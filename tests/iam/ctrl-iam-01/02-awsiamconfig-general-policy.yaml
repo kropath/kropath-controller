@@ -15,7 +15,7 @@ spec:
   defaults:
     permissionsBoundaryArn: ""
     blockIamUserAccessKeys: false
-    maxSessionDurationSeconds: 3600
+    maxSessionDurationSeconds: 0
     tags: {}
     syncedLabels: {}
     syncedAnnotations: {}
