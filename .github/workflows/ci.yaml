@@ -42,7 +42,7 @@ jobs:
         uses: helm/kind-action@v1
         with:
           cluster_name: kropath-test
-          kind_version: v0.25.0
+          version: v0.25.0
 
       - name: Install test CRDs
         run: |

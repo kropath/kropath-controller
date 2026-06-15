@@ -24,11 +24,9 @@ spec:
           properties:
             spec:
               type: object
-              additionalProperties: false
               properties:
                 mandatory:
                   type: object
-                  additionalProperties: false
                   properties:
                     permissionsBoundaryArn:
                       type: string
@@ -42,7 +40,6 @@ spec:
                       default: 0
                 defaults:
                   type: object
-                  additionalProperties: false
                   properties:
                     permissionsBoundaryArn:
                       type: string
@@ -56,15 +53,12 @@ spec:
                       default: 0
             status:
               type: object
-              additionalProperties: false
               properties:
                 effectiveConfig:
                   type: object
-                  additionalProperties: false
                   properties:
                     aws:
                       type: object
-                      additionalProperties: false
                       properties:
                         accountId:
                           type: string
@@ -74,7 +68,6 @@ spec:
                           default: ""
                     mandatory:
                       type: object
-                      additionalProperties: false
                       properties:
                         permissionsBoundaryArn:
                           type: string
@@ -88,7 +81,6 @@ spec:
                           default: 0
                     defaults:
                       type: object
-                      additionalProperties: false
                       properties:
                         permissionsBoundaryArn:
                           type: string
