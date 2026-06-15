@@ -84,7 +84,7 @@ jobs:
       - name: Run Chainsaw tests
         run: |
           mkdir -p test-results
-          chainsaw test tests/iam/ctrl-iam-01/ --parallel 4 --report-format JUNIT-TEST --report-path test-results/
+          chainsaw test tests/iam/ctrl-iam-01/ --parallel 1 --report-format JUNIT-TEST --report-path test-results/
 
       - name: Stop controller
         if: always()
