@@ -14,6 +14,8 @@ import (
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -29,10 +31,17 @@ type Reconciler struct {
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.Client = mgr.GetClient()
-	return ctrl.NewControllerManagedBy(mgr).
+	builder := ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.AWSPolicyDocument{}).
-		Watches(&v1alpha1.AWSPolicyDocument{}, handler.EnqueueRequestsFromMapFunc(r.mapSourceDocumentUpdates)).
-		Complete(r)
+		Watches(&v1alpha1.AWSPolicyDocument{}, handler.EnqueueRequestsFromMapFunc(r.mapSourceDocumentUpdates))
+
+	for _, kind := range policyRefWatchKinds() {
+		prototype := &unstructured.Unstructured{}
+		prototype.SetGroupVersionKind(schema.GroupVersionKind{Group: "kropath.run", Version: "v1alpha1", Kind: kind})
+		builder = builder.Watches(prototype, handler.EnqueueRequestsFromMapFunc(r.mapReferencedResourceUpdates))
+	}
+
+	return builder.Complete(r)
 }
 
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -149,6 +158,18 @@ func (r *Reconciler) mapSourceDocumentUpdates(ctx context.Context, obj client.Ob
 	return references
 }
 
+func (r *Reconciler) mapReferencedResourceUpdates(ctx context.Context, obj client.Object) []ctrl.Request {
+	if r == nil || r.Client == nil || obj == nil {
+		return nil
+	}
+
+	references, err := r.requestsForReferencedResource(ctx, obj.GetNamespace(), obj.GetName(), obj.GetObjectKind().GroupVersionKind().Kind)
+	if err != nil {
+		return nil
+	}
+	return references
+}
+
 func (r *Reconciler) requestsForSourceDocument(ctx context.Context, namespace, sourceName string) ([]ctrl.Request, error) {
 	var docs v1alpha1.AWSPolicyDocumentList
 	if err := r.List(ctx, &docs, client.InNamespace(namespace)); err != nil {
@@ -172,6 +193,29 @@ func (r *Reconciler) requestsForSourceDocument(ctx context.Context, namespace, s
 	return requests, nil
 }
 
+func (r *Reconciler) requestsForReferencedResource(ctx context.Context, namespace, name, kind string) ([]ctrl.Request, error) {
+	var docs v1alpha1.AWSPolicyDocumentList
+	if err := r.List(ctx, &docs, client.InNamespace(namespace)); err != nil {
+		return nil, err
+	}
+
+	requests := make([]ctrl.Request, 0, len(docs.Items))
+	for i := range docs.Items {
+		doc := &docs.Items[i]
+		if !documentReferencesResource(doc, kind, name) {
+			continue
+		}
+		requests = append(requests, ctrl.Request{
+			NamespacedName: client.ObjectKey{
+				Namespace: doc.Namespace,
+				Name:      doc.Name,
+			},
+		})
+	}
+
+	return requests, nil
+}
+
 func documentReferencesSource(doc *v1alpha1.AWSPolicyDocument, sourceName string) bool {
 	for _, source := range doc.Spec.Sources {
 		if source.Name == sourceName {
@@ -179,6 +223,40 @@ func documentReferencesSource(doc *v1alpha1.AWSPolicyDocument, sourceName string
 		}
 	}
 	return false
+}
+
+func documentReferencesResource(doc *v1alpha1.AWSPolicyDocument, kind, name string) bool {
+	for _, stmt := range doc.Spec.Statements {
+		for _, principal := range stmt.Principals {
+			if refMatches(principal.Ref, kind, name) {
+				return true
+			}
+		}
+		for _, resource := range stmt.Resources {
+			if refMatches(resource.Ref, kind, name) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func refMatches(ref *v1alpha1.PolicyRef, kind, name string) bool {
+	if ref == nil {
+		return false
+	}
+	return ref.Kind == kind && ref.Name == name
+}
+
+func policyRefWatchKinds() []string {
+	return []string{
+		"AWSIAMRole",
+		"AWSS3Bucket",
+		"AWSLambdaFunction",
+		"AWSSQSQueue",
+		"AWSKMSKey",
+		"AWSSecretsManagerSecret",
+	}
 }
 
 type policyDocumentJSON struct {

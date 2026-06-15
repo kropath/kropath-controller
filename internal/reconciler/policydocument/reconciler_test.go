@@ -428,6 +428,66 @@ func TestRequestsForSourceDocumentReturnsParentsReferencingSource(t *testing.T) 
 	}
 }
 
+func TestRequestsForReferencedResourceReturnsMatchingDocuments(t *testing.T) {
+	scheme := runtime.NewScheme()
+	if err := v1alpha1.AddToScheme(scheme); err != nil {
+		t.Fatalf("add scheme: %v", err)
+	}
+
+	match := &v1alpha1.AWSPolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+		ObjectMeta: metav1.ObjectMeta{Name: "match", Namespace: "default"},
+		Spec: v1alpha1.AWSPolicyDocumentSpec{
+			Statements: []v1alpha1.PolicyStatement{
+				{
+					Effect:  "Allow",
+					Actions: []string{"s3:GetObject"},
+					Resources: []v1alpha1.PolicyResource{
+						{Ref: &v1alpha1.PolicyRef{Kind: "AWSIAMRole", Name: "lambda-exec"}},
+					},
+				},
+			},
+		},
+	}
+	unrelated := &v1alpha1.AWSPolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+		ObjectMeta: metav1.ObjectMeta{Name: "unrelated", Namespace: "default"},
+		Spec: v1alpha1.AWSPolicyDocumentSpec{
+			Statements: []v1alpha1.PolicyStatement{
+				{
+					Effect:  "Allow",
+					Actions: []string{"s3:GetObject"},
+					Resources: []v1alpha1.PolicyResource{
+						{Ref: &v1alpha1.PolicyRef{Kind: "AWSS3Bucket", Name: "my-bucket"}},
+					},
+				},
+			},
+		},
+	}
+
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(match, unrelated).Build()
+	r := &Reconciler{Client: c}
+
+	requests, err := r.requestsForReferencedResource(context.Background(), "default", "lambda-exec", "AWSIAMRole")
+	if err != nil {
+		t.Fatalf("requests for referenced resource: %v", err)
+	}
+	if len(requests) != 1 {
+		t.Fatalf("expected one matching request, got %d: %#v", len(requests), requests)
+	}
+	if requests[0].NamespacedName.Name != "match" {
+		t.Fatalf("unexpected request: %#v", requests[0])
+	}
+
+	requests, err = r.requestsForReferencedResource(context.Background(), "default", "lambda-exec", "AWSS3Bucket")
+	if err != nil {
+		t.Fatalf("requests for mismatched kind: %v", err)
+	}
+	if len(requests) != 0 {
+		t.Fatalf("expected no requests for mismatched kind, got %#v", requests)
+	}
+}
+
 func jsonContains(raw, needle string) bool {
 	return strings.Contains(raw, needle)
 }
