@@ -65,9 +65,9 @@ spec:
                       type: string
                       default: ""
           x-kubernetes-validations:
-            - rule: '!(self.spec.mandatory.iam.permissionsBoundaryArn != "" && self.spec.defaults.iam.permissionsBoundaryArn != "")'
+            - rule: '!(self.spec.mandatory.iam.permissionsBoundaryArn != "" && has(self.spec.defaults) && has(self.spec.defaults.iam) && self.spec.defaults.iam.permissionsBoundaryArn != "")'
               message: permissionsBoundaryArn must be set in either mandatory or defaults, not both.
-            - rule: '!(self.spec.mandatory.iam.blockIamUserAccessKeys && self.spec.defaults.iam.blockIamUserAccessKeys)'
+            - rule: '!(self.spec.mandatory.iam.blockIamUserAccessKeys && has(self.spec.defaults) && has(self.spec.defaults.iam) && self.spec.defaults.iam.blockIamUserAccessKeys)'
               message: blockIamUserAccessKeys must be set in either mandatory or defaults, not both.
-            - rule: '!(self.spec.mandatory.iam.maxSessionDurationSeconds > 0 && self.spec.defaults.iam.maxSessionDurationSeconds > 0)'
+            - rule: '!(self.spec.mandatory.iam.maxSessionDurationSeconds > 0 && has(self.spec.defaults) && has(self.spec.defaults.iam) && self.spec.defaults.iam.maxSessionDurationSeconds > 0)'
               message: maxSessionDurationSeconds must be set in either mandatory or defaults, not both.
