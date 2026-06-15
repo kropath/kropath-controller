@@ -7,10 +7,9 @@ on:
       - main
 
 jobs:
-  test:
-    name: go test
+  unit:
+    name: Go unit tests
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,3 +22,69 @@ jobs:
 
       - name: Run tests
         run: go test ./...
+
+  e2e:
+    name: Chainsaw integration tests
+    runs-on: ubuntu-latest
+    needs: unit
+
+    steps:
+      - name: Checkout controller
+        uses: actions/checkout@v4
+
+      - name: Checkout AWS CRDs
+        uses: actions/checkout@v4
+        with:
+          repository: kropath/kropath-aws
+          path: kropath-aws
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Set up kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: kropath-test
+          kind_version: v0.25.0
+
+      - name: Install AWS CRDs
+        run: kubectl apply -f kropath-aws/crds/
+
+      - name: Build controller
+        run: |
+          mkdir -p bin
+          go build -o bin/kropath-operator ./cmd/manager
+
+      - name: Start controller
+        run: |
+          mkdir -p /tmp/kropath-controller
+          KUBECONFIG="${HOME}/.kube/config" ./bin/kropath-operator --health-probe-bind-address=:18081 > /tmp/kropath-controller/controller.log 2>&1 &
+          echo $! > /tmp/kropath-controller/pid
+
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:18081/readyz >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+
+          cat /tmp/kropath-controller/controller.log
+          exit 1
+
+      - name: Install Chainsaw
+        uses: kyverno/action-install-chainsaw@v0.2.15
+
+      - name: Run Chainsaw tests
+        run: |
+          mkdir -p test-results
+          chainsaw test tests/iam/ctrl-iam-01/ --parallel 4 --report-format JUNIT-TEST --report-path test-results/
+
+      - name: Stop controller
+        if: always()
+        run: |
+          if [ -f /tmp/kropath-controller/pid ]; then
+            kill "$(cat /tmp/kropath-controller/pid)" || true
+          fi
