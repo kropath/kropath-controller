@@ -72,6 +72,47 @@ func TestReconcilePassesThroughDocumentJSON(t *testing.T) {
 	}
 }
 
+func TestReconcileClearsResolvedDocumentOnInvalidDocumentJSON(t *testing.T) {
+	scheme := runtime.NewScheme()
+	if err := v1alpha1.AddToScheme(scheme); err != nil {
+		t.Fatalf("add scheme: %v", err)
+	}
+
+	doc := &v1alpha1.AWSPolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+		ObjectMeta: metav1.ObjectMeta{Name: "raw", Namespace: "default", Generation: 4},
+		Spec: v1alpha1.AWSPolicyDocumentSpec{
+			DocumentJSON: `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}`,
+		},
+		Status: v1alpha1.AWSPolicyDocumentStatus{
+			ResolvedDocumentJSON: `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:PutObject","Resource":"*"}]}`,
+			StatementCount:       1,
+		},
+	}
+
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(doc).Build()
+	r := &Reconciler{Client: c}
+
+	if _, err := r.reconcileDocument(context.Background(), doc); err != nil {
+		t.Fatalf("seed reconcile: %v", err)
+	}
+
+	doc.Spec.DocumentJSON = `{"Version":"2012-10-17",`
+	if _, err := r.reconcileDocument(context.Background(), doc); err != nil {
+		t.Fatalf("reconcile invalid json: %v", err)
+	}
+
+	if doc.Status.ResolvedDocumentJSON != "" {
+		t.Fatalf("expected resolved json cleared, got %s", doc.Status.ResolvedDocumentJSON)
+	}
+	if doc.Status.StatementCount != 0 {
+		t.Fatalf("expected statement count cleared, got %d", doc.Status.StatementCount)
+	}
+	if !conditionHasStatus(doc.Status.Conditions, v1alpha1.ConditionReady, metav1.ConditionFalse) {
+		t.Fatalf("ready condition not false: %#v", doc.Status.Conditions)
+	}
+}
+
 func TestReconcileSkipsStatusUpdateWhenStatusIsUnchanged(t *testing.T) {
 	scheme := runtime.NewScheme()
 	if err := v1alpha1.AddToScheme(scheme); err != nil {

@@ -74,6 +74,8 @@ func (r *Reconciler) reconcileDocument(ctx context.Context, doc *v1alpha1.AWSPol
 
 	if strings.TrimSpace(doc.Spec.DocumentJSON) != "" {
 		if !json.Valid([]byte(doc.Spec.DocumentJSON)) {
+			doc.Status.ResolvedDocumentJSON = ""
+			doc.Status.StatementCount = 0
 			doc.Status.Conditions = setCondition(doc.Status.Conditions, readyCondition(metav1.ConditionFalse, "InvalidDocumentJSON", "spec.documentJSON is not valid JSON", doc.Generation))
 			doc.Status.Conditions = setCondition(doc.Status.Conditions, sourceNotReadyCondition(metav1.ConditionFalse, "InvalidDocumentJSON", "spec.documentJSON is not valid JSON", doc.Generation))
 			doc.Status.Conditions = setCondition(doc.Status.Conditions, sidConflictCondition(metav1.ConditionFalse, "InvalidDocumentJSON", "spec.documentJSON is not valid JSON", doc.Generation))
