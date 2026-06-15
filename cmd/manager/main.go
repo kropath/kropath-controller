@@ -24,6 +24,16 @@ var (
 	enablePolicyDoc bool
 )
 
+func leaderElectionNamespace() string {
+	if ns := os.Getenv("LEADER_ELECTION_NAMESPACE"); ns != "" {
+		return ns
+	}
+	if ns := os.Getenv("POD_NAMESPACE"); ns != "" {
+		return ns
+	}
+	return "default"
+}
+
 func main() {
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -45,11 +55,12 @@ func main() {
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 sch,
-		Metrics:                server.Options{BindAddress: metricsAddr},
-		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         true,
-		LeaderElectionID:       "kropath-controller.kropath.run",
+		Scheme:                  sch,
+		Metrics:                 server.Options{BindAddress: metricsAddr},
+		HealthProbeBindAddress:  probeAddr,
+		LeaderElection:          true,
+		LeaderElectionNamespace: leaderElectionNamespace(),
+		LeaderElectionID:        "kropath-controller.kropath.run",
 	})
 	if err != nil {
 		ctrl.Log.Error(err, "unable to start manager")
