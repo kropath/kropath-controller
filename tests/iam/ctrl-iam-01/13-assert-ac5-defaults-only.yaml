@@ -1,0 +1,12 @@
+# Assert: defaults.maxSession=3600 populated; mandatory.maxSession=0 (not set).
+apiVersion: kropath.run/v1alpha1
+kind: AWSIAMConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      maxSessionDurationSeconds: 0
+    defaults:
+      maxSessionDurationSeconds: 3600

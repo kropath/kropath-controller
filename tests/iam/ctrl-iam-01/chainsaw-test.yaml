@@ -1,0 +1,148 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-iam-01 Chainsaw integration tests — all 7 acceptance criteria.
+# Requires:
+#   - kind cluster with kropath-operator deployed (feature flag: --enable-iam-cascade)
+#   - AWSKropathConfig CRD applied (crds/awskropathconfig.yaml from kropath-aws)
+#   - AWSIAMConfig CRD applied (crds/awsiamconfig.yaml from kropath-aws)
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-iam-01-cascade
+spec:
+  steps:
+    # AC-1: globalKropathConfig.mandatory.iam.permissionsBoundaryArn set at level 1
+    # propagates to AWSIAMConfig.status.effectiveConfig.mandatory.permissionsBoundaryArn.
+    - name: ac1-global-mandatory-boundary-propagates
+      try:
+        - apply:
+            file: 01-global-kropathconfig-mandatory-boundary.yaml
+        - apply:
+            file: 02-awsiamconfig-general-policy.yaml
+        - assert:
+            file: 03-assert-ac1-mandatory-boundary.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-awsiamconfig-general-policy.yaml
+        - delete:
+            file: 01-global-kropathconfig-mandatory-boundary.yaml
+
+    # AC-2: level-1 (KropathConfig mandatory) wins over level-3 (IAMConfig mandatory).
+    - name: ac2-level1-wins-over-level3
+      try:
+        - apply:
+            file: 04-global-kropathconfig-mandatory-boundary-l1.yaml
+        - apply:
+            file: 05-global-awsiamconfig-mandatory-boundary-l3.yaml
+        - apply:
+            file: 02-awsiamconfig-general-policy.yaml
+        - assert:
+            file: 06-assert-ac2-level1-wins.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-awsiamconfig-general-policy.yaml
+        - delete:
+            file: 05-global-awsiamconfig-mandatory-boundary-l3.yaml
+        - delete:
+            file: 04-global-kropathconfig-mandatory-boundary-l1.yaml
+
+    # AC-3: globalKropathConfig.mandatory.iam.blockIamUserAccessKeys=true propagates.
+    - name: ac3-block-access-keys-propagates
+      try:
+        - apply:
+            file: 07-global-kropathconfig-block-access-keys.yaml
+        - apply:
+            file: 02-awsiamconfig-general-policy.yaml
+        - assert:
+            file: 08-assert-ac3-block-access-keys.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-awsiamconfig-general-policy.yaml
+        - delete:
+            file: 07-global-kropathconfig-block-access-keys.yaml
+
+    # AC-4: level-1 maxSessionDurationSeconds=3600 wins over level-3 value of 7200.
+    - name: ac4-max-session-level1-wins
+      try:
+        - apply:
+            file: 09-global-kropathconfig-max-session-3600.yaml
+        - apply:
+            file: 10-global-awsiamconfig-max-session-7200.yaml
+        - apply:
+            file: 02-awsiamconfig-general-policy.yaml
+        - assert:
+            file: 11-assert-ac4-max-session.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-awsiamconfig-general-policy.yaml
+        - delete:
+            file: 10-global-awsiamconfig-max-session-7200.yaml
+        - delete:
+            file: 09-global-kropathconfig-max-session-3600.yaml
+
+    # AC-5: only globalIAMConfig.defaults.maxSessionDurationSeconds set;
+    # mandatory must be 0, defaults must be 3600.
+    - name: ac5-defaults-only-no-mandatory-bleed
+      try:
+        - apply:
+            file: 12-global-awsiamconfig-defaults-max-session.yaml
+        - apply:
+            file: 02-awsiamconfig-general-policy.yaml
+        - assert:
+            file: 13-assert-ac5-defaults-only.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-awsiamconfig-general-policy.yaml
+        - delete:
+            file: 12-global-awsiamconfig-defaults-max-session.yaml
+
+    # AC-6: global mandatory (level 1) wins over local namespace mandatory (level 2).
+    - name: ac6-global-mandatory-wins-over-local
+      try:
+        - apply:
+            file: 14-global-kropathconfig-mandatory-boundary-global.yaml
+        - apply:
+            file: 15-local-kropathconfig-mandatory-boundary-ns.yaml
+        - apply:
+            file: 02-awsiamconfig-general-policy.yaml
+        - assert:
+            file: 16-assert-ac6-global-wins.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-awsiamconfig-general-policy.yaml
+        - delete:
+            file: 15-local-kropathconfig-mandatory-boundary-ns.yaml
+        - delete:
+            file: 14-global-kropathconfig-mandatory-boundary-global.yaml
+
+    # AC-7: AWSKropathConfig with both mandatory.iam.permissionsBoundaryArn and
+    # defaults.iam.permissionsBoundaryArn non-empty is rejected at admission.
+    # This is a pure CRD validation test — does not require a running controller.
+    - name: ac7-mutual-exclusivity-validation
+      try:
+        - apply:
+            file: 17-awskropathconfig-both-tiers-boundary.yaml
+            expect:
+              - match:
+                  apiVersion: kropath.run/v1alpha1
+                  kind: AWSKropathConfig
+                check:
+                  ($error != null): true
