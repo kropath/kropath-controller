@@ -32,12 +32,6 @@ jobs:
       - name: Checkout controller
         uses: actions/checkout@v4
 
-      - name: Checkout AWS CRDs
-        uses: actions/checkout@v4
-        with:
-          repository: kropath/kropath-aws
-          path: kropath-aws
-
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -50,8 +44,12 @@ jobs:
           cluster_name: kropath-test
           kind_version: v0.25.0
 
-      - name: Install AWS CRDs
-        run: kubectl apply -f kropath-aws/crds/
+      - name: Install test CRDs
+        run: |
+          kubectl apply -f tests/fixtures/crds/
+          kubectl wait --for=condition=Established --timeout=60s \
+            crd/awskropathconfigs.kropath.run \
+            crd/awsiamconfigs.kropath.run
 
       - name: Build controller
         run: |
