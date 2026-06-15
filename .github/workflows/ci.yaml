@@ -72,6 +72,12 @@ jobs:
           cat /tmp/kropath-controller/controller.log
           exit 1
 
+      - name: Prepare test namespaces
+        run: |
+          for ns in kro-system payments-prod; do
+            kubectl create namespace "$ns" --dry-run=client -o yaml | kubectl apply -f -
+          done
+
       - name: Install Chainsaw
         uses: kyverno/action-install-chainsaw@v0.2.15
 
