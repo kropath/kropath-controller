@@ -48,8 +48,8 @@ func main() {
 		Scheme:                 sch,
 		Metrics:                server.Options{BindAddress: metricsAddr},
 		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         false,
-		LeaderElectionID:       "kropath-controller",
+		LeaderElection:         true,
+		LeaderElectionID:       "kropath-controller.kropath.run",
 	})
 	if err != nil {
 		ctrl.Log.Error(err, "unable to start manager")

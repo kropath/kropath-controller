@@ -17,4 +17,3 @@ rules:
       - awskmskeys
       - awssecretsmanagersecrets
     verbs: ["get", "list", "watch"]
-

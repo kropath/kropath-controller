@@ -175,4 +175,3 @@ spec:
                   - type: Ready
                     status: "True"
                 resolvedDocumentJSON: (contains(@, '"Principal":{"AWS":"arn:aws:s3:::my-bucket"}'))
-
