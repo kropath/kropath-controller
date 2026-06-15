@@ -16,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 )
 
 const defaultRequeueAfter = 10 * time.Second
@@ -27,8 +28,10 @@ type Reconciler struct {
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.Client = mgr.GetClient()
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.AWSPolicyDocument{}).
+		Watches(&v1alpha1.AWSPolicyDocument{}, handler.EnqueueRequestsFromMapFunc(r.mapSourceDocumentUpdates)).
 		Complete(r)
 }
 
@@ -129,6 +132,50 @@ func (r *Reconciler) requeueAfter() time.Duration {
 		return r.RequeueAfter
 	}
 	return defaultRequeueAfter
+}
+
+func (r *Reconciler) mapSourceDocumentUpdates(ctx context.Context, obj client.Object) []ctrl.Request {
+	if r == nil || r.Client == nil || obj == nil {
+		return nil
+	}
+
+	references, err := r.requestsForSourceDocument(ctx, obj.GetNamespace(), obj.GetName())
+	if err != nil {
+		return nil
+	}
+	return references
+}
+
+func (r *Reconciler) requestsForSourceDocument(ctx context.Context, namespace, sourceName string) ([]ctrl.Request, error) {
+	var docs v1alpha1.AWSPolicyDocumentList
+	if err := r.List(ctx, &docs, client.InNamespace(namespace)); err != nil {
+		return nil, err
+	}
+
+	requests := make([]ctrl.Request, 0, len(docs.Items))
+	for i := range docs.Items {
+		doc := &docs.Items[i]
+		if !documentReferencesSource(doc, sourceName) {
+			continue
+		}
+		requests = append(requests, ctrl.Request{
+			NamespacedName: client.ObjectKey{
+				Namespace: doc.Namespace,
+				Name:      doc.Name,
+			},
+		})
+	}
+
+	return requests, nil
+}
+
+func documentReferencesSource(doc *v1alpha1.AWSPolicyDocument, sourceName string) bool {
+	for _, source := range doc.Spec.Sources {
+		if source.Name == sourceName {
+			return true
+		}
+	}
+	return false
 }
 
 type policyDocumentJSON struct {

@@ -372,6 +372,51 @@ func TestResolveRefUsesStatusArn(t *testing.T) {
 	}
 }
 
+func TestRequestsForSourceDocumentReturnsParentsReferencingSource(t *testing.T) {
+	scheme := runtime.NewScheme()
+	if err := v1alpha1.AddToScheme(scheme); err != nil {
+		t.Fatalf("add scheme: %v", err)
+	}
+
+	source := &v1alpha1.AWSPolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+		ObjectMeta: metav1.ObjectMeta{Name: "base-policy", Namespace: "default"},
+	}
+	related := &v1alpha1.AWSPolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+		ObjectMeta: metav1.ObjectMeta{Name: "app-policy", Namespace: "default"},
+		Spec: v1alpha1.AWSPolicyDocumentSpec{
+			Sources: []v1alpha1.PolicyDocumentSource{{Name: "base-policy"}},
+		},
+	}
+	unrelated := &v1alpha1.AWSPolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+		ObjectMeta: metav1.ObjectMeta{Name: "standalone", Namespace: "default"},
+	}
+
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(source, related, unrelated).Build()
+	r := &Reconciler{Client: c}
+
+	requests, err := r.requestsForSourceDocument(context.Background(), "default", "base-policy")
+	if err != nil {
+		t.Fatalf("requests for source document: %v", err)
+	}
+	if len(requests) != 1 {
+		t.Fatalf("expected one parent request, got %d: %#v", len(requests), requests)
+	}
+	if requests[0].NamespacedName.Namespace != "default" || requests[0].NamespacedName.Name != "app-policy" {
+		t.Fatalf("unexpected request: %#v", requests[0])
+	}
+
+	requests, err = r.requestsForSourceDocument(context.Background(), "default", "missing")
+	if err != nil {
+		t.Fatalf("requests for missing source document: %v", err)
+	}
+	if len(requests) != 0 {
+		t.Fatalf("expected no parent requests for missing source, got %#v", requests)
+	}
+}
+
 func jsonContains(raw, needle string) bool {
 	return strings.Contains(raw, needle)
 }
