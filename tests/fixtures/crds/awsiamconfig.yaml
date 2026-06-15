@@ -38,6 +38,21 @@ spec:
                       type: integer
                       format: int64
                       default: 0
+                    tags:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedLabels:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
                 defaults:
                   type: object
                   properties:
@@ -51,6 +66,21 @@ spec:
                       type: integer
                       format: int64
                       default: 0
+                    tags:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedLabels:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
             status:
               type: object
               properties:
@@ -79,6 +109,21 @@ spec:
                           type: integer
                           format: int64
                           default: 0
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                        syncedLabels:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                        syncedAnnotations:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
                     defaults:
                       type: object
                       properties:
@@ -92,6 +137,21 @@ spec:
                           type: integer
                           format: int64
                           default: 0
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                        syncedLabels:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                        syncedAnnotations:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
                 observedGeneration:
                   type: integer
                   format: int64
