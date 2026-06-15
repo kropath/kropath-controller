@@ -32,6 +32,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&AWSKropathConfigList{},
 		&AWSIAMConfig{},
 		&AWSIAMConfigList{},
+		&AWSPolicyDocument{},
+		&AWSPolicyDocumentList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

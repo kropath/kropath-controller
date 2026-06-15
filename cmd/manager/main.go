@@ -1,16 +1,5 @@
-// Copyright 2026 kropath Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2026 The kropath Authors.
+// SPDX-License-Identifier: Apache-2.0
 
 package main
 
@@ -18,32 +7,42 @@ import (
 	"flag"
 	"os"
 
-	"github.com/go-logr/zapr"
 	"github.com/kropath/kropath-controller/api/v1alpha1"
-	iamconfig "github.com/kropath/kropath-controller/internal/reconciler/iamconfig"
-	"go.uber.org/zap"
+	"github.com/kropath/kropath-controller/internal/reconciler/iamconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/policydocument"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
-func main() {
-	var metricsAddr string
-	var probeAddr string
-	var leaderElect bool
+var (
+	metricsAddr     string
+	probeAddr       string
+	enablePolicyDoc bool
+)
 
+func leaderElectionNamespace() string {
+	if ns := os.Getenv("LEADER_ELECTION_NAMESPACE"); ns != "" {
+		return ns
+	}
+	if ns := os.Getenv("POD_NAMESPACE"); ns != "" {
+		return ns
+	}
+	return "default"
+}
+
+func main() {
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.BoolVar(&leaderElect, "leader-elect", false, "Enable leader election for controller manager.")
+	flag.BoolVar(&enablePolicyDoc, "enable-poldoc", false, "Enable the AWSPolicyDocument reconciler.")
+	opts := zap.Options{Development: true}
+	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
-	zapLogger, err := zap.NewDevelopment()
-	if err != nil {
-		os.Exit(1)
-	}
-	ctrl.SetLogger(zapr.NewLogger(zapLogger))
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	sch := runtime.NewScheme()
 	if err := clientgoscheme.AddToScheme(sch); err != nil {
@@ -56,11 +55,12 @@ func main() {
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 sch,
-		Metrics:                server.Options{BindAddress: metricsAddr},
-		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         leaderElect,
-		LeaderElectionID:       "kropath-controller",
+		Scheme:                  sch,
+		Metrics:                 server.Options{BindAddress: metricsAddr},
+		HealthProbeBindAddress:  probeAddr,
+		LeaderElection:          true,
+		LeaderElectionNamespace: leaderElectionNamespace(),
+		LeaderElectionID:        "kropath-controller.kropath.run",
 	})
 	if err != nil {
 		ctrl.Log.Error(err, "unable to start manager")
@@ -76,6 +76,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	if enablePolicyDoc {
+		if err := (&policydocument.Reconciler{Client: mgr.GetClient()}).SetupWithManager(mgr); err != nil {
+			ctrl.Log.Error(err, "unable to create AWSPolicyDocument reconciler")
+			os.Exit(1)
+		}
+	}
+
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		ctrl.Log.Error(err, "unable to set up health check")
 		os.Exit(1)
@@ -85,6 +92,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	ctrl.Log.Info("starting manager", "metrics", metricsAddr, "probes", probeAddr, "enable_poldoc", enablePolicyDoc)
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		ctrl.Log.Error(err, "problem running manager")
 		os.Exit(1)
