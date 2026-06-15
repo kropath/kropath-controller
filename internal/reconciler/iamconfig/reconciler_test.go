@@ -152,6 +152,57 @@ func TestReconcileCopiesAWSIdentity(t *testing.T) {
 	}
 }
 
+func TestRequestsForIAMConfigChangeGlobal(t *testing.T) {
+	rec, _ := testReconciler(t,
+		globalIAMConfigDefaults("general-policy", cascade.IAMSection{MaxSessionDurationSeconds: 3600}),
+		localIAMConfig("payments-prod", "general-policy"),
+		localIAMConfig("sandbox", "general-policy"),
+		localIAMConfig("payments-prod", "other-policy"),
+	)
+
+	got := rec.requestsForIAMConfigChange(context.Background(), &v1alpha1.AWSIAMConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "general-policy",
+			Namespace: kroSystemNamespace,
+		},
+	})
+
+	if len(got) != 2 {
+		t.Fatalf("requests len = %d, want 2", len(got))
+	}
+	want := map[string]bool{
+		"payments-prod/general-policy": false,
+		"sandbox/general-policy":       false,
+	}
+	for _, req := range got {
+		key := req.Namespace + "/" + req.Name
+		if _, ok := want[key]; !ok {
+			t.Fatalf("unexpected request %q", key)
+		}
+		want[key] = true
+	}
+	for key, seen := range want {
+		if !seen {
+			t.Fatalf("missing request %q", key)
+		}
+	}
+}
+
+func TestRequestsForIAMConfigChangeNonGlobalIgnored(t *testing.T) {
+	rec, _ := testReconciler(t, localIAMConfig("payments-prod", "general-policy"))
+
+	got := rec.requestsForIAMConfigChange(context.Background(), &v1alpha1.AWSIAMConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "general-policy",
+			Namespace: "payments-prod",
+		},
+	})
+
+	if len(got) != 0 {
+		t.Fatalf("requests len = %d, want 0", len(got))
+	}
+}
+
 func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, *v1alpha1.AWSIAMConfig) {
 	t.Helper()
 	scheme := runtime.NewScheme()

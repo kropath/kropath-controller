@@ -61,6 +61,10 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.AWSIAMConfig{}).
 		Watches(
+			&v1alpha1.AWSIAMConfig{},
+			handler.EnqueueRequestsFromMapFunc(r.requestsForIAMConfigChange),
+		).
+		Watches(
 			&v1alpha1.AWSKropathConfig{},
 			handler.EnqueueRequestsFromMapFunc(r.requestsForKropathConfigChange),
 		).
@@ -147,7 +151,29 @@ func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj cli
 
 	requests := make([]ctrl.Request, 0, len(list.Items))
 	for _, item := range list.Items {
-		if item.Name != cfg.Name {
+		if item.Namespace == kroSystemNamespace || item.Name != cfg.Name {
+			continue
+		}
+		requests = append(requests, ctrl.Request{NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name}})
+	}
+	return requests
+}
+
+func (r *Reconciler) requestsForIAMConfigChange(ctx context.Context, obj client.Object) []ctrl.Request {
+	cfg, ok := obj.(*v1alpha1.AWSIAMConfig)
+	if !ok || cfg.Namespace != kroSystemNamespace {
+		return nil
+	}
+
+	var list v1alpha1.AWSIAMConfigList
+	if err := r.Client.List(ctx, &list); err != nil {
+		r.Log.Error(err, "unable to list IAM configs for global IAMConfig change")
+		return nil
+	}
+
+	requests := make([]ctrl.Request, 0, len(list.Items))
+	for _, item := range list.Items {
+		if item.Namespace == kroSystemNamespace || item.Name != cfg.Name {
 			continue
 		}
 		requests = append(requests, ctrl.Request{NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name}})
