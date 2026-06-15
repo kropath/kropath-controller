@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
@@ -37,9 +38,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	originalStatus := snapshotStatus(doc.Status)
 	result, err := r.reconcileDocument(ctx, &doc)
 	if err != nil {
 		return ctrl.Result{}, err
+	}
+
+	if reflect.DeepEqual(originalStatus, doc.Status) {
+		return result, nil
 	}
 
 	if err := r.Status().Update(ctx, &doc); err != nil {
@@ -50,6 +56,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 
 	return result, nil
+}
+
+func snapshotStatus(status v1alpha1.AWSPolicyDocumentStatus) v1alpha1.AWSPolicyDocumentStatus {
+	if len(status.Conditions) > 0 {
+		status.Conditions = append([]metav1.Condition(nil), status.Conditions...)
+	}
+	return status
 }
 
 func (r *Reconciler) reconcileDocument(ctx context.Context, doc *v1alpha1.AWSPolicyDocument) (ctrl.Result, error) {

@@ -14,8 +14,34 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
+
+type recordingClient struct {
+	client.Client
+	statusUpdates int
+}
+
+func (c *recordingClient) Status() client.StatusWriter {
+	return &recordingStatusWriter{
+		StatusWriter: c.Client.Status(),
+		onUpdate: func() {
+			c.statusUpdates++
+		},
+	}
+}
+
+type recordingStatusWriter struct {
+	client.StatusWriter
+	onUpdate func()
+}
+
+func (w *recordingStatusWriter) Update(ctx context.Context, obj client.Object, opts ...client.SubResourceUpdateOption) error {
+	w.onUpdate()
+	return w.StatusWriter.Update(ctx, obj, opts...)
+}
 
 func TestReconcilePassesThroughDocumentJSON(t *testing.T) {
 	scheme := runtime.NewScheme()
@@ -43,6 +69,46 @@ func TestReconcilePassesThroughDocumentJSON(t *testing.T) {
 	}
 	if !conditionHasStatus(doc.Status.Conditions, v1alpha1.ConditionReady, metav1.ConditionTrue) {
 		t.Fatalf("ready condition not true: %#v", doc.Status.Conditions)
+	}
+}
+
+func TestReconcileSkipsStatusUpdateWhenStatusIsUnchanged(t *testing.T) {
+	scheme := runtime.NewScheme()
+	if err := v1alpha1.AddToScheme(scheme); err != nil {
+		t.Fatalf("add scheme: %v", err)
+	}
+
+	doc := &v1alpha1.AWSPolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+		ObjectMeta: metav1.ObjectMeta{Name: "raw", Namespace: "default", Generation: 3},
+		Spec: v1alpha1.AWSPolicyDocumentSpec{
+			DocumentJSON: `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}`,
+		},
+	}
+
+	calc := &Reconciler{Client: fake.NewClientBuilder().WithScheme(scheme).WithObjects(doc).Build()}
+	if _, err := calc.reconcileDocument(context.Background(), doc); err != nil {
+		t.Fatalf("seed reconcile: %v", err)
+	}
+
+	stored := &v1alpha1.AWSPolicyDocument{
+		TypeMeta:   doc.TypeMeta,
+		ObjectMeta: doc.ObjectMeta,
+		Spec:       doc.Spec,
+		Status:     snapshotStatus(doc.Status),
+	}
+
+	baseClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(stored).Build()
+	r := &Reconciler{Client: &recordingClient{Client: baseClient}}
+
+	if _, err := r.Reconcile(context.Background(), ctrlRequest("default", "raw")); err != nil {
+		t.Fatalf("reconcile: %v", err)
+	}
+
+	if rc, ok := r.Client.(*recordingClient); !ok {
+		t.Fatalf("unexpected client type %T", r.Client)
+	} else if rc.statusUpdates != 0 {
+		t.Fatalf("expected no status updates, got %d", rc.statusUpdates)
 	}
 }
 
@@ -276,4 +342,8 @@ func conditionHasStatus(conditions []metav1.Condition, conditionType string, sta
 		}
 	}
 	return false
+}
+
+func ctrlRequest(namespace, name string) ctrl.Request {
+	return ctrl.Request{NamespacedName: client.ObjectKey{Namespace: namespace, Name: name}}
 }
