@@ -1,0 +1,178 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: awspolicydocument-phase2-refs
+spec:
+  steps:
+    - name: ac-pd2-1-document-json-pass-through
+      try:
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: raw-form
+                namespace: default
+              spec:
+                documentJSON: '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}'
+        - assert:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: raw-form
+                namespace: default
+              status:
+                resolvedDocumentJSON: '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}'
+                conditions:
+                  - type: Ready
+                    status: "True"
+
+    - name: ac-pd2-2-resource-ref-resolution
+      try:
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSIAMRole
+              metadata:
+                name: lambda-exec
+                namespace: default
+        - patch:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSIAMRole
+              metadata:
+                name: lambda-exec
+                namespace: default
+              status:
+                predictedArn: arn:aws:iam::123456789012:role/lambda-exec
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: role-ref
+                namespace: default
+              spec:
+                statements:
+                  - effect: Allow
+                    actions: ["lambda:InvokeFunction"]
+                    resources:
+                      - ref:
+                          kind: AWSIAMRole
+                          name: lambda-exec
+        - assert:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: role-ref
+                namespace: default
+              status:
+                conditions:
+                  - type: Ready
+                    status: "True"
+                resolvedDocumentJSON: (contains(@, 'arn:aws:iam::123456789012:role/lambda-exec'))
+
+    - name: ac-pd2-3-pending-ref
+      try:
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: pending-ref
+                namespace: default
+              spec:
+                statements:
+                  - effect: Allow
+                    actions: ["lambda:InvokeFunction"]
+                    resources:
+                      - ref:
+                          kind: AWSIAMRole
+                          name: lambda-exec
+        - assert:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: pending-ref
+                namespace: default
+              status:
+                conditions:
+                  - type: SourceNotReady
+                    status: "True"
+
+    - name: ac-pd2-4-ref-becomes-ready
+      try:
+        - patch:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSIAMRole
+              metadata:
+                name: lambda-exec
+                namespace: default
+              status:
+                predictedArn: arn:aws:iam::123456789012:role/lambda-exec
+        - assert:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: pending-ref
+                namespace: default
+              status:
+                conditions:
+                  - type: Ready
+                    status: "True"
+                  - type: SourceNotReady
+                    status: "False"
+                resolvedDocumentJSON: (contains(@, 'arn:aws:iam::123456789012:role/lambda-exec'))
+
+    - name: ac-pd2-5-principal-ref-resolution
+      try:
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Bucket
+              metadata:
+                name: my-bucket
+                namespace: default
+        - patch:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Bucket
+              metadata:
+                name: my-bucket
+                namespace: default
+              status:
+                predictedArn: arn:aws:s3:::my-bucket
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: bucket-policy
+                namespace: default
+              spec:
+                statements:
+                  - effect: Allow
+                    actions: ["s3:GetObject"]
+                    principals:
+                      - type: AWS
+                        ref:
+                          kind: AWSS3Bucket
+                          name: my-bucket
+        - assert:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: bucket-policy
+                namespace: default
+              status:
+                conditions:
+                  - type: Ready
+                    status: "True"
+                resolvedDocumentJSON: (contains(@, '"Principal":{"AWS":"arn:aws:s3:::my-bucket"}'))
+

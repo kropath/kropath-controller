@@ -1,0 +1,20 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kropath-policydocument
+rules:
+  - apiGroups: ["kropath.run"]
+    resources:
+      - awspolicydocuments
+      - awspolicydocuments/status
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["kropath.run"]
+    resources:
+      - awsiamroles
+      - awss3buckets
+      - awslambdafunctions
+      - awssqsqueues
+      - awskmskeys
+      - awssecretsmanagersecrets
+    verbs: ["get", "list", "watch"]
+
