@@ -1,0 +1,13 @@
+# AC-3: globalKropathConfig with mandatory.iam.blockIamUserAccessKeys=true.
+apiVersion: kropath.run/v1alpha1
+kind: AWSKropathConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    iam:
+      blockIamUserAccessKeys: true
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"

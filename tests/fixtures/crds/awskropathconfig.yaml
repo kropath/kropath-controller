@@ -1,0 +1,73 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: awskropathconfigs.kropath.run
+spec:
+  group: kropath.run
+  scope: Namespaced
+  names:
+    kind: AWSKropathConfig
+    listKind: AWSKropathConfigList
+    plural: awskropathconfigs
+    singular: awskropathconfig
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          required:
+            - spec
+          properties:
+            spec:
+              type: object
+              properties:
+                mandatory:
+                  type: object
+                  properties:
+                    iam:
+                      type: object
+                      properties:
+                        permissionsBoundaryArn:
+                          type: string
+                          default: ""
+                        blockIamUserAccessKeys:
+                          type: boolean
+                          default: false
+                        maxSessionDurationSeconds:
+                          type: integer
+                          format: int64
+                          default: 0
+                defaults:
+                  type: object
+                  properties:
+                    iam:
+                      type: object
+                      properties:
+                        permissionsBoundaryArn:
+                          type: string
+                          default: ""
+                        blockIamUserAccessKeys:
+                          type: boolean
+                          default: false
+                        maxSessionDurationSeconds:
+                          type: integer
+                          format: int64
+                          default: 0
+                aws:
+                  type: object
+                  properties:
+                    accountId:
+                      type: string
+                      default: ""
+                    region:
+                      type: string
+                      default: ""
+          x-kubernetes-validations:
+            - rule: '!(self.spec.mandatory.iam.permissionsBoundaryArn != "" && has(self.spec.defaults) && has(self.spec.defaults.iam) && self.spec.defaults.iam.permissionsBoundaryArn != "")'
+              message: permissionsBoundaryArn must be set in either mandatory or defaults, not both.
+            - rule: '!(self.spec.mandatory.iam.blockIamUserAccessKeys && has(self.spec.defaults) && has(self.spec.defaults.iam) && self.spec.defaults.iam.blockIamUserAccessKeys)'
+              message: blockIamUserAccessKeys must be set in either mandatory or defaults, not both.
+            - rule: '!(self.spec.mandatory.iam.maxSessionDurationSeconds > 0 && has(self.spec.defaults) && has(self.spec.defaults.iam) && self.spec.defaults.iam.maxSessionDurationSeconds > 0)'
+              message: maxSessionDurationSeconds must be set in either mandatory or defaults, not both.

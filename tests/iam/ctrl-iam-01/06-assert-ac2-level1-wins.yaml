@@ -1,0 +1,10 @@
+# Assert: level-1 KropathConfig mandatory boundary wins over level-3 IAMConfig.
+apiVersion: kropath.run/v1alpha1
+kind: AWSIAMConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      permissionsBoundaryArn: "arn:aws:iam::123456789012:policy/KropathConfigWins"

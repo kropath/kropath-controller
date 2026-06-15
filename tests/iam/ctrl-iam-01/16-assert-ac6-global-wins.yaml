@@ -1,0 +1,10 @@
+# Assert: global level-1 mandatory boundary wins over local level-2 boundary.
+apiVersion: kropath.run/v1alpha1
+kind: AWSIAMConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      permissionsBoundaryArn: "arn:aws:iam::123456789012:policy/GlobalBlanket"
