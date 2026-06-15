@@ -103,13 +103,13 @@ spec:
         - apply:
             file: 12-global-awsiamconfig-defaults-max-session.yaml
         - apply:
-            file: 02-awsiamconfig-general-policy.yaml
+            file: 18-awsiamconfig-defaults-only.yaml
         - assert:
             file: 13-assert-ac5-defaults-only.yaml
             timeout: 30s
       cleanup:
         - delete:
-            file: 02-awsiamconfig-general-policy.yaml
+            file: 18-awsiamconfig-defaults-only.yaml
         - delete:
             file: 12-global-awsiamconfig-defaults-max-session.yaml
 

@@ -2,7 +2,7 @@
 apiVersion: kropath.run/v1alpha1
 kind: AWSIAMConfig
 metadata:
-  name: general-policy
+  name: general-policy-defaults
   namespace: payments-prod
 status:
   effectiveConfig:
