@@ -63,13 +63,13 @@ type EffectiveIAMConfig struct {
 func MergeIAMCascade(
 	// Mandatory inputs (highest → lowest priority)
 	globalKropathMandatory IAMSection, // level 1
-	localKropathMandatory IAMSection,  // level 2
-	globalIAMCfgMandatory IAMSection,  // level 3
-	localIAMCfgMandatory IAMSection,   // level 4
+	localKropathMandatory IAMSection, // level 2
+	globalIAMCfgMandatory IAMSection, // level 3
+	localIAMCfgMandatory IAMSection, // level 4
 	// Defaults inputs (highest → lowest priority)
-	localIAMCfgDefaults IAMSection,  // level 6
+	localIAMCfgDefaults IAMSection, // level 6
 	globalIAMCfgDefaults IAMSection, // level 7
-	localKropathDefaults IAMSection,  // level 8
+	localKropathDefaults IAMSection, // level 8
 	globalKropathDefaults IAMSection, // level 9
 ) EffectiveIAMConfig {
 	return EffectiveIAMConfig{
