@@ -101,6 +101,9 @@ func (r *Reconciler) reconcileDocument(ctx context.Context, doc *v1alpha1.AWSPol
 			return ctrl.Result{}, err
 		}
 		if pending {
+			doc.Status.ResolvedDocumentJSON = ""
+			doc.Status.StatementCount = 0
+			doc.Status.SourceCount = int32(len(doc.Spec.Sources))
 			doc.Status.Conditions = setCondition(doc.Status.Conditions, readyCondition(metav1.ConditionFalse, "SourceNotReady", "one or more refs are not ready", doc.Generation))
 			doc.Status.Conditions = setCondition(doc.Status.Conditions, sourceNotReadyCondition(metav1.ConditionTrue, "SourceNotReady", "one or more refs are not ready", doc.Generation))
 			doc.Status.Conditions = setCondition(doc.Status.Conditions, sidConflictCondition(metav1.ConditionFalse, "SourceNotReady", "ref resolution is still pending", doc.Generation))

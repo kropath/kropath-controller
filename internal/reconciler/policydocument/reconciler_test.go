@@ -219,6 +219,11 @@ func TestReconcileMarksSourceNotReadyWhenRefPending(t *testing.T) {
 				},
 			},
 		},
+		Status: v1alpha1.AWSPolicyDocumentStatus{
+			ResolvedDocumentJSON: `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}`,
+			StatementCount:       1,
+			SourceCount:          1,
+		},
 	}
 
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(doc).Build()
@@ -237,6 +242,12 @@ func TestReconcileMarksSourceNotReadyWhenRefPending(t *testing.T) {
 	}
 	if conditionHasStatus(doc.Status.Conditions, v1alpha1.ConditionReady, metav1.ConditionTrue) {
 		t.Fatalf("ready should be false: %#v", doc.Status.Conditions)
+	}
+	if doc.Status.ResolvedDocumentJSON != "" {
+		t.Fatalf("expected resolved json cleared, got %s", doc.Status.ResolvedDocumentJSON)
+	}
+	if doc.Status.StatementCount != 0 {
+		t.Fatalf("expected statement count cleared, got %d", doc.Status.StatementCount)
 	}
 }
 
