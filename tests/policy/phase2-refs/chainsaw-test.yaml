@@ -125,6 +125,7 @@ spec:
                 conditions:
                   - type: SourceNotReady
                     status: "True"
+                resolvedDocumentJSON: ""
 
     - name: ac-pd2-4-ref-becomes-ready
       try:
