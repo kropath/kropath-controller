@@ -25,6 +25,48 @@ type AWSProviderIdentity struct {
 	Region    string `json:"region,omitempty"`
 }
 
+// S3Section holds the AWS S3 governance fields shared by
+// AWSKropathConfig.spec.mandatory.s3 / .defaults.s3.
+//
+// Zero value of each field is the permissive sentinel (not enforced).
+type S3Section struct {
+	// EncryptionAlgorithm controls the bucket default encryption algorithm.
+	// Empty string = no enforcement.
+	EncryptionAlgorithm string `json:"encryptionAlgorithm,omitempty"`
+
+	// KmsKeyArn is the ARN of the KMS key to use for SSE-KMS.
+	// Empty string = no enforcement.
+	KmsKeyArn string `json:"kmsKeyArn,omitempty"`
+
+	// BlockPublicAccess blocks public access when true.
+	// false (zero value) = not enforced.
+	BlockPublicAccess bool `json:"blockPublicAccess,omitempty"`
+
+	// Versioning controls the bucket versioning state.
+	// Empty string = no enforcement.
+	Versioning string `json:"versioning,omitempty"`
+
+	// LoggingEnabled requires server access logging when true.
+	// false (zero value) = not enforced.
+	LoggingEnabled bool `json:"loggingEnabled,omitempty"`
+
+	// LogDeliveryBucket is the target bucket for server access logs.
+	// Empty string = not enforced.
+	LogDeliveryBucket string `json:"logDeliveryBucket,omitempty"`
+
+	// EnforceHttpsOnly denies non-TLS access when true.
+	// false (zero value) = not enforced.
+	EnforceHttpsOnly bool `json:"enforceHttpsOnly,omitempty"`
+
+	// ObjectLockMode controls S3 Object Lock governance mode.
+	// Empty string = not enforced.
+	ObjectLockMode string `json:"objectLockMode,omitempty"`
+
+	// ObjectLockRetentionDays controls S3 Object Lock retention.
+	// 0 = not enforced.
+	ObjectLockRetentionDays int64 `json:"objectLockRetentionDays,omitempty"`
+}
+
 type AWSKropathConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -47,6 +89,7 @@ type AWSKropathConfigSpec struct {
 
 type AWSKropathConfigTier struct {
 	IAM cascade.IAMSection `json:"iam,omitempty"`
+	S3  S3Section          `json:"s3,omitempty"`
 }
 
 type AWSIAMConfig struct {
