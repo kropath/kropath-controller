@@ -27,6 +27,14 @@ spec:
                 conditions:
                   - type: Ready
                     status: "True"
+      cleanup:
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: raw-form
+                namespace: default
 
     - name: ac-pd2-2-resource-ref-resolution
       try:
@@ -73,6 +81,21 @@ spec:
                   - type: Ready
                     status: "True"
                 resolvedDocumentJSON: (contains(@, 'arn:aws:iam::123456789012:role/lambda-exec'))
+      cleanup:
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: role-ref
+                namespace: default
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSIAMRole
+              metadata:
+                name: lambda-exec
+                namespace: default
 
     - name: ac-pd2-3-pending-ref
       try:
@@ -105,6 +128,13 @@ spec:
 
     - name: ac-pd2-4-ref-becomes-ready
       try:
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSIAMRole
+              metadata:
+                name: lambda-exec
+                namespace: default
         - patch:
             resource:
               apiVersion: kropath.run/v1alpha1
@@ -128,6 +158,21 @@ spec:
                   - type: SourceNotReady
                     status: "False"
                 resolvedDocumentJSON: (contains(@, 'arn:aws:iam::123456789012:role/lambda-exec'))
+      cleanup:
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: pending-ref
+                namespace: default
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSIAMRole
+              metadata:
+                name: lambda-exec
+                namespace: default
 
     - name: ac-pd2-5-principal-ref-resolution
       try:
@@ -175,3 +220,18 @@ spec:
                   - type: Ready
                     status: "True"
                 resolvedDocumentJSON: (contains(@, '"Principal":{"AWS":"arn:aws:s3:::my-bucket"}'))
+      cleanup:
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: bucket-policy
+                namespace: default
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Bucket
+              metadata:
+                name: my-bucket
+                namespace: default
