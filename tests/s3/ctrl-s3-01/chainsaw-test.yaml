@@ -1,0 +1,489 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-s3-01 Chainsaw integration tests for the S3 governance cascade.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-s3-01-cascade
+spec:
+  steps:
+    - name: install-crds
+      try:
+        - apply:
+            file: ../../fixtures/crds/awskropathconfig.yaml
+        - apply:
+            file: ../../fixtures/crds/awss3config.yaml
+
+    - name: ac1-global-mandatory-encryption-propagates
+      try:
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSKropathConfig
+              metadata:
+                name: ac1-general-policy
+                namespace: kro-system
+              spec:
+                mandatory:
+                  s3:
+                    encryptionAlgorithm: aws:kms
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac1-general-policy
+                namespace: data-prod
+        - assert:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac1-general-policy
+                namespace: data-prod
+              status:
+                effectiveConfig:
+                  mandatory:
+                    encryptionAlgorithm: aws:kms
+      cleanup:
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac1-general-policy
+                namespace: data-prod
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSKropathConfig
+              metadata:
+                name: ac1-general-policy
+                namespace: kro-system
+
+    - name: ac2-level1-wins-over-level3
+      try:
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSKropathConfig
+              metadata:
+                name: ac2-general-policy
+                namespace: kro-system
+              spec:
+                mandatory:
+                  s3:
+                    encryptionAlgorithm: aws:kms
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac2-general-policy
+                namespace: kro-system
+              spec:
+                mandatory:
+                  encryptionAlgorithm: AES256
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac2-general-policy
+                namespace: data-prod
+        - assert:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac2-general-policy
+                namespace: data-prod
+              status:
+                effectiveConfig:
+                  mandatory:
+                    encryptionAlgorithm: aws:kms
+      cleanup:
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac2-general-policy
+                namespace: data-prod
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac2-general-policy
+                namespace: kro-system
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSKropathConfig
+              metadata:
+                name: ac2-general-policy
+                namespace: kro-system
+
+    - name: ac3-global-block-public-access-fans-out
+      try:
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSKropathConfig
+              metadata:
+                name: ac3-general-policy
+                namespace: kro-system
+              spec:
+                mandatory:
+                  s3:
+                    blockPublicAccess: true
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac3-general-policy
+                namespace: data-prod
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac3-general-policy
+                namespace: sandbox
+        - assert:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac3-general-policy
+                namespace: data-prod
+              status:
+                effectiveConfig:
+                  mandatory:
+                    blockPublicAccess: true
+        - assert:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac3-general-policy
+                namespace: sandbox
+              status:
+                effectiveConfig:
+                  mandatory:
+                    blockPublicAccess: true
+      cleanup:
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac3-general-policy
+                namespace: sandbox
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac3-general-policy
+                namespace: data-prod
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSKropathConfig
+              metadata:
+                name: ac3-general-policy
+                namespace: kro-system
+
+    - name: ac4-level1-enforce-https-wins
+      try:
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSKropathConfig
+              metadata:
+                name: ac4-general-policy
+                namespace: kro-system
+              spec:
+                mandatory:
+                  s3:
+                    enforceHttpsOnly: true
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac4-general-policy
+                namespace: kro-system
+              spec:
+                mandatory:
+                  enforceHttpsOnly: false
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac4-general-policy
+                namespace: data-prod
+        - assert:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac4-general-policy
+                namespace: data-prod
+              status:
+                effectiveConfig:
+                  mandatory:
+                    enforceHttpsOnly: true
+      cleanup:
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac4-general-policy
+                namespace: data-prod
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac4-general-policy
+                namespace: kro-system
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSKropathConfig
+              metadata:
+                name: ac4-general-policy
+                namespace: kro-system
+
+    - name: ac5-defaults-only-keeps-mandatory-empty
+      try:
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac5-general-policy
+                namespace: kro-system
+              spec:
+                defaults:
+                  encryptionAlgorithm: aws:kms
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac5-general-policy
+                namespace: data-prod
+        - assert:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac5-general-policy
+                namespace: data-prod
+              status:
+                effectiveConfig:
+                  mandatory:
+                    encryptionAlgorithm: ""
+                  defaults:
+                    encryptionAlgorithm: aws:kms
+      cleanup:
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac5-general-policy
+                namespace: data-prod
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac5-general-policy
+                namespace: kro-system
+
+    - name: ac6-global-kms-key-wins
+      try:
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSKropathConfig
+              metadata:
+                name: ac6-general-policy
+                namespace: kro-system
+              spec:
+                mandatory:
+                  s3:
+                    kmsKeyArn: arn:aws:kms:us-east-1:123:key/global
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSKropathConfig
+              metadata:
+                name: ac6-general-policy
+                namespace: data-prod
+              spec:
+                mandatory:
+                  s3:
+                    kmsKeyArn: arn:aws:kms:us-east-1:123:key/local
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac6-general-policy
+                namespace: data-prod
+        - assert:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac6-general-policy
+                namespace: data-prod
+              status:
+                effectiveConfig:
+                  mandatory:
+                    kmsKeyArn: arn:aws:kms:us-east-1:123:key/global
+      cleanup:
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac6-general-policy
+                namespace: data-prod
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSKropathConfig
+              metadata:
+                name: ac6-general-policy
+                namespace: data-prod
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSKropathConfig
+              metadata:
+                name: ac6-general-policy
+                namespace: kro-system
+
+    - name: ac7-mutual-exclusivity-rejected
+      try:
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSKropathConfig
+              metadata:
+                name: ac7-invalid
+                namespace: kro-system
+              spec:
+                mandatory:
+                  s3:
+                    versioning: Enabled
+                defaults:
+                  s3:
+                    versioning: Suspended
+            expect:
+              - match:
+                  apiVersion: kropath.run/v1alpha1
+                  kind: AWSKropathConfig
+                check:
+                  ($error != null): true
+
+    - name: ac8-logging-fields-cascade-as-pair
+      try:
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSKropathConfig
+              metadata:
+                name: ac8-general-policy
+                namespace: kro-system
+              spec:
+                mandatory:
+                  s3:
+                    loggingEnabled: true
+                    logDeliveryBucket: org-access-logs
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac8-general-policy
+                namespace: data-prod
+        - assert:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac8-general-policy
+                namespace: data-prod
+              status:
+                effectiveConfig:
+                  mandatory:
+                    loggingEnabled: true
+                    logDeliveryBucket: org-access-logs
+      cleanup:
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac8-general-policy
+                namespace: data-prod
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSKropathConfig
+              metadata:
+                name: ac8-general-policy
+                namespace: kro-system
+
+    - name: ac9-zero-value-object-lock-passes-through
+      try:
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac9-general-policy
+                namespace: data-prod
+        - assert:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac9-general-policy
+                namespace: data-prod
+              status:
+                effectiveConfig:
+                  mandatory:
+                    objectLockMode: ""
+                    objectLockRetentionDays: 0
+      cleanup:
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSS3Config
+              metadata:
+                name: ac9-general-policy
+                namespace: data-prod

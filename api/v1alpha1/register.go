@@ -32,6 +32,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&AWSKropathConfigList{},
 		&AWSIAMConfig{},
 		&AWSIAMConfigList{},
+		&AWSS3Config{},
+		&AWSS3ConfigList{},
 		&AWSPolicyDocument{},
 		&AWSPolicyDocumentList{},
 	)
