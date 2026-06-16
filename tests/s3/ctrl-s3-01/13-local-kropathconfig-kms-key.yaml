@@ -1,0 +1,9 @@
+apiVersion: kropath.run/v1alpha1
+kind: AWSKropathConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    s3:
+      kmsKeyArn: arn:aws:kms:us-east-1:123:key/local

@@ -1,0 +1,163 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-s3-01 Chainsaw integration tests — controller-side S3 cascade support.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-s3-01-cascade
+spec:
+  steps:
+    - name: ac1-global-mandatory-encryption
+      try:
+        - apply:
+            file: 01-global-kropathconfig-mandatory-encryption.yaml
+        - apply:
+            file: 02-awss3config-general-policy.yaml
+        - assert:
+            file: 03-assert-ac1-mandatory-encryption.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-awss3config-general-policy.yaml
+        - delete:
+            file: 01-global-kropathconfig-mandatory-encryption.yaml
+
+    - name: ac2-level1-wins-over-level3
+      try:
+        - apply:
+            file: 01-global-kropathconfig-mandatory-encryption.yaml
+        - apply:
+            file: 04-global-awss3config-mandatory-encryption.yaml
+        - apply:
+            file: 02-awss3config-general-policy.yaml
+        - assert:
+            file: 05-assert-ac2-level1-wins.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-awss3config-general-policy.yaml
+        - delete:
+            file: 04-global-awss3config-mandatory-encryption.yaml
+        - delete:
+            file: 01-global-kropathconfig-mandatory-encryption.yaml
+
+    - name: ac3-block-public-access
+      try:
+        - apply:
+            file: 06-global-kropathconfig-block-public-access.yaml
+        - apply:
+            file: 02-awss3config-general-policy.yaml
+        - assert:
+            file: 07-assert-ac3-block-public-access.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-awss3config-general-policy.yaml
+        - delete:
+            file: 06-global-kropathconfig-block-public-access.yaml
+
+    - name: ac4-enforce-https-level1-wins
+      try:
+        - apply:
+            file: 08-global-kropathconfig-enforce-https.yaml
+        - apply:
+            file: 10-global-awss3config-defaults.yaml
+        - apply:
+            file: 02-awss3config-general-policy.yaml
+        - assert:
+            file: 09-assert-ac4-enforce-https.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-awss3config-general-policy.yaml
+        - delete:
+            file: 10-global-awss3config-defaults.yaml
+        - delete:
+            file: 08-global-kropathconfig-enforce-https.yaml
+
+    - name: ac5-defaults-only
+      try:
+        - apply:
+            file: 10-global-awss3config-defaults.yaml
+        - apply:
+            file: 02-awss3config-general-policy.yaml
+        - assert:
+            file: 11-assert-ac5-defaults-only.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-awss3config-general-policy.yaml
+        - delete:
+            file: 10-global-awss3config-defaults.yaml
+
+    - name: ac6-global-kms-key-wins
+      try:
+        - apply:
+            file: 12-global-kropathconfig-kms-key.yaml
+        - apply:
+            file: 13-local-kropathconfig-kms-key.yaml
+        - apply:
+            file: 02-awss3config-general-policy.yaml
+        - assert:
+            file: 14-assert-ac6-global-wins.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-awss3config-general-policy.yaml
+        - delete:
+            file: 13-local-kropathconfig-kms-key.yaml
+        - delete:
+            file: 12-global-kropathconfig-kms-key.yaml
+
+    - name: ac7-mutual-exclusivity-validation
+      try:
+        - apply:
+            file: 17-awss3config-invalid-both-tiers-logging.yaml
+            expect:
+              - match:
+                  apiVersion: kropath.run/v1alpha1
+                  kind: AWSS3Config
+                check:
+                  ($error != null): true
+
+    - name: ac8-logging-pair
+      try:
+        - apply:
+            file: 15-global-kropathconfig-logging.yaml
+        - apply:
+            file: 02-awss3config-general-policy.yaml
+        - assert:
+            file: 16-assert-ac8-logging-pair.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-awss3config-general-policy.yaml
+        - delete:
+            file: 15-global-kropathconfig-logging.yaml
+
+    - name: ac9-object-lock-zero-value
+      try:
+        - apply:
+            file: 10-global-awss3config-defaults.yaml
+        - apply:
+            file: 02-awss3config-general-policy.yaml
+        - assert:
+            file: 18-assert-ac9-object-lock-empty.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-awss3config-general-policy.yaml
+        - delete:
+            file: 10-global-awss3config-defaults.yaml

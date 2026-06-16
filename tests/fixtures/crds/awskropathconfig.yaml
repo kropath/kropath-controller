@@ -39,6 +39,55 @@ spec:
                           type: integer
                           format: int64
                           default: 0
+                    s3:
+                      type: object
+                      properties:
+                        encryptionAlgorithm:
+                          type: string
+                          default: ""
+                        kmsKeyArn:
+                          type: string
+                          default: ""
+                        blockPublicAccess:
+                          type: boolean
+                          default: false
+                        versioning:
+                          type: string
+                          default: ""
+                        loggingEnabled:
+                          type: boolean
+                          default: false
+                        logDeliveryBucket:
+                          type: string
+                          default: ""
+                        enforceHttpsOnly:
+                          type: boolean
+                          default: false
+                        objectLockMode:
+                          type: string
+                          default: ""
+                        objectLockRetentionDays:
+                          type: integer
+                          format: int64
+                          default: 0
+                    namingTemplate:
+                      type: string
+                      default: ""
+                    tags:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedLabels:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
                 defaults:
                   type: object
                   properties:
@@ -55,6 +104,55 @@ spec:
                           type: integer
                           format: int64
                           default: 0
+                    s3:
+                      type: object
+                      properties:
+                        encryptionAlgorithm:
+                          type: string
+                          default: ""
+                        kmsKeyArn:
+                          type: string
+                          default: ""
+                        blockPublicAccess:
+                          type: boolean
+                          default: false
+                        versioning:
+                          type: string
+                          default: ""
+                        loggingEnabled:
+                          type: boolean
+                          default: false
+                        logDeliveryBucket:
+                          type: string
+                          default: ""
+                        enforceHttpsOnly:
+                          type: boolean
+                          default: false
+                        objectLockMode:
+                          type: string
+                          default: ""
+                        objectLockRetentionDays:
+                          type: integer
+                          format: int64
+                          default: 0
+                    namingTemplate:
+                      type: string
+                      default: ""
+                    tags:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedLabels:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
                 aws:
                   type: object
                   properties:

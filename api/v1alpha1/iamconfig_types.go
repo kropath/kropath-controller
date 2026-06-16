@@ -46,7 +46,12 @@ type AWSKropathConfigSpec struct {
 }
 
 type AWSKropathConfigTier struct {
-	IAM cascade.IAMSection `json:"iam,omitempty"`
+	IAM               cascade.IAMSection `json:"iam,omitempty"`
+	S3                cascade.S3Section  `json:"s3,omitempty"`
+	NamingTemplate    string             `json:"namingTemplate,omitempty"`
+	Tags              map[string]string  `json:"tags,omitempty"`
+	SyncedLabels      map[string]string  `json:"syncedLabels,omitempty"`
+	SyncedAnnotations map[string]string  `json:"syncedAnnotations,omitempty"`
 }
 
 type AWSIAMConfig struct {
@@ -85,7 +90,7 @@ func (in *AWSKropathConfig) DeepCopyInto(out *AWSKropathConfig) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	out.Spec = in.Spec
+	copyThroughJSON(in.Spec, &out.Spec)
 }
 
 func (in *AWSKropathConfig) DeepCopy() *AWSKropathConfig {

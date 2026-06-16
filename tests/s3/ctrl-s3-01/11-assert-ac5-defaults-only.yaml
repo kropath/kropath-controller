@@ -1,0 +1,11 @@
+apiVersion: kropath.run/v1alpha1
+kind: AWSS3Config
+metadata:
+  name: general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      encryptionAlgorithm: ""
+    defaults:
+      encryptionAlgorithm: aws:kms
