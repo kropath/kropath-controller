@@ -5,9 +5,5 @@ metadata:
   namespace: payments-prod
 status:
   effectiveConfig:
-    mandatory:
-      objectLockMode: ""
-      objectLockRetentionDays: 0
-    defaults:
-      objectLockMode: ""
-      objectLockRetentionDays: 0
+    mandatory: {}
+    defaults: {}
