@@ -1,7 +1,7 @@
 apiVersion: kropath.run/v1alpha1
 kind: AWSKropathConfig
 metadata:
-  name: general-policy
+  name: ac4-general-policy
   namespace: kro-system
 spec:
   mandatory:
