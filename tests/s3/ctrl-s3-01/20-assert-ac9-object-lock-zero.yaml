@@ -1,0 +1,13 @@
+apiVersion: kropath.run/v1alpha1
+kind: AWSS3Config
+metadata:
+  name: general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      objectLockMode: ""
+      objectLockRetentionDays: 0
+    defaults:
+      objectLockMode: ""
+      objectLockRetentionDays: 0

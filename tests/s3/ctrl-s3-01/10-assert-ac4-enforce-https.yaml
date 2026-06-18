@@ -1,0 +1,9 @@
+apiVersion: kropath.run/v1alpha1
+kind: AWSS3Config
+metadata:
+  name: general-policy
+  namespace: kro-system
+status:
+  effectiveConfig:
+    mandatory:
+      enforceHttpsOnly: true

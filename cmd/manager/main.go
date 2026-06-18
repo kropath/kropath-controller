@@ -10,6 +10,7 @@ import (
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/reconciler/iamconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/policydocument"
+	"github.com/kropath/kropath-controller/internal/reconciler/s3config"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -73,6 +74,15 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		ctrl.Log.Error(err, "unable to create IAM config controller")
+		os.Exit(1)
+	}
+
+	if err := (&s3config.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("AWSS3Config"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create S3 config controller")
 		os.Exit(1)
 	}
 
