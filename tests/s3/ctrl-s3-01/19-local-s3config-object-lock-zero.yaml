@@ -1,0 +1,12 @@
+apiVersion: kropath.run/v1alpha1
+kind: AWSS3Config
+metadata:
+  name: ac9-general-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    objectLockMode: ""
+    objectLockRetentionDays: 0
+  defaults:
+    objectLockMode: ""
+    objectLockRetentionDays: 0

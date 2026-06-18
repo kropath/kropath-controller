@@ -1,0 +1,10 @@
+apiVersion: kropath.run/v1alpha1
+kind: AWSS3Config
+metadata:
+  name: ac5-general-policy
+  namespace: kro-system
+status:
+  effectiveConfig:
+    mandatory: {}
+    defaults:
+      encryptionAlgorithm: aws:kms
