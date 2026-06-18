@@ -53,13 +53,13 @@ spec:
         - apply:
             file: 07-global-kpc-block-public.yaml
         - apply:
-            file: 02-local-s3config-payments.yaml
+            file: 08-local-s3config-ac3.yaml
         - assert:
             file: 08-assert-ac3-block-public.yaml
             timeout: 30s
       cleanup:
         - delete:
-            file: 02-local-s3config-payments.yaml
+            file: 08-local-s3config-ac3.yaml
         - delete:
             file: 07-global-kpc-block-public.yaml
 
@@ -68,13 +68,13 @@ spec:
         - apply:
             file: 09-global-kpc-enforce-https.yaml
         - apply:
-            file: 05-global-s3config-level3-encryption.yaml
+            file: 10-local-s3config-ac4.yaml
         - assert:
             file: 10-assert-ac4-enforce-https.yaml
             timeout: 30s
       cleanup:
         - delete:
-            file: 05-global-s3config-level3-encryption.yaml
+            file: 10-local-s3config-ac4.yaml
         - delete:
             file: 09-global-kpc-enforce-https.yaml
 
@@ -120,13 +120,13 @@ spec:
         - apply:
             file: 17-global-kpc-logging.yaml
         - apply:
-            file: 02-local-s3config-payments.yaml
+            file: 18-local-s3config-ac8.yaml
         - assert:
             file: 18-assert-ac8-logging-pair.yaml
             timeout: 30s
       cleanup:
         - delete:
-            file: 02-local-s3config-payments.yaml
+            file: 18-local-s3config-ac8.yaml
         - delete:
             file: 17-global-kpc-logging.yaml
 
