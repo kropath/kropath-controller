@@ -196,6 +196,7 @@ spec:
                   - type: SidConflict
                     status: "True"
                     reason: SidConflict
+                    message: Sid "AllowS3Read" appears more than once across merged statements
                 resolvedDocumentJSON: ""
                 statementCount: 0
             timeout: 30s
@@ -405,6 +406,37 @@ spec:
                     reason: SourceMissing
                 resolvedDocumentJSON: ""
             timeout: 30s
+        - script:
+            timeout: 45s
+            content: |
+              set -eu
+
+              deploy_ns=$(kubectl get deploy -A --no-headers | awk '$2 == "kropath-operator" { print $1; exit }')
+              if [ -z "$deploy_ns" ]; then
+                echo "kropath-operator deployment not found"
+                exit 1
+              fi
+
+              kubectl -n "$deploy_ns" port-forward deploy/kropath-operator 18080:8080 >/tmp/kropath-metrics-portforward.log 2>&1 &
+              pf_pid=$!
+              trap 'kill "$pf_pid" >/dev/null 2>&1 || true' EXIT
+
+              for _ in $(seq 1 30); do
+                if curl -sf localhost:18080/metrics >/tmp/kropath-metrics.prom; then
+                  break
+                fi
+                sleep 1
+              done
+
+              baseline=$(curl -sf localhost:18080/metrics | awk '/^controller_runtime_reconcile_total\{.*result="requeue_after".*\}/ { sum += $2 } END { print sum + 0 }')
+              sleep 11
+              after=$(curl -sf localhost:18080/metrics | awk '/^controller_runtime_reconcile_total\{.*result="requeue_after".*\}/ { sum += $2 } END { print sum + 0 }')
+
+              if [ "$after" -le "$baseline" ]; then
+                echo "expected controller_runtime_reconcile_total{result=\"requeue_after\"} to increase after 10s backoff"
+                echo "baseline=$baseline after=$after"
+                exit 1
+              fi
       cleanup:
         - delete:
             resource:
