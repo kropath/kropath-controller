@@ -1,0 +1,447 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: awspolicydocument-phase3-merge
+spec:
+  steps:
+    - name: ac-pd3-1-source-statements-merge-before-own
+      try:
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: base
+                namespace: default
+              spec:
+                statements:
+                  - sid: BaseAllow
+                    effect: Allow
+                    actions: ["s3:GetObject"]
+                    resources:
+                      - arn: arn:aws:s3:::base-bucket
+        - assert:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: base
+                namespace: default
+              status:
+                conditions:
+                  - type: Ready
+                    status: "True"
+                resolvedDocumentJSON: '{"Version":"2012-10-17","Statement":[{"Sid":"BaseAllow","Effect":"Allow","Action":"s3:GetObject","Resource":"arn:aws:s3:::base-bucket"}]}'
+            timeout: 30s
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: child
+                namespace: default
+              spec:
+                sources:
+                  - name: base
+                statements:
+                  - sid: ChildAllow
+                    effect: Allow
+                    actions: ["s3:PutObject"]
+                    resources:
+                      - arn: arn:aws:s3:::child-bucket
+        - assert:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: child
+                namespace: default
+              status:
+                conditions:
+                  - type: Ready
+                    status: "True"
+                resolvedDocumentJSON: '{"Version":"2012-10-17","Statement":[{"Sid":"BaseAllow","Effect":"Allow","Action":"s3:GetObject","Resource":"arn:aws:s3:::base-bucket"},{"Sid":"ChildAllow","Effect":"Allow","Action":"s3:PutObject","Resource":"arn:aws:s3:::child-bucket"}]}'
+            timeout: 30s
+      cleanup:
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: child
+                namespace: default
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: base
+                namespace: default
+
+    - name: ac-pd3-2-raw-source-is-rejected
+      try:
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: raw-source
+                namespace: default
+              spec:
+                documentJSON: '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}'
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: merge-attempt
+                namespace: default
+              spec:
+                sources:
+                  - name: raw-source
+        - assert:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: merge-attempt
+                namespace: default
+              status:
+                conditions:
+                  - type: Ready
+                    status: "False"
+                    reason: MergeFromRawNotSupported
+                  - type: SourceNotReady
+                    status: "False"
+                    reason: MergeFromRawNotSupported
+                  - type: SidConflict
+                    status: "False"
+                    reason: MergeFromRawNotSupported
+                resolvedDocumentJSON: ""
+            timeout: 30s
+      cleanup:
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: merge-attempt
+                namespace: default
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: raw-source
+                namespace: default
+
+    - name: ac-pd3-3-sid-conflict-blocks-update
+      try:
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: base
+                namespace: default
+              spec:
+                statements:
+                  - sid: AllowS3Read
+                    effect: Allow
+                    actions: ["s3:GetObject"]
+                    resources:
+                      - arn: arn:aws:s3:::base-bucket
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: child
+                namespace: default
+              spec:
+                sources:
+                  - name: base
+                statements:
+                  - sid: AllowS3Read
+                    effect: Allow
+                    actions: ["s3:PutObject"]
+                    resources:
+                      - arn: arn:aws:s3:::child-bucket
+        - assert:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: child
+                namespace: default
+              status:
+                conditions:
+                  - type: Ready
+                    status: "False"
+                    reason: SidConflict
+                  - type: SidConflict
+                    status: "True"
+                    reason: SidConflict
+                    message: Sid "AllowS3Read" appears more than once across merged statements
+                resolvedDocumentJSON: ""
+                statementCount: 0
+            timeout: 30s
+      cleanup:
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: child
+                namespace: default
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: base
+                namespace: default
+
+    - name: ac-pd3-4-sid-conflict-clears-after-rename
+      try:
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: base
+                namespace: default
+              spec:
+                statements:
+                  - sid: AllowS3Read
+                    effect: Allow
+                    actions: ["s3:GetObject"]
+                    resources:
+                      - arn: arn:aws:s3:::base-bucket
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: child
+                namespace: default
+              spec:
+                sources:
+                  - name: base
+                statements:
+                  - sid: AllowS3Read
+                    effect: Allow
+                    actions: ["s3:PutObject"]
+                    resources:
+                      - arn: arn:aws:s3:::child-bucket
+        - patch:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: child
+                namespace: default
+              spec:
+                statements:
+                  - sid: AllowS3Write
+                    effect: Allow
+                    actions: ["s3:PutObject"]
+                    resources:
+                      - arn: arn:aws:s3:::child-bucket
+        - assert:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: child
+                namespace: default
+              status:
+                conditions:
+                  - type: Ready
+                    status: "True"
+                  - type: SidConflict
+                    status: "False"
+                resolvedDocumentJSON: '{"Version":"2012-10-17","Statement":[{"Sid":"AllowS3Read","Effect":"Allow","Action":"s3:GetObject","Resource":"arn:aws:s3:::base-bucket"},{"Sid":"AllowS3Write","Effect":"Allow","Action":"s3:PutObject","Resource":"arn:aws:s3:::child-bucket"}]}'
+            timeout: 30s
+      cleanup:
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: child
+                namespace: default
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: base
+                namespace: default
+
+    - name: ac-pd3-5-transitive-source-chain
+      try:
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: base
+                namespace: default
+              spec:
+                statements:
+                  - sid: BaseAllow
+                    effect: Allow
+                    actions: ["s3:GetObject"]
+                    resources:
+                      - arn: arn:aws:s3:::base-bucket
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: mid
+                namespace: default
+              spec:
+                sources:
+                  - name: base
+                statements:
+                  - sid: MidAllow
+                    effect: Allow
+                    actions: ["s3:PutObject"]
+                    resources:
+                      - arn: arn:aws:s3:::mid-bucket
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: leaf
+                namespace: default
+              spec:
+                sources:
+                  - name: mid
+                statements:
+                  - sid: LeafAllow
+                    effect: Allow
+                    actions: ["s3:DeleteObject"]
+                    resources:
+                      - arn: arn:aws:s3:::leaf-bucket
+        - assert:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: leaf
+                namespace: default
+              status:
+                conditions:
+                  - type: Ready
+                    status: "True"
+                resolvedDocumentJSON: '{"Version":"2012-10-17","Statement":[{"Sid":"BaseAllow","Effect":"Allow","Action":"s3:GetObject","Resource":"arn:aws:s3:::base-bucket"},{"Sid":"MidAllow","Effect":"Allow","Action":"s3:PutObject","Resource":"arn:aws:s3:::mid-bucket"},{"Sid":"LeafAllow","Effect":"Allow","Action":"s3:DeleteObject","Resource":"arn:aws:s3:::leaf-bucket"}]}'
+            timeout: 30s
+      cleanup:
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: leaf
+                namespace: default
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: mid
+                namespace: default
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: base
+                namespace: default
+
+    - name: ac-pd3-6-missing-source-requeues
+      try:
+        - apply:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: missing-source-child
+                namespace: default
+              spec:
+                sources:
+                  - name: does-not-exist
+        - assert:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: missing-source-child
+                namespace: default
+              status:
+                conditions:
+                  - type: Ready
+                    status: "False"
+                    reason: SourceMissing
+                  - type: SourceNotReady
+                    status: "True"
+                    reason: SourceMissing
+                resolvedDocumentJSON: ""
+            timeout: 30s
+        - script:
+            timeout: 45s
+            content: |
+              set -eu
+
+              deploy_ns=$(kubectl get deploy -A --no-headers | awk '$2 == "kropath-operator" { print $1; exit }')
+              if [ -z "$deploy_ns" ]; then
+                echo "kropath-operator deployment not found"
+                exit 1
+              fi
+
+              kubectl -n "$deploy_ns" port-forward deploy/kropath-operator 18080:8080 >/tmp/kropath-metrics-portforward.log 2>&1 &
+              pf_pid=$!
+              trap 'kill "$pf_pid" >/dev/null 2>&1 || true' EXIT
+
+              for _ in $(seq 1 30); do
+                if curl -sf localhost:18080/metrics >/tmp/kropath-metrics.prom; then
+                  break
+                fi
+                sleep 1
+              done
+
+              baseline=$(curl -sf localhost:18080/metrics | awk '/^controller_runtime_reconcile_total\{.*result="requeue_after".*\}/ { sum += $2 } END { print sum + 0 }')
+              sleep 11
+              after=$(curl -sf localhost:18080/metrics | awk '/^controller_runtime_reconcile_total\{.*result="requeue_after".*\}/ { sum += $2 } END { print sum + 0 }')
+
+              if [ "$after" -le "$baseline" ]; then
+                echo "expected controller_runtime_reconcile_total{result=\"requeue_after\"} to increase after 10s backoff"
+                echo "baseline=$baseline after=$after"
+                exit 1
+              fi
+      cleanup:
+        - delete:
+            resource:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSPolicyDocument
+              metadata:
+                name: missing-source-child
+                namespace: default

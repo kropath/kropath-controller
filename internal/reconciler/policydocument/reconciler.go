@@ -103,6 +103,22 @@ func (r *Reconciler) reconcileDocument(ctx context.Context, doc *v1alpha1.AWSPol
 		return ctrl.Result{}, nil
 	}
 
+	sourceStatements, sourceIssue, err := r.collectSourceStatements(ctx, doc)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	if sourceIssue != nil {
+		if sourceIssue.clearResolvedDocumentJSON {
+			doc.Status.ResolvedDocumentJSON = ""
+			doc.Status.StatementCount = 0
+		}
+		doc.Status.SourceCount = int32(len(doc.Spec.Sources))
+		doc.Status.Conditions = setCondition(doc.Status.Conditions, readyCondition(metav1.ConditionFalse, sourceIssue.readyReason, sourceIssue.message, doc.Generation))
+		doc.Status.Conditions = setCondition(doc.Status.Conditions, sourceNotReadyCondition(sourceIssue.sourceNotReadyStatus, sourceIssue.sourceNotReadyReason, sourceIssue.message, doc.Generation))
+		doc.Status.Conditions = setCondition(doc.Status.Conditions, sidConflictCondition(metav1.ConditionFalse, sourceIssue.readyReason, sourceIssue.message, doc.Generation))
+		return ctrl.Result{RequeueAfter: sourceIssue.requeueAfter}, nil
+	}
+
 	statements := make([]policyStatementJSON, 0, len(doc.Spec.Statements))
 	for _, stmt := range doc.Spec.Statements {
 		resolved, pending, err := resolveStatement(ctx, r.Client, doc.Namespace, stmt, resolve)
@@ -119,6 +135,15 @@ func (r *Reconciler) reconcileDocument(ctx context.Context, doc *v1alpha1.AWSPol
 			return ctrl.Result{RequeueAfter: r.requeueAfter()}, nil
 		}
 		statements = append(statements, resolved)
+	}
+
+	statements = append(sourceStatements, statements...)
+	if sid, conflict := findSidConflict(statements); conflict {
+		message := fmt.Sprintf("Sid %q appears more than once across merged statements", sid)
+		doc.Status.Conditions = setCondition(doc.Status.Conditions, readyCondition(metav1.ConditionFalse, "SidConflict", message, doc.Generation))
+		doc.Status.Conditions = setCondition(doc.Status.Conditions, sourceNotReadyCondition(metav1.ConditionFalse, "SidConflict", message, doc.Generation))
+		doc.Status.Conditions = setCondition(doc.Status.Conditions, sidConflictCondition(metav1.ConditionTrue, "SidConflict", message, doc.Generation))
+		return ctrl.Result{}, nil
 	}
 
 	doc.Status.StatementCount = int32(len(statements))
@@ -144,6 +169,91 @@ func (r *Reconciler) requeueAfter() time.Duration {
 		return r.RequeueAfter
 	}
 	return defaultRequeueAfter
+}
+
+type sourceDocumentIssue struct {
+	requeueAfter              time.Duration
+	readyReason               string
+	message                   string
+	sourceNotReadyStatus      metav1.ConditionStatus
+	sourceNotReadyReason      string
+	clearResolvedDocumentJSON bool
+}
+
+func (r *Reconciler) collectSourceStatements(ctx context.Context, doc *v1alpha1.AWSPolicyDocument) ([]policyStatementJSON, *sourceDocumentIssue, error) {
+	if len(doc.Spec.Sources) == 0 {
+		return nil, nil, nil
+	}
+
+	statements := make([]policyStatementJSON, 0)
+	for _, source := range doc.Spec.Sources {
+		var sourceDoc v1alpha1.AWSPolicyDocument
+		if err := r.Get(ctx, client.ObjectKey{Namespace: doc.Namespace, Name: source.Name}, &sourceDoc); err != nil {
+			if apierrors.IsNotFound(err) {
+				return nil, &sourceDocumentIssue{
+					requeueAfter:              r.requeueAfter(),
+					readyReason:               "SourceMissing",
+					message:                   fmt.Sprintf("source document %q not found", source.Name),
+					sourceNotReadyStatus:      metav1.ConditionTrue,
+					sourceNotReadyReason:      "SourceMissing",
+					clearResolvedDocumentJSON: true,
+				}, nil
+			}
+			return nil, nil, err
+		}
+
+		if strings.TrimSpace(sourceDoc.Spec.DocumentJSON) != "" {
+			return nil, &sourceDocumentIssue{
+				readyReason:               "MergeFromRawNotSupported",
+				message:                   fmt.Sprintf("source document %q uses spec.documentJSON and cannot be merged", source.Name),
+				sourceNotReadyStatus:      metav1.ConditionFalse,
+				sourceNotReadyReason:      "MergeFromRawNotSupported",
+				clearResolvedDocumentJSON: false,
+			}, nil
+		}
+
+		if strings.TrimSpace(sourceDoc.Status.ResolvedDocumentJSON) == "" {
+			return nil, &sourceDocumentIssue{
+				requeueAfter:              r.requeueAfter(),
+				readyReason:               "SourcePending",
+				message:                   fmt.Sprintf("source document %q has not resolved yet", source.Name),
+				sourceNotReadyStatus:      metav1.ConditionTrue,
+				sourceNotReadyReason:      "SourcePending",
+				clearResolvedDocumentJSON: true,
+			}, nil
+		}
+
+		sourceStatements, err := parseStatements(sourceDoc.Status.ResolvedDocumentJSON)
+		if err != nil {
+			return nil, nil, fmt.Errorf("parse resolved document for source %q: %w", source.Name, err)
+		}
+		statements = append(statements, sourceStatements...)
+	}
+
+	return statements, nil, nil
+}
+
+func parseStatements(raw string) ([]policyStatementJSON, error) {
+	var doc policyDocumentJSON
+	if err := json.Unmarshal([]byte(raw), &doc); err != nil {
+		return nil, err
+	}
+	return doc.Statement, nil
+}
+
+func findSidConflict(statements []policyStatementJSON) (string, bool) {
+	seen := make(map[string]struct{}, len(statements))
+	for _, stmt := range statements {
+		sid := strings.TrimSpace(stmt.Sid)
+		if sid == "" {
+			continue
+		}
+		if _, ok := seen[sid]; ok {
+			return sid, true
+		}
+		seen[sid] = struct{}{}
+	}
+	return "", false
 }
 
 func (r *Reconciler) mapSourceDocumentUpdates(ctx context.Context, obj client.Object) []ctrl.Request {
