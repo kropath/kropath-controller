@@ -5,6 +5,7 @@ package policydocument
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 	"testing"
 	"time"
@@ -488,8 +489,331 @@ func TestRequestsForReferencedResourceReturnsMatchingDocuments(t *testing.T) {
 	}
 }
 
+func TestReconcileMergesSourceStatementsBeforeOwnStatements(t *testing.T) {
+	scheme := runtime.NewScheme()
+	if err := v1alpha1.AddToScheme(scheme); err != nil {
+		t.Fatalf("add scheme: %v", err)
+	}
+
+	source := &v1alpha1.AWSPolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+		ObjectMeta: metav1.ObjectMeta{Name: "base", Namespace: "default", Generation: 1},
+		Status: v1alpha1.AWSPolicyDocumentStatus{
+			ResolvedDocumentJSON: `{"Version":"2012-10-17","Statement":[{"Sid":"BaseAllow","Effect":"Allow","Action":"s3:GetObject","Resource":"arn:aws:s3:::base-bucket"}]}`,
+		},
+		Spec: v1alpha1.AWSPolicyDocumentSpec{
+			Statements: []v1alpha1.PolicyStatement{
+				{
+					Sid:     "BaseAllow",
+					Effect:  "Allow",
+					Actions: []string{"s3:GetObject"},
+					Resources: []v1alpha1.PolicyResource{
+						{ARN: "arn:aws:s3:::base-bucket"},
+					},
+				},
+			},
+		},
+	}
+	doc := &v1alpha1.AWSPolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+		ObjectMeta: metav1.ObjectMeta{Name: "child", Namespace: "default", Generation: 2},
+		Spec: v1alpha1.AWSPolicyDocumentSpec{
+			Sources: []v1alpha1.PolicyDocumentSource{{Name: "base"}},
+			Statements: []v1alpha1.PolicyStatement{
+				{
+					Sid:     "ChildAllow",
+					Effect:  "Allow",
+					Actions: []string{"s3:PutObject"},
+					Resources: []v1alpha1.PolicyResource{
+						{ARN: "arn:aws:s3:::child-bucket"},
+					},
+				},
+			},
+		},
+	}
+
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(source, doc).Build()
+	r := &Reconciler{Client: c}
+
+	if _, err := r.reconcileDocument(context.Background(), doc); err != nil {
+		t.Fatalf("reconcile child: %v", err)
+	}
+
+	parsed := mustParsePolicyDocument(t, doc.Status.ResolvedDocumentJSON)
+	if got, want := len(parsed.Statement), 2; got != want {
+		t.Fatalf("expected %d statements, got %d", want, got)
+	}
+	if got, want := parsed.Statement[0].Sid, "BaseAllow"; got != want {
+		t.Fatalf("expected first statement Sid %q, got %q", want, got)
+	}
+	if got, want := parsed.Statement[1].Sid, "ChildAllow"; got != want {
+		t.Fatalf("expected second statement Sid %q, got %q", want, got)
+	}
+}
+
+func TestReconcileRejectsMergeFromRawSource(t *testing.T) {
+	scheme := runtime.NewScheme()
+	if err := v1alpha1.AddToScheme(scheme); err != nil {
+		t.Fatalf("add scheme: %v", err)
+	}
+
+	source := &v1alpha1.AWSPolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+		ObjectMeta: metav1.ObjectMeta{Name: "base", Namespace: "default", Generation: 1},
+		Spec: v1alpha1.AWSPolicyDocumentSpec{
+			DocumentJSON: `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}`,
+		},
+		Status: v1alpha1.AWSPolicyDocumentStatus{
+			ResolvedDocumentJSON: `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}`,
+		},
+	}
+	doc := &v1alpha1.AWSPolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+		ObjectMeta: metav1.ObjectMeta{Name: "child", Namespace: "default", Generation: 2},
+		Spec: v1alpha1.AWSPolicyDocumentSpec{
+			Sources: []v1alpha1.PolicyDocumentSource{{Name: "base"}},
+		},
+		Status: v1alpha1.AWSPolicyDocumentStatus{
+			ResolvedDocumentJSON: `{"Version":"2012-10-17","Statement":[{"Sid":"Keep","Effect":"Allow","Action":"s3:ListBucket","Resource":"*"}]}`,
+			StatementCount:       1,
+			SourceCount:          1,
+		},
+	}
+
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(source, doc).Build()
+	r := &Reconciler{Client: c}
+
+	if _, err := r.reconcileDocument(context.Background(), doc); err != nil {
+		t.Fatalf("reconcile: %v", err)
+	}
+
+	if got, want := doc.Status.ResolvedDocumentJSON, `{"Version":"2012-10-17","Statement":[{"Sid":"Keep","Effect":"Allow","Action":"s3:ListBucket","Resource":"*"}]}`; got != want {
+		t.Fatalf("resolved document changed unexpectedly: got %s", got)
+	}
+	if !conditionHasStatus(doc.Status.Conditions, v1alpha1.ConditionReady, metav1.ConditionFalse) {
+		t.Fatalf("ready should be false: %#v", doc.Status.Conditions)
+	}
+	if got, want := conditionReason(doc.Status.Conditions, v1alpha1.ConditionReady), "MergeFromRawNotSupported"; got != want {
+		t.Fatalf("unexpected ready reason: got %q want %q", got, want)
+	}
+}
+
+func TestReconcileDetectsAndClearsSidConflicts(t *testing.T) {
+	scheme := runtime.NewScheme()
+	if err := v1alpha1.AddToScheme(scheme); err != nil {
+		t.Fatalf("add scheme: %v", err)
+	}
+
+	source := &v1alpha1.AWSPolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+		ObjectMeta: metav1.ObjectMeta{Name: "base", Namespace: "default", Generation: 1},
+		Status: v1alpha1.AWSPolicyDocumentStatus{
+			ResolvedDocumentJSON: `{"Version":"2012-10-17","Statement":[{"Sid":"AllowS3Read","Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}`,
+		},
+	}
+	doc := &v1alpha1.AWSPolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+		ObjectMeta: metav1.ObjectMeta{Name: "child", Namespace: "default", Generation: 2},
+		Spec: v1alpha1.AWSPolicyDocumentSpec{
+			Sources: []v1alpha1.PolicyDocumentSource{{Name: "base"}},
+			Statements: []v1alpha1.PolicyStatement{
+				{
+					Sid:     "AllowS3Read",
+					Effect:  "Allow",
+					Actions: []string{"s3:PutObject"},
+					Resources: []v1alpha1.PolicyResource{
+						{ARN: "arn:aws:s3:::child-bucket"},
+					},
+				},
+			},
+		},
+		Status: v1alpha1.AWSPolicyDocumentStatus{
+			ResolvedDocumentJSON: `{"Version":"2012-10-17","Statement":[{"Sid":"Keep","Effect":"Allow","Action":"s3:ListBucket","Resource":"*"}]}`,
+		},
+	}
+
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(source, doc).Build()
+	r := &Reconciler{Client: c}
+
+	if _, err := r.reconcileDocument(context.Background(), doc); err != nil {
+		t.Fatalf("reconcile with conflict: %v", err)
+	}
+
+	if got, want := doc.Status.ResolvedDocumentJSON, `{"Version":"2012-10-17","Statement":[{"Sid":"Keep","Effect":"Allow","Action":"s3:ListBucket","Resource":"*"}]}`; got != want {
+		t.Fatalf("resolved document changed unexpectedly: got %s", got)
+	}
+	if !conditionHasStatus(doc.Status.Conditions, v1alpha1.ConditionSidConflict, metav1.ConditionTrue) {
+		t.Fatalf("sid conflict should be true: %#v", doc.Status.Conditions)
+	}
+	if got, want := conditionReason(doc.Status.Conditions, v1alpha1.ConditionSidConflict), "SidConflict"; got != want {
+		t.Fatalf("unexpected sid conflict reason: got %q want %q", got, want)
+	}
+	if got := conditionMessage(doc.Status.Conditions, v1alpha1.ConditionSidConflict); !strings.Contains(got, "AllowS3Read") {
+		t.Fatalf("sid conflict message missing sid: %q", got)
+	}
+
+	doc.Spec.Statements[0].Sid = "AllowS3Write"
+	if _, err := r.reconcileDocument(context.Background(), doc); err != nil {
+		t.Fatalf("reconcile after conflict resolution: %v", err)
+	}
+
+	if !conditionHasStatus(doc.Status.Conditions, v1alpha1.ConditionSidConflict, metav1.ConditionFalse) {
+		t.Fatalf("sid conflict should be false after rename: %#v", doc.Status.Conditions)
+	}
+	if !conditionHasStatus(doc.Status.Conditions, v1alpha1.ConditionReady, metav1.ConditionTrue) {
+		t.Fatalf("ready should be true after rename: %#v", doc.Status.Conditions)
+	}
+	parsed := mustParsePolicyDocument(t, doc.Status.ResolvedDocumentJSON)
+	if got, want := len(parsed.Statement), 2; got != want {
+		t.Fatalf("expected %d statements, got %d", want, got)
+	}
+	if got, want := parsed.Statement[0].Sid, "AllowS3Read"; got != want {
+		t.Fatalf("expected first statement Sid %q, got %q", want, got)
+	}
+	if got, want := parsed.Statement[1].Sid, "AllowS3Write"; got != want {
+		t.Fatalf("expected second statement Sid %q, got %q", want, got)
+	}
+}
+
+func TestReconcileMarksSourceMissingAndRequeues(t *testing.T) {
+	scheme := runtime.NewScheme()
+	if err := v1alpha1.AddToScheme(scheme); err != nil {
+		t.Fatalf("add scheme: %v", err)
+	}
+
+	doc := &v1alpha1.AWSPolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+		ObjectMeta: metav1.ObjectMeta{Name: "child", Namespace: "default", Generation: 2},
+		Spec: v1alpha1.AWSPolicyDocumentSpec{
+			Sources: []v1alpha1.PolicyDocumentSource{{Name: "missing"}},
+		},
+		Status: v1alpha1.AWSPolicyDocumentStatus{
+			ResolvedDocumentJSON: `{"Version":"2012-10-17","Statement":[{"Sid":"Keep","Effect":"Allow","Action":"s3:ListBucket","Resource":"*"}]}`,
+			StatementCount:       1,
+		},
+	}
+
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(doc).Build()
+	r := &Reconciler{Client: c}
+
+	result, err := r.reconcileDocument(context.Background(), doc)
+	if err != nil {
+		t.Fatalf("reconcile: %v", err)
+	}
+	if result.RequeueAfter != defaultRequeueAfter {
+		t.Fatalf("expected requeue after %s, got %s", defaultRequeueAfter, result.RequeueAfter)
+	}
+	if !conditionHasStatus(doc.Status.Conditions, v1alpha1.ConditionSourceNotReady, metav1.ConditionTrue) {
+		t.Fatalf("source not ready should be true: %#v", doc.Status.Conditions)
+	}
+	if got, want := conditionReason(doc.Status.Conditions, v1alpha1.ConditionSourceNotReady), "SourceMissing"; got != want {
+		t.Fatalf("unexpected source not ready reason: got %q want %q", got, want)
+	}
+	if got := conditionMessage(doc.Status.Conditions, v1alpha1.ConditionSourceNotReady); !strings.Contains(got, "missing") {
+		t.Fatalf("source not ready message missing source name: %q", got)
+	}
+	if got, want := doc.Status.ResolvedDocumentJSON, ""; got != want {
+		t.Fatalf("expected resolved document cleared, got %q", got)
+	}
+}
+
+func TestReconcileMergesTransitiveSourcesThroughResolvedDocuments(t *testing.T) {
+	scheme := runtime.NewScheme()
+	if err := v1alpha1.AddToScheme(scheme); err != nil {
+		t.Fatalf("add scheme: %v", err)
+	}
+
+	base := &v1alpha1.AWSPolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+		ObjectMeta: metav1.ObjectMeta{Name: "base", Namespace: "default", Generation: 1},
+		Status: v1alpha1.AWSPolicyDocumentStatus{
+			ResolvedDocumentJSON: `{"Version":"2012-10-17","Statement":[{"Sid":"BaseAllow","Effect":"Allow","Action":"s3:GetObject","Resource":"arn:aws:s3:::base-bucket"}]}`,
+		},
+		Spec: v1alpha1.AWSPolicyDocumentSpec{
+			Statements: []v1alpha1.PolicyStatement{
+				{
+					Sid:     "BaseAllow",
+					Effect:  "Allow",
+					Actions: []string{"s3:GetObject"},
+					Resources: []v1alpha1.PolicyResource{
+						{ARN: "arn:aws:s3:::base-bucket"},
+					},
+				},
+			},
+		},
+	}
+	mid := &v1alpha1.AWSPolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+		ObjectMeta: metav1.ObjectMeta{Name: "mid", Namespace: "default", Generation: 2},
+		Status: v1alpha1.AWSPolicyDocumentStatus{
+			ResolvedDocumentJSON: `{"Version":"2012-10-17","Statement":[{"Sid":"BaseAllow","Effect":"Allow","Action":"s3:GetObject","Resource":"arn:aws:s3:::base-bucket"},{"Sid":"MidAllow","Effect":"Allow","Action":"s3:PutObject","Resource":"arn:aws:s3:::mid-bucket"}]}`,
+		},
+		Spec: v1alpha1.AWSPolicyDocumentSpec{
+			Sources: []v1alpha1.PolicyDocumentSource{{Name: "base"}},
+			Statements: []v1alpha1.PolicyStatement{
+				{
+					Sid:     "MidAllow",
+					Effect:  "Allow",
+					Actions: []string{"s3:PutObject"},
+					Resources: []v1alpha1.PolicyResource{
+						{ARN: "arn:aws:s3:::mid-bucket"},
+					},
+				},
+			},
+		},
+	}
+	leaf := &v1alpha1.AWSPolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+		ObjectMeta: metav1.ObjectMeta{Name: "leaf", Namespace: "default", Generation: 3},
+		Spec: v1alpha1.AWSPolicyDocumentSpec{
+			Sources: []v1alpha1.PolicyDocumentSource{{Name: "mid"}},
+			Statements: []v1alpha1.PolicyStatement{
+				{
+					Sid:     "LeafAllow",
+					Effect:  "Allow",
+					Actions: []string{"s3:DeleteObject"},
+					Resources: []v1alpha1.PolicyResource{
+						{ARN: "arn:aws:s3:::leaf-bucket"},
+					},
+				},
+			},
+		},
+	}
+
+	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(base, mid, leaf).Build()
+	r := &Reconciler{Client: c}
+
+	if _, err := r.reconcileDocument(context.Background(), leaf); err != nil {
+		t.Fatalf("reconcile leaf: %v", err)
+	}
+
+	parsed := mustParsePolicyDocument(t, leaf.Status.ResolvedDocumentJSON)
+	if got, want := len(parsed.Statement), 3; got != want {
+		t.Fatalf("expected %d statements, got %d", want, got)
+	}
+	if got, want := parsed.Statement[0].Sid, "BaseAllow"; got != want {
+		t.Fatalf("expected first statement Sid %q, got %q", want, got)
+	}
+	if got, want := parsed.Statement[1].Sid, "MidAllow"; got != want {
+		t.Fatalf("expected second statement Sid %q, got %q", want, got)
+	}
+	if got, want := parsed.Statement[2].Sid, "LeafAllow"; got != want {
+		t.Fatalf("expected third statement Sid %q, got %q", want, got)
+	}
+}
+
 func jsonContains(raw, needle string) bool {
 	return strings.Contains(raw, needle)
+}
+
+func mustParsePolicyDocument(t *testing.T, raw string) policyDocumentJSON {
+	t.Helper()
+
+	var doc policyDocumentJSON
+	if err := json.Unmarshal([]byte(raw), &doc); err != nil {
+		t.Fatalf("parse policy document: %v", err)
+	}
+	return doc
 }
 
 func conditionHasStatus(conditions []metav1.Condition, conditionType string, status metav1.ConditionStatus) bool {
@@ -499,6 +823,24 @@ func conditionHasStatus(conditions []metav1.Condition, conditionType string, sta
 		}
 	}
 	return false
+}
+
+func conditionReason(conditions []metav1.Condition, conditionType string) string {
+	for _, cond := range conditions {
+		if cond.Type == conditionType {
+			return cond.Reason
+		}
+	}
+	return ""
+}
+
+func conditionMessage(conditions []metav1.Condition, conditionType string) string {
+	for _, cond := range conditions {
+		if cond.Type == conditionType {
+			return cond.Message
+		}
+	}
+	return ""
 }
 
 func ctrlRequest(namespace, name string) ctrl.Request {
