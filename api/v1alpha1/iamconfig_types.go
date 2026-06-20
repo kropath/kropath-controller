@@ -89,7 +89,7 @@ type AWSKropathConfigSpec struct {
 
 type AWSKropathConfigTier struct {
 	IAM cascade.IAMSection `json:"iam,omitempty"`
-	S3  S3Section          `json:"s3,omitempty"`
+	S3  cascade.S3Section  `json:"s3,omitempty"`
 }
 
 type AWSIAMConfig struct {

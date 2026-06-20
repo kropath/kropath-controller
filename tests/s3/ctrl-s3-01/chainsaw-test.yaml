@@ -1,0 +1,142 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-s3-01-cascade
+spec:
+  steps:
+    - name: ac1-global-mandatory-encryption
+      try:
+        - apply:
+            file: 01-global-kpc-encryption.yaml
+        - apply:
+            file: 02-local-s3config-payments.yaml
+        - assert:
+            file: 03-assert-ac1-encryption.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-local-s3config-payments.yaml
+        - delete:
+            file: 01-global-kpc-encryption.yaml
+
+    - name: ac2-level1-wins-over-level3
+      try:
+        - apply:
+            file: 04-global-kpc-level1-encryption.yaml
+        - apply:
+            file: 05-global-s3config-level3-encryption.yaml
+        - assert:
+            file: 06-assert-ac2-level1-wins.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 05-global-s3config-level3-encryption.yaml
+        - delete:
+            file: 04-global-kpc-level1-encryption.yaml
+
+    - name: ac3-global-block-public
+      try:
+        - apply:
+            file: 07-global-kpc-block-public.yaml
+        - apply:
+            file: 08-local-s3config-ac3.yaml
+        - assert:
+            file: 08-assert-ac3-block-public.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 08-local-s3config-ac3.yaml
+        - delete:
+            file: 07-global-kpc-block-public.yaml
+
+    - name: ac4-level1-enforce-https-wins
+      try:
+        - apply:
+            file: 09-global-kpc-enforce-https.yaml
+        - apply:
+            file: 10-local-s3config-ac4.yaml
+        - assert:
+            file: 10-assert-ac4-enforce-https.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 10-local-s3config-ac4.yaml
+        - delete:
+            file: 09-global-kpc-enforce-https.yaml
+
+    - name: ac5-defaults-only
+      try:
+        - apply:
+            file: 11-global-s3config-defaults-only.yaml
+        - assert:
+            file: 12-assert-ac5-defaults-only.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 11-global-s3config-defaults-only.yaml
+
+    - name: ac6-global-kms-wins
+      try:
+        - apply:
+            file: 13-global-kpc-kms.yaml
+        - apply:
+            file: 14-local-s3config-kms.yaml
+        - assert:
+            file: 15-assert-ac6-global-kms-wins.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 14-local-s3config-kms.yaml
+        - delete:
+            file: 13-global-kpc-kms.yaml
+
+    - name: ac7-mutual-exclusivity-validation
+      try:
+        - apply:
+            file: 16-awskropathconfig-both-tiers-versioning.yaml
+            expect:
+              - match:
+                  apiVersion: kropath.run/v1alpha1
+                  kind: AWSKropathConfig
+                check:
+                  ($error != null): true
+
+    - name: ac8-logging-cascades-as-pair
+      try:
+        - apply:
+            file: 17-global-kpc-logging.yaml
+        - apply:
+            file: 18-local-s3config-ac8.yaml
+        - assert:
+            file: 18-assert-ac8-logging-pair.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 18-local-s3config-ac8.yaml
+        - delete:
+            file: 17-global-kpc-logging.yaml
+
+    - name: ac9-zero-value-object-lock
+      try:
+        - apply:
+            file: 19-local-s3config-object-lock-zero.yaml
+        - assert:
+            file: 20-assert-ac9-object-lock-zero.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 19-local-s3config-object-lock-zero.yaml

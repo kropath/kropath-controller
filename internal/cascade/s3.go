@@ -22,40 +22,40 @@ package cascade
 //
 // Zero value of each field is the permissive sentinel (not enforced).
 type S3Section struct {
-	// EncryptionAlgorithm is the bucket encryption algorithm.
+	// EncryptionAlgorithm is the bucket encryption mode.
 	// Empty string = no enforcement.
 	EncryptionAlgorithm string `json:"encryptionAlgorithm,omitempty"`
 
-	// KmsKeyArn is the ARN of the KMS key to use for SSE-KMS.
+	// KmsKeyArn is the KMS key ARN to enforce for bucket encryption.
 	// Empty string = no enforcement.
 	KmsKeyArn string `json:"kmsKeyArn,omitempty"`
 
-	// BlockPublicAccess blocks public access when true.
+	// BlockPublicAccess forces S3 public access blocking when true.
 	// false (zero value) = not enforced.
 	BlockPublicAccess bool `json:"blockPublicAccess,omitempty"`
 
-	// Versioning controls the bucket versioning state.
+	// Versioning is the enforced bucket versioning state.
 	// Empty string = no enforcement.
 	Versioning string `json:"versioning,omitempty"`
 
-	// LoggingEnabled requires server access logging when true.
+	// LoggingEnabled enforces server access logging when true.
 	// false (zero value) = not enforced.
 	LoggingEnabled bool `json:"loggingEnabled,omitempty"`
 
 	// LogDeliveryBucket is the target bucket for server access logs.
-	// Empty string = not enforced.
+	// Empty string = no enforcement.
 	LogDeliveryBucket string `json:"logDeliveryBucket,omitempty"`
 
-	// EnforceHttpsOnly denies non-TLS access when true.
+	// EnforceHttpsOnly requires TLS for bucket access when true.
 	// false (zero value) = not enforced.
 	EnforceHttpsOnly bool `json:"enforceHttpsOnly,omitempty"`
 
-	// ObjectLockMode controls S3 Object Lock governance mode.
-	// Empty string = not enforced.
+	// ObjectLockMode is the enforced object lock mode.
+	// Empty string = no enforcement.
 	ObjectLockMode string `json:"objectLockMode,omitempty"`
 
-	// ObjectLockRetentionDays controls S3 Object Lock retention.
-	// 0 = not enforced.
+	// ObjectLockRetentionDays is the enforced retention period in days.
+	// 0 (zero value) = no enforcement.
 	ObjectLockRetentionDays int64 `json:"objectLockRetentionDays,omitempty"`
 }
 
@@ -85,10 +85,12 @@ type EffectiveS3Config struct {
 // For defaults (levels 6–9): first non-zero value in priority order wins.
 // A source that is absent (zero-value struct) is silently skipped.
 func MergeS3Cascade(
+	// Mandatory inputs (highest → lowest priority)
 	globalKropathMandatory S3Section, // level 1
 	localKropathMandatory S3Section, // level 2
 	globalS3CfgMandatory S3Section, // level 3
 	localS3CfgMandatory S3Section, // level 4
+	// Defaults inputs (highest → lowest priority)
 	localS3CfgDefaults S3Section, // level 6
 	globalS3CfgDefaults S3Section, // level 7
 	localKropathDefaults S3Section, // level 8

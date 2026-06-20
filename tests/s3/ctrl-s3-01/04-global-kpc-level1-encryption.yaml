@@ -1,0 +1,9 @@
+apiVersion: kropath.run/v1alpha1
+kind: AWSKropathConfig
+metadata:
+  name: ac2-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    s3:
+      encryptionAlgorithm: aws:kms
