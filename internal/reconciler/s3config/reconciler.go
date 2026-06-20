@@ -96,11 +96,7 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.AWSS3Config) (
 		localKropath.Spec.Defaults.S3,
 		globalKropath.Spec.Defaults.S3,
 	)
-	cfg.Status.EffectiveConfig = v1alpha1.AWSEffectiveS3Config{
-		AWS:       mergeAWSIdentity(localKropath.Spec.AWS, globalKropath.Spec.AWS),
-		Mandatory: eff.Mandatory,
-		Defaults:  eff.Defaults,
-	}
+	cfg.Status.EffectiveConfig = eff
 	cfg.Status.SyncedTimestamp = metav1.Now().UTC().Format(time.RFC3339)
 
 	return true, ctrl.Result{}, nil
@@ -151,7 +147,7 @@ func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj cli
 
 	requests := make([]ctrl.Request, 0, len(list.Items))
 	for _, item := range list.Items {
-		if item.Namespace == kroSystemNamespace || item.Name != cfg.Name {
+		if item.Name != cfg.Name {
 			continue
 		}
 		requests = append(requests, ctrl.Request{NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name}})
@@ -179,15 +175,4 @@ func (r *Reconciler) requestsForS3ConfigChange(ctx context.Context, obj client.O
 		requests = append(requests, ctrl.Request{NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name}})
 	}
 	return requests
-}
-
-func mergeAWSIdentity(local, global v1alpha1.AWSProviderIdentity) v1alpha1.AWSProviderIdentity {
-	out := global
-	if local.AccountID != "" {
-		out.AccountID = local.AccountID
-	}
-	if local.Region != "" {
-		out.Region = local.Region
-	}
-	return out
 }

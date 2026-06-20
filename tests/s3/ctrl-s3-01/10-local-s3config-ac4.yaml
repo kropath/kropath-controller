@@ -1,0 +1,8 @@
+apiVersion: kropath.run/v1alpha1
+kind: AWSS3Config
+metadata:
+  name: ac4-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

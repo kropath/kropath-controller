@@ -18,212 +18,31 @@ import (
 	"context"
 	"testing"
 
-	"github.com/go-logr/logr"
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/cascade"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func TestReconcileAC1GlobalMandatoryEncryptionWins(t *testing.T) {
-	rec, cfg := testReconciler(t,
-		globalKropathConfig("general-policy", cascade.S3Section{EncryptionAlgorithm: "aws:kms"}),
-		localS3Config("payments-prod", "general-policy"),
-	)
-
-	if _, err := rec.Reconcile(context.Background(), req("payments-prod", "general-policy")); err != nil {
-		t.Fatalf("reconcile: %v", err)
-	}
-
-	updated := getS3Config(t, rec.Client, "payments-prod", "general-policy")
-	if got := updated.Status.EffectiveConfig.Mandatory.EncryptionAlgorithm; got != "aws:kms" {
-		t.Fatalf("mandatory.encryptionAlgorithm = %q, want aws:kms", got)
-	}
-	if updated.Status.ObservedGeneration != cfg.Generation {
-		t.Fatalf("observedGeneration = %d, want %d", updated.Status.ObservedGeneration, cfg.Generation)
-	}
-}
-
-func TestReconcileAC2Level1WinsOverLevel3(t *testing.T) {
-	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", cascade.S3Section{EncryptionAlgorithm: "aws:kms"}),
-		globalS3Config("general-policy", cascade.S3Section{EncryptionAlgorithm: "AES256"}),
-		localS3Config("payments-prod", "general-policy"),
-	)
-
-	if _, err := rec.Reconcile(context.Background(), req("payments-prod", "general-policy")); err != nil {
-		t.Fatalf("reconcile: %v", err)
-	}
-
-	updated := getS3Config(t, rec.Client, "payments-prod", "general-policy")
-	if got := updated.Status.EffectiveConfig.Mandatory.EncryptionAlgorithm; got != "aws:kms" {
-		t.Fatalf("mandatory.encryptionAlgorithm = %q, want level-1 value", got)
-	}
-}
-
-func TestReconcileAC3BlockPublicAccess(t *testing.T) {
-	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", cascade.S3Section{BlockPublicAccess: true}),
-		localS3Config("payments-prod", "general-policy"),
-	)
-
-	if _, err := rec.Reconcile(context.Background(), req("payments-prod", "general-policy")); err != nil {
-		t.Fatalf("reconcile: %v", err)
-	}
-
-	updated := getS3Config(t, rec.Client, "payments-prod", "general-policy")
-	if !updated.Status.EffectiveConfig.Mandatory.BlockPublicAccess {
-		t.Fatal("mandatory.blockPublicAccess = false, want true")
-	}
-}
-
-func TestReconcileAC4Level1EnforceHttpsWins(t *testing.T) {
-	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", cascade.S3Section{EnforceHttpsOnly: true}),
-		globalS3Config("general-policy", cascade.S3Section{EnforceHttpsOnly: false}),
-		localS3Config("payments-prod", "general-policy"),
-	)
-
-	if _, err := rec.Reconcile(context.Background(), req("payments-prod", "general-policy")); err != nil {
-		t.Fatalf("reconcile: %v", err)
-	}
-
-	updated := getS3Config(t, rec.Client, "payments-prod", "general-policy")
-	if !updated.Status.EffectiveConfig.Mandatory.EnforceHttpsOnly {
-		t.Fatal("mandatory.enforceHttpsOnly = false, want true")
-	}
-}
-
-func TestReconcileAC5DefaultsOnly(t *testing.T) {
-	rec, _ := testReconciler(t,
-		globalS3ConfigDefaults("general-policy", cascade.S3Section{EncryptionAlgorithm: "aws:kms"}),
-		localS3Config("payments-prod", "general-policy"),
-	)
-
-	if _, err := rec.Reconcile(context.Background(), req("payments-prod", "general-policy")); err != nil {
-		t.Fatalf("reconcile: %v", err)
-	}
-
-	updated := getS3Config(t, rec.Client, "payments-prod", "general-policy")
-	if got := updated.Status.EffectiveConfig.Defaults.EncryptionAlgorithm; got != "aws:kms" {
-		t.Fatalf("defaults.encryptionAlgorithm = %q, want aws:kms", got)
-	}
-	if got := updated.Status.EffectiveConfig.Mandatory.EncryptionAlgorithm; got != "" {
-		t.Fatalf("mandatory.encryptionAlgorithm = %q, want empty", got)
-	}
-}
-
-func TestReconcileAC6GlobalKmsKeyWins(t *testing.T) {
-	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", cascade.S3Section{KmsKeyArn: "arn:aws:kms:us-east-1:123:key/global"}),
-		localKropathConfig("payments-prod", "general-policy", cascade.S3Section{KmsKeyArn: "arn:aws:kms:us-east-1:123:key/local"}),
-		localS3Config("payments-prod", "general-policy"),
-	)
-
-	if _, err := rec.Reconcile(context.Background(), req("payments-prod", "general-policy")); err != nil {
-		t.Fatalf("reconcile: %v", err)
-	}
-
-	updated := getS3Config(t, rec.Client, "payments-prod", "general-policy")
-	if got := updated.Status.EffectiveConfig.Mandatory.KmsKeyArn; got != "arn:aws:kms:us-east-1:123:key/global" {
-		t.Fatalf("mandatory.kmsKeyArn = %q, want global value", got)
-	}
-}
-
-func TestReconcileCopiesAWSIdentity(t *testing.T) {
-	rec, _ := testReconciler(t,
-		globalKropathConfigWithAWS("general-policy", AWSIdentity("123456789012", "us-east-1")),
-		localS3Config("payments-prod", "general-policy"),
-	)
-
-	if _, err := rec.Reconcile(context.Background(), req("payments-prod", "general-policy")); err != nil {
-		t.Fatalf("reconcile: %v", err)
-	}
-
-	updated := getS3Config(t, rec.Client, "payments-prod", "general-policy")
-	if got := updated.Status.EffectiveConfig.AWS.AccountID; got != "123456789012" {
-		t.Fatalf("aws.accountId = %q, want 123456789012", got)
-	}
-	if got := updated.Status.EffectiveConfig.AWS.Region; got != "us-east-1" {
-		t.Fatalf("aws.region = %q, want us-east-1", got)
-	}
-}
-
-func TestRequestsForS3ConfigChangeGlobal(t *testing.T) {
-	rec, _ := testReconciler(t,
-		localS3Config("payments-prod", "general-policy"),
-		localS3Config("sandbox", "general-policy"),
-		localS3Config("payments-prod", "other-policy"),
-	)
-
-	got := rec.requestsForS3ConfigChange(context.Background(), &v1alpha1.AWSS3Config{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "general-policy",
-			Namespace: kroSystemNamespace,
-		},
-	})
-
-	if len(got) != 2 {
-		t.Fatalf("requests len = %d, want 2", len(got))
-	}
-	want := map[string]bool{
-		"payments-prod/general-policy": false,
-		"sandbox/general-policy":       false,
-	}
-	for _, req := range got {
-		key := req.Namespace + "/" + req.Name
-		if _, ok := want[key]; !ok {
-			t.Fatalf("unexpected request %q", key)
-		}
-		want[key] = true
-	}
-	for key, seen := range want {
-		if !seen {
-			t.Fatalf("missing request %q", key)
-		}
-	}
-}
-
-func TestRequestsForKropathConfigChangeNamespacesMatchName(t *testing.T) {
-	rec, _ := testReconciler(t,
-		localS3Config("payments-prod", "general-policy"),
-		localS3Config("sandbox", "general-policy"),
-		localS3Config("payments-prod", "other-policy"),
-	)
-
-	got := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.AWSKropathConfig{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "general-policy",
-			Namespace: kroSystemNamespace,
-		},
-	})
-
-	if len(got) != 2 {
-		t.Fatalf("requests len = %d, want 2", len(got))
-	}
-}
-
-func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, *v1alpha1.AWSS3Config) {
+func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, client.Client) {
 	t.Helper()
+
 	scheme := runtime.NewScheme()
 	if err := v1alpha1.AddToScheme(scheme); err != nil {
-		t.Fatalf("add scheme: %v", err)
+		t.Fatalf("AddToScheme: %v", err)
 	}
-	builder := fake.NewClientBuilder().
+
+	c := fake.NewClientBuilder().
 		WithScheme(scheme).
-		WithStatusSubresource(&v1alpha1.AWSS3Config{})
-	for _, obj := range objs {
-		builder = builder.WithRuntimeObjects(obj)
-	}
-	cl := builder.Build()
-	cfg := localS3Config("payments-prod", "general-policy")
-	if err := cl.Get(context.Background(), client.ObjectKeyFromObject(cfg), cfg); err != nil {
-		t.Fatalf("seed local S3Config: %v", err)
-	}
-	return &Reconciler{Client: cl, Log: logr.Discard(), Scheme: scheme}, cfg
+		WithRuntimeObjects(objs...).
+		WithStatusSubresource(&v1alpha1.AWSS3Config{}).
+		Build()
+
+	return &Reconciler{Client: c, Scheme: scheme}, c
 }
 
 func globalKropathConfig(name string, s3 cascade.S3Section) *v1alpha1.AWSKropathConfig {
@@ -240,19 +59,19 @@ func globalKropathConfig(name string, s3 cascade.S3Section) *v1alpha1.AWSKropath
 }
 
 func localKropathConfig(namespace, name string, s3 cascade.S3Section) *v1alpha1.AWSKropathConfig {
-	cfg := globalKropathConfig(name, cascade.S3Section{})
-	cfg.Namespace = namespace
-	cfg.Spec.Mandatory.S3 = s3
-	return cfg
+	return &v1alpha1.AWSKropathConfig{
+		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "AWSKropathConfig"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: v1alpha1.AWSKropathConfigSpec{
+			Mandatory: v1alpha1.AWSKropathConfigTier{S3: s3},
+		},
+	}
 }
 
-func globalKropathConfigWithAWS(name string, aws v1alpha1.AWSProviderIdentity) *v1alpha1.AWSKropathConfig {
-	cfg := globalKropathConfig(name, cascade.S3Section{})
-	cfg.Spec.AWS = aws
-	return cfg
-}
-
-func globalS3Config(name string, mandatory cascade.S3Section) *v1alpha1.AWSS3Config {
+func globalS3Config(name string, mandatory, defaults cascade.S3Section) *v1alpha1.AWSS3Config {
 	return &v1alpha1.AWSS3Config{
 		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "AWSS3Config"},
 		ObjectMeta: metav1.ObjectMeta{
@@ -261,41 +80,115 @@ func globalS3Config(name string, mandatory cascade.S3Section) *v1alpha1.AWSS3Con
 		},
 		Spec: v1alpha1.AWSS3ConfigSpec{
 			Mandatory: mandatory,
+			Defaults:  defaults,
 		},
 	}
 }
 
-func globalS3ConfigDefaults(name string, defaults cascade.S3Section) *v1alpha1.AWSS3Config {
-	cfg := globalS3Config(name, cascade.S3Section{})
-	cfg.Spec.Defaults = defaults
-	return cfg
-}
-
-func localS3Config(namespace, name string) *v1alpha1.AWSS3Config {
+func localS3Config(namespace, name string, mandatory, defaults cascade.S3Section) *v1alpha1.AWSS3Config {
 	return &v1alpha1.AWSS3Config{
 		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "AWSS3Config"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Spec: v1alpha1.AWSS3ConfigSpec{},
+		Spec: v1alpha1.AWSS3ConfigSpec{
+			Mandatory: mandatory,
+			Defaults:  defaults,
+		},
 	}
-}
-
-func AWSIdentity(accountID, region string) v1alpha1.AWSProviderIdentity {
-	return v1alpha1.AWSProviderIdentity{AccountID: accountID, Region: region}
 }
 
 func getS3Config(t *testing.T, c client.Client, namespace, name string) *v1alpha1.AWSS3Config {
 	t.Helper()
+
 	cfg := &v1alpha1.AWSS3Config{}
 	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("AWSS3Config"))
-	if err := c.Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, cfg); err != nil {
-		t.Fatalf("get S3Config: %v", err)
+	if err := c.Get(context.Background(), types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
+		t.Fatalf("Get AWSS3Config %s/%s: %v", namespace, name, err)
 	}
 	return cfg
 }
 
-func req(namespace, name string) ctrl.Request {
-	return ctrl.Request{NamespacedName: client.ObjectKey{Namespace: namespace, Name: name}}
+func TestReconcilerReconcile(t *testing.T) {
+	rec, c := testReconciler(t,
+		globalKropathConfig("general-policy", cascade.S3Section{EncryptionAlgorithm: "aws:kms"}),
+		localKropathConfig("payments-prod", "general-policy", cascade.S3Section{BlockPublicAccess: true}),
+		globalS3Config("general-policy", cascade.S3Section{KmsKeyArn: "arn:global-s3"}, cascade.S3Section{Versioning: "Enabled"}),
+		localS3Config("payments-prod", "general-policy", cascade.S3Section{Versioning: "Suspended"}, cascade.S3Section{LogDeliveryBucket: "logs"}),
+		localS3Config("data-prod", "general-policy", cascade.S3Section{ObjectLockMode: "GOVERNANCE"}, cascade.S3Section{}),
+	)
+
+	result, err := rec.Reconcile(context.Background(), ctrl.Request{
+		NamespacedName: types.NamespacedName{Namespace: "payments-prod", Name: "general-policy"},
+	})
+	if err != nil {
+		t.Fatalf("Reconcile: %v", err)
+	}
+	if result.RequeueAfter != 0 {
+		t.Fatalf("unexpected requeue: %v", result.RequeueAfter)
+	}
+
+	got := getS3Config(t, c, "payments-prod", "general-policy")
+	if got.Status.EffectiveConfig.Mandatory.EncryptionAlgorithm != "aws:kms" {
+		t.Fatalf("mandatory.encryptionAlgorithm = %q, want aws:kms", got.Status.EffectiveConfig.Mandatory.EncryptionAlgorithm)
+	}
+	if !got.Status.EffectiveConfig.Mandatory.BlockPublicAccess {
+		t.Fatal("mandatory.blockPublicAccess should be true")
+	}
+	if got.Status.EffectiveConfig.Mandatory.KmsKeyArn != "arn:global-s3" {
+		t.Fatalf("mandatory.kmsKeyArn = %q, want arn:global-s3", got.Status.EffectiveConfig.Mandatory.KmsKeyArn)
+	}
+	if got.Status.EffectiveConfig.Defaults.Versioning != "Enabled" {
+		t.Fatalf("defaults.versioning = %q, want Enabled", got.Status.EffectiveConfig.Defaults.Versioning)
+	}
+	if got.Status.EffectiveConfig.Defaults.LogDeliveryBucket != "logs" {
+		t.Fatalf("defaults.logDeliveryBucket = %q, want logs", got.Status.EffectiveConfig.Defaults.LogDeliveryBucket)
+	}
+}
+
+func TestRequestsForKropathConfigChangeIncludesGlobalAndLocalMatches(t *testing.T) {
+	rec, _ := testReconciler(t,
+		globalS3Config("general-policy", cascade.S3Section{}, cascade.S3Section{}),
+		localS3Config("payments-prod", "general-policy", cascade.S3Section{}, cascade.S3Section{}),
+		localS3Config("other-ns", "general-policy", cascade.S3Section{}, cascade.S3Section{}),
+		localS3Config("payments-prod", "other-policy", cascade.S3Section{}, cascade.S3Section{}),
+	)
+
+	requests := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.AWSKropathConfig{
+		ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: kroSystemNamespace},
+	})
+
+	if len(requests) != 3 {
+		t.Fatalf("requests len = %d, want 3", len(requests))
+	}
+	got := map[string]bool{}
+	for _, req := range requests {
+		got[req.NamespacedName.Namespace+"/"+req.NamespacedName.Name] = true
+	}
+	for _, want := range []string{
+		kroSystemNamespace + "/general-policy",
+		"payments-prod/general-policy",
+		"other-ns/general-policy",
+	} {
+		if !got[want] {
+			t.Fatalf("missing request %q in %#v", want, requests)
+		}
+	}
+}
+
+func TestRequestsForS3ConfigChangeQueuesNamespaceMatchesForGlobalSource(t *testing.T) {
+	rec, _ := testReconciler(t,
+		globalS3Config("general-policy", cascade.S3Section{}, cascade.S3Section{}),
+		localS3Config("payments-prod", "general-policy", cascade.S3Section{}, cascade.S3Section{}),
+		localS3Config("data-prod", "general-policy", cascade.S3Section{}, cascade.S3Section{}),
+	)
+
+	requests := rec.requestsForS3ConfigChange(context.Background(), &v1alpha1.AWSS3Config{
+		ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: kroSystemNamespace},
+	})
+
+	if len(requests) != 2 {
+		t.Fatalf("requests len = %d, want 2", len(requests))
+	}
 }

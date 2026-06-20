@@ -1,0 +1,12 @@
+apiVersion: kropath.run/v1alpha1
+kind: AWSKropathConfig
+metadata:
+  name: strict
+  namespace: kro-system
+spec:
+  mandatory:
+    s3:
+      versioning: Enabled
+  defaults:
+    s3:
+      versioning: Suspended

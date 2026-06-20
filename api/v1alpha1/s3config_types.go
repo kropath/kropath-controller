@@ -41,15 +41,9 @@ type AWSS3ConfigSpec struct {
 }
 
 type AWSS3ConfigStatus struct {
-	EffectiveConfig    AWSEffectiveS3Config `json:"effectiveConfig,omitempty"`
-	ObservedGeneration int64                `json:"observedGeneration,omitempty"`
-	SyncedTimestamp    string               `json:"syncedTimestamp,omitempty"`
-}
-
-type AWSEffectiveS3Config struct {
-	AWS       AWSProviderIdentity `json:"aws,omitempty"`
-	Mandatory cascade.S3Section   `json:"mandatory,omitempty"`
-	Defaults  cascade.S3Section   `json:"defaults,omitempty"`
+	EffectiveConfig    cascade.EffectiveS3Config `json:"effectiveConfig,omitempty"`
+	ObservedGeneration int64                     `json:"observedGeneration,omitempty"`
+	SyncedTimestamp    string                    `json:"syncedTimestamp,omitempty"`
 }
 
 func (in *AWSS3Config) DeepCopyInto(out *AWSS3Config) {
