@@ -1,0 +1,12 @@
+# AC-8: globalAWSKMSConfig mandatory.allowedKeySpecs (level 3, should lose to level 1).
+apiVersion: kropath.run/v1alpha1
+kind: AWSKMSConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    allowedKeySpecs:
+      - "RSA_4096"
+      - "ECC_NIST_P256"
+  defaults: {}

@@ -1,0 +1,14 @@
+# Assert AC-10: Valid=True; effectiveConfig.mandatory.keySpec="SYMMETRIC_DEFAULT" written.
+apiVersion: kropath.run/v1alpha1
+kind: AWSKMSConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+status:
+  conditions:
+    - type: Valid
+      status: "True"
+      reason: ValidationPassed
+  effectiveConfig:
+    mandatory:
+      keySpec: "SYMMETRIC_DEFAULT"

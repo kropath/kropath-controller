@@ -1,0 +1,10 @@
+# AC-14: globalAWSKropathConfig with aws.region and aws.accountId set.
+apiVersion: kropath.run/v1alpha1
+kind: AWSKropathConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"

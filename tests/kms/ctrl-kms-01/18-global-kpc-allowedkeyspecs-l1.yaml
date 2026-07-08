@@ -1,0 +1,14 @@
+# AC-8: globalAWSKropathConfig mandatory.kms.allowedKeySpecs=["SYMMETRIC_DEFAULT"] (level 1).
+apiVersion: kropath.run/v1alpha1
+kind: AWSKropathConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    kms:
+      allowedKeySpecs:
+        - "SYMMETRIC_DEFAULT"
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"

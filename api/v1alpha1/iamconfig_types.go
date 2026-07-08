@@ -46,8 +46,10 @@ type AWSKropathConfigSpec struct {
 }
 
 type AWSKropathConfigTier struct {
-	IAM cascade.IAMSection `json:"iam,omitempty"`
-	S3  cascade.S3Section  `json:"s3,omitempty"`
+	IAM  cascade.IAMSection        `json:"iam,omitempty"`
+	S3   cascade.S3Section         `json:"s3,omitempty"`
+	KMS  cascade.KMSKropathSection `json:"kms,omitempty"`
+	Tags map[string]string         `json:"tags,omitempty"`
 }
 
 type AWSIAMConfig struct {

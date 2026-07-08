@@ -1,0 +1,10 @@
+# AC-4: local AWSKMSConfig mandatory.keySpec="RSA_4096" (level 4 — should lose to level 3).
+apiVersion: kropath.run/v1alpha1
+kind: AWSKMSConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    keySpec: "RSA_4096"
+  defaults: {}

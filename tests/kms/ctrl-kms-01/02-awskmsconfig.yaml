@@ -1,0 +1,9 @@
+# Shared empty local AWSKMSConfig — all cascade sources come from global configs.
+apiVersion: kropath.run/v1alpha1
+kind: AWSKMSConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

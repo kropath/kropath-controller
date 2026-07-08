@@ -1,0 +1,11 @@
+# AC-15: AWSKMSConfig with mandatory.tags (KMS config-level tags, level 4).
+apiVersion: kropath.run/v1alpha1
+kind: AWSKMSConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    tags:
+      key-type: encryption
+  defaults: {}

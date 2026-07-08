@@ -1,0 +1,11 @@
+# Assert AC-4: mandatory.keySpec="SYMMETRIC_DEFAULT" from level-3 global KMSConfig
+# wins over level-4 local KMSConfig value of "RSA_4096".
+apiVersion: kropath.run/v1alpha1
+kind: AWSKMSConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      keySpec: "SYMMETRIC_DEFAULT"
