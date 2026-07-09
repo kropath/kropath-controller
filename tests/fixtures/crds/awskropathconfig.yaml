@@ -44,6 +44,10 @@ spec:
               message: objectLockMode must be set in either mandatory or defaults, not both.
             - rule: '!(self.spec.mandatory.s3.objectLockRetentionDays > 0 && has(self.spec.defaults) && has(self.spec.defaults.s3) && self.spec.defaults.s3.objectLockRetentionDays > 0)'
               message: objectLockRetentionDays must be set in either mandatory or defaults, not both.
+            - rule: '!(has(self.spec.mandatory.kms) && self.spec.mandatory.kms.enableKeyRotation && has(self.spec.defaults.kms) && self.spec.defaults.kms.enableKeyRotation)'
+              message: "kms.enableKeyRotation cannot be set to true in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.kms) && has(self.spec.mandatory.kms.allowedKeySpecs) && size(self.spec.mandatory.kms.allowedKeySpecs) > 0 && has(self.spec.defaults.kms) && has(self.spec.defaults.kms.allowedKeySpecs) && size(self.spec.defaults.kms.allowedKeySpecs) > 0)'
+              message: "kms.allowedKeySpecs cannot be set in both mandatory and defaults"
           properties:
             spec:
               type: object
@@ -97,6 +101,18 @@ spec:
                           type: integer
                           format: int64
                           default: 0
+                    kms:
+                      type: object
+                      default: {}
+                      properties:
+                        enableKeyRotation:
+                          type: boolean
+                          default: false
+                        allowedKeySpecs:
+                          type: array
+                          items:
+                            type: string
+                          default: []
                 defaults:
                   type: object
                   default: {}
@@ -146,6 +162,18 @@ spec:
                           type: integer
                           format: int64
                           default: 0
+                    kms:
+                      type: object
+                      default: {}
+                      properties:
+                        enableKeyRotation:
+                          type: boolean
+                          default: false
+                        allowedKeySpecs:
+                          type: array
+                          items:
+                            type: string
+                          default: []
                 aws:
                   type: object
                   properties:
@@ -180,3 +208,7 @@ spec:
               message: objectLockMode must be set in either mandatory or defaults, not both.
             - rule: '!(self.spec.mandatory.s3.objectLockRetentionDays > 0 && has(self.spec.defaults) && has(self.spec.defaults.s3) && self.spec.defaults.s3.objectLockRetentionDays > 0)'
               message: objectLockRetentionDays must be set in either mandatory or defaults, not both.
+            - rule: '!(has(self.spec.mandatory.kms) && self.spec.mandatory.kms.enableKeyRotation && has(self.spec.defaults.kms) && self.spec.defaults.kms.enableKeyRotation)'
+              message: "kms.enableKeyRotation cannot be set to true in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.kms) && has(self.spec.mandatory.kms.allowedKeySpecs) && size(self.spec.mandatory.kms.allowedKeySpecs) > 0 && has(self.spec.defaults.kms) && has(self.spec.defaults.kms.allowedKeySpecs) && size(self.spec.defaults.kms.allowedKeySpecs) > 0)'
+              message: "kms.allowedKeySpecs cannot be set in both mandatory and defaults"
