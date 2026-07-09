@@ -89,6 +89,38 @@ func (in *AWSKropathConfig) DeepCopyInto(out *AWSKropathConfig) {
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
 	out.Spec = in.Spec
+	if in.Spec.Mandatory.KMS.AllowedKeySpecs != nil {
+		out.Spec.Mandatory.KMS.AllowedKeySpecs = make([]string, len(in.Spec.Mandatory.KMS.AllowedKeySpecs))
+		copy(out.Spec.Mandatory.KMS.AllowedKeySpecs, in.Spec.Mandatory.KMS.AllowedKeySpecs)
+	}
+	if in.Spec.Mandatory.KMS.Tags != nil {
+		out.Spec.Mandatory.KMS.Tags = make(map[string]string, len(in.Spec.Mandatory.KMS.Tags))
+		for k, v := range in.Spec.Mandatory.KMS.Tags {
+			out.Spec.Mandatory.KMS.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.Tags != nil {
+		out.Spec.Mandatory.Tags = make(map[string]string, len(in.Spec.Mandatory.Tags))
+		for k, v := range in.Spec.Mandatory.Tags {
+			out.Spec.Mandatory.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.KMS.AllowedKeySpecs != nil {
+		out.Spec.Defaults.KMS.AllowedKeySpecs = make([]string, len(in.Spec.Defaults.KMS.AllowedKeySpecs))
+		copy(out.Spec.Defaults.KMS.AllowedKeySpecs, in.Spec.Defaults.KMS.AllowedKeySpecs)
+	}
+	if in.Spec.Defaults.KMS.Tags != nil {
+		out.Spec.Defaults.KMS.Tags = make(map[string]string, len(in.Spec.Defaults.KMS.Tags))
+		for k, v := range in.Spec.Defaults.KMS.Tags {
+			out.Spec.Defaults.KMS.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.Tags != nil {
+		out.Spec.Defaults.Tags = make(map[string]string, len(in.Spec.Defaults.Tags))
+		for k, v := range in.Spec.Defaults.Tags {
+			out.Spec.Defaults.Tags[k] = v
+		}
+	}
 }
 
 func (in *AWSKropathConfig) DeepCopy() *AWSKropathConfig {

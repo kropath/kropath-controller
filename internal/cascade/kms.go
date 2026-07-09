@@ -208,11 +208,14 @@ func ValidateKMSKeySpec(mandatory EffectiveKMSSection) (valid bool, reason, mess
 	)
 }
 
-// firstNonEmptyStrings returns the first non-nil, non-empty slice from the candidates.
+// firstNonEmptyStrings returns a defensive copy of the first non-nil, non-empty slice
+// from candidates, preventing the caller from aliasing a cached CR slice.
 func firstNonEmptyStrings(candidates ...[]string) []string {
 	for _, s := range candidates {
 		if len(s) > 0 {
-			return s
+			out := make([]string, len(s))
+			copy(out, s)
+			return out
 		}
 	}
 	return nil
