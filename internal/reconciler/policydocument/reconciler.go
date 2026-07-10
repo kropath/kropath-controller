@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
 	"strings"
 	"time"
@@ -22,6 +23,16 @@ import (
 )
 
 const defaultRequeueAfter = 10 * time.Second
+
+// countInt32 clamps a slice length to int32 range, guarding the status-field
+// conversion since a document could theoretically hold more entries than
+// int32 can represent.
+func countInt32(n int) int32 {
+	if n > math.MaxInt32 {
+		return math.MaxInt32
+	}
+	return int32(n) // #nosec G115 -- bounds-checked above, n <= math.MaxInt32
+}
 
 type Reconciler struct {
 	client.Client
@@ -96,7 +107,7 @@ func (r *Reconciler) reconcileDocument(ctx context.Context, doc *v1alpha1.AWSPol
 
 		doc.Status.ResolvedDocumentJSON = doc.Spec.DocumentJSON
 		doc.Status.StatementCount = 0
-		doc.Status.SourceCount = int32(len(doc.Spec.Sources))
+		doc.Status.SourceCount = countInt32(len(doc.Spec.Sources))
 		doc.Status.Conditions = setCondition(doc.Status.Conditions, readyCondition(metav1.ConditionTrue, "DocumentResolved", "spec.documentJSON copied to status.resolvedDocumentJSON", doc.Generation))
 		doc.Status.Conditions = setCondition(doc.Status.Conditions, sourceNotReadyCondition(metav1.ConditionFalse, "DocumentResolved", "no referenced sources required", doc.Generation))
 		doc.Status.Conditions = setCondition(doc.Status.Conditions, sidConflictCondition(metav1.ConditionFalse, "DocumentResolved", "no merged statements", doc.Generation))
@@ -112,7 +123,7 @@ func (r *Reconciler) reconcileDocument(ctx context.Context, doc *v1alpha1.AWSPol
 			doc.Status.ResolvedDocumentJSON = ""
 			doc.Status.StatementCount = 0
 		}
-		doc.Status.SourceCount = int32(len(doc.Spec.Sources))
+		doc.Status.SourceCount = countInt32(len(doc.Spec.Sources))
 		doc.Status.Conditions = setCondition(doc.Status.Conditions, readyCondition(metav1.ConditionFalse, sourceIssue.readyReason, sourceIssue.message, doc.Generation))
 		doc.Status.Conditions = setCondition(doc.Status.Conditions, sourceNotReadyCondition(sourceIssue.sourceNotReadyStatus, sourceIssue.sourceNotReadyReason, sourceIssue.message, doc.Generation))
 		doc.Status.Conditions = setCondition(doc.Status.Conditions, sidConflictCondition(metav1.ConditionFalse, sourceIssue.readyReason, sourceIssue.message, doc.Generation))
@@ -128,7 +139,7 @@ func (r *Reconciler) reconcileDocument(ctx context.Context, doc *v1alpha1.AWSPol
 		if pending {
 			doc.Status.ResolvedDocumentJSON = ""
 			doc.Status.StatementCount = 0
-			doc.Status.SourceCount = int32(len(doc.Spec.Sources))
+			doc.Status.SourceCount = countInt32(len(doc.Spec.Sources))
 			doc.Status.Conditions = setCondition(doc.Status.Conditions, readyCondition(metav1.ConditionFalse, "SourceNotReady", "one or more refs are not ready", doc.Generation))
 			doc.Status.Conditions = setCondition(doc.Status.Conditions, sourceNotReadyCondition(metav1.ConditionTrue, "SourceNotReady", "one or more refs are not ready", doc.Generation))
 			doc.Status.Conditions = setCondition(doc.Status.Conditions, sidConflictCondition(metav1.ConditionFalse, "SourceNotReady", "ref resolution is still pending", doc.Generation))
@@ -146,8 +157,8 @@ func (r *Reconciler) reconcileDocument(ctx context.Context, doc *v1alpha1.AWSPol
 		return ctrl.Result{}, nil
 	}
 
-	doc.Status.StatementCount = int32(len(statements))
-	doc.Status.SourceCount = int32(len(doc.Spec.Sources))
+	doc.Status.StatementCount = countInt32(len(statements))
+	doc.Status.SourceCount = countInt32(len(doc.Spec.Sources))
 
 	payload := map[string]any{
 		"Version":   "2012-10-17",
