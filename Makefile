@@ -108,7 +108,14 @@ chainsaw-setup: build kind-up ## Create kind cluster, apply CRDs, create test na
 		crd/awskropathconfigs.kropath.run \
 		crd/awsiamconfigs.kropath.run \
 		crd/awss3configs.kropath.run \
-		crd/awskmsconfigs.kropath.run
+		crd/awskmsconfigs.kropath.run \
+		crd/awspolicydocuments.kropath.run \
+		crd/awsiamroles.kropath.run \
+		crd/awss3buckets.kropath.run \
+		crd/awslambdafunctions.kropath.run \
+		crd/awssqsqueues.kropath.run \
+		crd/awskmskeys.kropath.run \
+		crd/awssecretsmanagersecrets.kropath.run
 	@for ns in $(TEST_NAMESPACES); do \
 		kubectl create namespace "$$ns" --dry-run=client -o yaml | kubectl apply -f -; \
 	done
@@ -167,10 +174,10 @@ test-policy: ## Run policy document Chainsaw suites (phase2-refs + phase3-merge)
 
 test-chainsaw: chainsaw-stop chainsaw-start chainsaw-wait ## Stop any stale controller, start fresh, run ALL Chainsaw suites, then stop it.
 	@mkdir -p $(REPORT_DIR)
-	$(CHAINSAW) test tests/iam/ctrl-iam-01/     $(CHAINSAW_FLAGS)
-	$(CHAINSAW) test tests/s3/ctrl-s3-01/       $(CHAINSAW_FLAGS)
-	$(CHAINSAW) test tests/kms/ctrl-kms-01/     $(CHAINSAW_FLAGS)
-	$(CHAINSAW) test tests/policy/phase2-refs/ tests/policy/phase3-merge/ $(CHAINSAW_FLAGS)
+	$(CHAINSAW) test tests/     $(CHAINSAW_FLAGS)
+# 	$(CHAINSAW) test tests/s3/ctrl-s3-01/       $(CHAINSAW_FLAGS)
+# 	$(CHAINSAW) test tests/kms/ctrl-kms-01/     $(CHAINSAW_FLAGS)
+# 	$(CHAINSAW) test tests/policy/phase2-refs/ tests/policy/phase3-merge/ $(CHAINSAW_FLAGS)
 	$(MAKE) chainsaw-stop
 
 # ─── Tool installation ─────────────────────────────────────────────────────────

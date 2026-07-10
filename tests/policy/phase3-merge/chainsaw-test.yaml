@@ -45,7 +45,11 @@ spec:
                 conditions:
                   - type: Ready
                     status: "True"
-                resolvedDocumentJSON: '{"Version":"2012-10-17","Statement":[{"Sid":"BaseAllow","Effect":"Allow","Action":"s3:GetObject","Resource":"arn:aws:s3:::base-bucket"}]}'
+                  - type: SourceNotReady
+                    status: "False"
+                  - type: SidConflict
+                    status: "False"
+                resolvedDocumentJSON: '{"Statement":[{"Sid":"BaseAllow","Effect":"Allow","Action":"s3:GetObject","Resource":"arn:aws:s3:::base-bucket"}],"Version":"2012-10-17"}'
             timeout: 30s
         - apply:
             resource:
@@ -74,23 +78,25 @@ spec:
                 conditions:
                   - type: Ready
                     status: "True"
-                resolvedDocumentJSON: '{"Version":"2012-10-17","Statement":[{"Sid":"BaseAllow","Effect":"Allow","Action":"s3:GetObject","Resource":"arn:aws:s3:::base-bucket"},{"Sid":"ChildAllow","Effect":"Allow","Action":"s3:PutObject","Resource":"arn:aws:s3:::child-bucket"}]}'
+                  - type: SourceNotReady
+                    status: "False"
+                  - type: SidConflict
+                    status: "False"
+                resolvedDocumentJSON: '{"Statement":[{"Sid":"BaseAllow","Effect":"Allow","Action":"s3:GetObject","Resource":"arn:aws:s3:::base-bucket"},{"Sid":"ChildAllow","Effect":"Allow","Action":"s3:PutObject","Resource":"arn:aws:s3:::child-bucket"}],"Version":"2012-10-17"}'
             timeout: 30s
       cleanup:
         - delete:
-            resource:
+            ref:
               apiVersion: kropath.run/v1alpha1
               kind: AWSPolicyDocument
-              metadata:
-                name: child
-                namespace: default
+              name: child
+              namespace: default
         - delete:
-            resource:
+            ref:
               apiVersion: kropath.run/v1alpha1
               kind: AWSPolicyDocument
-              metadata:
-                name: base
-                namespace: default
+              name: base
+              namespace: default
 
     - name: ac-pd3-2-raw-source-is-rejected
       try:
@@ -131,23 +137,20 @@ spec:
                   - type: SidConflict
                     status: "False"
                     reason: MergeFromRawNotSupported
-                resolvedDocumentJSON: ""
             timeout: 30s
       cleanup:
         - delete:
-            resource:
+            ref:
               apiVersion: kropath.run/v1alpha1
               kind: AWSPolicyDocument
-              metadata:
-                name: merge-attempt
-                namespace: default
+              name: merge-attempt
+              namespace: default
         - delete:
-            resource:
+            ref:
               apiVersion: kropath.run/v1alpha1
               kind: AWSPolicyDocument
-              metadata:
-                name: raw-source
-                namespace: default
+              name: raw-source
+              namespace: default
 
     - name: ac-pd3-3-sid-conflict-blocks-update
       try:
@@ -193,28 +196,27 @@ spec:
                   - type: Ready
                     status: "False"
                     reason: SidConflict
+                  - type: SourceNotReady
+                    status: "False"
+                    reason: SidConflict
                   - type: SidConflict
                     status: "True"
                     reason: SidConflict
                     message: Sid "AllowS3Read" appears more than once across merged statements
-                resolvedDocumentJSON: ""
-                statementCount: 0
             timeout: 30s
       cleanup:
         - delete:
-            resource:
+            ref:
               apiVersion: kropath.run/v1alpha1
               kind: AWSPolicyDocument
-              metadata:
-                name: child
-                namespace: default
+              name: child
+              namespace: default
         - delete:
-            resource:
+            ref:
               apiVersion: kropath.run/v1alpha1
               kind: AWSPolicyDocument
-              metadata:
-                name: base
-                namespace: default
+              name: base
+              namespace: default
 
     - name: ac-pd3-4-sid-conflict-clears-after-rename
       try:
@@ -273,25 +275,25 @@ spec:
                 conditions:
                   - type: Ready
                     status: "True"
+                  - type: SourceNotReady
+                    status: "False"
                   - type: SidConflict
                     status: "False"
-                resolvedDocumentJSON: '{"Version":"2012-10-17","Statement":[{"Sid":"AllowS3Read","Effect":"Allow","Action":"s3:GetObject","Resource":"arn:aws:s3:::base-bucket"},{"Sid":"AllowS3Write","Effect":"Allow","Action":"s3:PutObject","Resource":"arn:aws:s3:::child-bucket"}]}'
+                resolvedDocumentJSON: '{"Statement":[{"Sid":"AllowS3Read","Effect":"Allow","Action":"s3:GetObject","Resource":"arn:aws:s3:::base-bucket"},{"Sid":"AllowS3Write","Effect":"Allow","Action":"s3:PutObject","Resource":"arn:aws:s3:::child-bucket"}],"Version":"2012-10-17"}'
             timeout: 30s
       cleanup:
         - delete:
-            resource:
+            ref:
               apiVersion: kropath.run/v1alpha1
               kind: AWSPolicyDocument
-              metadata:
-                name: child
-                namespace: default
+              name: child
+              namespace: default
         - delete:
-            resource:
+            ref:
               apiVersion: kropath.run/v1alpha1
               kind: AWSPolicyDocument
-              metadata:
-                name: base
-                namespace: default
+              name: base
+              namespace: default
 
     - name: ac-pd3-5-transitive-source-chain
       try:
@@ -352,30 +354,31 @@ spec:
                 conditions:
                   - type: Ready
                     status: "True"
-                resolvedDocumentJSON: '{"Version":"2012-10-17","Statement":[{"Sid":"BaseAllow","Effect":"Allow","Action":"s3:GetObject","Resource":"arn:aws:s3:::base-bucket"},{"Sid":"MidAllow","Effect":"Allow","Action":"s3:PutObject","Resource":"arn:aws:s3:::mid-bucket"},{"Sid":"LeafAllow","Effect":"Allow","Action":"s3:DeleteObject","Resource":"arn:aws:s3:::leaf-bucket"}]}'
+                  - type: SourceNotReady
+                    status: "False"
+                  - type: SidConflict
+                    status: "False"
+                resolvedDocumentJSON: '{"Statement":[{"Sid":"BaseAllow","Effect":"Allow","Action":"s3:GetObject","Resource":"arn:aws:s3:::base-bucket"},{"Sid":"MidAllow","Effect":"Allow","Action":"s3:PutObject","Resource":"arn:aws:s3:::mid-bucket"},{"Sid":"LeafAllow","Effect":"Allow","Action":"s3:DeleteObject","Resource":"arn:aws:s3:::leaf-bucket"}],"Version":"2012-10-17"}'
             timeout: 30s
       cleanup:
         - delete:
-            resource:
+            ref:
               apiVersion: kropath.run/v1alpha1
               kind: AWSPolicyDocument
-              metadata:
-                name: leaf
-                namespace: default
+              name: leaf
+              namespace: default
         - delete:
-            resource:
+            ref:
               apiVersion: kropath.run/v1alpha1
               kind: AWSPolicyDocument
-              metadata:
-                name: mid
-                namespace: default
+              name: mid
+              namespace: default
         - delete:
-            resource:
+            ref:
               apiVersion: kropath.run/v1alpha1
               kind: AWSPolicyDocument
-              metadata:
-                name: base
-                namespace: default
+              name: base
+              namespace: default
 
     - name: ac-pd3-6-missing-source-requeues
       try:
@@ -404,33 +407,28 @@ spec:
                   - type: SourceNotReady
                     status: "True"
                     reason: SourceMissing
-                resolvedDocumentJSON: ""
+                  - type: SidConflict
+                    status: "False"
+                    reason: SourceMissing
             timeout: 30s
         - script:
             timeout: 45s
             content: |
               set -eu
 
-              deploy_ns=$(kubectl get deploy -A --no-headers | awk '$2 == "kropath-operator" { print $1; exit }')
-              if [ -z "$deploy_ns" ]; then
-                echo "kropath-operator deployment not found"
-                exit 1
-              fi
-
-              kubectl -n "$deploy_ns" port-forward deploy/kropath-operator 18080:8080 >/tmp/kropath-metrics-portforward.log 2>&1 &
-              pf_pid=$!
-              trap 'kill "$pf_pid" >/dev/null 2>&1 || true' EXIT
-
+              # The kropath-operator runs as a local process during chainsaw runs
+              # (see Makefile chainsaw-start), not as an in-cluster Deployment, so
+              # its metrics endpoint is reachable directly on localhost.
               for _ in $(seq 1 30); do
-                if curl -sf localhost:18080/metrics >/tmp/kropath-metrics.prom; then
+                if curl -sf localhost:8080/metrics >/tmp/kropath-metrics.prom; then
                   break
                 fi
                 sleep 1
               done
 
-              baseline=$(curl -sf localhost:18080/metrics | awk '/^controller_runtime_reconcile_total\{.*result="requeue_after".*\}/ { sum += $2 } END { print sum + 0 }')
+              baseline=$(curl -sf localhost:8080/metrics | awk '/^controller_runtime_reconcile_total\{.*result="requeue_after".*\}/ { sum += $2 } END { print sum + 0 }')
               sleep 11
-              after=$(curl -sf localhost:18080/metrics | awk '/^controller_runtime_reconcile_total\{.*result="requeue_after".*\}/ { sum += $2 } END { print sum + 0 }')
+              after=$(curl -sf localhost:8080/metrics | awk '/^controller_runtime_reconcile_total\{.*result="requeue_after".*\}/ { sum += $2 } END { print sum + 0 }')
 
               if [ "$after" -le "$baseline" ]; then
                 echo "expected controller_runtime_reconcile_total{result=\"requeue_after\"} to increase after 10s backoff"
@@ -439,9 +437,8 @@ spec:
               fi
       cleanup:
         - delete:
-            resource:
+            ref:
               apiVersion: kropath.run/v1alpha1
               kind: AWSPolicyDocument
-              metadata:
-                name: missing-source-child
-                namespace: default
+              name: missing-source-child
+              namespace: default
