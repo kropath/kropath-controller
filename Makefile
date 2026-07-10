@@ -23,6 +23,9 @@ CHAINSAW_VERSION := v0.2.15
 # ─── Paths ─────────────────────────────────────────────────────────────────────
 BINARY           := bin/kropath-operator
 MAIN_PKG         := ./cmd/manager
+IMAGE_REGISTRY   := ghcr.io/kropath
+IMAGE_NAME       := kropath-controller
+IMAGE_TAG        ?= $(shell git rev-parse --short HEAD)
 REPORT_DIR       := test-results
 CONTROLLER_LOG   := /tmp/kropath-controller/controller.log
 CONTROLLER_PID   := /tmp/kropath-controller/pid
@@ -37,6 +40,7 @@ GOLANGCI         ?= golangci-lint
 CHAINSAW_FLAGS   := --parallel 1 --report-format JUNIT-TEST --report-path $(REPORT_DIR)/
 
 .PHONY: all build test test-cover vet fmt lint \
+        docker-build docker-push \
         kind-up kind-down \
         chainsaw-setup chainsaw-start chainsaw-wait chainsaw-stop \
         test-iam test-s3 test-kms test-policy test-chainsaw \
@@ -52,6 +56,16 @@ all: build ## Build the operator binary (default target).
 build: ## Compile the operator binary → bin/kropath-operator.
 	@mkdir -p bin
 	go build -o $(BINARY) $(MAIN_PKG)
+
+# ─── Container image ────────────────────────────────────────────────────────────
+
+docker-build: ## Build the container image, tagged with the short git SHA and 'latest'.
+	docker build -t $(IMAGE_REGISTRY)/$(IMAGE_NAME):$(IMAGE_TAG) \
+		-t $(IMAGE_REGISTRY)/$(IMAGE_NAME):latest .
+
+docker-push: ## Push the SHA-tagged and 'latest' images (CI use; requires prior registry login).
+	docker push $(IMAGE_REGISTRY)/$(IMAGE_NAME):$(IMAGE_TAG)
+	docker push $(IMAGE_REGISTRY)/$(IMAGE_NAME):latest
 
 # ─── Unit tests ────────────────────────────────────────────────────────────────
 
