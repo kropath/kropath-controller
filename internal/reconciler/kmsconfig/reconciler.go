@@ -16,6 +16,7 @@ package kmsconfig
 
 import (
 	"context"
+	"reflect"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -114,31 +115,43 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.AWSKMSConfig) 
 
 	valid, reason, message := cascade.ValidateKMSKeySpec(eff.Mandatory)
 	if !valid {
-		cfg.Status.Conditions = setCondition(cfg.Status.Conditions, metav1.Condition{
+		newCond := metav1.Condition{
 			Type:               "Valid",
 			Status:             metav1.ConditionFalse,
 			Reason:             reason,
 			Message:            message,
 			ObservedGeneration: cfg.Generation,
 			LastTransitionTime: now,
-		})
+		}
+		if !conditionNeedsUpdate(cfg.Status.Conditions, newCond) {
+			return false, ctrl.Result{}, nil
+		}
+		cfg.Status.Conditions = setCondition(cfg.Status.Conditions, newCond)
 		cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 		return true, ctrl.Result{}, nil
 	}
 
-	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, metav1.Condition{
+	newCond := metav1.Condition{
 		Type:               "Valid",
 		Status:             metav1.ConditionTrue,
 		Reason:             "ValidationPassed",
 		Message:            "",
 		ObservedGeneration: cfg.Generation,
 		LastTransitionTime: now,
-	})
-	cfg.Status.EffectiveConfig = v1alpha1.AWSEffectiveKMSConfig{
+	}
+	newEffConfig := v1alpha1.AWSEffectiveKMSConfig{
 		AWS:       mergeAWSIdentity(localKropath.Spec.AWS, globalKropath.Spec.AWS),
 		Mandatory: eff.Mandatory,
 		Defaults:  eff.Defaults,
 	}
+
+	if !conditionNeedsUpdate(cfg.Status.Conditions, newCond) &&
+		reflect.DeepEqual(cfg.Status.EffectiveConfig, newEffConfig) {
+		return false, ctrl.Result{}, nil
+	}
+
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, newCond)
+	cfg.Status.EffectiveConfig = newEffConfig
 	cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 
 	return true, ctrl.Result{}, nil
@@ -228,6 +241,17 @@ func mergeAWSIdentity(local, global v1alpha1.AWSProviderIdentity) v1alpha1.AWSPr
 		out.Region = local.Region
 	}
 	return out
+}
+
+// conditionNeedsUpdate returns true when no existing condition matches Type+Status+Reason+Message,
+// meaning a status write is necessary to reflect the new state.
+func conditionNeedsUpdate(conditions []metav1.Condition, new metav1.Condition) bool {
+	for _, c := range conditions {
+		if c.Type == new.Type {
+			return c.Status != new.Status || c.Reason != new.Reason || c.Message != new.Message
+		}
+	}
+	return true
 }
 
 // setCondition upserts a condition by Type, preserving LastTransitionTime when status is unchanged.

@@ -113,6 +113,11 @@ spec:
                           items:
                             type: string
                           default: []
+                    tags:
+                      type: object
+                      additionalProperties:
+                        type: string
+                      default: {}
                 defaults:
                   type: object
                   default: {}
@@ -174,6 +179,11 @@ spec:
                           items:
                             type: string
                           default: []
+                    tags:
+                      type: object
+                      additionalProperties:
+                        type: string
+                      default: {}
                 aws:
                   type: object
                   properties:

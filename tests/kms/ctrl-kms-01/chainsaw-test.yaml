@@ -144,17 +144,49 @@ spec:
             file: 16-global-kpc-allowedkeyspecs.yaml
 
     # AC-8: level-1 allowedKeySpecs wins over level-3 allowedKeySpecs.
+    # Chainsaw defers all cleanup blocks to test end, so stale SSA field-manager state
+    # from earlier ACs accumulates. Specifically, AC-4's field manager owns
+    # payments-prod keySpec="RSA_4096" which blocks ValidateKMSKeySpec when
+    # allowedKeySpecs is narrowed to ["SYMMETRIC_DEFAULT"] by fixture 18.
+    # Fix: (1) delete both KMSConfigs first to clear stale state, (2) explicitly
+    # delete fixture 18's KropathConfig after the assert to prevent the narrow
+    # allowedKeySpecs from leaking into AC-9+ (AC-11 in particular sets keySpec=RSA_4096
+    # expecting no restriction).
     - name: ac8-level1-allowedkeyspecs-wins
       try:
+        - delete:
+            ref:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSKMSConfig
+              name: general-policy
+              namespace: kro-system
+        - delete:
+            ref:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSKMSConfig
+              name: general-policy
+              namespace: payments-prod
         - apply:
             file: 18-global-kpc-allowedkeyspecs-l1.yaml
         - apply:
-            file: 19-global-kmscfg-allowedkeyspecs-l3.yaml
-        - apply:
             file: 02-awskmsconfig.yaml
+        - apply:
+            file: 19-global-kmscfg-allowedkeyspecs-l3.yaml
         - assert:
             file: 20-assert-ac8.yaml
             timeout: 30s
+        - delete:
+            ref:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSKropathConfig
+              name: general-policy
+              namespace: kro-system
+        - delete:
+            ref:
+              apiVersion: kropath.run/v1alpha1
+              kind: AWSKMSConfig
+              name: general-policy
+              namespace: kro-system
       cleanup:
         - delete:
             file: 02-awskmsconfig.yaml
