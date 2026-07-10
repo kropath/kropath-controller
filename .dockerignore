@@ -1,0 +1,7 @@
+.git
+bin/
+test-results/
+coverage.out
+coverage.html
+docs/
+*.md
