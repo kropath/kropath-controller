@@ -6,6 +6,7 @@ metadata:
   name: general-policy
   namespace: kro-system
 spec:
-  mandatory: {}
+  mandatory:
+    keySpec: ""
   defaults:
     keySpec: "SYMMETRIC_DEFAULT"

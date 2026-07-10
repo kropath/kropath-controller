@@ -416,7 +416,7 @@ func TestRequestsForSourceDocumentReturnsParentsReferencingSource(t *testing.T) 
 	if len(requests) != 1 {
 		t.Fatalf("expected one parent request, got %d: %#v", len(requests), requests)
 	}
-	if requests[0].NamespacedName.Namespace != "default" || requests[0].NamespacedName.Name != "app-policy" {
+	if requests[0].Namespace != "default" || requests[0].Name != "app-policy" {
 		t.Fatalf("unexpected request: %#v", requests[0])
 	}
 
@@ -476,7 +476,7 @@ func TestRequestsForReferencedResourceReturnsMatchingDocuments(t *testing.T) {
 	if len(requests) != 1 {
 		t.Fatalf("expected one matching request, got %d: %#v", len(requests), requests)
 	}
-	if requests[0].NamespacedName.Name != "match" {
+	if requests[0].Name != "match" {
 		t.Fatalf("unexpected request: %#v", requests[0])
 	}
 

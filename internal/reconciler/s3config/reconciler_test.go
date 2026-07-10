@@ -164,7 +164,7 @@ func TestRequestsForKropathConfigChangeIncludesGlobalAndLocalMatches(t *testing.
 	}
 	got := map[string]bool{}
 	for _, req := range requests {
-		got[req.NamespacedName.Namespace+"/"+req.NamespacedName.Name] = true
+		got[req.Namespace+"/"+req.Name] = true
 	}
 	for _, want := range []string{
 		kroSystemNamespace + "/general-policy",

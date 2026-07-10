@@ -166,6 +166,11 @@ spec:
             status:
               type: object
               properties:
+                observedGeneration:
+                  type: integer
+                  format: int64
+                syncedTimestamp:
+                  type: string
                 conditions:
                   type: array
                   items:
