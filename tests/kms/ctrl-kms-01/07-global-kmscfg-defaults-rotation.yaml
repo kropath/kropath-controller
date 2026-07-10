@@ -1,0 +1,12 @@
+# AC-3: globalAWSKMSConfig with defaults.enableKeyRotation=true (level 7).
+# mandatory.enableKeyRotation is not set (false = permissive sentinel).
+apiVersion: kropath.run/v1alpha1
+kind: AWSKMSConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    enableKeyRotation: false
+  defaults:
+    enableKeyRotation: true

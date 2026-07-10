@@ -1,0 +1,13 @@
+# AC-9: AWSKMSConfig with mandatory.keySpec NOT in mandatory.allowedKeySpecs.
+# Controller must set Valid=False and NOT write effectiveConfig.
+apiVersion: kropath.run/v1alpha1
+kind: AWSKMSConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    keySpec: "RSA_2048"
+    allowedKeySpecs:
+      - "SYMMETRIC_DEFAULT"
+  defaults: {}

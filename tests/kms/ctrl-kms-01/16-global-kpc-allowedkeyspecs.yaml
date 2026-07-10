@@ -1,0 +1,15 @@
+# AC-7: globalAWSKropathConfig mandatory.kms.allowedKeySpecs (level 1).
+apiVersion: kropath.run/v1alpha1
+kind: AWSKropathConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    kms:
+      allowedKeySpecs:
+        - "SYMMETRIC_DEFAULT"
+        - "RSA_4096"
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"

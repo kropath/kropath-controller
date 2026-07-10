@@ -9,6 +9,7 @@ import (
 
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/reconciler/iamconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/kmsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/policydocument"
 	"github.com/kropath/kropath-controller/internal/reconciler/s3config"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -20,9 +21,10 @@ import (
 )
 
 var (
-	metricsAddr     string
-	probeAddr       string
-	enablePolicyDoc bool
+	metricsAddr      string
+	probeAddr        string
+	enablePolicyDoc  bool
+	enableKMSCascade bool
 )
 
 func leaderElectionNamespace() string {
@@ -39,6 +41,7 @@ func main() {
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enablePolicyDoc, "enable-poldoc", false, "Enable the AWSPolicyDocument reconciler.")
+	flag.BoolVar(&enableKMSCascade, "enable-kms-cascade", false, "Enable the AWSKMSConfig cascade reconciler.")
 	opts := zap.Options{Development: true}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
@@ -93,6 +96,17 @@ func main() {
 		}
 	}
 
+	if enableKMSCascade {
+		if err := (&kmsconfig.Reconciler{
+			Client: mgr.GetClient(),
+			Log:    ctrl.Log.WithName("controllers").WithName("AWSKMSConfig"),
+			Scheme: mgr.GetScheme(),
+		}).SetupWithManager(mgr); err != nil {
+			ctrl.Log.Error(err, "unable to create AWSKMSConfig reconciler")
+			os.Exit(1)
+		}
+	}
+
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		ctrl.Log.Error(err, "unable to set up health check")
 		os.Exit(1)
@@ -102,7 +116,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctrl.Log.Info("starting manager", "metrics", metricsAddr, "probes", probeAddr, "enable_poldoc", enablePolicyDoc)
+	ctrl.Log.Info("starting manager", "metrics", metricsAddr, "probes", probeAddr, "enable_poldoc", enablePolicyDoc, "enable_kms_cascade", enableKMSCascade)
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		ctrl.Log.Error(err, "problem running manager")
 		os.Exit(1)

@@ -6,9 +6,15 @@ on:
     branches:
       - main
 
+# Keep these in sync with the version pins at the top of the Makefile.
+env:
+  KIND_VERSION:     v0.25.0
+  CHAINSAW_VERSION: v0.2.15
+  GOLANGCI_VERSION: v2.11.4
+
 jobs:
-  unit:
-    name: Go unit tests
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -20,16 +26,17 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Run tests
-        run: go test ./...
+      - name: Install golangci-lint
+        run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${{ env.GOLANGCI_VERSION }}
 
-  e2e:
-    name: Chainsaw integration tests
+      - name: Lint
+        run: make lint
+
+  unit:
+    name: Unit tests
     runs-on: ubuntu-latest
-    needs: unit
-
     steps:
-      - name: Checkout controller
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Go
@@ -38,59 +45,90 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Set up kind cluster
-        uses: helm/kind-action@v1
+      - name: Unit tests
+        run: make test
+
+  security:
+    name: Security scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          cluster_name: kropath-test
-          version: v0.25.0
+          go-version-file: go.mod
+          cache: true
 
-      - name: Install test CRDs
+      - name: Install gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: Run security scans
+        run: make security
+
+  image:
+    name: Build image
+    runs-on: ubuntu-latest
+    needs: [lint, unit, security]
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: |
+            ghcr.io/kropath/kropath-controller:latest
+            ghcr.io/kropath/kropath-controller:sha-${{ github.sha }}
+
+  e2e:
+    name: Chainsaw integration tests
+    runs-on: ubuntu-latest
+    needs: [lint, unit, security]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install kind
         run: |
-          kubectl apply -f tests/fixtures/crds/
-          kubectl wait --for=condition=Established --timeout=60s \
-            crd/awskropathconfigs.kropath.run \
-            crd/awsiamconfigs.kropath.run \
-            crd/awss3configs.kropath.run
-
-      - name: Build controller
-        run: |
-          mkdir -p bin
-          go build -o bin/kropath-operator ./cmd/manager
-
-      - name: Start controller
-        run: |
-          mkdir -p /tmp/kropath-controller
-          KUBECONFIG="${HOME}/.kube/config" ./bin/kropath-operator --health-probe-bind-address=:18081 > /tmp/kropath-controller/controller.log 2>&1 &
-          echo $! > /tmp/kropath-controller/pid
-
-          for _ in $(seq 1 30); do
-            if curl -fsS http://127.0.0.1:18081/readyz >/dev/null; then
-              exit 0
-            fi
-            sleep 2
-          done
-
-          cat /tmp/kropath-controller/controller.log
-          exit 1
-
-      - name: Prepare test namespaces
-        run: |
-          for ns in kro-system payments-prod; do
-            kubectl create namespace "$ns" --dry-run=client -o yaml | kubectl apply -f -
-          done
+          curl -sSLo /tmp/kind https://kind.sigs.k8s.io/dl/${{ env.KIND_VERSION }}/kind-linux-amd64
+          chmod +x /tmp/kind
+          sudo mv /tmp/kind /usr/local/bin/kind
 
       - name: Install Chainsaw
         uses: kyverno/action-install-chainsaw@v0.2.15
 
       - name: Run Chainsaw tests
-        run: |
-          mkdir -p test-results
-          chainsaw test tests/iam/ctrl-iam-01/ --parallel 1 --report-format JUNIT-TEST --report-path test-results/
-          chainsaw test tests/s3/ctrl-s3-01/ --parallel 1 --report-format JUNIT-TEST --report-path test-results/
+        run: make test-chainsaw
 
       - name: Stop controller
         if: always()
-        run: |
-          if [ -f /tmp/kropath-controller/pid ]; then
-            kill "$(cat /tmp/kropath-controller/pid)" || true
-          fi
+        run: make chainsaw-stop

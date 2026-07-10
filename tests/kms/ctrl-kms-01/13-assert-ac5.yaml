@@ -1,0 +1,10 @@
+# Assert AC-5: defaults.keySpec="SYMMETRIC_DEFAULT" from level-7; mandatory.keySpec empty.
+apiVersion: kropath.run/v1alpha1
+kind: AWSKMSConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    defaults:
+      keySpec: "SYMMETRIC_DEFAULT"
