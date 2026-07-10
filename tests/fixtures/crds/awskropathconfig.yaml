@@ -193,32 +193,3 @@ spec:
                     region:
                       type: string
                       default: ""
-          x-kubernetes-validations:
-            - rule: '!(self.spec.mandatory.iam.permissionsBoundaryArn != "" && has(self.spec.defaults) && has(self.spec.defaults.iam) && self.spec.defaults.iam.permissionsBoundaryArn != "")'
-              message: permissionsBoundaryArn must be set in either mandatory or defaults, not both.
-            - rule: '!(self.spec.mandatory.iam.blockIamUserAccessKeys && has(self.spec.defaults) && has(self.spec.defaults.iam) && self.spec.defaults.iam.blockIamUserAccessKeys)'
-              message: blockIamUserAccessKeys must be set in either mandatory or defaults, not both.
-            - rule: '!(self.spec.mandatory.iam.maxSessionDurationSeconds > 0 && has(self.spec.defaults) && has(self.spec.defaults.iam) && self.spec.defaults.iam.maxSessionDurationSeconds > 0)'
-              message: maxSessionDurationSeconds must be set in either mandatory or defaults, not both.
-            - rule: '!(self.spec.mandatory.s3.encryptionAlgorithm != "" && has(self.spec.defaults) && has(self.spec.defaults.s3) && self.spec.defaults.s3.encryptionAlgorithm != "")'
-              message: encryptionAlgorithm must be set in either mandatory or defaults, not both.
-            - rule: '!(self.spec.mandatory.s3.kmsKeyArn != "" && has(self.spec.defaults) && has(self.spec.defaults.s3) && self.spec.defaults.s3.kmsKeyArn != "")'
-              message: kmsKeyArn must be set in either mandatory or defaults, not both.
-            - rule: '!(self.spec.mandatory.s3.blockPublicAccess && has(self.spec.defaults) && has(self.spec.defaults.s3) && self.spec.defaults.s3.blockPublicAccess)'
-              message: blockPublicAccess must be set in either mandatory or defaults, not both.
-            - rule: '!(self.spec.mandatory.s3.versioning != "" && has(self.spec.defaults) && has(self.spec.defaults.s3) && self.spec.defaults.s3.versioning != "")'
-              message: versioning must be set in either mandatory or defaults, not both.
-            - rule: '!(self.spec.mandatory.s3.loggingEnabled && has(self.spec.defaults) && has(self.spec.defaults.s3) && self.spec.defaults.s3.loggingEnabled)'
-              message: loggingEnabled must be set in either mandatory or defaults, not both.
-            - rule: '!(self.spec.mandatory.s3.logDeliveryBucket != "" && has(self.spec.defaults) && has(self.spec.defaults.s3) && self.spec.defaults.s3.logDeliveryBucket != "")'
-              message: logDeliveryBucket must be set in either mandatory or defaults, not both.
-            - rule: '!(self.spec.mandatory.s3.enforceHttpsOnly && has(self.spec.defaults) && has(self.spec.defaults.s3) && self.spec.defaults.s3.enforceHttpsOnly)'
-              message: enforceHttpsOnly must be set in either mandatory or defaults, not both.
-            - rule: '!(self.spec.mandatory.s3.objectLockMode != "" && has(self.spec.defaults) && has(self.spec.defaults.s3) && self.spec.defaults.s3.objectLockMode != "")'
-              message: objectLockMode must be set in either mandatory or defaults, not both.
-            - rule: '!(self.spec.mandatory.s3.objectLockRetentionDays > 0 && has(self.spec.defaults) && has(self.spec.defaults.s3) && self.spec.defaults.s3.objectLockRetentionDays > 0)'
-              message: objectLockRetentionDays must be set in either mandatory or defaults, not both.
-            - rule: '!(has(self.spec.mandatory.kms) && self.spec.mandatory.kms.enableKeyRotation && has(self.spec.defaults.kms) && self.spec.defaults.kms.enableKeyRotation)'
-              message: "kms.enableKeyRotation cannot be set to true in both mandatory and defaults"
-            - rule: '!(has(self.spec.mandatory.kms) && has(self.spec.mandatory.kms.allowedKeySpecs) && size(self.spec.mandatory.kms.allowedKeySpecs) > 0 && has(self.spec.defaults.kms) && has(self.spec.defaults.kms.allowedKeySpecs) && size(self.spec.defaults.kms.allowedKeySpecs) > 0)'
-              message: "kms.allowedKeySpecs cannot be set in both mandatory and defaults"
