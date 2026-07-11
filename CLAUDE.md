@@ -35,3 +35,14 @@
 - Single Deployment, single RBAC manifest, single `/metrics` endpoint (port 8080)
 - Health probes: `/healthz` port 8081 (manager alive), `/readyz` port 8081 (leader lease + watches established)
 - Feature flags: `--enable-poldoc`, `--enable-sequencer` (future) — allows incremental rollout
+
+### Before Creating a PR
+
+Run these and confirm all pass before opening a pull request:
+
+```bash
+make lint
+make test-cover
+make test-chainsaw
+make security
+```
