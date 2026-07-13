@@ -29,7 +29,7 @@ func resolveRef(ctx context.Context, c client.Client, namespace string, ref *v1a
 	}
 
 	obj := &unstructured.Unstructured{}
-	obj.SetGroupVersionKind(schema.GroupVersionKind{Group: "kropath.run", Version: "v1alpha1", Kind: ref.Kind})
+	obj.SetGroupVersionKind(schema.GroupVersionKind{Group: "aws.kropath.run", Version: "v1alpha1", Kind: ref.Kind})
 	if err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: ref.Name}, obj); err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			return "", true, nil

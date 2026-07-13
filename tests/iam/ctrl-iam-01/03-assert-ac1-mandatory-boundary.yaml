@@ -1,6 +1,6 @@
 # Assert: mandatory.permissionsBoundaryArn from level-1 globalKropathConfig
 # must appear in status.effectiveConfig of namespaced AWSIAMConfig.
-apiVersion: kropath.run/v1alpha1
+apiVersion: aws.kropath.run/v1alpha1
 kind: AWSIAMConfig
 metadata:
   name: general-policy

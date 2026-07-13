@@ -1,5 +1,5 @@
 # Assert AC-11: effectiveConfig written normally when allowedKeySpecs is empty.
-apiVersion: kropath.run/v1alpha1
+apiVersion: aws.kropath.run/v1alpha1
 kind: AWSKMSConfig
 metadata:
   name: general-policy

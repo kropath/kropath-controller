@@ -1,5 +1,5 @@
 # Assert: level-1 maxSession=3600 wins over level-3 maxSession=7200.
-apiVersion: kropath.run/v1alpha1
+apiVersion: aws.kropath.run/v1alpha1
 kind: AWSIAMConfig
 metadata:
   name: general-policy

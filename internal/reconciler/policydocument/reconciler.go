@@ -48,7 +48,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	for _, kind := range policyRefWatchKinds() {
 		prototype := &unstructured.Unstructured{}
-		prototype.SetGroupVersionKind(schema.GroupVersionKind{Group: "kropath.run", Version: "v1alpha1", Kind: kind})
+		prototype.SetGroupVersionKind(schema.GroupVersionKind{Group: "aws.kropath.run", Version: "v1alpha1", Kind: kind})
 		builder = builder.Watches(prototype, handler.EnqueueRequestsFromMapFunc(r.mapReferencedResourceUpdates))
 	}
 

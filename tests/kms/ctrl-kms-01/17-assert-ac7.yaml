@@ -1,5 +1,5 @@
 # Assert AC-7: mandatory.allowedKeySpecs=["SYMMETRIC_DEFAULT","RSA_4096"] from level-1.
-apiVersion: kropath.run/v1alpha1
+apiVersion: aws.kropath.run/v1alpha1
 kind: AWSKMSConfig
 metadata:
   name: general-policy

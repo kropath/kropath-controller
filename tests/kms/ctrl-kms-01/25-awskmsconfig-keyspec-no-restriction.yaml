@@ -1,6 +1,6 @@
 # AC-11: AWSKMSConfig with mandatory.keySpec set but no allowedKeySpecs restriction.
 # Empty allowedKeySpecs = no restriction; effectiveConfig must be written.
-apiVersion: kropath.run/v1alpha1
+apiVersion: aws.kropath.run/v1alpha1
 kind: AWSKMSConfig
 metadata:
   name: general-policy

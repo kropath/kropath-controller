@@ -1,6 +1,6 @@
 # AC-10: AWSKMSConfig with mandatory.keySpec IN mandatory.allowedKeySpecs.
 # Controller must set Valid=True and write effectiveConfig.
-apiVersion: kropath.run/v1alpha1
+apiVersion: aws.kropath.run/v1alpha1
 kind: AWSKMSConfig
 metadata:
   name: general-policy

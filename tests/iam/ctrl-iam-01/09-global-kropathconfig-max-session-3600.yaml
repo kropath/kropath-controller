@@ -1,5 +1,5 @@
 # AC-4: level-1 globalKropathConfig mandatory maxSessionDurationSeconds=3600.
-apiVersion: kropath.run/v1alpha1
+apiVersion: aws.kropath.run/v1alpha1
 kind: AWSKropathConfig
 metadata:
   name: general-policy

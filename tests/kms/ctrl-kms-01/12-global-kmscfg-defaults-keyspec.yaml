@@ -1,6 +1,6 @@
 # AC-5: globalAWSKMSConfig defaults.keySpec="SYMMETRIC_DEFAULT" (level 7).
 # mandatory.keySpec is not set.
-apiVersion: kropath.run/v1alpha1
+apiVersion: aws.kropath.run/v1alpha1
 kind: AWSKMSConfig
 metadata:
   name: general-policy

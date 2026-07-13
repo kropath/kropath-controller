@@ -142,7 +142,7 @@ spec:
             file: 17-awskropathconfig-both-tiers-boundary.yaml
             expect:
               - match:
-                  apiVersion: kropath.run/v1alpha1
+                  apiVersion: aws.kropath.run/v1alpha1
                   kind: AWSKropathConfig
                 check:
                   ($error != null): true

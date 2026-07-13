@@ -22,7 +22,7 @@ spec:
       try:
         - apply:
             resource:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               metadata:
                 name: base
@@ -36,7 +36,7 @@ spec:
                       - arn: arn:aws:s3:::base-bucket
         - assert:
             resource:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               metadata:
                 name: base
@@ -53,7 +53,7 @@ spec:
             timeout: 30s
         - apply:
             resource:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               metadata:
                 name: child
@@ -69,7 +69,7 @@ spec:
                       - arn: arn:aws:s3:::child-bucket
         - assert:
             resource:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               metadata:
                 name: child
@@ -87,13 +87,13 @@ spec:
       cleanup:
         - delete:
             ref:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               name: child
               namespace: default
         - delete:
             ref:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               name: base
               namespace: default
@@ -102,7 +102,7 @@ spec:
       try:
         - apply:
             resource:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               metadata:
                 name: raw-source
@@ -111,7 +111,7 @@ spec:
                 documentJSON: '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}'
         - apply:
             resource:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               metadata:
                 name: merge-attempt
@@ -121,7 +121,7 @@ spec:
                   - name: raw-source
         - assert:
             resource:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               metadata:
                 name: merge-attempt
@@ -141,13 +141,13 @@ spec:
       cleanup:
         - delete:
             ref:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               name: merge-attempt
               namespace: default
         - delete:
             ref:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               name: raw-source
               namespace: default
@@ -156,7 +156,7 @@ spec:
       try:
         - apply:
             resource:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               metadata:
                 name: base
@@ -170,7 +170,7 @@ spec:
                       - arn: arn:aws:s3:::base-bucket
         - apply:
             resource:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               metadata:
                 name: child
@@ -186,7 +186,7 @@ spec:
                       - arn: arn:aws:s3:::child-bucket
         - assert:
             resource:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               metadata:
                 name: child
@@ -207,13 +207,13 @@ spec:
       cleanup:
         - delete:
             ref:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               name: child
               namespace: default
         - delete:
             ref:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               name: base
               namespace: default
@@ -222,7 +222,7 @@ spec:
       try:
         - apply:
             resource:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               metadata:
                 name: base
@@ -236,7 +236,7 @@ spec:
                       - arn: arn:aws:s3:::base-bucket
         - apply:
             resource:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               metadata:
                 name: child
@@ -252,7 +252,7 @@ spec:
                       - arn: arn:aws:s3:::child-bucket
         - patch:
             resource:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               metadata:
                 name: child
@@ -266,7 +266,7 @@ spec:
                       - arn: arn:aws:s3:::child-bucket
         - assert:
             resource:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               metadata:
                 name: child
@@ -284,13 +284,13 @@ spec:
       cleanup:
         - delete:
             ref:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               name: child
               namespace: default
         - delete:
             ref:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               name: base
               namespace: default
@@ -299,7 +299,7 @@ spec:
       try:
         - apply:
             resource:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               metadata:
                 name: base
@@ -313,7 +313,7 @@ spec:
                       - arn: arn:aws:s3:::base-bucket
         - apply:
             resource:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               metadata:
                 name: mid
@@ -329,7 +329,7 @@ spec:
                       - arn: arn:aws:s3:::mid-bucket
         - apply:
             resource:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               metadata:
                 name: leaf
@@ -345,7 +345,7 @@ spec:
                       - arn: arn:aws:s3:::leaf-bucket
         - assert:
             resource:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               metadata:
                 name: leaf
@@ -363,19 +363,19 @@ spec:
       cleanup:
         - delete:
             ref:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               name: leaf
               namespace: default
         - delete:
             ref:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               name: mid
               namespace: default
         - delete:
             ref:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               name: base
               namespace: default
@@ -384,7 +384,7 @@ spec:
       try:
         - apply:
             resource:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               metadata:
                 name: missing-source-child
@@ -394,7 +394,7 @@ spec:
                   - name: does-not-exist
         - assert:
             resource:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               metadata:
                 name: missing-source-child
@@ -438,7 +438,7 @@ spec:
       cleanup:
         - delete:
             ref:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSPolicyDocument
               name: missing-source-child
               namespace: default

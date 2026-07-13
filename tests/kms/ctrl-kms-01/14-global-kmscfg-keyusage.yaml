@@ -1,5 +1,5 @@
 # AC-6: globalAWSKMSConfig mandatory.keyUsage="ENCRYPT_DECRYPT" (level 3).
-apiVersion: kropath.run/v1alpha1
+apiVersion: aws.kropath.run/v1alpha1
 kind: AWSKMSConfig
 metadata:
   name: general-policy

@@ -156,13 +156,13 @@ spec:
       try:
         - delete:
             ref:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSKMSConfig
               name: general-policy
               namespace: kro-system
         - delete:
             ref:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSKMSConfig
               name: general-policy
               namespace: payments-prod
@@ -177,13 +177,13 @@ spec:
             timeout: 30s
         - delete:
             ref:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSKropathConfig
               name: general-policy
               namespace: kro-system
         - delete:
             ref:
-              apiVersion: kropath.run/v1alpha1
+              apiVersion: aws.kropath.run/v1alpha1
               kind: AWSKMSConfig
               name: general-policy
               namespace: kro-system
@@ -239,7 +239,7 @@ spec:
             file: 27-awskropathconfig-both-rotation.yaml
             expect:
               - match:
-                  apiVersion: kropath.run/v1alpha1
+                  apiVersion: aws.kropath.run/v1alpha1
                   kind: AWSKropathConfig
                 check:
                   ($error != null): true
@@ -252,7 +252,7 @@ spec:
             file: 28-awskropathconfig-both-allowedkeyspecs.yaml
             expect:
               - match:
-                  apiVersion: kropath.run/v1alpha1
+                  apiVersion: aws.kropath.run/v1alpha1
                   kind: AWSKropathConfig
                 check:
                   ($error != null): true

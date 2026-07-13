@@ -1,6 +1,6 @@
 # Assert AC-8: mandatory.allowedKeySpecs=["SYMMETRIC_DEFAULT"] from level-1 KropathConfig
 # wins over level-3 globalKMSConfig value of ["RSA_4096","ECC_NIST_P256"].
-apiVersion: kropath.run/v1alpha1
+apiVersion: aws.kropath.run/v1alpha1
 kind: AWSKMSConfig
 metadata:
   name: general-policy

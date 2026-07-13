@@ -1,5 +1,5 @@
 # AC-8: globalAWSKropathConfig mandatory.kms.allowedKeySpecs=["SYMMETRIC_DEFAULT"] (level 1).
-apiVersion: kropath.run/v1alpha1
+apiVersion: aws.kropath.run/v1alpha1
 kind: AWSKropathConfig
 metadata:
   name: general-policy

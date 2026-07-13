@@ -1,5 +1,5 @@
 # Assert AC-10: Valid=True; effectiveConfig.mandatory.keySpec="SYMMETRIC_DEFAULT" written.
-apiVersion: kropath.run/v1alpha1
+apiVersion: aws.kropath.run/v1alpha1
 kind: AWSKMSConfig
 metadata:
   name: general-policy

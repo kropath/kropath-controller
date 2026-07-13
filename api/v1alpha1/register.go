@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	GroupVersion  = schema.GroupVersion{Group: "kropath.run", Version: "v1alpha1"}
+	GroupVersion  = schema.GroupVersion{Group: "aws.kropath.run", Version: "v1alpha1"}
 	SchemeBuilder = runtime.NewSchemeBuilder(addKnownTypes)
 	AddToScheme   = SchemeBuilder.AddToScheme
 )

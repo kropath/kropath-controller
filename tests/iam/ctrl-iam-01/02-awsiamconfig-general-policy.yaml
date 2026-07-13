@@ -1,5 +1,5 @@
 # AWSIAMConfig used across multiple AC tests as the namespaced config.
-apiVersion: kropath.run/v1alpha1
+apiVersion: aws.kropath.run/v1alpha1
 kind: AWSIAMConfig
 metadata:
   name: general-policy

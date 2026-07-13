@@ -64,7 +64,7 @@ func main() {
 		HealthProbeBindAddress:  probeAddr,
 		LeaderElection:          true,
 		LeaderElectionNamespace: leaderElectionNamespace(),
-		LeaderElectionID:        "kropath-controller.kropath.run",
+		LeaderElectionID:        "kropath-controller.aws.kropath.run",
 	})
 	if err != nil {
 		ctrl.Log.Error(err, "unable to start manager")

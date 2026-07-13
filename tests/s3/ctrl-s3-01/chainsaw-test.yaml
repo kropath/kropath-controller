@@ -110,7 +110,7 @@ spec:
             file: 16-awskropathconfig-both-tiers-versioning.yaml
             expect:
               - match:
-                  apiVersion: kropath.run/v1alpha1
+                  apiVersion: aws.kropath.run/v1alpha1
                   kind: AWSKropathConfig
                 check:
                   ($error != null): true
