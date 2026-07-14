@@ -119,17 +119,17 @@ kind-down: ## Delete the kind cluster.
 chainsaw-setup: build kind-up ## Create kind cluster, apply CRDs, create test namespaces.
 	kubectl apply -f tests/fixtures/crds/
 	kubectl wait --for=condition=Established --timeout=60s \
-		crd/awskropathconfigs.kropath.run \
-		crd/awsiamconfigs.kropath.run \
-		crd/awss3configs.kropath.run \
-		crd/awskmsconfigs.kropath.run \
-		crd/awspolicydocuments.kropath.run \
-		crd/awsiamroles.kropath.run \
-		crd/awss3buckets.kropath.run \
-		crd/awslambdafunctions.kropath.run \
-		crd/awssqsqueues.kropath.run \
-		crd/awskmskeys.kropath.run \
-		crd/awssecretsmanagersecrets.kropath.run
+		crd/awskropathconfigs.aws.kropath.run \
+		crd/awsiamconfigs.aws.kropath.run \
+		crd/awss3configs.aws.kropath.run \
+		crd/awskmsconfigs.aws.kropath.run \
+		crd/awspolicydocuments.aws.kropath.run \
+		crd/awsiamroles.aws.kropath.run \
+		crd/awss3buckets.aws.kropath.run \
+		crd/awslambdafunctions.aws.kropath.run \
+		crd/awssqsqueues.aws.kropath.run \
+		crd/awskmskeys.aws.kropath.run \
+		crd/awssecretsmanagersecrets.aws.kropath.run
 	@for ns in $(TEST_NAMESPACES); do \
 		kubectl create namespace "$$ns" --dry-run=client -o yaml | kubectl apply -f -; \
 	done
