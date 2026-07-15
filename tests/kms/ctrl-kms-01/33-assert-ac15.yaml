@@ -1,7 +1,7 @@
 # Assert AC-15: effCfg.mandatory.tags is the union of KropathConfig.mandatory.tags
-# and AWSKMSConfig.mandatory.tags.
-apiVersion: kropath.run/v1alpha1
-kind: AWSKMSConfig
+# and KMSConfig.mandatory.tags.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
 metadata:
   name: general-policy
   namespace: payments-prod

@@ -1,6 +1,6 @@
-# AC-8: globalAWSKropathConfig mandatory.kms.allowedKeySpecs=["SYMMETRIC_DEFAULT"] (level 1).
-apiVersion: kropath.run/v1alpha1
-kind: AWSKropathConfig
+# AC-8: globalKropathConfig mandatory.kms.allowedKeySpecs=["SYMMETRIC_DEFAULT"] (level 1).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
 metadata:
   name: general-policy
   namespace: kro-system

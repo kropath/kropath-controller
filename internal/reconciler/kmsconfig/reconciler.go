@@ -39,8 +39,8 @@ type Reconciler struct {
 }
 
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	cfg := &v1alpha1.AWSKMSConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("AWSKMSConfig"))
+	cfg := &v1alpha1.KMSConfig{}
+	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("KMSConfig"))
 	if err := r.Client.Get(ctx, req.NamespacedName, cfg); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -60,19 +60,19 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1alpha1.AWSKMSConfig{}).
+		For(&v1alpha1.KMSConfig{}).
 		Watches(
-			&v1alpha1.AWSKMSConfig{},
+			&v1alpha1.KMSConfig{},
 			handler.EnqueueRequestsFromMapFunc(r.requestsForKMSConfigChange),
 		).
 		Watches(
-			&v1alpha1.AWSKropathConfig{},
+			&v1alpha1.KropathConfig{},
 			handler.EnqueueRequestsFromMapFunc(r.requestsForKropathConfigChange),
 		).
 		Complete(r)
 }
 
-func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.AWSKMSConfig) (bool, ctrl.Result, error) {
+func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.KMSConfig) (bool, ctrl.Result, error) {
 	globalKropath, err := r.loadKropathConfig(ctx, kroSystemNamespace, cfg.Name)
 	if err != nil {
 		return false, ctrl.Result{}, err
@@ -90,7 +90,7 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.AWSKMSConfig) 
 
 	// Augment each KMSKropathSection with the tier-level tags (AC-15):
 	// KMSKropathSection carries cross-type KMS fields only; tier-level tags from
-	// AWSKropathConfigTier.Tags are promoted here so they flow through MergeKMSCascade.
+	// KropathConfigTier.Tags are promoted here so they flow through MergeKMSCascade.
 	globalKropathMandatoryKMS := globalKropath.Spec.Mandatory.KMS
 	globalKropathMandatoryKMS.Tags = globalKropath.Spec.Mandatory.Tags
 	localKropathMandatoryKMS := localKropath.Spec.Mandatory.KMS
@@ -139,7 +139,7 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.AWSKMSConfig) 
 		ObservedGeneration: cfg.Generation,
 		LastTransitionTime: now,
 	}
-	newEffConfig := v1alpha1.AWSEffectiveKMSConfig{
+	newEffConfig := v1alpha1.EffectiveKMSConfig{
 		AWS:       mergeAWSIdentity(localKropath.Spec.AWS, globalKropath.Spec.AWS),
 		Mandatory: eff.Mandatory,
 		Defaults:  eff.Defaults,
@@ -157,24 +157,24 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.AWSKMSConfig) 
 	return true, ctrl.Result{}, nil
 }
 
-func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name string) (*v1alpha1.AWSKropathConfig, error) {
-	cfg := &v1alpha1.AWSKropathConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("AWSKropathConfig"))
+func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name string) (*v1alpha1.KropathConfig, error) {
+	cfg := &v1alpha1.KropathConfig{}
+	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("KropathConfig"))
 	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
 		if client.IgnoreNotFound(err) == nil {
-			return &v1alpha1.AWSKropathConfig{}, nil
+			return &v1alpha1.KropathConfig{}, nil
 		}
 		return nil, err
 	}
 	return cfg, nil
 }
 
-func (r *Reconciler) loadKMSConfig(ctx context.Context, namespace, name string) (*v1alpha1.AWSKMSConfig, error) {
-	cfg := &v1alpha1.AWSKMSConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("AWSKMSConfig"))
+func (r *Reconciler) loadKMSConfig(ctx context.Context, namespace, name string) (*v1alpha1.KMSConfig, error) {
+	cfg := &v1alpha1.KMSConfig{}
+	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("KMSConfig"))
 	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
 		if client.IgnoreNotFound(err) == nil {
-			return &v1alpha1.AWSKMSConfig{}, nil
+			return &v1alpha1.KMSConfig{}, nil
 		}
 		return nil, err
 	}
@@ -182,12 +182,12 @@ func (r *Reconciler) loadKMSConfig(ctx context.Context, namespace, name string) 
 }
 
 func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj client.Object) []ctrl.Request {
-	cfg, ok := obj.(*v1alpha1.AWSKropathConfig)
+	cfg, ok := obj.(*v1alpha1.KropathConfig)
 	if !ok {
 		return nil
 	}
 
-	var list v1alpha1.AWSKMSConfigList
+	var list v1alpha1.KMSConfigList
 	if cfg.Namespace == kroSystemNamespace {
 		if err := r.Client.List(ctx, &list); err != nil {
 			r.Log.Error(err, "unable to list KMS configs for global KropathConfig change")
@@ -211,12 +211,12 @@ func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj cli
 }
 
 func (r *Reconciler) requestsForKMSConfigChange(ctx context.Context, obj client.Object) []ctrl.Request {
-	cfg, ok := obj.(*v1alpha1.AWSKMSConfig)
+	cfg, ok := obj.(*v1alpha1.KMSConfig)
 	if !ok || cfg.Namespace != kroSystemNamespace {
 		return nil
 	}
 
-	var list v1alpha1.AWSKMSConfigList
+	var list v1alpha1.KMSConfigList
 	if err := r.Client.List(ctx, &list); err != nil {
 		r.Log.Error(err, "unable to list KMS configs for global KMSConfig change")
 		return nil
@@ -232,7 +232,7 @@ func (r *Reconciler) requestsForKMSConfigChange(ctx context.Context, obj client.
 	return requests
 }
 
-func mergeAWSIdentity(local, global v1alpha1.AWSProviderIdentity) v1alpha1.AWSProviderIdentity {
+func mergeAWSIdentity(local, global v1alpha1.ProviderIdentity) v1alpha1.ProviderIdentity {
 	out := global
 	if local.AccountID != "" {
 		out.AccountID = local.AccountID

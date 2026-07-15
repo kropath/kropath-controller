@@ -1,6 +1,6 @@
 # AC-2: level-1 globalKropathConfig mandatory boundary (should win).
-apiVersion: kropath.run/v1alpha1
-kind: AWSKropathConfig
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
 metadata:
   name: general-policy
   namespace: kro-system

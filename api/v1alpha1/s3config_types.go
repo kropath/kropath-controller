@@ -20,33 +20,33 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-type AWSS3Config struct {
+type S3Config struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   AWSS3ConfigSpec   `json:"spec,omitempty"`
-	Status AWSS3ConfigStatus `json:"status,omitempty"`
+	Spec   S3ConfigSpec   `json:"spec,omitempty"`
+	Status S3ConfigStatus `json:"status,omitempty"`
 }
 
-type AWSS3ConfigList struct {
+type S3ConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []AWSS3Config `json:"items"`
+	Items []S3Config `json:"items"`
 }
 
-type AWSS3ConfigSpec struct {
+type S3ConfigSpec struct {
 	Mandatory cascade.S3Section `json:"mandatory,omitempty"`
 	Defaults  cascade.S3Section `json:"defaults,omitempty"`
 }
 
-type AWSS3ConfigStatus struct {
+type S3ConfigStatus struct {
 	EffectiveConfig    cascade.EffectiveS3Config `json:"effectiveConfig,omitempty"`
 	ObservedGeneration int64                     `json:"observedGeneration,omitempty"`
 	SyncedTimestamp    string                    `json:"syncedTimestamp,omitempty"`
 }
 
-func (in *AWSS3Config) DeepCopyInto(out *AWSS3Config) {
+func (in *S3Config) DeepCopyInto(out *S3Config) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
@@ -54,44 +54,44 @@ func (in *AWSS3Config) DeepCopyInto(out *AWSS3Config) {
 	out.Status = in.Status
 }
 
-func (in *AWSS3Config) DeepCopy() *AWSS3Config {
+func (in *S3Config) DeepCopy() *S3Config {
 	if in == nil {
 		return nil
 	}
-	out := new(AWSS3Config)
+	out := new(S3Config)
 	in.DeepCopyInto(out)
 	return out
 }
 
-func (in *AWSS3Config) DeepCopyObject() runtime.Object {
+func (in *S3Config) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}
 	return nil
 }
 
-func (in *AWSS3ConfigList) DeepCopyInto(out *AWSS3ConfigList) {
+func (in *S3ConfigList) DeepCopyInto(out *S3ConfigList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
-		out.Items = make([]AWSS3Config, len(in.Items))
+		out.Items = make([]S3Config, len(in.Items))
 		for i := range in.Items {
 			in.Items[i].DeepCopyInto(&out.Items[i])
 		}
 	}
 }
 
-func (in *AWSS3ConfigList) DeepCopy() *AWSS3ConfigList {
+func (in *S3ConfigList) DeepCopy() *S3ConfigList {
 	if in == nil {
 		return nil
 	}
-	out := new(AWSS3ConfigList)
+	out := new(S3ConfigList)
 	in.DeepCopyInto(out)
 	return out
 }
 
-func (in *AWSS3ConfigList) DeepCopyObject() runtime.Object {
+func (in *S3ConfigList) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}

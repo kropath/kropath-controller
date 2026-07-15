@@ -20,40 +20,40 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-type AWSKMSConfig struct {
+type KMSConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   AWSKMSConfigSpec   `json:"spec,omitempty"`
-	Status AWSKMSConfigStatus `json:"status,omitempty"`
+	Spec   KMSConfigSpec   `json:"spec,omitempty"`
+	Status KMSConfigStatus `json:"status,omitempty"`
 }
 
-type AWSKMSConfigList struct {
+type KMSConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []AWSKMSConfig `json:"items"`
+	Items []KMSConfig `json:"items"`
 }
 
-type AWSKMSConfigSpec struct {
+type KMSConfigSpec struct {
 	Mandatory cascade.KMSConfigSection `json:"mandatory,omitempty"`
 	Defaults  cascade.KMSConfigSection `json:"defaults,omitempty"`
 }
 
-type AWSKMSConfigStatus struct {
-	EffectiveConfig    AWSEffectiveKMSConfig `json:"effectiveConfig,omitempty"`
+type KMSConfigStatus struct {
+	EffectiveConfig    EffectiveKMSConfig `json:"effectiveConfig,omitempty"`
 	Conditions         []metav1.Condition    `json:"conditions,omitempty"`
 	ObservedGeneration int64                 `json:"observedGeneration,omitempty"`
 	SyncedTimestamp    string                `json:"syncedTimestamp,omitempty"`
 }
 
-type AWSEffectiveKMSConfig struct {
-	AWS       AWSProviderIdentity         `json:"aws,omitempty"`
+type EffectiveKMSConfig struct {
+	AWS       ProviderIdentity         `json:"aws,omitempty"`
 	Mandatory cascade.EffectiveKMSSection `json:"mandatory,omitempty"`
 	Defaults  cascade.EffectiveKMSSection `json:"defaults,omitempty"`
 }
 
-func (in *AWSKMSConfig) DeepCopyInto(out *AWSKMSConfig) {
+func (in *KMSConfig) DeepCopyInto(out *KMSConfig) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
@@ -105,44 +105,44 @@ func (in *AWSKMSConfig) DeepCopyInto(out *AWSKMSConfig) {
 	}
 }
 
-func (in *AWSKMSConfig) DeepCopy() *AWSKMSConfig {
+func (in *KMSConfig) DeepCopy() *KMSConfig {
 	if in == nil {
 		return nil
 	}
-	out := new(AWSKMSConfig)
+	out := new(KMSConfig)
 	in.DeepCopyInto(out)
 	return out
 }
 
-func (in *AWSKMSConfig) DeepCopyObject() runtime.Object {
+func (in *KMSConfig) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}
 	return nil
 }
 
-func (in *AWSKMSConfigList) DeepCopyInto(out *AWSKMSConfigList) {
+func (in *KMSConfigList) DeepCopyInto(out *KMSConfigList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
-		out.Items = make([]AWSKMSConfig, len(in.Items))
+		out.Items = make([]KMSConfig, len(in.Items))
 		for i := range in.Items {
 			in.Items[i].DeepCopyInto(&out.Items[i])
 		}
 	}
 }
 
-func (in *AWSKMSConfigList) DeepCopy() *AWSKMSConfigList {
+func (in *KMSConfigList) DeepCopy() *KMSConfigList {
 	if in == nil {
 		return nil
 	}
-	out := new(AWSKMSConfigList)
+	out := new(KMSConfigList)
 	in.DeepCopyInto(out)
 	return out
 }
 
-func (in *AWSKMSConfigList) DeepCopyObject() runtime.Object {
+func (in *KMSConfigList) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}

@@ -1,7 +1,7 @@
 # Assert AC-2: mandatory.enableKeyRotation=true from level-1 KropathConfig wins over
 # level-3 globalKMSConfig which has zero-value enableKeyRotation.
-apiVersion: kropath.run/v1alpha1
-kind: AWSKMSConfig
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
 metadata:
   name: general-policy
   namespace: payments-prod

@@ -20,71 +20,71 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-type AWSProviderIdentity struct {
+type ProviderIdentity struct {
 	AccountID string `json:"accountId,omitempty"`
 	Region    string `json:"region,omitempty"`
 }
 
-type AWSKropathConfig struct {
+type KropathConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec AWSKropathConfigSpec `json:"spec,omitempty"`
+	Spec KropathConfigSpec `json:"spec,omitempty"`
 }
 
-type AWSKropathConfigList struct {
+type KropathConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []AWSKropathConfig `json:"items"`
+	Items []KropathConfig `json:"items"`
 }
 
-type AWSKropathConfigSpec struct {
-	Mandatory AWSKropathConfigTier `json:"mandatory,omitempty"`
-	Defaults  AWSKropathConfigTier `json:"defaults,omitempty"`
-	AWS       AWSProviderIdentity  `json:"aws,omitempty"`
+type KropathConfigSpec struct {
+	Mandatory KropathConfigTier `json:"mandatory,omitempty"`
+	Defaults  KropathConfigTier `json:"defaults,omitempty"`
+	AWS       ProviderIdentity  `json:"aws,omitempty"`
 }
 
-type AWSKropathConfigTier struct {
+type KropathConfigTier struct {
 	IAM  cascade.IAMSection        `json:"iam,omitempty"`
 	S3   cascade.S3Section         `json:"s3,omitempty"`
 	KMS  cascade.KMSKropathSection `json:"kms,omitempty"`
 	Tags map[string]string         `json:"tags,omitempty"`
 }
 
-type AWSIAMConfig struct {
+type IAMConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   AWSIAMConfigSpec   `json:"spec,omitempty"`
-	Status AWSIAMConfigStatus `json:"status,omitempty"`
+	Spec   IAMConfigSpec   `json:"spec,omitempty"`
+	Status IAMConfigStatus `json:"status,omitempty"`
 }
 
-type AWSIAMConfigList struct {
+type IAMConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []AWSIAMConfig `json:"items"`
+	Items []IAMConfig `json:"items"`
 }
 
-type AWSIAMConfigSpec struct {
+type IAMConfigSpec struct {
 	Mandatory cascade.IAMSection `json:"mandatory,omitempty"`
 	Defaults  cascade.IAMSection `json:"defaults,omitempty"`
 }
 
-type AWSIAMConfigStatus struct {
-	EffectiveConfig    AWSEffectiveIAMConfig `json:"effectiveConfig,omitempty"`
+type IAMConfigStatus struct {
+	EffectiveConfig    EffectiveIAMConfig `json:"effectiveConfig,omitempty"`
 	ObservedGeneration int64                 `json:"observedGeneration,omitempty"`
 	SyncedTimestamp    string                `json:"syncedTimestamp,omitempty"`
 }
 
-type AWSEffectiveIAMConfig struct {
-	AWS       AWSProviderIdentity `json:"aws,omitempty"`
+type EffectiveIAMConfig struct {
+	AWS       ProviderIdentity `json:"aws,omitempty"`
 	Mandatory cascade.IAMSection  `json:"mandatory,omitempty"`
 	Defaults  cascade.IAMSection  `json:"defaults,omitempty"`
 }
 
-func (in *AWSKropathConfig) DeepCopyInto(out *AWSKropathConfig) {
+func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
@@ -123,51 +123,51 @@ func (in *AWSKropathConfig) DeepCopyInto(out *AWSKropathConfig) {
 	}
 }
 
-func (in *AWSKropathConfig) DeepCopy() *AWSKropathConfig {
+func (in *KropathConfig) DeepCopy() *KropathConfig {
 	if in == nil {
 		return nil
 	}
-	out := new(AWSKropathConfig)
+	out := new(KropathConfig)
 	in.DeepCopyInto(out)
 	return out
 }
 
-func (in *AWSKropathConfig) DeepCopyObject() runtime.Object {
+func (in *KropathConfig) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}
 	return nil
 }
 
-func (in *AWSKropathConfigList) DeepCopyInto(out *AWSKropathConfigList) {
+func (in *KropathConfigList) DeepCopyInto(out *KropathConfigList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
-		out.Items = make([]AWSKropathConfig, len(in.Items))
+		out.Items = make([]KropathConfig, len(in.Items))
 		for i := range in.Items {
 			in.Items[i].DeepCopyInto(&out.Items[i])
 		}
 	}
 }
 
-func (in *AWSKropathConfigList) DeepCopy() *AWSKropathConfigList {
+func (in *KropathConfigList) DeepCopy() *KropathConfigList {
 	if in == nil {
 		return nil
 	}
-	out := new(AWSKropathConfigList)
+	out := new(KropathConfigList)
 	in.DeepCopyInto(out)
 	return out
 }
 
-func (in *AWSKropathConfigList) DeepCopyObject() runtime.Object {
+func (in *KropathConfigList) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}
 	return nil
 }
 
-func (in *AWSIAMConfig) DeepCopyInto(out *AWSIAMConfig) {
+func (in *IAMConfig) DeepCopyInto(out *IAMConfig) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
@@ -175,44 +175,44 @@ func (in *AWSIAMConfig) DeepCopyInto(out *AWSIAMConfig) {
 	out.Status = in.Status
 }
 
-func (in *AWSIAMConfig) DeepCopy() *AWSIAMConfig {
+func (in *IAMConfig) DeepCopy() *IAMConfig {
 	if in == nil {
 		return nil
 	}
-	out := new(AWSIAMConfig)
+	out := new(IAMConfig)
 	in.DeepCopyInto(out)
 	return out
 }
 
-func (in *AWSIAMConfig) DeepCopyObject() runtime.Object {
+func (in *IAMConfig) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}
 	return nil
 }
 
-func (in *AWSIAMConfigList) DeepCopyInto(out *AWSIAMConfigList) {
+func (in *IAMConfigList) DeepCopyInto(out *IAMConfigList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
-		out.Items = make([]AWSIAMConfig, len(in.Items))
+		out.Items = make([]IAMConfig, len(in.Items))
 		for i := range in.Items {
 			in.Items[i].DeepCopyInto(&out.Items[i])
 		}
 	}
 }
 
-func (in *AWSIAMConfigList) DeepCopy() *AWSIAMConfigList {
+func (in *IAMConfigList) DeepCopy() *IAMConfigList {
 	if in == nil {
 		return nil
 	}
-	out := new(AWSIAMConfigList)
+	out := new(IAMConfigList)
 	in.DeepCopyInto(out)
 	return out
 }
 
-func (in *AWSIAMConfigList) DeepCopyObject() runtime.Object {
+func (in *IAMConfigList) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}

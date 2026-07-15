@@ -1,6 +1,6 @@
 # Assert: global level-1 mandatory boundary wins over local level-2 boundary.
-apiVersion: kropath.run/v1alpha1
-kind: AWSIAMConfig
+apiVersion: aws.kropath.run/v1alpha1
+kind: IAMConfig
 metadata:
   name: general-policy
   namespace: payments-prod

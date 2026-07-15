@@ -1,6 +1,6 @@
-# AC-8: globalAWSKMSConfig mandatory.allowedKeySpecs (level 3, should lose to level 1).
-apiVersion: kropath.run/v1alpha1
-kind: AWSKMSConfig
+# AC-8: globalKMSConfig mandatory.allowedKeySpecs (level 3, should lose to level 1).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
 metadata:
   name: general-policy
   namespace: kro-system

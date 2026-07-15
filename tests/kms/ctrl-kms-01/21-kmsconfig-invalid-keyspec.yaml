@@ -1,7 +1,7 @@
-# AC-9: AWSKMSConfig with mandatory.keySpec NOT in mandatory.allowedKeySpecs.
+# AC-9: KMSConfig with mandatory.keySpec NOT in mandatory.allowedKeySpecs.
 # Controller must set Valid=False and NOT write effectiveConfig.
-apiVersion: kropath.run/v1alpha1
-kind: AWSKMSConfig
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
 metadata:
   name: general-policy
   namespace: payments-prod

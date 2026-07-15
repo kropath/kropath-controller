@@ -17,8 +17,8 @@
 package cascade
 
 // IAMSection holds the three IAM-specific governance fields shared by
-// AWSKropathConfig.spec.mandatory.iam / .defaults.iam and
-// AWSIAMConfig.spec.mandatory / .spec.defaults.
+// KropathConfig.spec.mandatory.iam / .defaults.iam and
+// IAMConfig.spec.mandatory / .spec.defaults.
 //
 // Zero value of each field is the permissive sentinel (not enforced).
 type IAMSection struct {
@@ -36,7 +36,7 @@ type IAMSection struct {
 }
 
 // EffectiveIAMConfig is the merged IAM governance result written into
-// AWSIAMConfig.status.effectiveConfig by the controller.
+// IAMConfig.status.effectiveConfig by the controller.
 type EffectiveIAMConfig struct {
 	Mandatory IAMSection `json:"mandatory"`
 	Defaults  IAMSection `json:"defaults"`
@@ -47,15 +47,15 @@ type EffectiveIAMConfig struct {
 //
 // The ten-level priority chain (ADR-015 §5.3) for IAM fields:
 //
-//	Level 1 — globalKropathMandatory  (AWSKropathConfig in kro-system)
-//	Level 2 — localKropathMandatory   (AWSKropathConfig in resource namespace)
-//	Level 3 — globalIAMCfgMandatory   (AWSIAMConfig in kro-system)
-//	Level 4 — localIAMCfgMandatory    (AWSIAMConfig in resource namespace)
+//	Level 1 — globalKropathMandatory  (KropathConfig in kro-system)
+//	Level 2 — localKropathMandatory   (KropathConfig in resource namespace)
+//	Level 3 — globalIAMCfgMandatory   (IAMConfig in kro-system)
+//	Level 4 — localIAMCfgMandatory    (IAMConfig in resource namespace)
 //	(Level 5 = instance spec — resolved in RGD CEL, not here)
-//	Level 6 — localIAMCfgDefaults     (AWSIAMConfig in resource namespace)
-//	Level 7 — globalIAMCfgDefaults    (AWSIAMConfig in kro-system)
-//	Level 8 — localKropathDefaults    (AWSKropathConfig in resource namespace)
-//	Level 9 — globalKropathDefaults   (AWSKropathConfig in kro-system)
+//	Level 6 — localIAMCfgDefaults     (IAMConfig in resource namespace)
+//	Level 7 — globalIAMCfgDefaults    (IAMConfig in kro-system)
+//	Level 8 — localKropathDefaults    (KropathConfig in resource namespace)
+//	Level 9 — globalKropathDefaults   (KropathConfig in kro-system)
 //
 // For mandatory (levels 1–4): first non-zero value in priority order wins.
 // For defaults (levels 6–9): first non-zero value in priority order wins.

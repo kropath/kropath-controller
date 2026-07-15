@@ -40,8 +40,8 @@ func leaderElectionNamespace() string {
 func main() {
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.BoolVar(&enablePolicyDoc, "enable-poldoc", false, "Enable the AWSPolicyDocument reconciler.")
-	flag.BoolVar(&enableKMSCascade, "enable-kms-cascade", false, "Enable the AWSKMSConfig cascade reconciler.")
+	flag.BoolVar(&enablePolicyDoc, "enable-poldoc", false, "Enable the PolicyDocument reconciler.")
+	flag.BoolVar(&enableKMSCascade, "enable-kms-cascade", false, "Enable the KMSConfig cascade reconciler.")
 	opts := zap.Options{Development: true}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
@@ -64,7 +64,7 @@ func main() {
 		HealthProbeBindAddress:  probeAddr,
 		LeaderElection:          true,
 		LeaderElectionNamespace: leaderElectionNamespace(),
-		LeaderElectionID:        "kropath-controller.kropath.run",
+		LeaderElectionID:        "kropath-controller.aws.kropath.run",
 	})
 	if err != nil {
 		ctrl.Log.Error(err, "unable to start manager")
@@ -73,7 +73,7 @@ func main() {
 
 	if err := (&iamconfig.Reconciler{
 		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("AWSIAMConfig"),
+		Log:    ctrl.Log.WithName("controllers").WithName("IAMConfig"),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		ctrl.Log.Error(err, "unable to create IAM config controller")
@@ -82,7 +82,7 @@ func main() {
 
 	if err := (&s3config.Reconciler{
 		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("AWSS3Config"),
+		Log:    ctrl.Log.WithName("controllers").WithName("S3Config"),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		ctrl.Log.Error(err, "unable to create S3 config controller")
@@ -91,7 +91,7 @@ func main() {
 
 	if enablePolicyDoc {
 		if err := (&policydocument.Reconciler{Client: mgr.GetClient()}).SetupWithManager(mgr); err != nil {
-			ctrl.Log.Error(err, "unable to create AWSPolicyDocument reconciler")
+			ctrl.Log.Error(err, "unable to create PolicyDocument reconciler")
 			os.Exit(1)
 		}
 	}
@@ -99,10 +99,10 @@ func main() {
 	if enableKMSCascade {
 		if err := (&kmsconfig.Reconciler{
 			Client: mgr.GetClient(),
-			Log:    ctrl.Log.WithName("controllers").WithName("AWSKMSConfig"),
+			Log:    ctrl.Log.WithName("controllers").WithName("KMSConfig"),
 			Scheme: mgr.GetScheme(),
 		}).SetupWithManager(mgr); err != nil {
-			ctrl.Log.Error(err, "unable to create AWSKMSConfig reconciler")
+			ctrl.Log.Error(err, "unable to create KMSConfig reconciler")
 			os.Exit(1)
 		}
 	}

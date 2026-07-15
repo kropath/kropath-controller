@@ -1,6 +1,6 @@
-# AC-4: level-3 globalAWSIAMConfig mandatory maxSessionDurationSeconds=7200 (should lose).
-apiVersion: kropath.run/v1alpha1
-kind: AWSIAMConfig
+# AC-4: level-3 globalIAMConfig mandatory maxSessionDurationSeconds=7200 (should lose).
+apiVersion: aws.kropath.run/v1alpha1
+kind: IAMConfig
 metadata:
   name: general-policy
   namespace: kro-system

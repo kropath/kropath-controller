@@ -13,9 +13,9 @@
 - Also copies provider identity (`aws.accountId`, `aws.region`) into `effCfg.aws.*` (ADR-010 D-3)
 - Unit tests required for merge logic; integration tests required for full controller reconcile path
 
-### Reconciler 2 — AWSPolicyDocument (`--enable-poldoc`)
+### Reconciler 2 — PolicyDocument (`--enable-poldoc`)
 
-- Watches `AWSPolicyDocument` CRs and `AWSKropathConfig` CRs (account ID / region lookup)
+- Watches `PolicyDocument` CRs and `KropathConfig` CRs (account ID / region lookup)
 - Resolves `spec.statements[].principals[].ref` and `spec.statements[].resources[].ref` to ARNs using ARN prediction; falls back to `status.arn` for non-predictable kinds
 - Merges Statement arrays from `spec.sources` (left-ordered concatenation); detects Sid conflicts
 - Serializes resolved document to `status.resolvedDocumentJSON`; sets `Ready`, `SidConflict`, `SourceNotReady` conditions

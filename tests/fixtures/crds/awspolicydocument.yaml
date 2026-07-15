@@ -15,14 +15,14 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: awspolicydocuments.kropath.run
+  name: policydocuments.aws.kropath.run
 spec:
-  group: kropath.run
+  group: aws.kropath.run
   names:
-    kind: AWSPolicyDocument
-    listKind: AWSPolicyDocumentList
-    plural: awspolicydocuments
-    singular: awspolicydocument
+    kind: PolicyDocument
+    listKind: PolicyDocumentList
+    plural: policydocuments
+    singular: policydocument
     shortNames:
       - awspoldoc
   scope: Namespaced

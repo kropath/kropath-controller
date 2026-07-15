@@ -1,6 +1,6 @@
 # Assert AC-9: Valid condition is False with reason InvalidKeySpecNotInAllowedList.
-apiVersion: kropath.run/v1alpha1
-kind: AWSKMSConfig
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
 metadata:
   name: general-policy
   namespace: payments-prod

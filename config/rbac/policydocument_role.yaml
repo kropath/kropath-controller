@@ -3,12 +3,12 @@ kind: ClusterRole
 metadata:
   name: kropath-policydocument
 rules:
-  - apiGroups: ["kropath.run"]
+  - apiGroups: ["aws.kropath.run"]
     resources:
-      - awspolicydocuments
-      - awspolicydocuments/status
+      - policydocuments
+      - policydocuments/status
     verbs: ["get", "list", "watch", "update", "patch"]
-  - apiGroups: ["kropath.run"]
+  - apiGroups: ["aws.kropath.run"]
     resources:
       - awsiamroles
       - awss3buckets

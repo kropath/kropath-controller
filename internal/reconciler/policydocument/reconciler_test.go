@@ -50,10 +50,10 @@ func TestReconcilePassesThroughDocumentJSON(t *testing.T) {
 		t.Fatalf("add scheme: %v", err)
 	}
 
-	doc := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	doc := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "raw", Namespace: "default", Generation: 3},
-		Spec: v1alpha1.AWSPolicyDocumentSpec{
+		Spec: v1alpha1.PolicyDocumentSpec{
 			DocumentJSON: `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}`,
 		},
 	}
@@ -79,13 +79,13 @@ func TestReconcileClearsResolvedDocumentOnInvalidDocumentJSON(t *testing.T) {
 		t.Fatalf("add scheme: %v", err)
 	}
 
-	doc := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	doc := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "raw", Namespace: "default", Generation: 4},
-		Spec: v1alpha1.AWSPolicyDocumentSpec{
+		Spec: v1alpha1.PolicyDocumentSpec{
 			DocumentJSON: `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}`,
 		},
-		Status: v1alpha1.AWSPolicyDocumentStatus{
+		Status: v1alpha1.PolicyDocumentStatus{
 			ResolvedDocumentJSON: `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:PutObject","Resource":"*"}]}`,
 			StatementCount:       1,
 		},
@@ -120,10 +120,10 @@ func TestReconcileSkipsStatusUpdateWhenStatusIsUnchanged(t *testing.T) {
 		t.Fatalf("add scheme: %v", err)
 	}
 
-	doc := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	doc := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "raw", Namespace: "default", Generation: 3},
-		Spec: v1alpha1.AWSPolicyDocumentSpec{
+		Spec: v1alpha1.PolicyDocumentSpec{
 			DocumentJSON: `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}`,
 		},
 	}
@@ -133,7 +133,7 @@ func TestReconcileSkipsStatusUpdateWhenStatusIsUnchanged(t *testing.T) {
 		t.Fatalf("seed reconcile: %v", err)
 	}
 
-	stored := &v1alpha1.AWSPolicyDocument{
+	stored := &v1alpha1.PolicyDocument{
 		TypeMeta:   doc.TypeMeta,
 		ObjectMeta: doc.ObjectMeta,
 		Spec:       doc.Spec,
@@ -161,17 +161,17 @@ func TestReconcileResolvesPredictedArnRef(t *testing.T) {
 	}
 
 	role := &unstructured.Unstructured{}
-	role.SetGroupVersionKind(schema.GroupVersionKind{Group: "kropath.run", Version: "v1alpha1", Kind: "AWSIAMRole"})
+	role.SetGroupVersionKind(schema.GroupVersionKind{Group: "aws.kropath.run", Version: "v1alpha1", Kind: "AWSIAMRole"})
 	role.SetNamespace("default")
 	role.SetName("lambda-exec")
 	if err := unstructured.SetNestedField(role.Object, "arn:aws:iam::123456789012:role/lambda-exec", "status", "predictedArn"); err != nil {
 		t.Fatalf("seed role status: %v", err)
 	}
 
-	doc := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	doc := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "policy", Namespace: "default", Generation: 5},
-		Spec: v1alpha1.AWSPolicyDocumentSpec{
+		Spec: v1alpha1.PolicyDocumentSpec{
 			Statements: []v1alpha1.PolicyStatement{
 				{
 					Sid:     "AllowLambdaInvoke",
@@ -206,10 +206,10 @@ func TestReconcileMarksSourceNotReadyWhenRefPending(t *testing.T) {
 		t.Fatalf("add scheme: %v", err)
 	}
 
-	doc := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	doc := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "policy", Namespace: "default", Generation: 2},
-		Spec: v1alpha1.AWSPolicyDocumentSpec{
+		Spec: v1alpha1.PolicyDocumentSpec{
 			Statements: []v1alpha1.PolicyStatement{
 				{
 					Effect:  "Allow",
@@ -220,7 +220,7 @@ func TestReconcileMarksSourceNotReadyWhenRefPending(t *testing.T) {
 				},
 			},
 		},
-		Status: v1alpha1.AWSPolicyDocumentStatus{
+		Status: v1alpha1.PolicyDocumentStatus{
 			ResolvedDocumentJSON: `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}`,
 			StatementCount:       1,
 			SourceCount:          1,
@@ -259,17 +259,17 @@ func TestReconcileResolvesPrincipalRefToPredictedArn(t *testing.T) {
 	}
 
 	bucket := &unstructured.Unstructured{}
-	bucket.SetGroupVersionKind(schema.GroupVersionKind{Group: "kropath.run", Version: "v1alpha1", Kind: "AWSS3Bucket"})
+	bucket.SetGroupVersionKind(schema.GroupVersionKind{Group: "aws.kropath.run", Version: "v1alpha1", Kind: "AWSS3Bucket"})
 	bucket.SetNamespace("default")
 	bucket.SetName("my-bucket")
 	if err := unstructured.SetNestedField(bucket.Object, "arn:aws:s3:::my-bucket", "status", "predictedArn"); err != nil {
 		t.Fatalf("seed bucket status: %v", err)
 	}
 
-	doc := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	doc := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "bucket-policy", Namespace: "default", Generation: 6},
-		Spec: v1alpha1.AWSPolicyDocumentSpec{
+		Spec: v1alpha1.PolicyDocumentSpec{
 			Statements: []v1alpha1.PolicyStatement{
 				{
 					Effect:  "Allow",
@@ -304,14 +304,14 @@ func TestReconcileSucceedsAfterRefBecomesReady(t *testing.T) {
 	}
 
 	role := &unstructured.Unstructured{}
-	role.SetGroupVersionKind(schema.GroupVersionKind{Group: "kropath.run", Version: "v1alpha1", Kind: "AWSIAMRole"})
+	role.SetGroupVersionKind(schema.GroupVersionKind{Group: "aws.kropath.run", Version: "v1alpha1", Kind: "AWSIAMRole"})
 	role.SetNamespace("default")
 	role.SetName("lambda-exec")
 
-	doc := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	doc := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "policy", Namespace: "default", Generation: 7},
-		Spec: v1alpha1.AWSPolicyDocumentSpec{
+		Spec: v1alpha1.PolicyDocumentSpec{
 			Statements: []v1alpha1.PolicyStatement{
 				{
 					Effect:  "Allow",
@@ -341,7 +341,7 @@ func TestReconcileSucceedsAfterRefBecomesReady(t *testing.T) {
 		t.Fatalf("update role: %v", err)
 	}
 
-	doc.Status = v1alpha1.AWSPolicyDocumentStatus{}
+	doc.Status = v1alpha1.PolicyDocumentStatus{}
 	if _, err := r.reconcileDocument(context.Background(), doc); err != nil {
 		t.Fatalf("second reconcile: %v", err)
 	}
@@ -364,7 +364,7 @@ func TestResolveRefUsesStatusArn(t *testing.T) {
 	}
 
 	obj := &unstructured.Unstructured{}
-	obj.SetGroupVersionKind(schema.GroupVersionKind{Group: "kropath.run", Version: "v1alpha1", Kind: "AWSIAMPolicy"})
+	obj.SetGroupVersionKind(schema.GroupVersionKind{Group: "aws.kropath.run", Version: "v1alpha1", Kind: "AWSIAMPolicy"})
 	obj.SetNamespace("default")
 	obj.SetName("policy")
 	if err := unstructured.SetNestedField(obj.Object, "arn:aws:iam::123456789012:policy/example", "status", "arn"); err != nil {
@@ -390,19 +390,19 @@ func TestRequestsForSourceDocumentReturnsParentsReferencingSource(t *testing.T) 
 		t.Fatalf("add scheme: %v", err)
 	}
 
-	source := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	source := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "base-policy", Namespace: "default"},
 	}
-	related := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	related := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "app-policy", Namespace: "default"},
-		Spec: v1alpha1.AWSPolicyDocumentSpec{
+		Spec: v1alpha1.PolicyDocumentSpec{
 			Sources: []v1alpha1.PolicyDocumentSource{{Name: "base-policy"}},
 		},
 	}
-	unrelated := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	unrelated := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "standalone", Namespace: "default"},
 	}
 
@@ -435,10 +435,10 @@ func TestRequestsForReferencedResourceReturnsMatchingDocuments(t *testing.T) {
 		t.Fatalf("add scheme: %v", err)
 	}
 
-	match := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	match := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "match", Namespace: "default"},
-		Spec: v1alpha1.AWSPolicyDocumentSpec{
+		Spec: v1alpha1.PolicyDocumentSpec{
 			Statements: []v1alpha1.PolicyStatement{
 				{
 					Effect:  "Allow",
@@ -450,10 +450,10 @@ func TestRequestsForReferencedResourceReturnsMatchingDocuments(t *testing.T) {
 			},
 		},
 	}
-	unrelated := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	unrelated := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "unrelated", Namespace: "default"},
-		Spec: v1alpha1.AWSPolicyDocumentSpec{
+		Spec: v1alpha1.PolicyDocumentSpec{
 			Statements: []v1alpha1.PolicyStatement{
 				{
 					Effect:  "Allow",
@@ -495,13 +495,13 @@ func TestReconcileMergesSourceStatementsBeforeOwnStatements(t *testing.T) {
 		t.Fatalf("add scheme: %v", err)
 	}
 
-	source := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	source := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "base", Namespace: "default", Generation: 1},
-		Status: v1alpha1.AWSPolicyDocumentStatus{
+		Status: v1alpha1.PolicyDocumentStatus{
 			ResolvedDocumentJSON: `{"Version":"2012-10-17","Statement":[{"Sid":"BaseAllow","Effect":"Allow","Action":"s3:GetObject","Resource":"arn:aws:s3:::base-bucket"}]}`,
 		},
-		Spec: v1alpha1.AWSPolicyDocumentSpec{
+		Spec: v1alpha1.PolicyDocumentSpec{
 			Statements: []v1alpha1.PolicyStatement{
 				{
 					Sid:     "BaseAllow",
@@ -514,10 +514,10 @@ func TestReconcileMergesSourceStatementsBeforeOwnStatements(t *testing.T) {
 			},
 		},
 	}
-	doc := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	doc := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "child", Namespace: "default", Generation: 2},
-		Spec: v1alpha1.AWSPolicyDocumentSpec{
+		Spec: v1alpha1.PolicyDocumentSpec{
 			Sources: []v1alpha1.PolicyDocumentSource{{Name: "base"}},
 			Statements: []v1alpha1.PolicyStatement{
 				{
@@ -557,23 +557,23 @@ func TestReconcileRejectsMergeFromRawSource(t *testing.T) {
 		t.Fatalf("add scheme: %v", err)
 	}
 
-	source := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	source := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "base", Namespace: "default", Generation: 1},
-		Spec: v1alpha1.AWSPolicyDocumentSpec{
+		Spec: v1alpha1.PolicyDocumentSpec{
 			DocumentJSON: `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}`,
 		},
-		Status: v1alpha1.AWSPolicyDocumentStatus{
+		Status: v1alpha1.PolicyDocumentStatus{
 			ResolvedDocumentJSON: `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}`,
 		},
 	}
-	doc := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	doc := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "child", Namespace: "default", Generation: 2},
-		Spec: v1alpha1.AWSPolicyDocumentSpec{
+		Spec: v1alpha1.PolicyDocumentSpec{
 			Sources: []v1alpha1.PolicyDocumentSource{{Name: "base"}},
 		},
-		Status: v1alpha1.AWSPolicyDocumentStatus{
+		Status: v1alpha1.PolicyDocumentStatus{
 			ResolvedDocumentJSON: `{"Version":"2012-10-17","Statement":[{"Sid":"Keep","Effect":"Allow","Action":"s3:ListBucket","Resource":"*"}]}`,
 			StatementCount:       1,
 			SourceCount:          1,
@@ -604,17 +604,17 @@ func TestReconcileDetectsAndClearsSidConflicts(t *testing.T) {
 		t.Fatalf("add scheme: %v", err)
 	}
 
-	source := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	source := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "base", Namespace: "default", Generation: 1},
-		Status: v1alpha1.AWSPolicyDocumentStatus{
+		Status: v1alpha1.PolicyDocumentStatus{
 			ResolvedDocumentJSON: `{"Version":"2012-10-17","Statement":[{"Sid":"AllowS3Read","Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}`,
 		},
 	}
-	doc := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	doc := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "child", Namespace: "default", Generation: 2},
-		Spec: v1alpha1.AWSPolicyDocumentSpec{
+		Spec: v1alpha1.PolicyDocumentSpec{
 			Sources: []v1alpha1.PolicyDocumentSource{{Name: "base"}},
 			Statements: []v1alpha1.PolicyStatement{
 				{
@@ -627,7 +627,7 @@ func TestReconcileDetectsAndClearsSidConflicts(t *testing.T) {
 				},
 			},
 		},
-		Status: v1alpha1.AWSPolicyDocumentStatus{
+		Status: v1alpha1.PolicyDocumentStatus{
 			ResolvedDocumentJSON: `{"Version":"2012-10-17","Statement":[{"Sid":"Keep","Effect":"Allow","Action":"s3:ListBucket","Resource":"*"}]}`,
 		},
 	}
@@ -681,13 +681,13 @@ func TestReconcileMarksSourceMissingAndRequeues(t *testing.T) {
 		t.Fatalf("add scheme: %v", err)
 	}
 
-	doc := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	doc := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "child", Namespace: "default", Generation: 2},
-		Spec: v1alpha1.AWSPolicyDocumentSpec{
+		Spec: v1alpha1.PolicyDocumentSpec{
 			Sources: []v1alpha1.PolicyDocumentSource{{Name: "missing"}},
 		},
-		Status: v1alpha1.AWSPolicyDocumentStatus{
+		Status: v1alpha1.PolicyDocumentStatus{
 			ResolvedDocumentJSON: `{"Version":"2012-10-17","Statement":[{"Sid":"Keep","Effect":"Allow","Action":"s3:ListBucket","Resource":"*"}]}`,
 			StatementCount:       1,
 		},
@@ -723,13 +723,13 @@ func TestReconcileMergesTransitiveSourcesThroughResolvedDocuments(t *testing.T) 
 		t.Fatalf("add scheme: %v", err)
 	}
 
-	base := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	base := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "base", Namespace: "default", Generation: 1},
-		Status: v1alpha1.AWSPolicyDocumentStatus{
+		Status: v1alpha1.PolicyDocumentStatus{
 			ResolvedDocumentJSON: `{"Version":"2012-10-17","Statement":[{"Sid":"BaseAllow","Effect":"Allow","Action":"s3:GetObject","Resource":"arn:aws:s3:::base-bucket"}]}`,
 		},
-		Spec: v1alpha1.AWSPolicyDocumentSpec{
+		Spec: v1alpha1.PolicyDocumentSpec{
 			Statements: []v1alpha1.PolicyStatement{
 				{
 					Sid:     "BaseAllow",
@@ -742,13 +742,13 @@ func TestReconcileMergesTransitiveSourcesThroughResolvedDocuments(t *testing.T) 
 			},
 		},
 	}
-	mid := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	mid := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "mid", Namespace: "default", Generation: 2},
-		Status: v1alpha1.AWSPolicyDocumentStatus{
+		Status: v1alpha1.PolicyDocumentStatus{
 			ResolvedDocumentJSON: `{"Version":"2012-10-17","Statement":[{"Sid":"BaseAllow","Effect":"Allow","Action":"s3:GetObject","Resource":"arn:aws:s3:::base-bucket"},{"Sid":"MidAllow","Effect":"Allow","Action":"s3:PutObject","Resource":"arn:aws:s3:::mid-bucket"}]}`,
 		},
-		Spec: v1alpha1.AWSPolicyDocumentSpec{
+		Spec: v1alpha1.PolicyDocumentSpec{
 			Sources: []v1alpha1.PolicyDocumentSource{{Name: "base"}},
 			Statements: []v1alpha1.PolicyStatement{
 				{
@@ -762,10 +762,10 @@ func TestReconcileMergesTransitiveSourcesThroughResolvedDocuments(t *testing.T) 
 			},
 		},
 	}
-	leaf := &v1alpha1.AWSPolicyDocument{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "kropath.run/v1alpha1", Kind: v1alpha1.AWSPolicyDocumentKind},
+	leaf := &v1alpha1.PolicyDocument{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "aws.kropath.run/v1alpha1", Kind: v1alpha1.PolicyDocumentKind},
 		ObjectMeta: metav1.ObjectMeta{Name: "leaf", Namespace: "default", Generation: 3},
-		Spec: v1alpha1.AWSPolicyDocumentSpec{
+		Spec: v1alpha1.PolicyDocumentSpec{
 			Sources: []v1alpha1.PolicyDocumentSource{{Name: "mid"}},
 			Statements: []v1alpha1.PolicyStatement{
 				{

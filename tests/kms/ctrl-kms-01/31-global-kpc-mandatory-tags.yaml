@@ -1,6 +1,6 @@
-# AC-15: globalAWSKropathConfig with mandatory.tags (tier-level tags, level 1).
-apiVersion: kropath.run/v1alpha1
-kind: AWSKropathConfig
+# AC-15: globalKropathConfig with mandatory.tags (tier-level tags, level 1).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
 metadata:
   name: general-policy
   namespace: kro-system

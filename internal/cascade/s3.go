@@ -17,8 +17,8 @@
 package cascade
 
 // S3Section holds the S3-specific governance fields shared by
-// AWSKropathConfig.spec.mandatory.s3 / .defaults.s3 and
-// AWSS3Config.spec.mandatory / .spec.defaults.
+// KropathConfig.spec.mandatory.s3 / .defaults.s3 and
+// S3Config.spec.mandatory / .spec.defaults.
 //
 // Zero value of each field is the permissive sentinel (not enforced).
 type S3Section struct {
@@ -60,7 +60,7 @@ type S3Section struct {
 }
 
 // EffectiveS3Config is the merged S3 governance result written into
-// AWSS3Config.status.effectiveConfig by the controller.
+// S3Config.status.effectiveConfig by the controller.
 type EffectiveS3Config struct {
 	Mandatory S3Section `json:"mandatory"`
 	Defaults  S3Section `json:"defaults"`
@@ -71,15 +71,15 @@ type EffectiveS3Config struct {
 //
 // The ten-level priority chain (ADR-015 §5.3) for S3 fields:
 //
-//	Level 1 — globalKropathMandatory  (AWSKropathConfig in kro-system)
-//	Level 2 — localKropathMandatory   (AWSKropathConfig in resource namespace)
-//	Level 3 — globalS3CfgMandatory    (AWSS3Config in kro-system)
-//	Level 4 — localS3CfgMandatory     (AWSS3Config in resource namespace)
+//	Level 1 — globalKropathMandatory  (KropathConfig in kro-system)
+//	Level 2 — localKropathMandatory   (KropathConfig in resource namespace)
+//	Level 3 — globalS3CfgMandatory    (S3Config in kro-system)
+//	Level 4 — localS3CfgMandatory     (S3Config in resource namespace)
 //	(Level 5 = instance spec — resolved in RGD CEL, not here)
-//	Level 6 — localS3CfgDefaults      (AWSS3Config in resource namespace)
-//	Level 7 — globalS3CfgDefaults     (AWSS3Config in kro-system)
-//	Level 8 — localKropathDefaults    (AWSKropathConfig in resource namespace)
-//	Level 9 — globalKropathDefaults   (AWSKropathConfig in kro-system)
+//	Level 6 — localS3CfgDefaults      (S3Config in resource namespace)
+//	Level 7 — globalS3CfgDefaults     (S3Config in kro-system)
+//	Level 8 — localKropathDefaults    (KropathConfig in resource namespace)
+//	Level 9 — globalKropathDefaults   (KropathConfig in kro-system)
 //
 // For mandatory (levels 1–4): first non-zero value in priority order wins.
 // For defaults (levels 6–9): first non-zero value in priority order wins.

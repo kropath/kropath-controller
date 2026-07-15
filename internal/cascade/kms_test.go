@@ -49,7 +49,7 @@ func mergeKMSAll(
 	)
 }
 
-// TestMergeKMSCascade_AC1 — globalAWSKropathConfig.mandatory.kms.enableKeyRotation=true
+// TestMergeKMSCascade_AC1 — globalKropathConfig.mandatory.kms.enableKeyRotation=true
 // at level 1 propagates to effCfg.mandatory.enableKeyRotation.
 func TestMergeKMSCascade_AC1(t *testing.T) {
 	got := mergeKMSAll(
@@ -72,7 +72,7 @@ func TestMergeKMSCascade_AC1(t *testing.T) {
 }
 
 // TestMergeKMSCascade_AC2 — level-1 KropathConfig mandatory wins over level-3
-// AWSKMSConfig mandatory when both enableKeyRotation values differ.
+// KMSConfig mandatory when both enableKeyRotation values differ.
 func TestMergeKMSCascade_AC2(t *testing.T) {
 	got := mergeKMSAll(
 		cascade.KMSKropathSection{EnableKeyRotation: true}, // level 1
@@ -90,7 +90,7 @@ func TestMergeKMSCascade_AC2(t *testing.T) {
 	}
 }
 
-// TestMergeKMSCascade_AC3 — only globalAWSKMSConfig.defaults.enableKeyRotation set;
+// TestMergeKMSCascade_AC3 — only globalKMSConfig.defaults.enableKeyRotation set;
 // mandatory must be false, defaults must be true.
 func TestMergeKMSCascade_AC3(t *testing.T) {
 	got := mergeKMSAll(
@@ -112,8 +112,8 @@ func TestMergeKMSCascade_AC3(t *testing.T) {
 	}
 }
 
-// TestMergeKMSCascade_AC4 — globalAWSKMSConfig.mandatory.keySpec=SYMMETRIC_DEFAULT (level 3)
-// wins over localAWSKMSConfig.mandatory.keySpec=RSA_4096 (level 4).
+// TestMergeKMSCascade_AC4 — globalKMSConfig.mandatory.keySpec=SYMMETRIC_DEFAULT (level 3)
+// wins over localKMSConfig.mandatory.keySpec=RSA_4096 (level 4).
 func TestMergeKMSCascade_AC4(t *testing.T) {
 	got := mergeKMSAll(
 		zeroKropathKMS,
@@ -131,7 +131,7 @@ func TestMergeKMSCascade_AC4(t *testing.T) {
 	}
 }
 
-// TestMergeKMSCascade_AC5 — only globalAWSKMSConfig.defaults.keySpec set;
+// TestMergeKMSCascade_AC5 — only globalKMSConfig.defaults.keySpec set;
 // mandatory.keySpec must be empty, defaults.keySpec must be set.
 func TestMergeKMSCascade_AC5(t *testing.T) {
 	got := mergeKMSAll(
@@ -153,7 +153,7 @@ func TestMergeKMSCascade_AC5(t *testing.T) {
 	}
 }
 
-// TestMergeKMSCascade_AC6 — globalAWSKMSConfig.mandatory.keyUsage=ENCRYPT_DECRYPT
+// TestMergeKMSCascade_AC6 — globalKMSConfig.mandatory.keyUsage=ENCRYPT_DECRYPT
 // propagates to effCfg.mandatory.keyUsage.
 func TestMergeKMSCascade_AC6(t *testing.T) {
 	got := mergeKMSAll(
@@ -172,7 +172,7 @@ func TestMergeKMSCascade_AC6(t *testing.T) {
 	}
 }
 
-// TestMergeKMSCascade_AC7 — globalAWSKropathConfig.mandatory.kms.allowedKeySpecs
+// TestMergeKMSCascade_AC7 — globalKropathConfig.mandatory.kms.allowedKeySpecs
 // propagates across all profiles and namespaces.
 func TestMergeKMSCascade_AC7(t *testing.T) {
 	allowed := []string{"SYMMETRIC_DEFAULT", "RSA_4096"}
@@ -197,7 +197,7 @@ func TestMergeKMSCascade_AC7(t *testing.T) {
 }
 
 // TestMergeKMSCascade_AC8 — level-1 allowedKeySpecs (KropathConfig) wins over
-// level-3 allowedKeySpecs (AWSKMSConfig) when both are set.
+// level-3 allowedKeySpecs (KMSConfig) when both are set.
 func TestMergeKMSCascade_AC8(t *testing.T) {
 	got := mergeKMSAll(
 		cascade.KMSKropathSection{AllowedKeySpecs: []string{"SYMMETRIC_DEFAULT", "RSA_4096"}}, // level 1

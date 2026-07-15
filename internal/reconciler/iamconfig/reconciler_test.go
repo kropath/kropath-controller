@@ -160,7 +160,7 @@ func TestRequestsForIAMConfigChangeGlobal(t *testing.T) {
 		localIAMConfig("payments-prod", "other-policy"),
 	)
 
-	got := rec.requestsForIAMConfigChange(context.Background(), &v1alpha1.AWSIAMConfig{
+	got := rec.requestsForIAMConfigChange(context.Background(), &v1alpha1.IAMConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "general-policy",
 			Namespace: kroSystemNamespace,
@@ -191,7 +191,7 @@ func TestRequestsForIAMConfigChangeGlobal(t *testing.T) {
 func TestRequestsForIAMConfigChangeNonGlobalIgnored(t *testing.T) {
 	rec, _ := testReconciler(t, localIAMConfig("payments-prod", "general-policy"))
 
-	got := rec.requestsForIAMConfigChange(context.Background(), &v1alpha1.AWSIAMConfig{
+	got := rec.requestsForIAMConfigChange(context.Background(), &v1alpha1.IAMConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "general-policy",
 			Namespace: "payments-prod",
@@ -203,7 +203,7 @@ func TestRequestsForIAMConfigChangeNonGlobalIgnored(t *testing.T) {
 	}
 }
 
-func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, *v1alpha1.AWSIAMConfig) {
+func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, *v1alpha1.IAMConfig) {
 	t.Helper()
 	scheme := runtime.NewScheme()
 	if err := v1alpha1.AddToScheme(scheme); err != nil {
@@ -211,7 +211,7 @@ func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, *v1alpha
 	}
 	builder := fake.NewClientBuilder().
 		WithScheme(scheme).
-		WithStatusSubresource(&v1alpha1.AWSIAMConfig{})
+		WithStatusSubresource(&v1alpha1.IAMConfig{})
 	for _, obj := range objs {
 		builder = builder.WithRuntimeObjects(obj)
 	}
@@ -223,70 +223,70 @@ func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, *v1alpha
 	return &Reconciler{Client: cl, Log: logr.Discard(), Scheme: scheme}, cfg
 }
 
-func globalKropathConfig(name string, iam cascade.IAMSection) *v1alpha1.AWSKropathConfig {
-	return &v1alpha1.AWSKropathConfig{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "AWSKropathConfig"},
+func globalKropathConfig(name string, iam cascade.IAMSection) *v1alpha1.KropathConfig {
+	return &v1alpha1.KropathConfig{
+		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "KropathConfig"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: kroSystemNamespace,
 		},
-		Spec: v1alpha1.AWSKropathConfigSpec{
-			Mandatory: v1alpha1.AWSKropathConfigTier{IAM: iam},
+		Spec: v1alpha1.KropathConfigSpec{
+			Mandatory: v1alpha1.KropathConfigTier{IAM: iam},
 		},
 	}
 }
 
-func localKropathConfig(namespace, name string, iam cascade.IAMSection) *v1alpha1.AWSKropathConfig {
+func localKropathConfig(namespace, name string, iam cascade.IAMSection) *v1alpha1.KropathConfig {
 	cfg := globalKropathConfig(name, cascade.IAMSection{})
 	cfg.Namespace = namespace
 	cfg.Spec.Mandatory.IAM = iam
 	return cfg
 }
 
-func globalKropathConfigWithAWS(name string, aws v1alpha1.AWSProviderIdentity) *v1alpha1.AWSKropathConfig {
+func globalKropathConfigWithAWS(name string, aws v1alpha1.ProviderIdentity) *v1alpha1.KropathConfig {
 	cfg := globalKropathConfig(name, cascade.IAMSection{})
 	cfg.Spec.AWS = aws
 	return cfg
 }
 
-func globalIAMConfig(name string, mandatory cascade.IAMSection) *v1alpha1.AWSIAMConfig {
-	return &v1alpha1.AWSIAMConfig{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "AWSIAMConfig"},
+func globalIAMConfig(name string, mandatory cascade.IAMSection) *v1alpha1.IAMConfig {
+	return &v1alpha1.IAMConfig{
+		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "IAMConfig"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: kroSystemNamespace,
 		},
-		Spec: v1alpha1.AWSIAMConfigSpec{
+		Spec: v1alpha1.IAMConfigSpec{
 			Mandatory: mandatory,
 		},
 	}
 }
 
-func globalIAMConfigDefaults(name string, defaults cascade.IAMSection) *v1alpha1.AWSIAMConfig {
+func globalIAMConfigDefaults(name string, defaults cascade.IAMSection) *v1alpha1.IAMConfig {
 	cfg := globalIAMConfig(name, cascade.IAMSection{})
 	cfg.Spec.Defaults = defaults
 	return cfg
 }
 
-func localIAMConfig(namespace, name string) *v1alpha1.AWSIAMConfig {
-	return &v1alpha1.AWSIAMConfig{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "AWSIAMConfig"},
+func localIAMConfig(namespace, name string) *v1alpha1.IAMConfig {
+	return &v1alpha1.IAMConfig{
+		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "IAMConfig"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Spec: v1alpha1.AWSIAMConfigSpec{},
+		Spec: v1alpha1.IAMConfigSpec{},
 	}
 }
 
-func AWSIdentity(accountID, region string) v1alpha1.AWSProviderIdentity {
-	return v1alpha1.AWSProviderIdentity{AccountID: accountID, Region: region}
+func AWSIdentity(accountID, region string) v1alpha1.ProviderIdentity {
+	return v1alpha1.ProviderIdentity{AccountID: accountID, Region: region}
 }
 
-func getIAMConfig(t *testing.T, c client.Client, namespace, name string) *v1alpha1.AWSIAMConfig {
+func getIAMConfig(t *testing.T, c client.Client, namespace, name string) *v1alpha1.IAMConfig {
 	t.Helper()
-	cfg := &v1alpha1.AWSIAMConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("AWSIAMConfig"))
+	cfg := &v1alpha1.IAMConfig{}
+	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("IAMConfig"))
 	if err := c.Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, cfg); err != nil {
 		t.Fatalf("get IAMConfig: %v", err)
 	}

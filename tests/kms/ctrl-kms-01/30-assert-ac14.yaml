@@ -1,6 +1,6 @@
 # Assert AC-14: effCfg.aws.region and effCfg.aws.accountId from globalKropathConfig.
-apiVersion: kropath.run/v1alpha1
-kind: AWSKMSConfig
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
 metadata:
   name: general-policy
   namespace: payments-prod

@@ -1,0 +1,10 @@
+# AC-4: local KMSConfig mandatory.keySpec="RSA_4096" (level 4 — should lose to level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    keySpec: "RSA_4096"
+  defaults: {}

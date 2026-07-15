@@ -1,6 +1,6 @@
-# AC-14: globalAWSKropathConfig with aws.region and aws.accountId set.
-apiVersion: kropath.run/v1alpha1
-kind: AWSKropathConfig
+# AC-14: globalKropathConfig with aws.region and aws.accountId set.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
 metadata:
   name: general-policy
   namespace: kro-system

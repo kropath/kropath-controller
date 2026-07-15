@@ -22,8 +22,8 @@ Three layers per provider. **kropath-controller** pre-merges all sources and wri
 
 | Layer | Kind | Scope |
 |---|---|---|
-| 1 | `<Provider>KropathConfig` | Org-wide + namespace |
-| 2 | `<Provider><Kind>Config` | ResourceConfig per-type (controller writes `status.effectiveConfig`) |
+| 1 | `KropathConfig` | Org-wide + namespace |
+| 2 | `<ResourceFamily>Config` | ResourceConfig per-type/per-resource-family (controller writes `status.effectiveConfig`) |
 | 3 | Resource instance `spec` | Developer overrides |
 
 ## CEL Cascade Pattern (ADR-010)
@@ -34,8 +34,8 @@ Three layers per provider. **kropath-controller** pre-merges all sources and wri
 resources:
 - id: rsrcCfg
   externalRef:
-    apiVersion: kropath.run/v1alpha1
-    kind: AWSS3BucketConfig
+    apiVersion: aws.kropath.run/v1alpha1
+    kind: S3Config
     metadata:
       name: ${schema.spec.configRef}
       namespace: ${schema.metadata.namespace}
@@ -60,10 +60,10 @@ Status definitions live under `spec.schema.status`, not `spec.status`.
 ## Required Wiring (ADR-015 §6–7)
 
 Every child K8s resource must receive:
-- `metadata.labels` ← `mergedSyncedLabels` (prefixed `kropath.run/`)
+- `metadata.labels` ← `mergedSyncedLabels` (prefixed `aws.kropath.run/`)
 - `metadata.labels` ← `app.kubernetes.io/managed-by: kro`
 - `metadata.labels` ← `app.kubernetes.io/instance: ${metadata.name}`
-- `metadata.annotations` ← `mergedSyncedAnnotations` (prefixed `kropath.run/`)
+- `metadata.annotations` ← `mergedSyncedAnnotations` (prefixed `aws.kropath.run/`)
 - Provider deletion policy annotation/field (see table)
 - Cloud resource tags ← `allCloudMetadata`
 
@@ -106,6 +106,6 @@ All agents use these standard keys in the Multica issue metadata bag. Keys outsi
 ## Other Standards
 
 - **Security First:** Default to secure; mandatory config overrides user input.
-- **API group:** `kropath.run` (e.g. `apiVersion: kropath.run/v1alpha1`).
+- **API group:** `aws.kropath.run` (e.g. `apiVersion: aws.kropath.run/v1alpha1`).
 - **Licensing:** Apache 2.0 headers in every RGD and script.
 - **CEL:** Use `${}` for all dynamic values.
