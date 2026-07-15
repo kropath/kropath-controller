@@ -22,8 +22,8 @@ Three layers per provider. **kropath-controller** pre-merges all sources and wri
 
 | Layer | Kind | Scope |
 |---|---|---|
-| 1 | `<Provider>KropathConfig` | Org-wide + namespace |
-| 2 | `<Provider><Kind>Config` | ResourceConfig per-type (controller writes `status.effectiveConfig`) |
+| 1 | `KropathConfig` | Org-wide + namespace |
+| 2 | `<ResourceFamily>Config` | ResourceConfig per-type/per-resource-family (controller writes `status.effectiveConfig`) |
 | 3 | Resource instance `spec` | Developer overrides |
 
 ## CEL Cascade Pattern (ADR-010)
@@ -35,7 +35,7 @@ resources:
 - id: rsrcCfg
   externalRef:
     apiVersion: aws.kropath.run/v1alpha1
-    kind: AWSS3BucketConfig
+    kind: S3Config
     metadata:
       name: ${schema.spec.configRef}
       namespace: ${schema.metadata.namespace}
