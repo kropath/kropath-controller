@@ -30,7 +30,7 @@ import (
 
 func TestReconcileAC1GlobalMandatoryEnableRotationWins(t *testing.T) {
 	rec, cfg := testReconciler(t,
-		globalKropathConfig("general-policy", v1alpha1.AWSKropathConfigTier{
+		globalKropathConfig("general-policy", v1alpha1.KropathConfigTier{
 			KMS: cascade.KMSKropathSection{EnableKeyRotation: true},
 		}),
 		localKMSConfig("payments-prod", "general-policy", cascade.KMSConfigSection{}, cascade.KMSConfigSection{}),
@@ -51,7 +51,7 @@ func TestReconcileAC1GlobalMandatoryEnableRotationWins(t *testing.T) {
 
 func TestReconcileAC2Level1MandatoryWinsOverLevel3(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", v1alpha1.AWSKropathConfigTier{
+		globalKropathConfig("general-policy", v1alpha1.KropathConfigTier{
 			KMS: cascade.KMSKropathSection{AllowedKeySpecs: []string{"SYMMETRIC_DEFAULT"}},
 		}),
 		globalKMSConfig("general-policy",
@@ -109,7 +109,7 @@ func TestReconcileAC5DefaultsOnlyKeySpec(t *testing.T) {
 
 func TestReconcileAC9InvalidKeySpecSetsInvalidCondition(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", v1alpha1.AWSKropathConfigTier{
+		globalKropathConfig("general-policy", v1alpha1.KropathConfigTier{
 			KMS: cascade.KMSKropathSection{AllowedKeySpecs: []string{"SYMMETRIC_DEFAULT"}},
 		}),
 		localKMSConfig("payments-prod", "general-policy", cascade.KMSConfigSection{KeySpec: "RSA_4096"}, cascade.KMSConfigSection{}),
@@ -138,7 +138,7 @@ func TestReconcileAC9InvalidKeySpecSetsInvalidCondition(t *testing.T) {
 
 func TestReconcileAC10ValidKeySpecSetsValidCondition(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", v1alpha1.AWSKropathConfigTier{
+		globalKropathConfig("general-policy", v1alpha1.KropathConfigTier{
 			KMS: cascade.KMSKropathSection{AllowedKeySpecs: []string{"SYMMETRIC_DEFAULT", "RSA_4096"}},
 		}),
 		localKMSConfig("payments-prod", "general-policy", cascade.KMSConfigSection{KeySpec: "RSA_4096"}, cascade.KMSConfigSection{}),
@@ -160,7 +160,7 @@ func TestReconcileAC10ValidKeySpecSetsValidCondition(t *testing.T) {
 
 func TestReconcileAC15TagUnionMerge(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", v1alpha1.AWSKropathConfigTier{
+		globalKropathConfig("general-policy", v1alpha1.KropathConfigTier{
 			Tags: map[string]string{"owner": "platform-team", "shared-key": "from-global-kropath"},
 		}),
 		localKMSConfig("payments-prod", "general-policy",
@@ -181,7 +181,7 @@ func TestReconcileAC15TagUnionMerge(t *testing.T) {
 	if tags["team"] != "payments" {
 		t.Fatalf("tags[team] = %q, want payments", tags["team"])
 	}
-	// Level 1 (global KropathConfig mandatory) wins over level 4 (local AWSKMSConfig mandatory)
+	// Level 1 (global KropathConfig mandatory) wins over level 4 (local KMSConfig mandatory)
 	// on key conflicts.
 	if tags["shared-key"] != "from-global-kropath" {
 		t.Fatalf("tags[shared-key] = %q, want from-global-kropath (level-1 wins)", tags["shared-key"])
@@ -190,7 +190,7 @@ func TestReconcileAC15TagUnionMerge(t *testing.T) {
 
 func TestReconcileCopiesAWSIdentity(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfigWithAWS("general-policy", v1alpha1.AWSProviderIdentity{AccountID: "123456789012", Region: "us-east-1"}),
+		globalKropathConfigWithAWS("general-policy", v1alpha1.ProviderIdentity{AccountID: "123456789012", Region: "us-east-1"}),
 		localKMSConfig("payments-prod", "general-policy", cascade.KMSConfigSection{}, cascade.KMSConfigSection{}),
 	)
 
@@ -214,7 +214,7 @@ func TestRequestsForKropathConfigChangeGlobal(t *testing.T) {
 		localKMSConfig("payments-prod", "other-policy", cascade.KMSConfigSection{}, cascade.KMSConfigSection{}),
 	)
 
-	got := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.AWSKropathConfig{
+	got := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.KropathConfig{
 		ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: kroSystemNamespace},
 	})
 
@@ -245,7 +245,7 @@ func TestRequestsForKropathConfigChangeNonGlobalScopedToNamespace(t *testing.T) 
 		localKMSConfig("sandbox", "general-policy", cascade.KMSConfigSection{}, cascade.KMSConfigSection{}),
 	)
 
-	got := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.AWSKropathConfig{
+	got := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.KropathConfig{
 		ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: "payments-prod"},
 	})
 
@@ -263,7 +263,7 @@ func TestRequestsForKMSConfigChangeGlobal(t *testing.T) {
 		localKMSConfig("data-prod", "general-policy", cascade.KMSConfigSection{}, cascade.KMSConfigSection{}),
 	)
 
-	got := rec.requestsForKMSConfigChange(context.Background(), &v1alpha1.AWSKMSConfig{
+	got := rec.requestsForKMSConfigChange(context.Background(), &v1alpha1.KMSConfig{
 		ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: kroSystemNamespace},
 	})
 
@@ -277,7 +277,7 @@ func TestRequestsForKMSConfigChangeNonGlobalIgnored(t *testing.T) {
 		localKMSConfig("payments-prod", "general-policy", cascade.KMSConfigSection{}, cascade.KMSConfigSection{}),
 	)
 
-	got := rec.requestsForKMSConfigChange(context.Background(), &v1alpha1.AWSKMSConfig{
+	got := rec.requestsForKMSConfigChange(context.Background(), &v1alpha1.KMSConfig{
 		ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: "payments-prod"},
 	})
 
@@ -288,7 +288,7 @@ func TestRequestsForKMSConfigChangeNonGlobalIgnored(t *testing.T) {
 
 // ─── Test fixtures ──────────────────────────────────────────────────────────
 
-func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, *v1alpha1.AWSKMSConfig) {
+func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, *v1alpha1.KMSConfig) {
 	t.Helper()
 	scheme := runtime.NewScheme()
 	if err := v1alpha1.AddToScheme(scheme); err != nil {
@@ -296,63 +296,63 @@ func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, *v1alpha
 	}
 	builder := fake.NewClientBuilder().
 		WithScheme(scheme).
-		WithStatusSubresource(&v1alpha1.AWSKMSConfig{})
+		WithStatusSubresource(&v1alpha1.KMSConfig{})
 	for _, obj := range objs {
 		builder = builder.WithRuntimeObjects(obj)
 	}
 	cl := builder.Build()
-	cfg := &v1alpha1.AWSKMSConfig{}
+	cfg := &v1alpha1.KMSConfig{}
 	if err := cl.Get(context.Background(), client.ObjectKey{Namespace: "payments-prod", Name: "general-policy"}, cfg); err != nil {
-		t.Fatalf("seed local AWSKMSConfig: %v", err)
+		t.Fatalf("seed local KMSConfig: %v", err)
 	}
 	return &Reconciler{Client: cl, Log: logr.Discard(), Scheme: scheme}, cfg
 }
 
-func globalKropathConfig(name string, tier v1alpha1.AWSKropathConfigTier) *v1alpha1.AWSKropathConfig {
-	return &v1alpha1.AWSKropathConfig{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "AWSKropathConfig"},
+func globalKropathConfig(name string, tier v1alpha1.KropathConfigTier) *v1alpha1.KropathConfig {
+	return &v1alpha1.KropathConfig{
+		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "KropathConfig"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: kroSystemNamespace,
 		},
-		Spec: v1alpha1.AWSKropathConfigSpec{
+		Spec: v1alpha1.KropathConfigSpec{
 			Mandatory: tier,
 		},
 	}
 }
 
-func globalKropathConfigWithAWS(name string, aws v1alpha1.AWSProviderIdentity) *v1alpha1.AWSKropathConfig {
-	cfg := globalKropathConfig(name, v1alpha1.AWSKropathConfigTier{})
+func globalKropathConfigWithAWS(name string, aws v1alpha1.ProviderIdentity) *v1alpha1.KropathConfig {
+	cfg := globalKropathConfig(name, v1alpha1.KropathConfigTier{})
 	cfg.Spec.AWS = aws
 	return cfg
 }
 
-func globalKMSConfig(name string, mandatory, defaults cascade.KMSConfigSection) *v1alpha1.AWSKMSConfig {
-	return &v1alpha1.AWSKMSConfig{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "AWSKMSConfig"},
+func globalKMSConfig(name string, mandatory, defaults cascade.KMSConfigSection) *v1alpha1.KMSConfig {
+	return &v1alpha1.KMSConfig{
+		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "KMSConfig"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: kroSystemNamespace,
 		},
-		Spec: v1alpha1.AWSKMSConfigSpec{
+		Spec: v1alpha1.KMSConfigSpec{
 			Mandatory: mandatory,
 			Defaults:  defaults,
 		},
 	}
 }
 
-func localKMSConfig(namespace, name string, mandatory, defaults cascade.KMSConfigSection) *v1alpha1.AWSKMSConfig {
+func localKMSConfig(namespace, name string, mandatory, defaults cascade.KMSConfigSection) *v1alpha1.KMSConfig {
 	cfg := globalKMSConfig(name, mandatory, defaults)
 	cfg.Namespace = namespace
 	return cfg
 }
 
-func getKMSConfig(t *testing.T, c client.Client, namespace, name string) *v1alpha1.AWSKMSConfig {
+func getKMSConfig(t *testing.T, c client.Client, namespace, name string) *v1alpha1.KMSConfig {
 	t.Helper()
-	cfg := &v1alpha1.AWSKMSConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("AWSKMSConfig"))
+	cfg := &v1alpha1.KMSConfig{}
+	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("KMSConfig"))
 	if err := c.Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, cfg); err != nil {
-		t.Fatalf("get AWSKMSConfig %s/%s: %v", namespace, name, err)
+		t.Fatalf("get KMSConfig %s/%s: %v", namespace, name, err)
 	}
 	return cfg
 }

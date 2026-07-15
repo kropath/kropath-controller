@@ -43,8 +43,8 @@ type Reconciler struct {
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.Client = mgr.GetClient()
 	builder := ctrl.NewControllerManagedBy(mgr).
-		For(&v1alpha1.AWSPolicyDocument{}).
-		Watches(&v1alpha1.AWSPolicyDocument{}, handler.EnqueueRequestsFromMapFunc(r.mapSourceDocumentUpdates))
+		For(&v1alpha1.PolicyDocument{}).
+		Watches(&v1alpha1.PolicyDocument{}, handler.EnqueueRequestsFromMapFunc(r.mapSourceDocumentUpdates))
 
 	for _, kind := range policyRefWatchKinds() {
 		prototype := &unstructured.Unstructured{}
@@ -56,7 +56,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	var doc v1alpha1.AWSPolicyDocument
+	var doc v1alpha1.PolicyDocument
 	if err := r.Get(ctx, req.NamespacedName, &doc); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -81,14 +81,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	return result, nil
 }
 
-func snapshotStatus(status v1alpha1.AWSPolicyDocumentStatus) v1alpha1.AWSPolicyDocumentStatus {
+func snapshotStatus(status v1alpha1.PolicyDocumentStatus) v1alpha1.PolicyDocumentStatus {
 	if len(status.Conditions) > 0 {
 		status.Conditions = append([]metav1.Condition(nil), status.Conditions...)
 	}
 	return status
 }
 
-func (r *Reconciler) reconcileDocument(ctx context.Context, doc *v1alpha1.AWSPolicyDocument) (ctrl.Result, error) {
+func (r *Reconciler) reconcileDocument(ctx context.Context, doc *v1alpha1.PolicyDocument) (ctrl.Result, error) {
 	doc.Status.ObservedGeneration = doc.Generation
 	resolve := r.ResolveRefFn
 	if resolve == nil {
@@ -191,14 +191,14 @@ type sourceDocumentIssue struct {
 	clearResolvedDocumentJSON bool
 }
 
-func (r *Reconciler) collectSourceStatements(ctx context.Context, doc *v1alpha1.AWSPolicyDocument) ([]policyStatementJSON, *sourceDocumentIssue, error) {
+func (r *Reconciler) collectSourceStatements(ctx context.Context, doc *v1alpha1.PolicyDocument) ([]policyStatementJSON, *sourceDocumentIssue, error) {
 	if len(doc.Spec.Sources) == 0 {
 		return nil, nil, nil
 	}
 
 	statements := make([]policyStatementJSON, 0)
 	for _, source := range doc.Spec.Sources {
-		var sourceDoc v1alpha1.AWSPolicyDocument
+		var sourceDoc v1alpha1.PolicyDocument
 		if err := r.Get(ctx, client.ObjectKey{Namespace: doc.Namespace, Name: source.Name}, &sourceDoc); err != nil {
 			if apierrors.IsNotFound(err) {
 				return nil, &sourceDocumentIssue{
@@ -292,7 +292,7 @@ func (r *Reconciler) mapReferencedResourceUpdates(ctx context.Context, obj clien
 }
 
 func (r *Reconciler) requestsForSourceDocument(ctx context.Context, namespace, sourceName string) ([]ctrl.Request, error) {
-	var docs v1alpha1.AWSPolicyDocumentList
+	var docs v1alpha1.PolicyDocumentList
 	if err := r.List(ctx, &docs, client.InNamespace(namespace)); err != nil {
 		return nil, err
 	}
@@ -315,7 +315,7 @@ func (r *Reconciler) requestsForSourceDocument(ctx context.Context, namespace, s
 }
 
 func (r *Reconciler) requestsForReferencedResource(ctx context.Context, namespace, name, kind string) ([]ctrl.Request, error) {
-	var docs v1alpha1.AWSPolicyDocumentList
+	var docs v1alpha1.PolicyDocumentList
 	if err := r.List(ctx, &docs, client.InNamespace(namespace)); err != nil {
 		return nil, err
 	}
@@ -337,7 +337,7 @@ func (r *Reconciler) requestsForReferencedResource(ctx context.Context, namespac
 	return requests, nil
 }
 
-func documentReferencesSource(doc *v1alpha1.AWSPolicyDocument, sourceName string) bool {
+func documentReferencesSource(doc *v1alpha1.PolicyDocument, sourceName string) bool {
 	for _, source := range doc.Spec.Sources {
 		if source.Name == sourceName {
 			return true
@@ -346,7 +346,7 @@ func documentReferencesSource(doc *v1alpha1.AWSPolicyDocument, sourceName string
 	return false
 }
 
-func documentReferencesResource(doc *v1alpha1.AWSPolicyDocument, kind, name string) bool {
+func documentReferencesResource(doc *v1alpha1.PolicyDocument, kind, name string) bool {
 	for _, stmt := range doc.Spec.Statements {
 		for _, principal := range stmt.Principals {
 			if refMatches(principal.Ref, kind, name) {

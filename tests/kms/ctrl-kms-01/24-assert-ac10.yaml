@@ -1,6 +1,6 @@
 # Assert AC-10: Valid=True; effectiveConfig.mandatory.keySpec="SYMMETRIC_DEFAULT" written.
 apiVersion: aws.kropath.run/v1alpha1
-kind: AWSKMSConfig
+kind: KMSConfig
 metadata:
   name: general-policy
   namespace: payments-prod

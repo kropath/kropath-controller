@@ -1,15 +1,15 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: awss3configs.aws.kropath.run
+  name: s3configs.aws.kropath.run
 spec:
   group: aws.kropath.run
   scope: Namespaced
   names:
-    kind: AWSS3Config
-    listKind: AWSS3ConfigList
-    plural: awss3configs
-    singular: awss3config
+    kind: S3Config
+    listKind: S3ConfigList
+    plural: s3configs
+    singular: s3config
   versions:
     - name: v1alpha1
       served: true

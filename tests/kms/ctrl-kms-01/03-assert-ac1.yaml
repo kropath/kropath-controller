@@ -1,6 +1,6 @@
 # Assert AC-1: mandatory.enableKeyRotation=true from level-1 globalKropathConfig.
 apiVersion: aws.kropath.run/v1alpha1
-kind: AWSKMSConfig
+kind: KMSConfig
 metadata:
   name: general-policy
   namespace: payments-prod

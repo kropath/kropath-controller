@@ -11,10 +11,10 @@ See `docs/STANDARDS.md` and ADR-015 (`kropath-core`) for the full architecture r
 
 | Reconciler | CR(s) watched | Flag | Purpose |
 |---|---|---|---|
-| IAM config merge | `AWSKropathConfig`, `AWSIAMConfig` | always on | Merges org/namespace/instance config layers, writes `status.effectiveConfig` (ADR-010) |
-| S3 config merge | `AWSKropathConfig`, `AWSS3Config` | always on | Same merge pattern, scoped to S3 resource config |
-| KMS config cascade | `AWSKropathConfig`, `AWSKMSConfig` | `--enable-kms-cascade` | Cascades KMS key-spec and policy config to `status.effectiveConfig` |
-| AWSPolicyDocument | `AWSPolicyDocument`, `AWSKropathConfig` | `--enable-poldoc` | Resolves principal/resource refs to ARNs, merges statement sources, writes `status.resolvedDocumentJSON` |
+| IAM config merge | `KropathConfig`, `IAMConfig` | always on | Merges org/namespace/instance config layers, writes `status.effectiveConfig` (ADR-010) |
+| S3 config merge | `KropathConfig`, `S3Config` | always on | Same merge pattern, scoped to S3 resource config |
+| KMS config cascade | `KropathConfig`, `KMSConfig` | `--enable-kms-cascade` | Cascades KMS key-spec and policy config to `status.effectiveConfig` |
+| PolicyDocument | `PolicyDocument`, `KropathConfig` | `--enable-poldoc` | Resolves principal/resource refs to ARNs, merges statement sources, writes `status.resolvedDocumentJSON` |
 
 Config-merge reconcilers write the single `status.effectiveConfig` object that kro RGDs read via
 one `externalRef` lookup per RGD (see the CEL cascade pattern in `docs/STANDARDS.md`).
@@ -54,8 +54,8 @@ make docker-build    # build the container image (tag = short git SHA + latest)
 |---|---|---|
 | `--metrics-bind-address` | `:8080` | Prometheus `/metrics` endpoint |
 | `--health-probe-bind-address` | `:8081` | `/healthz` and `/readyz` endpoints |
-| `--enable-poldoc` | `false` | Enable the AWSPolicyDocument reconciler |
-| `--enable-kms-cascade` | `false` | Enable the AWSKMSConfig cascade reconciler |
+| `--enable-poldoc` | `false` | Enable the PolicyDocument reconciler |
+| `--enable-kms-cascade` | `false` | Enable the KMSConfig cascade reconciler |
 
 The manager runs with leader election on by default (`LEADER_ELECTION_NAMESPACE` or
 `POD_NAMESPACE` env var selects the lease namespace; defaults to `default`).

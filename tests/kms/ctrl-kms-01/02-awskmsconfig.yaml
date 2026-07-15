@@ -1,6 +1,6 @@
-# Shared empty local AWSKMSConfig — all cascade sources come from global configs.
+# Shared empty local KMSConfig — all cascade sources come from global configs.
 apiVersion: aws.kropath.run/v1alpha1
-kind: AWSKMSConfig
+kind: KMSConfig
 metadata:
   name: general-policy
   namespace: payments-prod

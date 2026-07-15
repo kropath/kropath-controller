@@ -38,8 +38,8 @@ type Reconciler struct {
 }
 
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	cfg := &v1alpha1.AWSS3Config{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("AWSS3Config"))
+	cfg := &v1alpha1.S3Config{}
+	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("S3Config"))
 	if err := r.Client.Get(ctx, req.NamespacedName, cfg); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -59,19 +59,19 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1alpha1.AWSS3Config{}).
+		For(&v1alpha1.S3Config{}).
 		Watches(
-			&v1alpha1.AWSS3Config{},
+			&v1alpha1.S3Config{},
 			handler.EnqueueRequestsFromMapFunc(r.requestsForS3ConfigChange),
 		).
 		Watches(
-			&v1alpha1.AWSKropathConfig{},
+			&v1alpha1.KropathConfig{},
 			handler.EnqueueRequestsFromMapFunc(r.requestsForKropathConfigChange),
 		).
 		Complete(r)
 }
 
-func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.AWSS3Config) (bool, ctrl.Result, error) {
+func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.S3Config) (bool, ctrl.Result, error) {
 	globalKropath, err := r.loadKropathConfig(ctx, kroSystemNamespace, cfg.Name)
 	if err != nil {
 		return false, ctrl.Result{}, err
@@ -102,24 +102,24 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.AWSS3Config) (
 	return true, ctrl.Result{}, nil
 }
 
-func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name string) (*v1alpha1.AWSKropathConfig, error) {
-	cfg := &v1alpha1.AWSKropathConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("AWSKropathConfig"))
+func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name string) (*v1alpha1.KropathConfig, error) {
+	cfg := &v1alpha1.KropathConfig{}
+	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("KropathConfig"))
 	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
 		if client.IgnoreNotFound(err) == nil {
-			return &v1alpha1.AWSKropathConfig{}, nil
+			return &v1alpha1.KropathConfig{}, nil
 		}
 		return nil, err
 	}
 	return cfg, nil
 }
 
-func (r *Reconciler) loadS3Config(ctx context.Context, namespace, name string) (*v1alpha1.AWSS3Config, error) {
-	cfg := &v1alpha1.AWSS3Config{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("AWSS3Config"))
+func (r *Reconciler) loadS3Config(ctx context.Context, namespace, name string) (*v1alpha1.S3Config, error) {
+	cfg := &v1alpha1.S3Config{}
+	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("S3Config"))
 	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
 		if client.IgnoreNotFound(err) == nil {
-			return &v1alpha1.AWSS3Config{}, nil
+			return &v1alpha1.S3Config{}, nil
 		}
 		return nil, err
 	}
@@ -127,12 +127,12 @@ func (r *Reconciler) loadS3Config(ctx context.Context, namespace, name string) (
 }
 
 func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj client.Object) []ctrl.Request {
-	cfg, ok := obj.(*v1alpha1.AWSKropathConfig)
+	cfg, ok := obj.(*v1alpha1.KropathConfig)
 	if !ok {
 		return nil
 	}
 
-	var list v1alpha1.AWSS3ConfigList
+	var list v1alpha1.S3ConfigList
 	if cfg.Namespace == kroSystemNamespace {
 		if err := r.Client.List(ctx, &list); err != nil {
 			r.Log.Error(err, "unable to list S3 configs for global KropathConfig change")
@@ -156,12 +156,12 @@ func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj cli
 }
 
 func (r *Reconciler) requestsForS3ConfigChange(ctx context.Context, obj client.Object) []ctrl.Request {
-	cfg, ok := obj.(*v1alpha1.AWSS3Config)
+	cfg, ok := obj.(*v1alpha1.S3Config)
 	if !ok || cfg.Namespace != kroSystemNamespace {
 		return nil
 	}
 
-	var list v1alpha1.AWSS3ConfigList
+	var list v1alpha1.S3ConfigList
 	if err := r.Client.List(ctx, &list); err != nil {
 		r.Log.Error(err, "unable to list S3 configs for global S3Config change")
 		return nil

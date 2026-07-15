@@ -1,6 +1,6 @@
 # AC-7: Should be rejected — permissionsBoundaryArn set in both mandatory.iam and defaults.iam.
 apiVersion: aws.kropath.run/v1alpha1
-kind: AWSKropathConfig
+kind: KropathConfig
 metadata:
   name: invalid-both-tiers
   namespace: kro-system

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Test-only stand-in for the ACK AWSSQSQueue CRD. The AWSPolicyDocument
+# Test-only stand-in for the ACK AWSSQSQueue CRD. The PolicyDocument
 # reconciler only reads status.predictedArn off referenced resources
 # (see internal/reconciler/policydocument/resolve.go), so this fixture
 # is intentionally minimal rather than mirroring the full ACK schema.

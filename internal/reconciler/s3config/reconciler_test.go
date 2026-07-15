@@ -39,73 +39,73 @@ func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, client.C
 	c := fake.NewClientBuilder().
 		WithScheme(scheme).
 		WithRuntimeObjects(objs...).
-		WithStatusSubresource(&v1alpha1.AWSS3Config{}).
+		WithStatusSubresource(&v1alpha1.S3Config{}).
 		Build()
 
 	return &Reconciler{Client: c, Scheme: scheme}, c
 }
 
-func globalKropathConfig(name string, s3 cascade.S3Section) *v1alpha1.AWSKropathConfig {
-	return &v1alpha1.AWSKropathConfig{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "AWSKropathConfig"},
+func globalKropathConfig(name string, s3 cascade.S3Section) *v1alpha1.KropathConfig {
+	return &v1alpha1.KropathConfig{
+		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "KropathConfig"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: kroSystemNamespace,
 		},
-		Spec: v1alpha1.AWSKropathConfigSpec{
-			Mandatory: v1alpha1.AWSKropathConfigTier{S3: s3},
+		Spec: v1alpha1.KropathConfigSpec{
+			Mandatory: v1alpha1.KropathConfigTier{S3: s3},
 		},
 	}
 }
 
-func localKropathConfig(namespace, name string, s3 cascade.S3Section) *v1alpha1.AWSKropathConfig {
-	return &v1alpha1.AWSKropathConfig{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "AWSKropathConfig"},
+func localKropathConfig(namespace, name string, s3 cascade.S3Section) *v1alpha1.KropathConfig {
+	return &v1alpha1.KropathConfig{
+		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "KropathConfig"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Spec: v1alpha1.AWSKropathConfigSpec{
-			Mandatory: v1alpha1.AWSKropathConfigTier{S3: s3},
+		Spec: v1alpha1.KropathConfigSpec{
+			Mandatory: v1alpha1.KropathConfigTier{S3: s3},
 		},
 	}
 }
 
-func globalS3Config(name string, mandatory, defaults cascade.S3Section) *v1alpha1.AWSS3Config {
-	return &v1alpha1.AWSS3Config{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "AWSS3Config"},
+func globalS3Config(name string, mandatory, defaults cascade.S3Section) *v1alpha1.S3Config {
+	return &v1alpha1.S3Config{
+		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "S3Config"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: kroSystemNamespace,
 		},
-		Spec: v1alpha1.AWSS3ConfigSpec{
+		Spec: v1alpha1.S3ConfigSpec{
 			Mandatory: mandatory,
 			Defaults:  defaults,
 		},
 	}
 }
 
-func localS3Config(namespace, name string, mandatory, defaults cascade.S3Section) *v1alpha1.AWSS3Config {
-	return &v1alpha1.AWSS3Config{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "AWSS3Config"},
+func localS3Config(namespace, name string, mandatory, defaults cascade.S3Section) *v1alpha1.S3Config {
+	return &v1alpha1.S3Config{
+		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "S3Config"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Spec: v1alpha1.AWSS3ConfigSpec{
+		Spec: v1alpha1.S3ConfigSpec{
 			Mandatory: mandatory,
 			Defaults:  defaults,
 		},
 	}
 }
 
-func getS3Config(t *testing.T, c client.Client, namespace, name string) *v1alpha1.AWSS3Config {
+func getS3Config(t *testing.T, c client.Client, namespace, name string) *v1alpha1.S3Config {
 	t.Helper()
 
-	cfg := &v1alpha1.AWSS3Config{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("AWSS3Config"))
+	cfg := &v1alpha1.S3Config{}
+	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("S3Config"))
 	if err := c.Get(context.Background(), types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
-		t.Fatalf("Get AWSS3Config %s/%s: %v", namespace, name, err)
+		t.Fatalf("Get S3Config %s/%s: %v", namespace, name, err)
 	}
 	return cfg
 }
@@ -155,7 +155,7 @@ func TestRequestsForKropathConfigChangeIncludesGlobalAndLocalMatches(t *testing.
 		localS3Config("payments-prod", "other-policy", cascade.S3Section{}, cascade.S3Section{}),
 	)
 
-	requests := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.AWSKropathConfig{
+	requests := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.KropathConfig{
 		ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: kroSystemNamespace},
 	})
 
@@ -184,7 +184,7 @@ func TestRequestsForS3ConfigChangeQueuesNamespaceMatchesForGlobalSource(t *testi
 		localS3Config("data-prod", "general-policy", cascade.S3Section{}, cascade.S3Section{}),
 	)
 
-	requests := rec.requestsForS3ConfigChange(context.Background(), &v1alpha1.AWSS3Config{
+	requests := rec.requestsForS3ConfigChange(context.Background(), &v1alpha1.S3Config{
 		ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: kroSystemNamespace},
 	})
 

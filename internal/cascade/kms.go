@@ -17,8 +17,8 @@ package cascade
 import "fmt"
 
 // KMSKropathSection holds the KMS-family governance fields from
-// AWSKropathConfig.spec.mandatory.kms / .defaults.kms (ADR-015 §3.5)
-// PLUS the tier-level tags from AWSKropathConfig.spec.mandatory.tags (populated
+// KropathConfig.spec.mandatory.kms / .defaults.kms (ADR-015 §3.5)
+// PLUS the tier-level tags from KropathConfig.spec.mandatory.tags (populated
 // by the reconciler so that tag cascade flows through MergeKMSCascade).
 //
 // Only the cross-type KMS fields live here: enableKeyRotation and allowedKeySpecs.
@@ -34,14 +34,14 @@ type KMSKropathSection struct {
 	// nil / empty slice (zero value) = no restriction.
 	AllowedKeySpecs []string `json:"allowedKeySpecs,omitempty"`
 
-	// Tags are tier-level cloud resource tags from AWSKropathConfig.spec.mandatory.tags.
+	// Tags are tier-level cloud resource tags from KropathConfig.spec.mandatory.tags.
 	// Populated by the reconciler from the tier-level field, not from spec.mandatory.kms.
 	// nil / empty map (zero value) = no tags at this level.
 	Tags map[string]string `json:"tags,omitempty"`
 }
 
-// KMSConfigSection holds the KMS governance fields from AWSKMSConfig.spec.mandatory
-// or AWSKMSConfig.spec.defaults (per-type ResourceConfig).
+// KMSConfigSection holds the KMS governance fields from KMSConfig.spec.mandatory
+// or KMSConfig.spec.defaults (per-type ResourceConfig).
 //
 // Zero value of each field is the permissive sentinel (not enforced).
 type KMSConfigSection struct {
@@ -66,7 +66,7 @@ type KMSConfigSection struct {
 }
 
 // EffectiveKMSSection is one tier (mandatory or defaults) of the merged KMS governance
-// result written into AWSKMSConfig.status.effectiveConfig by the controller.
+// result written into KMSConfig.status.effectiveConfig by the controller.
 type EffectiveKMSSection struct {
 	EnableKeyRotation bool              `json:"enableKeyRotation,omitempty"`
 	KeySpec           string            `json:"keySpec,omitempty"`
@@ -76,7 +76,7 @@ type EffectiveKMSSection struct {
 }
 
 // EffectiveKMSConfig is the merged KMS governance result written into
-// AWSKMSConfig.status.effectiveConfig by the controller.
+// KMSConfig.status.effectiveConfig by the controller.
 type EffectiveKMSConfig struct {
 	Mandatory EffectiveKMSSection `json:"mandatory"`
 	Defaults  EffectiveKMSSection `json:"defaults"`
@@ -87,15 +87,15 @@ type EffectiveKMSConfig struct {
 //
 // The ten-level priority chain (ADR-015 §5.3) for KMS fields:
 //
-//	Level 1 — globalKropathMandatory  (AWSKropathConfig in kro-system)
-//	Level 2 — localKropathMandatory   (AWSKropathConfig in resource namespace)
-//	Level 3 — globalKMSCfgMandatory   (AWSKMSConfig in kro-system)
-//	Level 4 — localKMSCfgMandatory    (AWSKMSConfig in resource namespace)
+//	Level 1 — globalKropathMandatory  (KropathConfig in kro-system)
+//	Level 2 — localKropathMandatory   (KropathConfig in resource namespace)
+//	Level 3 — globalKMSCfgMandatory   (KMSConfig in kro-system)
+//	Level 4 — localKMSCfgMandatory    (KMSConfig in resource namespace)
 //	(Level 5 = instance spec — resolved in RGD CEL, not here)
-//	Level 6 — localKMSCfgDefaults     (AWSKMSConfig in resource namespace)
-//	Level 7 — globalKMSCfgDefaults    (AWSKMSConfig in kro-system)
-//	Level 8 — localKropathDefaults    (AWSKropathConfig in resource namespace)
-//	Level 9 — globalKropathDefaults   (AWSKropathConfig in kro-system)
+//	Level 6 — localKMSCfgDefaults     (KMSConfig in resource namespace)
+//	Level 7 — globalKMSCfgDefaults    (KMSConfig in kro-system)
+//	Level 8 — localKropathDefaults    (KropathConfig in resource namespace)
+//	Level 9 — globalKropathDefaults   (KropathConfig in kro-system)
 //
 // For mandatory (levels 1–4): first non-zero value in priority order wins.
 // For defaults (levels 6–9): first non-zero value in priority order wins.
@@ -105,7 +105,7 @@ type EffectiveKMSConfig struct {
 // so they only appear at levels 3–4 (mandatory) and 6–7 (defaults).
 // enableKeyRotation and allowedKeySpecs appear at all four mandatory/defaults levels.
 // Tags appear at all four mandatory/defaults levels; KropathSection.Tags carries the
-// tier-level AWSKropathConfig.mandatory.tags (populated by the reconciler).
+// tier-level KropathConfig.mandatory.tags (populated by the reconciler).
 func MergeKMSCascade(
 	// Mandatory inputs (highest → lowest priority)
 	globalKropathMandatory KMSKropathSection, // level 1
@@ -185,7 +185,7 @@ func MergeKMSCascade(
 }
 
 // ValidateKMSKeySpec validates the allowedKeySpecs / keySpec cross-constraint on the
-// resolved mandatory tier of an AWSKMSConfig (family design OD-3, §7).
+// resolved mandatory tier of an KMSConfig (family design OD-3, §7).
 //
 // Constraint: when mandatory.keySpec is non-empty and mandatory.allowedKeySpecs is
 // non-empty, keySpec must be a member of allowedKeySpecs.

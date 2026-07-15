@@ -1,6 +1,6 @@
-# AC-15: AWSKMSConfig with mandatory.tags (KMS config-level tags, level 4).
+# AC-15: KMSConfig with mandatory.tags (KMS config-level tags, level 4).
 apiVersion: aws.kropath.run/v1alpha1
-kind: AWSKMSConfig
+kind: KMSConfig
 metadata:
   name: general-policy
   namespace: payments-prod

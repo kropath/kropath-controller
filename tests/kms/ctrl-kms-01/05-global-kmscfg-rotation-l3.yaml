@@ -1,6 +1,6 @@
-# AC-2: globalAWSKMSConfig mandatory.enableKeyRotation=false (zero value = not enforced, level 3).
+# AC-2: globalKMSConfig mandatory.enableKeyRotation=false (zero value = not enforced, level 3).
 apiVersion: aws.kropath.run/v1alpha1
-kind: AWSKMSConfig
+kind: KMSConfig
 metadata:
   name: general-policy
   namespace: kro-system

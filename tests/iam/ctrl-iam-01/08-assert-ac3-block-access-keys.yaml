@@ -1,6 +1,6 @@
 # Assert: blockIamUserAccessKeys=true from level-1 globalKropathConfig propagates.
 apiVersion: aws.kropath.run/v1alpha1
-kind: AWSIAMConfig
+kind: IAMConfig
 metadata:
   name: general-policy
   namespace: payments-prod

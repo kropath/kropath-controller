@@ -1,7 +1,7 @@
-# AC-5: globalAWSKMSConfig defaults.keySpec="SYMMETRIC_DEFAULT" (level 7).
+# AC-5: globalKMSConfig defaults.keySpec="SYMMETRIC_DEFAULT" (level 7).
 # mandatory.keySpec is not set.
 apiVersion: aws.kropath.run/v1alpha1
-kind: AWSKMSConfig
+kind: KMSConfig
 metadata:
   name: general-policy
   namespace: kro-system

@@ -1,6 +1,6 @@
 # Assert: level-1 maxSession=3600 wins over level-3 maxSession=7200.
 apiVersion: aws.kropath.run/v1alpha1
-kind: AWSIAMConfig
+kind: IAMConfig
 metadata:
   name: general-policy
   namespace: payments-prod

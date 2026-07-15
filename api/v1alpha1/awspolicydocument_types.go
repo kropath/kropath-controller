@@ -11,14 +11,14 @@ import (
 )
 
 const (
-	AWSPolicyDocumentKind = "AWSPolicyDocument"
+	PolicyDocumentKind = "PolicyDocument"
 
 	ConditionReady          = "Ready"
 	ConditionSourceNotReady = "SourceNotReady"
 	ConditionSidConflict    = "SidConflict"
 )
 
-type AWSPolicyDocumentSpec struct {
+type PolicyDocumentSpec struct {
 	Sources      []PolicyDocumentSource `json:"sources,omitempty"`
 	Statements   []PolicyStatement      `json:"statements,omitempty"`
 	DocumentJSON string                 `json:"documentJSON,omitempty"`
@@ -60,7 +60,7 @@ type PolicyCondition struct {
 	Values   []string `json:"values"`
 }
 
-type AWSPolicyDocumentStatus struct {
+type PolicyDocumentStatus struct {
 	ResolvedDocumentJSON string             `json:"resolvedDocumentJSON,omitempty"`
 	StatementCount       int32              `json:"statementCount,omitempty"`
 	SourceCount          int32              `json:"sourceCount,omitempty"`
@@ -70,35 +70,35 @@ type AWSPolicyDocumentStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-type AWSPolicyDocument struct {
+type PolicyDocument struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   AWSPolicyDocumentSpec   `json:"spec,omitempty"`
-	Status AWSPolicyDocumentStatus `json:"status,omitempty"`
+	Spec   PolicyDocumentSpec   `json:"spec,omitempty"`
+	Status PolicyDocumentStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
-type AWSPolicyDocumentList struct {
+type PolicyDocumentList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []AWSPolicyDocument `json:"items"`
+	Items           []PolicyDocument `json:"items"`
 }
 
-func (in *AWSPolicyDocument) DeepCopyObject() runtime.Object {
+func (in *PolicyDocument) DeepCopyObject() runtime.Object {
 	if in == nil {
 		return nil
 	}
-	out := new(AWSPolicyDocument)
+	out := new(PolicyDocument)
 	copyThroughJSON(in, out)
 	return out
 }
 
-func (in *AWSPolicyDocumentList) DeepCopyObject() runtime.Object {
+func (in *PolicyDocumentList) DeepCopyObject() runtime.Object {
 	if in == nil {
 		return nil
 	}
-	out := new(AWSPolicyDocumentList)
+	out := new(PolicyDocumentList)
 	copyThroughJSON(in, out)
 	return out
 }

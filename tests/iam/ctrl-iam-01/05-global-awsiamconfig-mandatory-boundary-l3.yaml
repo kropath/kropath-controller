@@ -1,6 +1,6 @@
-# AC-2: level-3 globalAWSIAMConfig mandatory boundary (should lose to level 1).
+# AC-2: level-3 globalIAMConfig mandatory boundary (should lose to level 1).
 apiVersion: aws.kropath.run/v1alpha1
-kind: AWSIAMConfig
+kind: IAMConfig
 metadata:
   name: general-policy
   namespace: kro-system

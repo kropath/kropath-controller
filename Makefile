@@ -119,11 +119,11 @@ kind-down: ## Delete the kind cluster.
 chainsaw-setup: build kind-up ## Create kind cluster, apply CRDs, create test namespaces.
 	kubectl apply -f tests/fixtures/crds/
 	kubectl wait --for=condition=Established --timeout=60s \
-		crd/awskropathconfigs.aws.kropath.run \
-		crd/awsiamconfigs.aws.kropath.run \
-		crd/awss3configs.aws.kropath.run \
-		crd/awskmsconfigs.aws.kropath.run \
-		crd/awspolicydocuments.aws.kropath.run \
+		crd/kropathconfigs.aws.kropath.run \
+		crd/iamconfigs.aws.kropath.run \
+		crd/s3configs.aws.kropath.run \
+		crd/kmsconfigs.aws.kropath.run \
+		crd/policydocuments.aws.kropath.run \
 		crd/awsiamroles.aws.kropath.run \
 		crd/awss3buckets.aws.kropath.run \
 		crd/awslambdafunctions.aws.kropath.run \

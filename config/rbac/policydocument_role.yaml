@@ -5,8 +5,8 @@ metadata:
 rules:
   - apiGroups: ["aws.kropath.run"]
     resources:
-      - awspolicydocuments
-      - awspolicydocuments/status
+      - policydocuments
+      - policydocuments/status
     verbs: ["get", "list", "watch", "update", "patch"]
   - apiGroups: ["aws.kropath.run"]
     resources:

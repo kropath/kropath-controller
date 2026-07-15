@@ -1,6 +1,6 @@
 # Assert AC-5: defaults.keySpec="SYMMETRIC_DEFAULT" from level-7; mandatory.keySpec empty.
 apiVersion: aws.kropath.run/v1alpha1
-kind: AWSKMSConfig
+kind: KMSConfig
 metadata:
   name: general-policy
   namespace: payments-prod

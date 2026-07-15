@@ -1,6 +1,6 @@
 # Assert AC-6: mandatory.keyUsage="ENCRYPT_DECRYPT" from level-3 global KMSConfig.
 apiVersion: aws.kropath.run/v1alpha1
-kind: AWSKMSConfig
+kind: KMSConfig
 metadata:
   name: general-policy
   namespace: payments-prod

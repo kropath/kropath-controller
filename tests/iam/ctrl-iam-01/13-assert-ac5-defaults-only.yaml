@@ -1,6 +1,6 @@
 # Assert: defaults.maxSession=3600 populated; mandatory.maxSession=0 (not set).
 apiVersion: aws.kropath.run/v1alpha1
-kind: AWSIAMConfig
+kind: IAMConfig
 metadata:
   name: general-policy-defaults
   namespace: payments-prod

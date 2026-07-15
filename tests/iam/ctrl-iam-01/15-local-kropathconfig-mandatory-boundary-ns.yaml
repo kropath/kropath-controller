@@ -1,7 +1,7 @@
-# AC-6: local namespace (payments-prod) AWSKropathConfig mandatory boundary — level 2.
+# AC-6: local namespace (payments-prod) KropathConfig mandatory boundary — level 2.
 # Should lose to the global (level 1) value.
 apiVersion: aws.kropath.run/v1alpha1
-kind: AWSKropathConfig
+kind: KropathConfig
 metadata:
   name: general-policy
   namespace: payments-prod

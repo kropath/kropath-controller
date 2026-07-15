@@ -107,11 +107,11 @@ spec:
     - name: ac7-mutual-exclusivity-validation
       try:
         - apply:
-            file: 16-awskropathconfig-both-tiers-versioning.yaml
+            file: 16-kropathconfig-both-tiers-versioning.yaml
             expect:
               - match:
                   apiVersion: aws.kropath.run/v1alpha1
-                  kind: AWSKropathConfig
+                  kind: KropathConfig
                 check:
                   ($error != null): true
 
