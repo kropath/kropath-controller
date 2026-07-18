@@ -4,4 +4,4 @@ metadata:
   name: admin-boundary
   namespace: kro-system
 spec:
-  documentJSON: "{"Version":"2012-10-17","Statement":[]}"
+  documentJSON: '{"Version":"2012-10-17","Statement":[]}'
