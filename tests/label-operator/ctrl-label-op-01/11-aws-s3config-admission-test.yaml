@@ -1,0 +1,6 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: S3Config
+metadata:
+  name: admission-test
+  namespace: kro-system
+spec: {}

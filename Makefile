@@ -43,7 +43,7 @@ CHAINSAW_FLAGS   := --parallel 1 --report-format JUNIT-TEST --report-path $(REPO
         docker-build docker-push \
         kind-up kind-down \
         chainsaw-setup chainsaw-start chainsaw-wait chainsaw-stop \
-        test-iam test-s3 test-kms test-policy test-chainsaw \
+        test-iam test-s3 test-kms test-policy test-label-operator test-chainsaw \
         install-tools gosec vulncheck security \
         help default
 
@@ -129,7 +129,9 @@ chainsaw-setup: build kind-up ## Create kind cluster, apply CRDs, create test na
 		crd/awslambdafunctions.aws.kropath.run \
 		crd/awssqsqueues.aws.kropath.run \
 		crd/awskmskeys.aws.kropath.run \
-		crd/awssecretsmanagersecrets.aws.kropath.run
+		crd/awssecretsmanagersecrets.aws.kropath.run \
+		crd/cloudstoragebucketconfigs.gcp.kropath.run \
+		crd/kropathconfigs.kropath.run
 	@for ns in $(TEST_NAMESPACES); do \
 		kubectl create namespace "$$ns" --dry-run=client -o yaml | kubectl apply -f -; \
 	done
@@ -143,6 +145,7 @@ chainsaw-start: chainsaw-setup ## Build, set up CRDs, and start the operator in 
 			--health-probe-bind-address=:$(HEALTH_PORT) \
 			--enable-kms-cascade \
 			--enable-poldoc \
+			--enable-label-operator \
 			> $(CONTROLLER_LOG) 2>&1 & echo $$! > $(CONTROLLER_PID); \
 		echo "Controller started (PID $$(cat $(CONTROLLER_PID)))."; \
 	fi
@@ -185,6 +188,10 @@ test-kms: ## Run KMS cascade Chainsaw suite (ctrl-kms-01).
 test-policy: ## Run policy document Chainsaw suites (phase2-refs + phase3-merge).
 	@mkdir -p $(REPORT_DIR)
 	$(CHAINSAW) test tests/policy/phase2-refs/ tests/policy/phase3-merge/ $(CHAINSAW_FLAGS)
+
+test-label-operator: ## Run label-operator Chainsaw suite (ctrl-label-op-01).
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/label-operator/ctrl-label-op-01/ $(CHAINSAW_FLAGS)
 
 test-chainsaw: chainsaw-stop chainsaw-start chainsaw-wait ## Stop any stale controller, start fresh, run ALL Chainsaw suites, then stop it.
 	@mkdir -p $(REPORT_DIR)

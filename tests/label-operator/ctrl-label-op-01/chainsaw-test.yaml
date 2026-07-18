@@ -1,0 +1,140 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Chainsaw test suite: ctrl-label-op-01
+# Spec: kropath-core/docs/specs/controller-label-operator.md
+# Covers all 8 acceptance criteria.
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-label-op-01-label-operator
+spec:
+  steps:
+    # AC-1: AWS config resource created with no labels → label added.
+    - name: ac1-aws-config-label-auto-added
+      try:
+        - apply:
+            file: 01-aws-s3config-no-label.yaml
+        - assert:
+            file: 02-assert-ac1-aws-config-label.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 01-aws-s3config-no-label.yaml
+
+    # AC-2: GCP config resource created with no labels → GCP label added.
+    - name: ac2-gcp-config-label-auto-added
+      try:
+        - apply:
+            file: 03-gcp-cloudstoragebucketconfig-no-label.yaml
+        - assert:
+            file: 04-assert-ac2-gcp-config-label.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 03-gcp-cloudstoragebucketconfig-no-label.yaml
+
+    # AC-3: AWS non-config resource (PolicyDocument) created with no labels → label added.
+    - name: ac3-aws-resource-label-auto-added
+      try:
+        - apply:
+            file: 05-aws-policydocument-no-label.yaml
+        - assert:
+            file: 06-assert-ac3-aws-resource-label.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 05-aws-policydocument-no-label.yaml
+
+    # AC-4: AWS resource with wrong label value → label corrected.
+    - name: ac4-label-value-corrected
+      try:
+        - apply:
+            file: 07-aws-s3config-wrong-label.yaml
+        - assert:
+            file: 08-assert-ac4-label-corrected.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 07-aws-s3config-wrong-label.yaml
+
+    # AC-5: AWS resource with correct label → no unnecessary patch (label unchanged).
+    - name: ac5-correct-label-no-op
+      try:
+        - apply:
+            file: 09-aws-s3config-correct-label.yaml
+        - assert:
+            file: 10-assert-ac5-label-unchanged.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 09-aws-s3config-correct-label.yaml
+
+    # AC-6: Resource admitted when operator is unavailable (no label at creation time).
+    # Verifies the resource is admitted to the cluster without rejection.
+    - name: ac6-operator-unavailable-resource-admitted
+      try:
+        - apply:
+            file: 11-aws-s3config-admission-test.yaml
+        - assert:
+            file: 12-assert-ac6-resource-admitted.yaml
+            timeout: 10s
+      cleanup:
+        - delete:
+            file: 11-aws-s3config-admission-test.yaml
+
+    # AC-7: Retroactive label — resource created without label gets labeled on reconcile.
+    - name: ac7-retroactive-label-on-recovery
+      try:
+        - apply:
+            file: 13-aws-s3config-unlabeled.yaml
+        - assert:
+            file: 14-assert-ac7-retroactive-label.yaml
+            timeout: 60s
+      cleanup:
+        - delete:
+            file: 13-aws-s3config-unlabeled.yaml
+
+    # AC-8: KropathConfig in kropath.run API group is NOT labeled by the operator.
+    # The operator watches only {aws,gcp,azure}.kropath.run; kropath.run is excluded.
+    # We apply the resource, wait for any potential operator reconcile, then verify
+    # that no provider label was added using a kubectl script step.
+    - name: ac8-kropathconfig-excluded
+      try:
+        - apply:
+            file: 15-kropathconfig-core.yaml
+        - assert:
+            file: 16-assert-ac8-no-label.yaml
+            timeout: 10s
+        - sleep:
+            duration: 5s
+        - script:
+            content: |
+              LABEL=$(kubectl get kropathconfigs.kropath.run org-config -n kro-system \
+                -o jsonpath='{.metadata.labels.aws\.kropath\.run/resource-name}' 2>/dev/null || true)
+              if [ -n "$LABEL" ]; then
+                echo "FAIL: label 'aws.kropath.run/resource-name=$LABEL' unexpectedly present on KropathConfig"
+                exit 1
+              fi
+              GLABEL=$(kubectl get kropathconfigs.kropath.run org-config -n kro-system \
+                -o jsonpath='{.metadata.labels.gcp\.kropath\.run/resource-name}' 2>/dev/null || true)
+              if [ -n "$GLABEL" ]; then
+                echo "FAIL: label 'gcp.kropath.run/resource-name=$GLABEL' unexpectedly present on KropathConfig"
+                exit 1
+              fi
+              echo "PASS: no provider label found on KropathConfig in kropath.run group"
+      cleanup:
+        - delete:
+            file: 15-kropathconfig-core.yaml

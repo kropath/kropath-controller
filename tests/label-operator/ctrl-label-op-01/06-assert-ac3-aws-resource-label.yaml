@@ -1,0 +1,7 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: PolicyDocument
+metadata:
+  name: admin-boundary
+  namespace: kro-system
+  labels:
+    aws.kropath.run/resource-name: admin-boundary

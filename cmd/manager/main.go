@@ -10,6 +10,7 @@ import (
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/reconciler/iamconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/kmsconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/labeloperator"
 	"github.com/kropath/kropath-controller/internal/reconciler/policydocument"
 	"github.com/kropath/kropath-controller/internal/reconciler/s3config"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -21,10 +22,11 @@ import (
 )
 
 var (
-	metricsAddr      string
-	probeAddr        string
-	enablePolicyDoc  bool
-	enableKMSCascade bool
+	metricsAddr         string
+	probeAddr           string
+	enablePolicyDoc     bool
+	enableKMSCascade    bool
+	enableLabelOperator bool
 )
 
 func leaderElectionNamespace() string {
@@ -42,6 +44,7 @@ func main() {
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enablePolicyDoc, "enable-poldoc", false, "Enable the PolicyDocument reconciler.")
 	flag.BoolVar(&enableKMSCascade, "enable-kms-cascade", false, "Enable the KMSConfig cascade reconciler.")
+	flag.BoolVar(&enableLabelOperator, "enable-label-operator", false, "Enable the label-operator reconciler.")
 	opts := zap.Options{Development: true}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
@@ -107,6 +110,13 @@ func main() {
 		}
 	}
 
+	if enableLabelOperator {
+		if err := labeloperator.Setup(mgr, ctrl.Log.WithName("controllers").WithName("LabelOperator")); err != nil {
+			ctrl.Log.Error(err, "unable to setup label-operator")
+			os.Exit(1)
+		}
+	}
+
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		ctrl.Log.Error(err, "unable to set up health check")
 		os.Exit(1)
@@ -116,7 +126,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctrl.Log.Info("starting manager", "metrics", metricsAddr, "probes", probeAddr, "enable_poldoc", enablePolicyDoc, "enable_kms_cascade", enableKMSCascade)
+	ctrl.Log.Info("starting manager", "metrics", metricsAddr, "probes", probeAddr, "enable_poldoc", enablePolicyDoc, "enable_kms_cascade", enableKMSCascade, "enable_label_operator", enableLabelOperator)
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		ctrl.Log.Error(err, "problem running manager")
 		os.Exit(1)

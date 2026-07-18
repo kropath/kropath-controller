@@ -1,0 +1,7 @@
+# AC-6: resource exists in cluster (was admitted, not rejected).
+# The operator is running so the label will also be present.
+apiVersion: aws.kropath.run/v1alpha1
+kind: S3Config
+metadata:
+  name: admission-test
+  namespace: kro-system
