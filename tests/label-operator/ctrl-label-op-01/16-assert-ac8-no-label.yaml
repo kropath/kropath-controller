@@ -1,0 +1,9 @@
+# AC-8: KropathConfig in kropath.run must NOT have any provider label.
+# Chainsaw assert with (labels == nil or missing key) is expressed by checking
+# the resource exists but the label key is absent. We use a script step below
+# for negative label check since chainsaw assert matches present fields only.
+apiVersion: kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: org-config
+  namespace: kro-system

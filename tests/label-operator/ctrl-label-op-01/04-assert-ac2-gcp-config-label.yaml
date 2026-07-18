@@ -1,0 +1,7 @@
+apiVersion: gcp.kropath.run/v1alpha1
+kind: CloudStorageBucketConfig
+metadata:
+  name: standard-tier
+  namespace: kro-system
+  labels:
+    gcp.kropath.run/resource-name: standard-tier
