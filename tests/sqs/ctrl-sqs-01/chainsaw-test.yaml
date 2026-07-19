@@ -87,8 +87,21 @@ spec:
 
     # AC-5: globalSQSConfig.defaults.visibilityTimeout=30 (level 7) wins over
     # globalKropathConfig.defaults.sqs.visibilityTimeout=60 (level 9).
+    # Chainsaw defers all cleanup blocks to test end, so the AC-4 KropathConfig
+    # (kro-system/general-policy with mandatory.sqs.visibilityTimeout=120) is still
+    # present when AC-5 runs. Applying fixture 11 (defaults.sqs.visibilityTimeout=60)
+    # to that same object triggers the CEL mutual-exclusivity rule.
+    # Fix: (1) delete the stale KropathConfig at the start of try; (2) delete the
+    # AC-5 KropathConfig after the assert to prevent defaults.sqs.visibilityTimeout
+    # leaking into later ACs (follows the KMS AC-8 pattern).
     - name: ac5-global-sqscfg-defaults-wins-over-kpc-defaults
       try:
+        - delete:
+            ref:
+              apiVersion: aws.kropath.run/v1alpha1
+              kind: KropathConfig
+              name: general-policy
+              namespace: kro-system
         - apply:
             file: 11-global-kpc-defaults-visibility-l9.yaml
         - apply:
@@ -98,6 +111,12 @@ spec:
         - assert:
             file: 12-assert-ac5.yaml
             timeout: 30s
+        - delete:
+            ref:
+              apiVersion: aws.kropath.run/v1alpha1
+              kind: KropathConfig
+              name: general-policy
+              namespace: kro-system
       cleanup:
         - delete:
             file: 02-sqsconfig.yaml
