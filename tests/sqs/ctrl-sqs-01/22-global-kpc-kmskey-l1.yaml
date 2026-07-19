@@ -1,0 +1,13 @@
+# AC-10: globalKropathConfig with mandatory.sqs.kmsMasterKeyId (level 1).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    sqs:
+      kmsMasterKeyId: "arn:aws:kms:ap-southeast-2:123:key/org-key"
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"

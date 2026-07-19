@@ -1,0 +1,10 @@
+# Assert AC-4: mandatory.visibilityTimeout=120 from level-1 globalKropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SQSConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      visibilityTimeout: 120

@@ -48,6 +48,18 @@ spec:
               message: "kms.enableKeyRotation cannot be set to true in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.kms) && has(self.spec.mandatory.kms.allowedKeySpecs) && size(self.spec.mandatory.kms.allowedKeySpecs) > 0 && has(self.spec.defaults.kms) && has(self.spec.defaults.kms.allowedKeySpecs) && size(self.spec.defaults.kms.allowedKeySpecs) > 0)'
               message: "kms.allowedKeySpecs cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.sqs) && self.spec.mandatory.sqs.encryptionType != "" && has(self.spec.defaults.sqs) && self.spec.defaults.sqs.encryptionType != "")'
+              message: "sqs.encryptionType cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.sqs) && self.spec.mandatory.sqs.kmsMasterKeyId != "" && has(self.spec.defaults.sqs) && self.spec.defaults.sqs.kmsMasterKeyId != "")'
+              message: "sqs.kmsMasterKeyId cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.sqs) && self.spec.mandatory.sqs.visibilityTimeout > 0 && has(self.spec.defaults.sqs) && self.spec.defaults.sqs.visibilityTimeout > 0)'
+              message: "sqs.visibilityTimeout cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.sqs) && self.spec.mandatory.sqs.messageRetentionPeriod > 0 && has(self.spec.defaults.sqs) && self.spec.defaults.sqs.messageRetentionPeriod > 0)'
+              message: "sqs.messageRetentionPeriod cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.sqs) && self.spec.mandatory.sqs.delaySeconds > 0 && has(self.spec.defaults.sqs) && self.spec.defaults.sqs.delaySeconds > 0)'
+              message: "sqs.delaySeconds cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.sqs) && self.spec.mandatory.sqs.maximumMessageSize > 0 && has(self.spec.defaults.sqs) && self.spec.defaults.sqs.maximumMessageSize > 0)'
+              message: "sqs.maximumMessageSize cannot be set in both mandatory and defaults"
           properties:
             spec:
               type: object
@@ -113,6 +125,32 @@ spec:
                           items:
                             type: string
                           default: []
+                    sqs:
+                      type: object
+                      default: {}
+                      properties:
+                        encryptionType:
+                          type: string
+                          default: ""
+                        kmsMasterKeyId:
+                          type: string
+                          default: ""
+                        visibilityTimeout:
+                          type: integer
+                          format: int64
+                          default: 0
+                        messageRetentionPeriod:
+                          type: integer
+                          format: int64
+                          default: 0
+                        delaySeconds:
+                          type: integer
+                          format: int64
+                          default: 0
+                        maximumMessageSize:
+                          type: integer
+                          format: int64
+                          default: 0
                     tags:
                       type: object
                       additionalProperties:
@@ -179,6 +217,32 @@ spec:
                           items:
                             type: string
                           default: []
+                    sqs:
+                      type: object
+                      default: {}
+                      properties:
+                        encryptionType:
+                          type: string
+                          default: ""
+                        kmsMasterKeyId:
+                          type: string
+                          default: ""
+                        visibilityTimeout:
+                          type: integer
+                          format: int64
+                          default: 0
+                        messageRetentionPeriod:
+                          type: integer
+                          format: int64
+                          default: 0
+                        delaySeconds:
+                          type: integer
+                          format: int64
+                          default: 0
+                        maximumMessageSize:
+                          type: integer
+                          format: int64
+                          default: 0
                     tags:
                       type: object
                       additionalProperties:

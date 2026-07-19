@@ -1,0 +1,10 @@
+# Assert AC-5: defaults.visibilityTimeout=30 (level 7 beats level 9).
+apiVersion: aws.kropath.run/v1alpha1
+kind: SQSConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    defaults:
+      visibilityTimeout: 30

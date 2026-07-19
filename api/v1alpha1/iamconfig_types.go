@@ -49,6 +49,7 @@ type KropathConfigTier struct {
 	IAM  cascade.IAMSection        `json:"iam,omitempty"`
 	S3   cascade.S3Section         `json:"s3,omitempty"`
 	KMS  cascade.KMSKropathSection `json:"kms,omitempty"`
+	SQS  cascade.SQSKropathSection `json:"sqs,omitempty"`
 	Tags map[string]string         `json:"tags,omitempty"`
 }
 
@@ -119,6 +120,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.Tags = make(map[string]string, len(in.Spec.Defaults.Tags))
 		for k, v := range in.Spec.Defaults.Tags {
 			out.Spec.Defaults.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.SQS.Tags != nil {
+		out.Spec.Mandatory.SQS.Tags = make(map[string]string, len(in.Spec.Mandatory.SQS.Tags))
+		for k, v := range in.Spec.Mandatory.SQS.Tags {
+			out.Spec.Mandatory.SQS.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.SQS.Tags != nil {
+		out.Spec.Defaults.SQS.Tags = make(map[string]string, len(in.Spec.Defaults.SQS.Tags))
+		for k, v := range in.Spec.Defaults.SQS.Tags {
+			out.Spec.Defaults.SQS.Tags[k] = v
 		}
 	}
 }

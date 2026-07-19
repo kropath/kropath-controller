@@ -1,0 +1,13 @@
+# Assert AC-9: effCfg.mandatory.tags is the union of KropathConfig.mandatory.tags
+# and SQSConfig.mandatory.tags.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SQSConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      tags:
+        cost-centre: infra
+        queue-type: messaging

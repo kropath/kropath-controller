@@ -36,6 +36,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&S3ConfigList{},
 		&KMSConfig{},
 		&KMSConfigList{},
+		&SQSConfig{},
+		&SQSConfigList{},
 		&PolicyDocument{},
 		&PolicyDocumentList{},
 	)

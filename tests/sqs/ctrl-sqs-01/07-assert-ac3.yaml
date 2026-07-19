@@ -1,0 +1,10 @@
+# Assert AC-3: defaults.encryptionType="sqs-managed" from level-6 localSQSConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SQSConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    defaults:
+      encryptionType: "sqs-managed"
