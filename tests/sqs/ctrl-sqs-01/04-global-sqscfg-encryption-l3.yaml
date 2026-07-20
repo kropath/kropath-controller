@@ -1,0 +1,10 @@
+# AC-2: globalSQSConfig with mandatory.encryptionType="kms" (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: SQSConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    encryptionType: "kms"
+  defaults: {}

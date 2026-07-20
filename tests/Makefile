@@ -14,7 +14,7 @@
 
 CHAINSAW ?= chainsaw
 
-.PHONY: setup test-iam test-s3 test-kms test-policy test-label-operator test-all
+.PHONY: setup test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-all
 
 ## setup: Apply all CRDs to the cluster. Run before any test target.
 setup:
@@ -33,6 +33,10 @@ test-s3:
 test-kms:
 	$(CHAINSAW) test kms/ctrl-kms-01/
 
+## test-sqs: Run SQS cascade integration tests (ctrl-sqs-01).
+test-sqs:
+	$(CHAINSAW) test sqs/ctrl-sqs-01/
+
 ## test-policy: Run policy document integration tests.
 test-policy:
 	$(CHAINSAW) test policy/phase2-refs/ policy/phase3-merge/
@@ -42,4 +46,4 @@ test-label-operator:
 	$(CHAINSAW) test label-operator/ctrl-label-op-01/
 
 ## test-all: Run all integration test suites.
-test-all: test-iam test-s3 test-kms test-policy test-label-operator
+test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator

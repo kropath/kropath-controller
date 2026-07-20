@@ -123,6 +123,7 @@ chainsaw-setup: build kind-up ## Create kind cluster, apply CRDs, create test na
 		crd/iamconfigs.aws.kropath.run \
 		crd/s3configs.aws.kropath.run \
 		crd/kmsconfigs.aws.kropath.run \
+		crd/sqsconfigs.aws.kropath.run \
 		crd/policydocuments.aws.kropath.run \
 		crd/awsiamroles.aws.kropath.run \
 		crd/awss3buckets.aws.kropath.run \
@@ -144,6 +145,7 @@ chainsaw-start: chainsaw-setup ## Build, set up CRDs, and start the operator in 
 		KUBECONFIG="$${HOME}/.kube/config" $(BINARY) \
 			--health-probe-bind-address=:$(HEALTH_PORT) \
 			--enable-kms-cascade \
+			--enable-sqs-cascade \
 			--enable-poldoc \
 			--enable-label-operator \
 			> $(CONTROLLER_LOG) 2>&1 & echo $$! > $(CONTROLLER_PID); \

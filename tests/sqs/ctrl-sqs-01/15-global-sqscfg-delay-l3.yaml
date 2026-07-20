@@ -1,0 +1,10 @@
+# AC-7: globalSQSConfig with mandatory.delaySeconds=60 (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: SQSConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    delaySeconds: 60
+  defaults: {}

@@ -13,6 +13,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/labeloperator"
 	"github.com/kropath/kropath-controller/internal/reconciler/policydocument"
 	"github.com/kropath/kropath-controller/internal/reconciler/s3config"
+	"github.com/kropath/kropath-controller/internal/reconciler/sqsconfig"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -26,6 +27,7 @@ var (
 	probeAddr           string
 	enablePolicyDoc     bool
 	enableKMSCascade    bool
+	enableSQSCascade    bool
 	enableLabelOperator bool
 )
 
@@ -44,6 +46,7 @@ func main() {
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enablePolicyDoc, "enable-poldoc", false, "Enable the PolicyDocument reconciler.")
 	flag.BoolVar(&enableKMSCascade, "enable-kms-cascade", false, "Enable the KMSConfig cascade reconciler.")
+	flag.BoolVar(&enableSQSCascade, "enable-sqs-cascade", false, "Enable the SQSConfig cascade reconciler.")
 	flag.BoolVar(&enableLabelOperator, "enable-label-operator", false, "Enable the label-operator reconciler.")
 	opts := zap.Options{Development: true}
 	opts.BindFlags(flag.CommandLine)
@@ -110,6 +113,17 @@ func main() {
 		}
 	}
 
+	if enableSQSCascade {
+		if err := (&sqsconfig.Reconciler{
+			Client: mgr.GetClient(),
+			Log:    ctrl.Log.WithName("controllers").WithName("SQSConfig"),
+			Scheme: mgr.GetScheme(),
+		}).SetupWithManager(mgr); err != nil {
+			ctrl.Log.Error(err, "unable to create SQSConfig reconciler")
+			os.Exit(1)
+		}
+	}
+
 	if enableLabelOperator {
 		if err := labeloperator.Setup(mgr, ctrl.Log.WithName("controllers").WithName("LabelOperator")); err != nil {
 			ctrl.Log.Error(err, "unable to setup label-operator")
@@ -126,7 +140,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctrl.Log.Info("starting manager", "metrics", metricsAddr, "probes", probeAddr, "enable_poldoc", enablePolicyDoc, "enable_kms_cascade", enableKMSCascade, "enable_label_operator", enableLabelOperator)
+	ctrl.Log.Info("starting manager", "metrics", metricsAddr, "probes", probeAddr, "enable_poldoc", enablePolicyDoc, "enable_kms_cascade", enableKMSCascade, "enable_sqs_cascade", enableSQSCascade, "enable_label_operator", enableLabelOperator)
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		ctrl.Log.Error(err, "problem running manager")
 		os.Exit(1)
