@@ -36,6 +36,26 @@
 - Health probes: `/healthz` port 8081 (manager alive), `/readyz` port 8081 (leader lease + watches established)
 - Feature flags: `--enable-poldoc`, `--enable-sequencer` (future) — allows incremental rollout
 
+### Chainsaw Test Assertion Stability
+
+**Never assert a list/array field by exact position when its element order is not guaranteed deterministic — use item-level `(?...)` matching instead.**
+
+**Why:** Any list built by iterating a Go map (or, in the sibling `kropath-aws` repo, a kro CEL `.merge().transformList()` chain) has iteration order that is not guaranteed stable across runs. A positional chainsaw `assert` on such a list is a latent flake — it can pass locally and fail in CI, or pass in isolation and fail under parallel execution, purely from map-order nondeterminism.
+
+**How to apply:** This repo's current `effectiveConfig.mandatory.tags` / `.defaults.tags` / `syncedLabels` / `syncedAnnotations` fields are all **maps**, not lists, so today's asserts (e.g. `tests/kms/ctrl-kms-01/33-assert-ac15.yaml`) are order-stable and need no change. `PolicyDocument` statement merges are also stable — `spec.sources` are concatenated in source order, not iterated from a map. But if a future change adds or asserts a **list built from a map** (e.g. a config field ever serialized as `[]{key,value}`, or a merge algorithm that starts ranging over a map), pair a length check with a per-item match instead of a positional list:
+
+```yaml
+spec:
+  (length(tags)): 2
+  tags:
+    - (key == 'cost-centre'): true
+      value: platform
+    - (key == 'environment'): true
+      value: mandatory
+```
+
+See `kropath-aws/docs/frequent-rgd-errors.md` §6 "Flaky List/Array Asserts — CEL Map-to-List Transforms Have Unstable Order" for the fuller writeup and the pattern applied to that repo's kro RGD chainsaw tests.
+
 ### Before Creating a PR
 
 Run these and confirm all pass before opening a pull request:
