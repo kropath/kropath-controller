@@ -1,0 +1,10 @@
+# AC-3: globalSecretsManagerConfig with defaults.kmsKeyID only (level 7).
+apiVersion: aws.kropath.run/v1alpha1
+kind: SecretsManagerConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  defaults:
+    kmsKeyID: "alias/sm-default-key"

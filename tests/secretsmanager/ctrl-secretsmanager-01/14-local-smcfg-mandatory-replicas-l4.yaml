@@ -1,0 +1,11 @@
+# AC-6 (local L4): replicaRegions that must be replaced (not merged) by L3.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SecretsManagerConfig
+metadata:
+  name: general-policy
+  namespace: secrets-prod
+spec:
+  mandatory:
+    replicaRegions:
+      - region: "eu-west-1"
+  defaults: {}

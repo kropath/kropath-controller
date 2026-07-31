@@ -1,0 +1,299 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-secretsmanager-01 Chainsaw integration tests — all 15 acceptance criteria.
+# Requires:
+#   - kind cluster with kropath-operator deployed (feature flag: --enable-secretsmanager-cascade)
+#   - KropathConfig CRD applied (crds/kropathconfig.yaml from kropath-aws)
+#   - SecretsManagerConfig CRD applied (from kropath-aws/crds/secretsmanagerconfig.yaml, KRO-250)
+#   - Run: cd tests && make setup && make test-secretsmanager
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-secretsmanager-01-cascade
+spec:
+  namespace: secrets-prod
+  steps:
+    # AC-1: globalKropathConfig.mandatory.secretsManager.kmsKeyID (level 1) propagates.
+    - name: ac1-global-kpc-mandatory-kmskey-level1
+      try:
+        - apply:
+            file: 01-global-kpc-mandatory-kmskey-l1.yaml
+        - apply:
+            file: 02-smconfig.yaml
+        - assert:
+            file: 03-assert-ac1.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-smconfig.yaml
+        - delete:
+            file: 01-global-kpc-mandatory-kmskey-l1.yaml
+
+    # AC-2: KropathConfig.mandatory.kmsKeyID (L1) wins over
+    # globalSecretsManagerConfig.mandatory.kmsKeyID (L3).
+    - name: ac2-kpc-L1-wins-smcfg-L3
+      try:
+        - apply:
+            file: 01-global-kpc-mandatory-kmskey-l1.yaml
+        - apply:
+            file: 04-global-smcfg-mandatory-kmskey-l3.yaml
+        - apply:
+            file: 02-smconfig.yaml
+        - assert:
+            file: 05-assert-ac2.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-smconfig.yaml
+        - delete:
+            file: 04-global-smcfg-mandatory-kmskey-l3.yaml
+        - delete:
+            file: 01-global-kpc-mandatory-kmskey-l1.yaml
+
+    # AC-3: globalSecretsManagerConfig.defaults.kmsKeyID (level 7) propagates;
+    # mandatory.kmsKeyID stays empty.
+    - name: ac3-global-smcfg-defaults-kmskey-level7
+      try:
+        - apply:
+            file: 06-global-smcfg-defaults-kmskey-l7.yaml
+        - apply:
+            file: 02-smconfig.yaml
+        - assert:
+            file: 07-assert-ac3.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-smconfig.yaml
+        - delete:
+            file: 06-global-smcfg-defaults-kmskey-l7.yaml
+
+    # AC-4: globalSecretsManagerConfig.mandatory.kmsKeyID (L3) wins over
+    # localSecretsManagerConfig.mandatory.kmsKeyID (L4).
+    - name: ac4-global-smcfg-L3-wins-local-L4
+      try:
+        - apply:
+            file: 08-global-smcfg-mandatory-kmskey-l3-only.yaml
+        - apply:
+            file: 09-local-smcfg-mandatory-kmskey-l4.yaml
+        - assert:
+            file: 10-assert-ac4.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 09-local-smcfg-mandatory-kmskey-l4.yaml
+        - delete:
+            file: 08-global-smcfg-mandatory-kmskey-l3-only.yaml
+
+    # AC-5: globalSecretsManagerConfig.mandatory.replicaRegions (level 3) propagates.
+    - name: ac5-global-smcfg-mandatory-replicaregions-level3
+      try:
+        - apply:
+            file: 11-global-smcfg-mandatory-replicas-l3.yaml
+        - apply:
+            file: 02-smconfig.yaml
+        - assert:
+            file: 12-assert-ac5.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-smconfig.yaml
+        - delete:
+            file: 11-global-smcfg-mandatory-replicas-l3.yaml
+
+    # AC-6: replicaRegions uses PRIORITY REPLACEMENT. L3 wins over L4; arrays are
+    # NOT merged additively. Result must be [{us-west-2}] only.
+    - name: ac6-replicaregions-priority-replacement-not-additive
+      try:
+        - apply:
+            file: 13-global-smcfg-mandatory-replicas-l3-priority.yaml
+        - apply:
+            file: 14-local-smcfg-mandatory-replicas-l4.yaml
+        - assert:
+            file: 15-assert-ac6.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 14-local-smcfg-mandatory-replicas-l4.yaml
+        - delete:
+            file: 13-global-smcfg-mandatory-replicas-l3-priority.yaml
+
+    # AC-7: globalSecretsManagerConfig.defaults.replicaRegions (level 7) propagates;
+    # mandatory.replicaRegions stays empty.
+    - name: ac7-global-smcfg-defaults-replicaregions-level7
+      try:
+        - apply:
+            file: 16-global-smcfg-defaults-replicas-l7.yaml
+        - apply:
+            file: 02-smconfig.yaml
+        - assert:
+            file: 17-assert-ac7.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-smconfig.yaml
+        - delete:
+            file: 16-global-smcfg-defaults-replicas-l7.yaml
+
+    # AC-8: globalSecretsManagerConfig.mandatory.forceOverwriteReplicaSecret=true
+    # (level 3) propagates to effectiveConfig.mandatory.
+    - name: ac8-global-smcfg-mandatory-forceoverwrite-level3
+      try:
+        - apply:
+            file: 18-global-smcfg-mandatory-forceoverwrite-l3.yaml
+        - apply:
+            file: 02-smconfig.yaml
+        - assert:
+            file: 19-assert-ac8.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-smconfig.yaml
+        - delete:
+            file: 18-global-smcfg-mandatory-forceoverwrite-l3.yaml
+
+    # AC-9: globalKropathConfig.defaults.secretsManager.kmsKeyID (level 9) propagates.
+    # Delete the KropathConfig in try to prevent defaults.secretsManager.kmsKeyID
+    # leaking into later ACs (follows the SQS AC-5 pattern).
+    - name: ac9-global-kpc-defaults-kmskey-level9
+      try:
+        - delete:
+            ref:
+              apiVersion: aws.kropath.run/v1alpha1
+              kind: KropathConfig
+              name: general-policy
+              namespace: kro-system
+        - apply:
+            file: 20-global-kpc-defaults-kmskey-l9.yaml
+        - apply:
+            file: 02-smconfig.yaml
+        - assert:
+            file: 21-assert-ac9.yaml
+            timeout: 30s
+        - delete:
+            ref:
+              apiVersion: aws.kropath.run/v1alpha1
+              kind: KropathConfig
+              name: general-policy
+              namespace: kro-system
+      cleanup:
+        - delete:
+            file: 02-smconfig.yaml
+        - delete:
+            file: 20-global-kpc-defaults-kmskey-l9.yaml
+
+    # AC-10: globalSecretsManagerConfig.defaults.namingTemplate (level 7) propagates.
+    - name: ac10-global-smcfg-defaults-naming-level7
+      try:
+        - apply:
+            file: 22-global-smcfg-defaults-naming-l7.yaml
+        - apply:
+            file: 02-smconfig.yaml
+        - assert:
+            file: 23-assert-ac10.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-smconfig.yaml
+        - delete:
+            file: 22-global-smcfg-defaults-naming-l7.yaml
+
+    # AC-11: globalSecretsManagerConfig.mandatory.namingTemplate (level 3) propagates.
+    - name: ac11-global-smcfg-mandatory-naming-level3
+      try:
+        - apply:
+            file: 24-global-smcfg-mandatory-naming-l3.yaml
+        - apply:
+            file: 02-smconfig.yaml
+        - assert:
+            file: 25-assert-ac11.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-smconfig.yaml
+        - delete:
+            file: 24-global-smcfg-mandatory-naming-l3.yaml
+
+    # AC-12: KropathConfig.mandatory.tags and SecretsManagerConfig.mandatory.tags
+    # are union-merged into effCfg.mandatory.tags.
+    - name: ac12-tag-union-merge
+      try:
+        - apply:
+            file: 26-global-kpc-mandatory-tags.yaml
+        - apply:
+            file: 27-smconfig-mandatory-tags.yaml
+        - apply:
+            file: 02-smconfig.yaml
+        - assert:
+            file: 28-assert-ac12.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-smconfig.yaml
+        - delete:
+            file: 27-smconfig-mandatory-tags.yaml
+        - delete:
+            file: 26-global-kpc-mandatory-tags.yaml
+
+    # AC-13: globalSecretsManagerConfig.mandatory.syncedLabels (level 3) propagates.
+    - name: ac13-global-smcfg-synced-labels
+      try:
+        - apply:
+            file: 29-global-smcfg-mandatory-synced-labels.yaml
+        - apply:
+            file: 02-smconfig.yaml
+        - assert:
+            file: 30-assert-ac13.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-smconfig.yaml
+        - delete:
+            file: 29-global-smcfg-mandatory-synced-labels.yaml
+
+    # AC-14: globalKropathConfig.spec.aws.region and accountId propagate to
+    # effCfg.aws.region and effCfg.aws.accountId.
+    - name: ac14-provider-identity-propagates
+      try:
+        - apply:
+            file: 31-global-kpc-aws-identity.yaml
+        - apply:
+            file: 02-smconfig.yaml
+        - assert:
+            file: 32-assert-ac14.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-smconfig.yaml
+        - delete:
+            file: 31-global-kpc-aws-identity.yaml
+
+    # AC-15 (negative): KropathConfig with BOTH mandatory.secretsManager.kmsKeyID AND
+    # defaults.secretsManager.kmsKeyID set must be rejected by the CEL
+    # x-kubernetes-validations rule on the KropathConfig CRD.
+    - name: ac15-cel-mutual-exclusivity-rejects-both-tiers
+      try:
+        - script:
+            content: |
+              OUTPUT=$(kubectl apply -f "$(dirname "$0")/33-kpc-mutual-exclusivity-invalid.yaml" 2>&1)
+              EXIT_CODE=$?
+              if [ $EXIT_CODE -ne 0 ]; then
+                echo "PASS: API server correctly rejected the resource."
+                echo "$OUTPUT"
+                exit 0
+              fi
+              echo "FAIL: resource was accepted when CEL validation should have rejected it."
+              echo "$OUTPUT"
+              kubectl delete -f "$(dirname "$0")/33-kpc-mutual-exclusivity-invalid.yaml" 2>/dev/null || true
+              exit 1
