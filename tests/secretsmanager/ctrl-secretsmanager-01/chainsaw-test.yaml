@@ -81,8 +81,17 @@ spec:
 
     # AC-4: globalSecretsManagerConfig.mandatory.kmsKeyID (L3) wins over
     # localSecretsManagerConfig.mandatory.kmsKeyID (L4).
+    # Delete the KropathConfig first: Chainsaw defers all cleanups to end-of-test,
+    # so the AC-2 KropathConfig (L1, highest priority) is still present here.
+    # Without deleting it, L1 wins and the L3-vs-L4 assertion fails.
     - name: ac4-global-smcfg-L3-wins-local-L4
       try:
+        - delete:
+            ref:
+              apiVersion: aws.kropath.run/v1alpha1
+              kind: KropathConfig
+              name: general-policy
+              namespace: kro-system
         - apply:
             file: 08-global-smcfg-mandatory-kmskey-l3-only.yaml
         - apply:
