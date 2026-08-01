@@ -38,6 +38,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&KMSConfigList{},
 		&SQSConfig{},
 		&SQSConfigList{},
+		&SNSConfig{},
+		&SNSConfigList{},
 		&SecretsManagerConfig{},
 		&SecretsManagerConfigList{},
 		&PolicyDocument{},

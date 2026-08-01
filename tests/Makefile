@@ -14,7 +14,7 @@
 
 CHAINSAW ?= chainsaw
 
-.PHONY: setup test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-all
+.PHONY: setup test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-all
 
 ## setup: Apply all CRDs to the cluster. Run before any test target.
 setup:
@@ -49,5 +49,9 @@ test-label-operator:
 test-secretsmanager:
 	$(CHAINSAW) test secretsmanager/ctrl-secretsmanager-01/
 
+## test-sns: Run SNS cascade integration tests (ctrl-sns-01).
+test-sns:
+	$(CHAINSAW) test sns/ctrl-sns-01/
+
 ## test-all: Run all integration test suites.
-test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager
+test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns

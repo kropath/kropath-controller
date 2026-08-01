@@ -71,6 +71,12 @@ spec:
                 spec.mandatory.secretsManager.kmsKeyID and
                 spec.defaults.secretsManager.kmsKeyID cannot both be set.
                 Set the field in exactly one tier.
+            - rule: '!(has(self.spec.mandatory.sns) && self.spec.mandatory.sns.kmsMasterKeyId != "" && has(self.spec.defaults.sns) && self.spec.defaults.sns.kmsMasterKeyId != "")'
+              message: "sns.kmsMasterKeyId cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.sns) && self.spec.mandatory.sns.signatureVersion != "" && has(self.spec.defaults.sns) && self.spec.defaults.sns.signatureVersion != "")'
+              message: "sns.signatureVersion cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.sns) && self.spec.mandatory.sns.tracingConfig != "" && has(self.spec.defaults.sns) && self.spec.defaults.sns.tracingConfig != "")'
+              message: "sns.tracingConfig cannot be set in both mandatory and defaults"
           properties:
             spec:
               type: object
@@ -167,6 +173,19 @@ spec:
                       default: {}
                       properties:
                         kmsKeyID:
+                          type: string
+                          default: ""
+                    sns:
+                      type: object
+                      default: {}
+                      properties:
+                        kmsMasterKeyId:
+                          type: string
+                          default: ""
+                        signatureVersion:
+                          type: string
+                          default: ""
+                        tracingConfig:
                           type: string
                           default: ""
                     tags:
@@ -266,6 +285,19 @@ spec:
                       default: {}
                       properties:
                         kmsKeyID:
+                          type: string
+                          default: ""
+                    sns:
+                      type: object
+                      default: {}
+                      properties:
+                        kmsMasterKeyId:
+                          type: string
+                          default: ""
+                        signatureVersion:
+                          type: string
+                          default: ""
+                        tracingConfig:
                           type: string
                           default: ""
                     tags:

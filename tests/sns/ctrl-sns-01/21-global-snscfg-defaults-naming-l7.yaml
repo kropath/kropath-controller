@@ -1,0 +1,11 @@
+# AC-10: globalSNSConfig with defaults.namingTemplate="{namespace}-{name}" (level 7).
+# KropathConfig.sns does not carry namingTemplate — governed only at SNSConfig levels.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SNSConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  defaults:
+    namingTemplate: "{namespace}-{name}"

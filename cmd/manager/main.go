@@ -14,6 +14,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/policydocument"
 	"github.com/kropath/kropath-controller/internal/reconciler/s3config"
 	"github.com/kropath/kropath-controller/internal/reconciler/secretsmanagerconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/snsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/sqsconfig"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -31,6 +32,7 @@ var (
 	enableSQSCascade      bool
 	enableSMCascade       bool
 	enableLabelOperator   bool
+	enableSNSCascade      bool
 )
 
 func leaderElectionNamespace() string {
@@ -51,6 +53,7 @@ func main() {
 	flag.BoolVar(&enableSQSCascade, "enable-sqs-cascade", false, "Enable the SQSConfig cascade reconciler.")
 	flag.BoolVar(&enableSMCascade, "enable-secretsmanager-cascade", false, "Enable the SecretsManagerConfig cascade reconciler.")
 	flag.BoolVar(&enableLabelOperator, "enable-label-operator", false, "Enable the label-operator reconciler.")
+	flag.BoolVar(&enableSNSCascade, "enable-sns-cascade", false, "Enable the SNSConfig cascade reconciler.")
 	opts := zap.Options{Development: true}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
@@ -145,6 +148,17 @@ func main() {
 		}
 	}
 
+	if enableSNSCascade {
+		if err := (&snsconfig.Reconciler{
+			Client: mgr.GetClient(),
+			Log:    ctrl.Log.WithName("controllers").WithName("SNSConfig"),
+			Scheme: mgr.GetScheme(),
+		}).SetupWithManager(mgr); err != nil {
+			ctrl.Log.Error(err, "unable to create SNSConfig reconciler")
+			os.Exit(1)
+		}
+	}
+
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		ctrl.Log.Error(err, "unable to set up health check")
 		os.Exit(1)
@@ -154,7 +168,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctrl.Log.Info("starting manager", "metrics", metricsAddr, "probes", probeAddr, "enable_poldoc", enablePolicyDoc, "enable_kms_cascade", enableKMSCascade, "enable_sqs_cascade", enableSQSCascade, "enable_secretsmanager_cascade", enableSMCascade, "enable_label_operator", enableLabelOperator)
+	ctrl.Log.Info("starting manager", "metrics", metricsAddr, "probes", probeAddr, "enable_poldoc", enablePolicyDoc, "enable_kms_cascade", enableKMSCascade, "enable_sqs_cascade", enableSQSCascade, "enable_secretsmanager_cascade", enableSMCascade, "enable_label_operator", enableLabelOperator, "enable_sns_cascade", enableSNSCascade)
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		ctrl.Log.Error(err, "problem running manager")
 		os.Exit(1)

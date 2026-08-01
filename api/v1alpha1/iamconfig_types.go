@@ -51,6 +51,7 @@ type KropathConfigTier struct {
 	KMS            cascade.KMSKropathSection `json:"kms,omitempty"`
 	SQS            cascade.SQSKropathSection `json:"sqs,omitempty"`
 	SecretsManager cascade.SMKropathSection  `json:"secretsManager,omitempty"`
+	SNS            cascade.SNSKropathSection `json:"sns,omitempty"`
 	Tags           map[string]string         `json:"tags,omitempty"`
 }
 

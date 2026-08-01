@@ -1,0 +1,254 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-sns-01 Chainsaw integration tests — all 13 acceptance criteria.
+# Requires:
+#   - kind cluster with kropath-operator deployed (feature flag: --enable-sns-cascade)
+#   - KropathConfig CRD applied (crds/kropathconfig.yaml from kropath-aws)
+#   - SNSConfig CRD applied (crds/snsconfig.yaml from kropath-aws)
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-sns-01-cascade
+spec:
+  steps:
+    # AC-1: globalKropathConfig.mandatory.sns.kmsMasterKeyId (level 1) propagates
+    # to effCfg.mandatory.kmsMasterKeyId.
+    - name: ac1-global-kpc-kmskey-level1
+      try:
+        - apply:
+            file: 01-global-kpc-kmskey-l1.yaml
+        - apply:
+            file: 02-snsconfig.yaml
+        - assert:
+            file: 03-assert-ac1.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-snsconfig.yaml
+        - delete:
+            file: 01-global-kpc-kmskey-l1.yaml
+
+    # AC-2: globalSNSConfig.mandatory.kmsMasterKeyId (level 3) propagates when
+    # levels 1-2 are empty.
+    - name: ac2-global-snscfg-kmskey-level3
+      try:
+        - apply:
+            file: 04-global-snscfg-kms-l3.yaml
+        - apply:
+            file: 02-snsconfig.yaml
+        - assert:
+            file: 05-assert-ac2.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-snsconfig.yaml
+        - delete:
+            file: 04-global-snscfg-kms-l3.yaml
+
+    # AC-3: localSNSConfig.defaults.kmsMasterKeyId (level 6) propagates to
+    # effCfg.defaults.kmsMasterKeyId; mandatory.kmsMasterKeyId stays empty.
+    - name: ac3-local-snscfg-defaults-kmskey-level6
+      try:
+        - apply:
+            file: 06-local-snscfg-defaults-kms.yaml
+        - assert:
+            file: 07-assert-ac3.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 06-local-snscfg-defaults-kms.yaml
+
+    # AC-4: globalKropathConfig.mandatory.sns.signatureVersion (level 1) propagates.
+    - name: ac4-global-kpc-signatureversion-level1
+      try:
+        - apply:
+            file: 08-global-kpc-signature-l1.yaml
+        - apply:
+            file: 02-snsconfig.yaml
+        - assert:
+            file: 09-assert-ac4.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-snsconfig.yaml
+        - delete:
+            file: 08-global-kpc-signature-l1.yaml
+
+    # AC-5: globalSNSConfig.defaults.signatureVersion="2" (level 7) wins over
+    # globalKropathConfig.defaults.sns.signatureVersion="1" (level 9).
+    # The AC-4 KropathConfig (mandatory.sns.signatureVersion) must be deleted first
+    # to avoid the CEL mutual-exclusivity rule firing on the same KropathConfig object.
+    - name: ac5-global-snscfg-defaults-wins-over-kpc-defaults
+      try:
+        - delete:
+            ref:
+              apiVersion: aws.kropath.run/v1alpha1
+              kind: KropathConfig
+              name: general-policy
+              namespace: kro-system
+        - apply:
+            file: 11-global-kpc-defaults-signature-l9.yaml
+        - apply:
+            file: 10-global-snscfg-defaults-signature-l7.yaml
+        - apply:
+            file: 02-snsconfig.yaml
+        - assert:
+            file: 12-assert-ac5.yaml
+            timeout: 30s
+        - delete:
+            ref:
+              apiVersion: aws.kropath.run/v1alpha1
+              kind: KropathConfig
+              name: general-policy
+              namespace: kro-system
+      cleanup:
+        - delete:
+            file: 02-snsconfig.yaml
+        - delete:
+            file: 10-global-snscfg-defaults-signature-l7.yaml
+        - delete:
+            file: 11-global-kpc-defaults-signature-l9.yaml
+
+    # AC-6: globalKropathConfig.mandatory.sns.tracingConfig="Active" (level 1) propagates.
+    - name: ac6-global-kpc-tracingconfig-level1
+      try:
+        - apply:
+            file: 13-global-kpc-tracing-l1.yaml
+        - apply:
+            file: 02-snsconfig.yaml
+        - assert:
+            file: 14-assert-ac6.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-snsconfig.yaml
+        - delete:
+            file: 13-global-kpc-tracing-l1.yaml
+
+    # AC-7: globalSNSConfig.mandatory.dataProtectionPolicy (level 3) propagates.
+    - name: ac7-global-snscfg-dataprotectionpolicy-level3
+      try:
+        - apply:
+            file: 15-global-snscfg-policy-l3.yaml
+        - apply:
+            file: 02-snsconfig.yaml
+        - assert:
+            file: 16-assert-ac7.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-snsconfig.yaml
+        - delete:
+            file: 15-global-snscfg-policy-l3.yaml
+
+    # AC-8: globalSNSConfig.mandatory.deliveryFeedback.http (level 3) propagates.
+    - name: ac8-global-snscfg-delivery-feedback-http-level3
+      try:
+        - apply:
+            file: 17-global-snscfg-feedback-http-l3.yaml
+        - apply:
+            file: 02-snsconfig.yaml
+        - assert:
+            file: 18-assert-ac8.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-snsconfig.yaml
+        - delete:
+            file: 17-global-snscfg-feedback-http-l3.yaml
+
+    # AC-9: globalSNSConfig.defaults.deliveryFeedback.sqs (level 7) propagates.
+    - name: ac9-global-snscfg-defaults-delivery-feedback-sqs-level7
+      try:
+        - apply:
+            file: 19-global-snscfg-defaults-feedback-sqs-l7.yaml
+        - apply:
+            file: 02-snsconfig.yaml
+        - assert:
+            file: 20-assert-ac9.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-snsconfig.yaml
+        - delete:
+            file: 19-global-snscfg-defaults-feedback-sqs-l7.yaml
+
+    # AC-10: globalSNSConfig.defaults.namingTemplate="{namespace}-{name}" (level 7)
+    # propagates. KropathConfig.sns has no namingTemplate field.
+    - name: ac10-global-snscfg-defaults-naming-level7
+      try:
+        - apply:
+            file: 21-global-snscfg-defaults-naming-l7.yaml
+        - apply:
+            file: 02-snsconfig.yaml
+        - assert:
+            file: 22-assert-ac10.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-snsconfig.yaml
+        - delete:
+            file: 21-global-snscfg-defaults-naming-l7.yaml
+
+    # AC-11: KropathConfig.mandatory.tags and SNSConfig.mandatory.tags are
+    # union-merged into effCfg.mandatory.tags.
+    - name: ac11-tag-union-merge
+      try:
+        - apply:
+            file: 23-global-kpc-mandatory-tags.yaml
+        - apply:
+            file: 24-snsconfig-mandatory-tags.yaml
+        - assert:
+            file: 25-assert-ac11.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 24-snsconfig-mandatory-tags.yaml
+        - delete:
+            file: 23-global-kpc-mandatory-tags.yaml
+
+    # AC-12: globalSNSConfig.mandatory.syncedLabels={data-class: internal} (level 3)
+    # propagates.
+    - name: ac12-global-snscfg-synced-labels
+      try:
+        - apply:
+            file: 26-global-snscfg-synced-labels.yaml
+        - apply:
+            file: 02-snsconfig.yaml
+        - assert:
+            file: 27-assert-ac12.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-snsconfig.yaml
+        - delete:
+            file: 26-global-snscfg-synced-labels.yaml
+
+    # AC-13: globalKropathConfig.spec.aws.region and accountId propagate
+    # to effCfg.aws.region and effCfg.aws.accountId.
+    - name: ac13-provider-identity-propagates
+      try:
+        - apply:
+            file: 28-global-kpc-aws-identity.yaml
+        - apply:
+            file: 02-snsconfig.yaml
+        - assert:
+            file: 29-assert-ac13.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-snsconfig.yaml
+        - delete:
+            file: 28-global-kpc-aws-identity.yaml
