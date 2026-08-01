@@ -1,0 +1,10 @@
+# Assert AC-1: mandatory.kmsMasterKeyId from level-1 globalKropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SNSConfig
+metadata:
+  name: general-policy
+  namespace: events-prod
+status:
+  effectiveConfig:
+    mandatory:
+      kmsMasterKeyId: "arn:aws:kms:ap-southeast-2:123456789012:key/org-key"

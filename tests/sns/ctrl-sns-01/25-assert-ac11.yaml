@@ -1,0 +1,13 @@
+# Assert AC-11: effCfg.mandatory.tags is the union of KropathConfig.mandatory.tags
+# and SNSConfig.mandatory.tags.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SNSConfig
+metadata:
+  name: general-policy
+  namespace: events-prod
+status:
+  effectiveConfig:
+    mandatory:
+      tags:
+        cost-centre: infra
+        topic-type: messaging
