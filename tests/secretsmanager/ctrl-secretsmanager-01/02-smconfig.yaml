@@ -1,0 +1,9 @@
+# Shared empty local SecretsManagerConfig — governance comes from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SecretsManagerConfig
+metadata:
+  name: general-policy
+  namespace: secrets-prod
+spec:
+  mandatory: {}
+  defaults: {}

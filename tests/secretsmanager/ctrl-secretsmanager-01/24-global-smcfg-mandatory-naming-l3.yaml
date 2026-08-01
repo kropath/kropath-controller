@@ -1,0 +1,10 @@
+# AC-11: globalSecretsManagerConfig.mandatory.namingTemplate (level 3) propagates.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SecretsManagerConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    namingTemplate: "{namespace}-{configRef}-{name}"
+  defaults: {}

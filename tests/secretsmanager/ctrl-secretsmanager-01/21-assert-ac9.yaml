@@ -1,0 +1,10 @@
+# Assert AC-9: defaults.kmsKeyID from L9 globalKropathConfig.defaults.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SecretsManagerConfig
+metadata:
+  name: general-policy
+  namespace: secrets-prod
+status:
+  effectiveConfig:
+    defaults:
+      kmsKeyID: "alias/org-default-key"

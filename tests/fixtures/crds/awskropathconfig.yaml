@@ -60,6 +60,17 @@ spec:
               message: "sqs.delaySeconds cannot be set in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.sqs) && self.spec.mandatory.sqs.maximumMessageSize > 0 && has(self.spec.defaults.sqs) && self.spec.defaults.sqs.maximumMessageSize > 0)'
               message: "sqs.maximumMessageSize cannot be set in both mandatory and defaults"
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.secretsManager) &&
+                  has(self.spec.mandatory.secretsManager.kmsKeyID) &&
+                  self.spec.mandatory.secretsManager.kmsKeyID != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.secretsManager) &&
+                  has(self.spec.defaults.secretsManager.kmsKeyID) &&
+                  self.spec.defaults.secretsManager.kmsKeyID != "")
+              message: >-
+                spec.mandatory.secretsManager.kmsKeyID and
+                spec.defaults.secretsManager.kmsKeyID cannot both be set.
+                Set the field in exactly one tier.
           properties:
             spec:
               type: object
@@ -151,6 +162,13 @@ spec:
                           type: integer
                           format: int64
                           default: 0
+                    secretsManager:
+                      type: object
+                      default: {}
+                      properties:
+                        kmsKeyID:
+                          type: string
+                          default: ""
                     tags:
                       type: object
                       additionalProperties:
@@ -243,6 +261,13 @@ spec:
                           type: integer
                           format: int64
                           default: 0
+                    secretsManager:
+                      type: object
+                      default: {}
+                      properties:
+                        kmsKeyID:
+                          type: string
+                          default: ""
                     tags:
                       type: object
                       additionalProperties:

@@ -1,0 +1,12 @@
+# Assert AC-6: L3 replicaRegions wins over L4 — priority replacement, NOT additive.
+# Result must be [{us-west-2}] only, NOT [{us-west-2},{eu-west-1}].
+apiVersion: aws.kropath.run/v1alpha1
+kind: SecretsManagerConfig
+metadata:
+  name: general-policy
+  namespace: secrets-prod
+status:
+  effectiveConfig:
+    mandatory:
+      replicaRegions:
+        - region: "us-west-2"

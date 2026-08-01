@@ -1,0 +1,14 @@
+# AC-3: globalSecretsManagerConfig with defaults.kmsKeyID only (level 7).
+# Explicitly zero mandatory.kmsKeyID so SSA claims ownership and clears any
+# value left by a prior apply (prevents CEL mutual-exclusivity false-positive
+# when AC-2 cleanup has a timing race with AC-3 start).
+apiVersion: aws.kropath.run/v1alpha1
+kind: SecretsManagerConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    kmsKeyID: ""
+  defaults:
+    kmsKeyID: "alias/sm-default-key"
