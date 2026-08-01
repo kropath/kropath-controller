@@ -7,4 +7,4 @@ metadata:
 status:
   effectiveConfig:
     mandatory:
-      kmsMasterKeyId: "alias/aws/sns"
+      kmsMasterKeyId: "arn:aws:kms:ap-southeast-2:123456789012:key/org-key"
