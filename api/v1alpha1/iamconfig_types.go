@@ -53,8 +53,9 @@ type KropathConfigTier struct {
 	SecretsManager cascade.SMKropathSection       `json:"secretsManager,omitempty"`
 	SNS            cascade.SNSKropathSection      `json:"sns,omitempty"`
 	DynamoDB       cascade.DynamoDBKropathSection    `json:"dynamodb,omitempty"`
-	EventBridge    cascade.EventBridgeKropathSection `json:"eventbridge,omitempty"`
-	Tags           map[string]string                 `json:"tags,omitempty"`
+	EventBridge    cascade.EventBridgeKropathSection    `json:"eventbridge,omitempty"`
+	CloudWatchLogs cascade.CloudWatchLogsKropathSection `json:"cloudwatchlogs,omitempty"`
+	Tags           map[string]string                    `json:"tags,omitempty"`
 }
 
 type IAMConfig struct {
@@ -172,6 +173,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.EventBridge.Tags = make(map[string]string, len(in.Spec.Defaults.EventBridge.Tags))
 		for k, v := range in.Spec.Defaults.EventBridge.Tags {
 			out.Spec.Defaults.EventBridge.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.CloudWatchLogs.Tags != nil {
+		out.Spec.Mandatory.CloudWatchLogs.Tags = make(map[string]string, len(in.Spec.Mandatory.CloudWatchLogs.Tags))
+		for k, v := range in.Spec.Mandatory.CloudWatchLogs.Tags {
+			out.Spec.Mandatory.CloudWatchLogs.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.CloudWatchLogs.Tags != nil {
+		out.Spec.Defaults.CloudWatchLogs.Tags = make(map[string]string, len(in.Spec.Defaults.CloudWatchLogs.Tags))
+		for k, v := range in.Spec.Defaults.CloudWatchLogs.Tags {
+			out.Spec.Defaults.CloudWatchLogs.Tags[k] = v
 		}
 	}
 }

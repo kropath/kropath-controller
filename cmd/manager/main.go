@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/kropath/kropath-controller/api/v1alpha1"
+	"github.com/kropath/kropath-controller/internal/reconciler/cloudwatchlogsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/dynamodbconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/eventbridgeconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/iamconfig"
@@ -36,7 +37,8 @@ var (
 	enableLabelOperator      bool
 	enableSNSCascade           bool
 	enableDynamoDBCascade      bool
-	enableEventBridgeCascade   bool
+	enableEventBridgeCascade      bool
+	enableCloudWatchLogsCascade   bool
 )
 
 func leaderElectionNamespace() string {
@@ -60,6 +62,7 @@ func main() {
 	flag.BoolVar(&enableSNSCascade, "enable-sns-cascade", false, "Enable the SNSConfig cascade reconciler.")
 	flag.BoolVar(&enableDynamoDBCascade, "enable-dynamodb-cascade", false, "Enable the DynamoDBConfig cascade reconciler.")
 	flag.BoolVar(&enableEventBridgeCascade, "enable-eventbridge-cascade", false, "Enable the EventBridgeConfig cascade reconciler.")
+	flag.BoolVar(&enableCloudWatchLogsCascade, "enable-cloudwatchlogs-cascade", false, "Enable the CloudWatchLogsConfig cascade reconciler.")
 	opts := zap.Options{Development: true}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
@@ -183,6 +186,17 @@ func main() {
 			Scheme: mgr.GetScheme(),
 		}).SetupWithManager(mgr); err != nil {
 			ctrl.Log.Error(err, "unable to create EventBridgeConfig reconciler")
+			os.Exit(1)
+		}
+	}
+
+	if enableCloudWatchLogsCascade {
+		if err := (&cloudwatchlogsconfig.Reconciler{
+			Client: mgr.GetClient(),
+			Log:    ctrl.Log.WithName("controllers").WithName("CloudWatchLogsConfig"),
+			Scheme: mgr.GetScheme(),
+		}).SetupWithManager(mgr); err != nil {
+			ctrl.Log.Error(err, "unable to create CloudWatchLogsConfig reconciler")
 			os.Exit(1)
 		}
 	}
