@@ -9,6 +9,7 @@ import (
 
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/reconciler/dynamodbconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/eventbridgeconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/iamconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/kmsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/labeloperator"
@@ -33,8 +34,9 @@ var (
 	enableSQSCascade         bool
 	enableSMCascade          bool
 	enableLabelOperator      bool
-	enableSNSCascade         bool
-	enableDynamoDBCascade    bool
+	enableSNSCascade           bool
+	enableDynamoDBCascade      bool
+	enableEventBridgeCascade   bool
 )
 
 func leaderElectionNamespace() string {
@@ -57,6 +59,7 @@ func main() {
 	flag.BoolVar(&enableLabelOperator, "enable-label-operator", false, "Enable the label-operator reconciler.")
 	flag.BoolVar(&enableSNSCascade, "enable-sns-cascade", false, "Enable the SNSConfig cascade reconciler.")
 	flag.BoolVar(&enableDynamoDBCascade, "enable-dynamodb-cascade", false, "Enable the DynamoDBConfig cascade reconciler.")
+	flag.BoolVar(&enableEventBridgeCascade, "enable-eventbridge-cascade", false, "Enable the EventBridgeConfig cascade reconciler.")
 	opts := zap.Options{Development: true}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
@@ -173,6 +176,17 @@ func main() {
 		}
 	}
 
+	if enableEventBridgeCascade {
+		if err := (&eventbridgeconfig.Reconciler{
+			Client: mgr.GetClient(),
+			Log:    ctrl.Log.WithName("controllers").WithName("EventBridgeConfig"),
+			Scheme: mgr.GetScheme(),
+		}).SetupWithManager(mgr); err != nil {
+			ctrl.Log.Error(err, "unable to create EventBridgeConfig reconciler")
+			os.Exit(1)
+		}
+	}
+
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		ctrl.Log.Error(err, "unable to set up health check")
 		os.Exit(1)
@@ -182,7 +196,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctrl.Log.Info("starting manager", "metrics", metricsAddr, "probes", probeAddr, "enable_poldoc", enablePolicyDoc, "enable_kms_cascade", enableKMSCascade, "enable_sqs_cascade", enableSQSCascade, "enable_secretsmanager_cascade", enableSMCascade, "enable_label_operator", enableLabelOperator, "enable_sns_cascade", enableSNSCascade, "enable_dynamodb_cascade", enableDynamoDBCascade)
+	ctrl.Log.Info("starting manager", "metrics", metricsAddr, "probes", probeAddr, "enable_poldoc", enablePolicyDoc, "enable_kms_cascade", enableKMSCascade, "enable_sqs_cascade", enableSQSCascade, "enable_secretsmanager_cascade", enableSMCascade, "enable_label_operator", enableLabelOperator, "enable_sns_cascade", enableSNSCascade, "enable_dynamodb_cascade", enableDynamoDBCascade, "enable_eventbridge_cascade", enableEventBridgeCascade)
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		ctrl.Log.Error(err, "problem running manager")
 		os.Exit(1)

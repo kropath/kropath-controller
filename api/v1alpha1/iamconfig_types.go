@@ -52,8 +52,9 @@ type KropathConfigTier struct {
 	SQS            cascade.SQSKropathSection      `json:"sqs,omitempty"`
 	SecretsManager cascade.SMKropathSection       `json:"secretsManager,omitempty"`
 	SNS            cascade.SNSKropathSection      `json:"sns,omitempty"`
-	DynamoDB       cascade.DynamoDBKropathSection `json:"dynamodb,omitempty"`
-	Tags           map[string]string              `json:"tags,omitempty"`
+	DynamoDB       cascade.DynamoDBKropathSection    `json:"dynamodb,omitempty"`
+	EventBridge    cascade.EventBridgeKropathSection `json:"eventbridge,omitempty"`
+	Tags           map[string]string                 `json:"tags,omitempty"`
 }
 
 type IAMConfig struct {
@@ -159,6 +160,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.DynamoDB.Tags = make(map[string]string, len(in.Spec.Defaults.DynamoDB.Tags))
 		for k, v := range in.Spec.Defaults.DynamoDB.Tags {
 			out.Spec.Defaults.DynamoDB.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.EventBridge.Tags != nil {
+		out.Spec.Mandatory.EventBridge.Tags = make(map[string]string, len(in.Spec.Mandatory.EventBridge.Tags))
+		for k, v := range in.Spec.Mandatory.EventBridge.Tags {
+			out.Spec.Mandatory.EventBridge.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.EventBridge.Tags != nil {
+		out.Spec.Defaults.EventBridge.Tags = make(map[string]string, len(in.Spec.Defaults.EventBridge.Tags))
+		for k, v := range in.Spec.Defaults.EventBridge.Tags {
+			out.Spec.Defaults.EventBridge.Tags[k] = v
 		}
 	}
 }

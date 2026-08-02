@@ -46,6 +46,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&PolicyDocumentList{},
 		&DynamoDBConfig{},
 		&DynamoDBConfigList{},
+		&EventBridgeConfig{},
+		&EventBridgeConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil
