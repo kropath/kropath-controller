@@ -98,8 +98,13 @@ spec:
 
     # AC-5: globalDynamoDBConfig.defaults.billingMode (level 7) wins over
     # globalKropathConfig.defaults.dynamodb.billingMode (level 9).
+    # Purge KropathConfig first: Chainsaw defers cleanup blocks to end-of-test,
+    # so AC-4's mandatory.billingMode KropathConfig is still live here. Patching
+    # it with defaults.billingMode would trigger the mutual-exclusivity CEL rule.
     - name: ac5-global-ddbcfg-defaults-billing-level7-wins
       try:
+        - script:
+            content: kubectl delete kropathconfig general-table -n kro-system --ignore-not-found
         - apply:
             file: 10-global-ddbcfg-defaults-billing-l7.yaml
         - apply:
