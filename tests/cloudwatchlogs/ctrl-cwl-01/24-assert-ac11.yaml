@@ -1,0 +1,11 @@
+# Assert AC-11: effCfg.aws.region and effCfg.aws.accountId from globalKropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: general-policy
+  namespace: logging-prod
+status:
+  effectiveConfig:
+    aws:
+      accountId: "123456789012"
+      region: "ap-southeast-2"

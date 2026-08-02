@@ -1,0 +1,10 @@
+# Assert AC-1: mandatory.kmsKeyId="arn:aws:kms:ap-southeast-2:123:key/org-key" from level-1 globalKropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: general-policy
+  namespace: logging-prod
+status:
+  effectiveConfig:
+    mandatory:
+      kmsKeyId: "arn:aws:kms:ap-southeast-2:123:key/org-key"

@@ -1,0 +1,13 @@
+# AC-9: localCloudWatchLogsConfig with mandatory.tags (CloudWatch Logs config-level tags, level 4).
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: general-policy
+  namespace: logging-prod
+  labels:
+    aws.kropath.run/resource-name: general-policy
+spec:
+  mandatory:
+    tags:
+      log-class: production
+  defaults: {}

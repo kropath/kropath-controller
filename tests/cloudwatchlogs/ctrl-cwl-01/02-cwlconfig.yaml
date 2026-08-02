@@ -1,0 +1,11 @@
+# Shared empty local CloudWatchLogsConfig — all cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: general-policy
+  namespace: logging-prod
+  labels:
+    aws.kropath.run/resource-name: general-policy
+spec:
+  mandatory: {}
+  defaults: {}

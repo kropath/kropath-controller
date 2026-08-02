@@ -1,0 +1,12 @@
+# AC-7: globalCloudWatchLogsConfig with defaults.namingTemplate="{namespace}-{name}" (level 7).
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+  labels:
+    aws.kropath.run/resource-name: general-policy
+spec:
+  mandatory: {}
+  defaults:
+    namingTemplate: "{namespace}-{name}"

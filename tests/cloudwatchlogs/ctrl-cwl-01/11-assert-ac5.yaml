@@ -1,0 +1,10 @@
+# Assert AC-5: mandatory.retentionDays=2557 from level-3 globalCWLConfig (levels 1-2 are 0).
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: general-policy
+  namespace: logging-prod
+status:
+  effectiveConfig:
+    mandatory:
+      retentionDays: 2557

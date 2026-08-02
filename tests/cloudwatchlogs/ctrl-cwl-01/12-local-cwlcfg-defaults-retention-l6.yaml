@@ -1,0 +1,12 @@
+# AC-6: localCloudWatchLogsConfig with defaults.retentionDays=90 (level 6).
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: general-policy
+  namespace: logging-prod
+  labels:
+    aws.kropath.run/resource-name: general-policy
+spec:
+  mandatory: {}
+  defaults:
+    retentionDays: 90

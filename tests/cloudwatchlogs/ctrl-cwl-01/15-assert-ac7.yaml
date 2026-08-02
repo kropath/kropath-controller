@@ -1,0 +1,11 @@
+# Assert AC-7: defaults.namingTemplate="{namespace}-{name}" from level-7 globalCWLConfig.
+# KropathConfig.cloudwatchlogs has no namingTemplate field.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: general-policy
+  namespace: logging-prod
+status:
+  effectiveConfig:
+    defaults:
+      namingTemplate: "{namespace}-{name}"
