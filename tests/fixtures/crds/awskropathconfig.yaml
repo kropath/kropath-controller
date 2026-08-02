@@ -77,6 +77,14 @@ spec:
               message: "sns.signatureVersion cannot be set in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.sns) && self.spec.mandatory.sns.tracingConfig != "" && has(self.spec.defaults.sns) && self.spec.defaults.sns.tracingConfig != "")'
               message: "sns.tracingConfig cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.dynamodb) && self.spec.mandatory.dynamodb.kmsMasterKeyId != "" && has(self.spec.defaults.dynamodb) && self.spec.defaults.dynamodb.kmsMasterKeyId != "")'
+              message: "dynamodb.kmsMasterKeyId cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.dynamodb) && self.spec.mandatory.dynamodb.billingMode != "" && has(self.spec.defaults.dynamodb) && self.spec.defaults.dynamodb.billingMode != "")'
+              message: "dynamodb.billingMode cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.dynamodb) && self.spec.mandatory.dynamodb.tableClass != "" && has(self.spec.defaults.dynamodb) && self.spec.defaults.dynamodb.tableClass != "")'
+              message: "dynamodb.tableClass cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.dynamodb) && self.spec.mandatory.dynamodb.contributorInsights != "" && has(self.spec.defaults.dynamodb) && self.spec.defaults.dynamodb.contributorInsights != "")'
+              message: "dynamodb.contributorInsights cannot be set in both mandatory and defaults"
           properties:
             spec:
               type: object
@@ -188,6 +196,33 @@ spec:
                         tracingConfig:
                           type: string
                           default: ""
+                    dynamodb:
+                      type: object
+                      default: {}
+                      properties:
+                        encryptionEnabled:
+                          type: boolean
+                        kmsMasterKeyId:
+                          type: string
+                          default: ""
+                        deletionProtectionEnabled:
+                          type: boolean
+                        pointInTimeRecoveryEnabled:
+                          type: boolean
+                        billingMode:
+                          type: string
+                          default: ""
+                        tableClass:
+                          type: string
+                          default: ""
+                        contributorInsights:
+                          type: string
+                          default: ""
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
                     tags:
                       type: object
                       additionalProperties:
@@ -300,6 +335,33 @@ spec:
                         tracingConfig:
                           type: string
                           default: ""
+                    dynamodb:
+                      type: object
+                      default: {}
+                      properties:
+                        encryptionEnabled:
+                          type: boolean
+                        kmsMasterKeyId:
+                          type: string
+                          default: ""
+                        deletionProtectionEnabled:
+                          type: boolean
+                        pointInTimeRecoveryEnabled:
+                          type: boolean
+                        billingMode:
+                          type: string
+                          default: ""
+                        tableClass:
+                          type: string
+                          default: ""
+                        contributorInsights:
+                          type: string
+                          default: ""
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
                     tags:
                       type: object
                       additionalProperties:
