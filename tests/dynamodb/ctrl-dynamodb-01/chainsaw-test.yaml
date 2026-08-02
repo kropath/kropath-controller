@@ -27,26 +27,12 @@ spec:
     # Purge any stale resources from prior runs before the suite starts.
     - name: purge-stale-leftovers
       try:
-        - delete:
-            apiVersion: aws.kropath.run/v1alpha1
-            kind: DynamoDBConfig
-            name: general-table
-            namespace: dynamodb
-        - delete:
-            apiVersion: aws.kropath.run/v1alpha1
-            kind: DynamoDBConfig
-            name: general-table
-            namespace: kro-system
-        - delete:
-            apiVersion: aws.kropath.run/v1alpha1
-            kind: KropathConfig
-            name: general-table
-            namespace: kro-system
-        - delete:
-            apiVersion: aws.kropath.run/v1alpha1
-            kind: KropathConfig
-            name: general-table
-            namespace: dynamodb
+        - script:
+            content: |
+              kubectl delete dynamodbconfig general-table -n dynamodb --ignore-not-found
+              kubectl delete dynamodbconfig general-table -n kro-system --ignore-not-found
+              kubectl delete kropathconfig general-table -n kro-system --ignore-not-found
+              kubectl delete kropathconfig general-table -n dynamodb --ignore-not-found
 
     # AC-1: globalKropathConfig.mandatory.dynamodb.encryptionEnabled=true (level 1) propagates.
     - name: ac1-global-kpc-encryption-level1
