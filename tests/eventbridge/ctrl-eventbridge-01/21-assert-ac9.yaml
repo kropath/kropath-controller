@@ -1,0 +1,10 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: EventBridgeConfig
+metadata:
+  name: general-bus
+  namespace: eventbridge
+status:
+  effectiveConfig:
+    aws:
+      accountId: "123456789012"
+      region: "ap-southeast-2"
