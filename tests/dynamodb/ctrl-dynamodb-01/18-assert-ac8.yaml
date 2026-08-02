@@ -1,0 +1,9 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: DynamoDBConfig
+metadata:
+  name: general-table
+  namespace: dynamodb
+status:
+  effectiveConfig:
+    defaults:
+      tableClass: "STANDARD_INFREQUENT_ACCESS"

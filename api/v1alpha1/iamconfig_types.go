@@ -46,13 +46,14 @@ type KropathConfigSpec struct {
 }
 
 type KropathConfigTier struct {
-	IAM            cascade.IAMSection        `json:"iam,omitempty"`
-	S3             cascade.S3Section         `json:"s3,omitempty"`
-	KMS            cascade.KMSKropathSection `json:"kms,omitempty"`
-	SQS            cascade.SQSKropathSection `json:"sqs,omitempty"`
-	SecretsManager cascade.SMKropathSection  `json:"secretsManager,omitempty"`
-	SNS            cascade.SNSKropathSection `json:"sns,omitempty"`
-	Tags           map[string]string         `json:"tags,omitempty"`
+	IAM            cascade.IAMSection             `json:"iam,omitempty"`
+	S3             cascade.S3Section              `json:"s3,omitempty"`
+	KMS            cascade.KMSKropathSection      `json:"kms,omitempty"`
+	SQS            cascade.SQSKropathSection      `json:"sqs,omitempty"`
+	SecretsManager cascade.SMKropathSection       `json:"secretsManager,omitempty"`
+	SNS            cascade.SNSKropathSection      `json:"sns,omitempty"`
+	DynamoDB       cascade.DynamoDBKropathSection `json:"dynamodb,omitempty"`
+	Tags           map[string]string              `json:"tags,omitempty"`
 }
 
 type IAMConfig struct {
@@ -146,6 +147,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.SecretsManager.Tags = make(map[string]string, len(in.Spec.Defaults.SecretsManager.Tags))
 		for k, v := range in.Spec.Defaults.SecretsManager.Tags {
 			out.Spec.Defaults.SecretsManager.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.DynamoDB.Tags != nil {
+		out.Spec.Mandatory.DynamoDB.Tags = make(map[string]string, len(in.Spec.Mandatory.DynamoDB.Tags))
+		for k, v := range in.Spec.Mandatory.DynamoDB.Tags {
+			out.Spec.Mandatory.DynamoDB.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.DynamoDB.Tags != nil {
+		out.Spec.Defaults.DynamoDB.Tags = make(map[string]string, len(in.Spec.Defaults.DynamoDB.Tags))
+		for k, v := range in.Spec.Defaults.DynamoDB.Tags {
+			out.Spec.Defaults.DynamoDB.Tags[k] = v
 		}
 	}
 }
