@@ -1,0 +1,172 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-eventbridge-01
+spec:
+  namespace: eventbridge
+  steps:
+
+  - name: purge-stale-leftovers
+    try:
+    - script:
+        content: |
+          kubectl delete eventbridgeconfig general-bus -n eventbridge --ignore-not-found
+          kubectl delete eventbridgeconfig general-bus -n kro-system --ignore-not-found
+          kubectl delete kropathconfig general-bus -n eventbridge --ignore-not-found
+          kubectl delete kropathconfig general-bus -n kro-system --ignore-not-found
+
+  # AC-1: globalKropathConfig.mandatory.eventbridge.archiveRetentionDays propagates to
+  # effectiveConfig.mandatory.archiveRetentionDays (L1 — highest mandatory priority).
+  - name: ac1-l1-global-kpc-mandatory-archive-retention
+    try:
+    - apply:
+        file: 01-global-kpc-arch-mandatory.yaml
+    - apply:
+        file: 02-ebconfig.yaml
+    - assert:
+        file: 03-assert-ac1.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 02-ebconfig.yaml
+    - delete:
+        file: 01-global-kpc-arch-mandatory.yaml
+
+  # AC-2: global EventBridgeConfig.mandatory.archiveRetentionDays propagates when L1/L2 absent (L3).
+  - name: ac2-l3-global-ebcfg-mandatory-archive-retention
+    try:
+    - apply:
+        file: 04-global-ebcfg-arch-mandatory.yaml
+    - apply:
+        file: 02-ebconfig.yaml
+    - assert:
+        file: 05-assert-ac2.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 02-ebconfig.yaml
+    - delete:
+        file: 04-global-ebcfg-arch-mandatory.yaml
+
+  # AC-3: local EventBridgeConfig.spec.defaults.archiveRetentionDays propagates to
+  # effectiveConfig.defaults when no mandatory source is set (L6).
+  - name: ac3-l6-local-ebcfg-defaults-archive-retention
+    try:
+    - apply:
+        file: 06-local-ebcfg-arch-defaults.yaml
+    - assert:
+        file: 07-assert-ac3.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 06-local-ebcfg-arch-defaults.yaml
+
+  # AC-4: global EventBridgeConfig.defaults.archiveRetentionDays (L7) wins over
+  # globalKropathConfig.defaults.eventbridge.archiveRetentionDays (L9).
+  - name: ac4-l7-global-ebcfg-defaults-beats-l9-global-kpc-defaults
+    try:
+    - apply:
+        file: 08-global-kpc-arch-defaults.yaml
+    - apply:
+        file: 09-global-ebcfg-arch-defaults.yaml
+    - apply:
+        file: 02-ebconfig.yaml
+    - assert:
+        file: 10-assert-ac4.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 02-ebconfig.yaml
+    - delete:
+        file: 09-global-ebcfg-arch-defaults.yaml
+    - delete:
+        file: 08-global-kpc-arch-defaults.yaml
+
+  # AC-5: tags are additive-merged — globalKPC.mandatory.tags (L1) and
+  # global EventBridgeConfig.mandatory.tags (L3) union into effectiveConfig.mandatory.tags.
+  - name: ac5-tags-additive-union-l1-and-l3
+    try:
+    - apply:
+        file: 11-global-kpc-tags-mandatory.yaml
+    - apply:
+        file: 12-global-ebcfg-tags-mandatory.yaml
+    - apply:
+        file: 02-ebconfig.yaml
+    - assert:
+        file: 13-assert-ac5.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 02-ebconfig.yaml
+    - delete:
+        file: 12-global-ebcfg-tags-mandatory.yaml
+    - delete:
+        file: 11-global-kpc-tags-mandatory.yaml
+
+  # AC-6: global EventBridgeConfig.mandatory.namingTemplate (L3) propagates to
+  # effectiveConfig.mandatory.namingTemplate.
+  - name: ac6-l3-global-ebcfg-mandatory-naming-template
+    try:
+    - apply:
+        file: 14-global-ebcfg-naming-mandatory.yaml
+    - apply:
+        file: 02-ebconfig.yaml
+    - assert:
+        file: 15-assert-ac6.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 02-ebconfig.yaml
+    - delete:
+        file: 14-global-ebcfg-naming-mandatory.yaml
+
+  # AC-7: global EventBridgeConfig.defaults.namingTemplate (L7) propagates to
+  # effectiveConfig.defaults.namingTemplate.
+  - name: ac7-l7-global-ebcfg-defaults-naming-template
+    try:
+    - apply:
+        file: 16-global-ebcfg-naming-defaults.yaml
+    - apply:
+        file: 02-ebconfig.yaml
+    - assert:
+        file: 17-assert-ac7.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 02-ebconfig.yaml
+    - delete:
+        file: 16-global-ebcfg-naming-defaults.yaml
+
+  # AC-8: global EventBridgeConfig.mandatory.syncedLabels (L3) propagates to
+  # effectiveConfig.mandatory.syncedLabels.
+  - name: ac8-l3-global-ebcfg-mandatory-synced-labels
+    try:
+    - apply:
+        file: 18-global-ebcfg-synced-labels-mandatory.yaml
+    - apply:
+        file: 02-ebconfig.yaml
+    - assert:
+        file: 19-assert-ac8.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 02-ebconfig.yaml
+    - delete:
+        file: 18-global-ebcfg-synced-labels-mandatory.yaml
+
+  # AC-9: AWS identity (accountId + region) from globalKropathConfig.spec.aws propagates
+  # to effectiveConfig.aws.
+  - name: ac9-aws-identity-from-global-kpc
+    try:
+    - apply:
+        file: 20-global-kpc-aws-identity.yaml
+    - apply:
+        file: 02-ebconfig.yaml
+    - assert:
+        file: 21-assert-ac9.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 02-ebconfig.yaml
+    - delete:
+        file: 20-global-kpc-aws-identity.yaml

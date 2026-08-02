@@ -14,7 +14,7 @@
 
 CHAINSAW ?= chainsaw
 
-.PHONY: setup test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-all
+.PHONY: setup test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-all
 
 ## setup: Apply all CRDs to the cluster. Run before any test target.
 setup:
@@ -57,5 +57,9 @@ test-sns:
 test-dynamodb:
 	$(CHAINSAW) test dynamodb/ctrl-dynamodb-01/
 
+## test-eventbridge: Run EventBridge cascade integration tests (ctrl-eventbridge-01).
+test-eventbridge:
+	$(CHAINSAW) test eventbridge/ctrl-eventbridge-01/
+
 ## test-all: Run all integration test suites.
-test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb
+test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge

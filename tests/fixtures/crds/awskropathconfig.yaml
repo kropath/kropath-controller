@@ -85,6 +85,8 @@ spec:
               message: "dynamodb.tableClass cannot be set in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.dynamodb) && self.spec.mandatory.dynamodb.contributorInsights != "" && has(self.spec.defaults.dynamodb) && self.spec.defaults.dynamodb.contributorInsights != "")'
               message: "dynamodb.contributorInsights cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.eventbridge) && self.spec.mandatory.eventbridge.archiveRetentionDays > 0 && has(self.spec.defaults.eventbridge) && self.spec.defaults.eventbridge.archiveRetentionDays > 0)'
+              message: "eventbridge.archiveRetentionDays cannot be set in both mandatory and defaults"
           properties:
             spec:
               type: object
@@ -223,6 +225,14 @@ spec:
                           default: {}
                           additionalProperties:
                             type: string
+                    eventbridge:
+                      type: object
+                      default: {}
+                      properties:
+                        archiveRetentionDays:
+                          type: integer
+                          format: int64
+                          default: 0
                     tags:
                       type: object
                       additionalProperties:
@@ -362,6 +372,14 @@ spec:
                           default: {}
                           additionalProperties:
                             type: string
+                    eventbridge:
+                      type: object
+                      default: {}
+                      properties:
+                        archiveRetentionDays:
+                          type: integer
+                          format: int64
+                          default: 0
                     tags:
                       type: object
                       additionalProperties:
