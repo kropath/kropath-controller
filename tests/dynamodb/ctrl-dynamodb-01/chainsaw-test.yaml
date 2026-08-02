@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# ctrl-dynamodb-01 Chainsaw integration tests — all 13 acceptance criteria.
+# ctrl-dynamodb-01 Chainsaw integration tests — all 14 acceptance criteria.
 # Requires:
 #   - kind cluster with kropath-operator deployed (feature flag: --enable-dynamodb-cascade)
 #   - KropathConfig CRD applied (fixtures/crds/awskropathconfig.yaml)
@@ -253,3 +253,20 @@ spec:
             file: 02-dynamodbconfig.yaml
         - delete:
             file: 28-global-ddbcfg-mandatory-labels.yaml
+
+    # AC-14: globalKropathConfig.spec.aws.region and accountId propagate
+    # to effCfg.aws.region and effCfg.aws.accountId.
+    - name: ac14-provider-identity
+      try:
+        - apply:
+            file: 30-global-kpc-aws-identity.yaml
+        - apply:
+            file: 02-dynamodbconfig.yaml
+        - assert:
+            file: 31-assert-ac14.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-dynamodbconfig.yaml
+        - delete:
+            file: 30-global-kpc-aws-identity.yaml
