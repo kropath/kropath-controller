@@ -1,0 +1,307 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-rds-01 Chainsaw integration tests — all 16 acceptance criteria.
+# Requires:
+#   - kind cluster with kropath-operator deployed (feature flag: --enable-rds-cascade)
+#   - KropathConfig CRD applied (fixtures/crds/awskropathconfig.yaml)
+#   - RDSConfig CRD applied (fixtures/crds/awsrdsconfig.yaml)
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-rds-01-cascade
+spec:
+  namespace: rds
+  steps:
+    # Purge any stale resources from prior runs before the suite starts.
+    - name: purge-stale-leftovers
+      try:
+        - script:
+            content: |
+              kubectl delete rdsconfig general-instance -n rds --ignore-not-found
+              kubectl delete rdsconfig general-instance -n kro-system --ignore-not-found
+              kubectl delete kropathconfig general-instance -n kro-system --ignore-not-found
+              kubectl delete kropathconfig general-instance -n rds --ignore-not-found
+
+    # AC-1: KropathConfig.mandatory.rds.storageEncrypted: true (level 1) forces
+    # storageEncrypted on all RDS resources regardless of RDSConfig.
+    - name: ac1-kc-mandatory-storageencrypted-level1
+      try:
+        - apply:
+            file: 01-global-kpc-rds-storageencrypted-true.yaml
+        - apply:
+            file: 02-rdsconfig.yaml
+        - assert:
+            file: 03-assert-ac1.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-rdsconfig.yaml
+        - delete:
+            file: 01-global-kpc-rds-storageencrypted-true.yaml
+
+    # AC-2: globalRDSConfig.mandatory.storageEncrypted: true (level 3) propagates when
+    # KropathConfig levels 1-2 are absent. Verifies mandatory tier from RDSConfig wins.
+    - name: ac2-rc-mandatory-storageencrypted-level3
+      try:
+        - apply:
+            file: 04-global-rdscfg-mandatory-storageencrypted.yaml
+        - apply:
+            file: 02-rdsconfig.yaml
+        - assert:
+            file: 05-assert-ac2.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-rdsconfig.yaml
+        - delete:
+            file: 04-global-rdscfg-mandatory-storageencrypted.yaml
+
+    # AC-3: localRDSConfig.defaults.storageEncrypted: true (level 6) applies when
+    # no mandatory override is present; mandatory tier is absent.
+    - name: ac3-rc-defaults-storageencrypted-level6
+      try:
+        - apply:
+            file: 06-local-rdscfg-defaults-storageencrypted.yaml
+        - assert:
+            file: 07-assert-ac3.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 06-local-rdscfg-defaults-storageencrypted.yaml
+
+    # AC-4: KropathConfig.mandatory.rds.deletionProtection: true (level 1) forces
+    # deletion protection on all RDS resources.
+    - name: ac4-kc-mandatory-deletionprotection-level1
+      try:
+        - apply:
+            file: 08-global-kpc-rds-deletionprotection.yaml
+        - apply:
+            file: 02-rdsconfig.yaml
+        - assert:
+            file: 09-assert-ac4.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-rdsconfig.yaml
+        - delete:
+            file: 08-global-kpc-rds-deletionprotection.yaml
+
+    # AC-5: globalRDSConfig.mandatory.deletionProtection: true (level 3) forces deletion
+    # protection; propagates to effCfg.mandatory.deletionProtection.
+    - name: ac5-rc-mandatory-deletionprotection-level3
+      try:
+        - apply:
+            file: 10-global-rdscfg-mandatory-deletionprotection.yaml
+        - apply:
+            file: 02-rdsconfig.yaml
+        - assert:
+            file: 11-assert-ac5.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-rdsconfig.yaml
+        - delete:
+            file: 10-global-rdscfg-mandatory-deletionprotection.yaml
+
+    # AC-6: backupRetentionPeriod mandatory floor: KropathConfig.mandatory.rds.backupRetentionPeriod: 7
+    # propagates as the minimum floor to effCfg.mandatory.backupRetentionPeriod.
+    # RGD applies max(mandatory, instance) — unit-tested in rds_test.go AC-6.
+    - name: ac6-mandatory-backupretention-floor
+      try:
+        - apply:
+            file: 12-global-kpc-rds-backupretention.yaml
+        - apply:
+            file: 02-rdsconfig.yaml
+        - assert:
+            file: 13-assert-ac6.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-rdsconfig.yaml
+        - delete:
+            file: 12-global-kpc-rds-backupretention.yaml
+
+    # AC-7: KropathConfig.mandatory.rds.multiAZ: true (level 1) forces Multi-AZ
+    # on all instances.
+    - name: ac7-kc-mandatory-multiaz-level1
+      try:
+        - apply:
+            file: 14-global-kpc-rds-multiaz.yaml
+        - apply:
+            file: 02-rdsconfig.yaml
+        - assert:
+            file: 15-assert-ac7.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-rdsconfig.yaml
+        - delete:
+            file: 14-global-kpc-rds-multiaz.yaml
+
+    # AC-8: publiclyAccessible pointer semantics: mandatory pointer false = forced private-only
+    # across all instances; nil = not enforced.
+    - name: ac8-mandatory-publiclyaccessible-pointer-false
+      try:
+        - apply:
+            file: 16-global-kpc-rds-publiclyaccessible-false.yaml
+        - apply:
+            file: 02-rdsconfig.yaml
+        - assert:
+            file: 17-assert-ac8.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-rdsconfig.yaml
+        - delete:
+            file: 16-global-kpc-rds-publiclyaccessible-false.yaml
+
+    # AC-9: KropathConfig.mandatory.rds.kmsKeyID non-empty (level 1) forces org-wide
+    # KMS key on all instances.
+    - name: ac9-kc-mandatory-kmskeyid-level1
+      try:
+        - apply:
+            file: 18-global-kpc-rds-kmskeyid.yaml
+        - apply:
+            file: 02-rdsconfig.yaml
+        - assert:
+            file: 19-assert-ac9.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-rdsconfig.yaml
+        - delete:
+            file: 18-global-kpc-rds-kmskeyid.yaml
+
+    # AC-10: RDSConfig.defaults.storageType: "gp3" (level 6) applies as default
+    # when instance does not specify.
+    - name: ac10-rc-defaults-storagetype-gp3
+      try:
+        - apply:
+            file: 20-global-rdscfg-defaults-storagetype.yaml
+        - apply:
+            file: 02-rdsconfig.yaml
+        - assert:
+            file: 21-assert-ac10.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-rdsconfig.yaml
+        - delete:
+            file: 20-global-rdscfg-defaults-storagetype.yaml
+
+    # AC-11: manageMasterUserPassword pointer semantics: mandatory true = forced
+    # Secrets Manager for all instances; nil = not enforced.
+    - name: ac11-mandatory-managemasterpassword
+      try:
+        - apply:
+            file: 22-global-rdscfg-mandatory-managemasterpassword.yaml
+        - apply:
+            file: 02-rdsconfig.yaml
+        - assert:
+            file: 23-assert-ac11.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-rdsconfig.yaml
+        - delete:
+            file: 22-global-rdscfg-mandatory-managemasterpassword.yaml
+
+    # AC-12: serverlessV2ScalingMinCapacity cluster-only: cascade applies from
+    # RDSConfig mandatory; propagates to effCfg.mandatory.serverlessV2ScalingMinCapacity.
+    - name: ac12-cluster-only-serverlessminacus
+      try:
+        - apply:
+            file: 24-global-rdscfg-mandatory-serverlessmin.yaml
+        - apply:
+            file: 02-rdsconfig.yaml
+        - assert:
+            file: 25-assert-ac12.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-rdsconfig.yaml
+        - delete:
+            file: 24-global-rdscfg-mandatory-serverlessmin.yaml
+
+    # AC-13: serverlessV2ScalingMaxCapacity cluster-only: same scoping as AC-12.
+    - name: ac13-cluster-only-serverlessmaxacus
+      try:
+        - apply:
+            file: 26-global-rdscfg-mandatory-serverlessmax.yaml
+        - apply:
+            file: 02-rdsconfig.yaml
+        - assert:
+            file: 27-assert-ac13.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-rdsconfig.yaml
+        - delete:
+            file: 26-global-rdscfg-mandatory-serverlessmax.yaml
+
+    # AC-14: backtrackWindow cluster-only: Aurora MySQL clusters only; ignored by
+    # RDSInstance. Cascade propagates from RDSConfig mandatory.
+    - name: ac14-cluster-only-backtrackwindow
+      try:
+        - apply:
+            file: 28-global-rdscfg-mandatory-backtrackwindow.yaml
+        - apply:
+            file: 02-rdsconfig.yaml
+        - assert:
+            file: 29-assert-ac14.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-rdsconfig.yaml
+        - delete:
+            file: 28-global-rdscfg-mandatory-backtrackwindow.yaml
+
+    # AC-15: Tags, syncedLabels, syncedAnnotations: map union merge across
+    # KropathConfig.mandatory + RDSConfig.mandatory + defaults.
+    - name: ac15-tags-union-merge
+      try:
+        - apply:
+            file: 30-global-kpc-tags-mandatory.yaml
+        - apply:
+            file: 31-global-rdscfg-tags-mandatory.yaml
+        - apply:
+            file: 02-rdsconfig.yaml
+        - assert:
+            file: 32-assert-ac15.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-rdsconfig.yaml
+        - delete:
+            file: 31-global-rdscfg-tags-mandatory.yaml
+        - delete:
+            file: 30-global-kpc-tags-mandatory.yaml
+
+    # AC-16: Controller writes status.effectiveConfig reflecting all resolved fields
+    # including provider identity (aws.accountId, aws.region).
+    - name: ac16-provider-identity
+      try:
+        - apply:
+            file: 33-global-kpc-aws-identity.yaml
+        - apply:
+            file: 02-rdsconfig.yaml
+        - assert:
+            file: 34-assert-ac16.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-rdsconfig.yaml
+        - delete:
+            file: 33-global-kpc-aws-identity.yaml
