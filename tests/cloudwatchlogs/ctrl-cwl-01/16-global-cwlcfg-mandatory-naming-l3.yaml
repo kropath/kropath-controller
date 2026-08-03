@@ -1,0 +1,12 @@
+# AC-8: globalCloudWatchLogsConfig with mandatory.namingTemplate="corp-{namespace}-{name}" (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: ac8-cwl-policy
+  namespace: kro-system
+  labels:
+    aws.kropath.run/resource-name: ac8-cwl-policy
+spec:
+  mandatory:
+    namingTemplate: "corp-{namespace}-{name}"
+  defaults: {}

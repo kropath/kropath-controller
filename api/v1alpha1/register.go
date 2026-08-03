@@ -48,6 +48,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&DynamoDBConfigList{},
 		&EventBridgeConfig{},
 		&EventBridgeConfigList{},
+		&CloudWatchLogsConfig{},
+		&CloudWatchLogsConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

@@ -87,6 +87,10 @@ spec:
               message: "dynamodb.contributorInsights cannot be set in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.eventbridge) && self.spec.mandatory.eventbridge.archiveRetentionDays > 0 && has(self.spec.defaults.eventbridge) && self.spec.defaults.eventbridge.archiveRetentionDays > 0)'
               message: "eventbridge.archiveRetentionDays cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.cloudwatchlogs) && self.spec.mandatory.cloudwatchlogs.kmsKeyId != "" && has(self.spec.defaults.cloudwatchlogs) && self.spec.defaults.cloudwatchlogs.kmsKeyId != "")'
+              message: "cloudwatchlogs.kmsKeyId cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.cloudwatchlogs) && self.spec.mandatory.cloudwatchlogs.retentionDays > 0 && has(self.spec.defaults.cloudwatchlogs) && self.spec.defaults.cloudwatchlogs.retentionDays > 0)'
+              message: "cloudwatchlogs.retentionDays cannot be set in both mandatory and defaults"
           properties:
             spec:
               type: object
@@ -233,6 +237,18 @@ spec:
                           type: integer
                           format: int64
                           default: 0
+                    cloudwatchlogs:
+                      type: object
+                      default: {}
+                      properties:
+                        kmsKeyId:
+                          type: string
+                          default: ""
+                        retentionDays:
+                          type: integer
+                          format: int64
+                          default: 0
+                          minimum: 0
                     tags:
                       type: object
                       additionalProperties:
@@ -380,6 +396,18 @@ spec:
                           type: integer
                           format: int64
                           default: 0
+                    cloudwatchlogs:
+                      type: object
+                      default: {}
+                      properties:
+                        kmsKeyId:
+                          type: string
+                          default: ""
+                        retentionDays:
+                          type: integer
+                          format: int64
+                          default: 0
+                          minimum: 0
                     tags:
                       type: object
                       additionalProperties:

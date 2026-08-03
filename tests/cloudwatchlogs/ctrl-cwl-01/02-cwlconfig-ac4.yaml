@@ -1,0 +1,11 @@
+# Empty local CloudWatchLogsConfig for ac4 — cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: ac4-cwl-policy
+  namespace: logging-prod
+  labels:
+    aws.kropath.run/resource-name: ac4-cwl-policy
+spec:
+  mandatory: {}
+  defaults: {}

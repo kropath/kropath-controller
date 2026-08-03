@@ -1,0 +1,10 @@
+# Assert AC-8: mandatory.namingTemplate="corp-{namespace}-{name}" from level-3 globalCWLConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: ac8-cwl-policy
+  namespace: logging-prod
+status:
+  effectiveConfig:
+    mandatory:
+      namingTemplate: "corp-{namespace}-{name}"

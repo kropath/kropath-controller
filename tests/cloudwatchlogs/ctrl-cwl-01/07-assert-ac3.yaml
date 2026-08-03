@@ -1,0 +1,11 @@
+# Assert AC-3: defaults.kmsKeyId from level-6 localCWLConfig; mandatory stays empty.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: ac3-cwl-policy
+  namespace: logging-prod
+status:
+  effectiveConfig:
+    mandatory: {}
+    defaults:
+      kmsKeyId: "arn:aws:kms:ap-southeast-2:123:key/default-key"
