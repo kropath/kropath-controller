@@ -55,6 +55,7 @@ type KropathConfigTier struct {
 	DynamoDB       cascade.DynamoDBKropathSection    `json:"dynamodb,omitempty"`
 	EventBridge    cascade.EventBridgeKropathSection    `json:"eventbridge,omitempty"`
 	CloudWatchLogs cascade.CloudWatchLogsKropathSection `json:"cloudwatchlogs,omitempty"`
+	ELB            cascade.ELBKropathSection            `json:"elb,omitempty"`
 	Tags           map[string]string                    `json:"tags,omitempty"`
 }
 
@@ -185,6 +186,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.CloudWatchLogs.Tags = make(map[string]string, len(in.Spec.Defaults.CloudWatchLogs.Tags))
 		for k, v := range in.Spec.Defaults.CloudWatchLogs.Tags {
 			out.Spec.Defaults.CloudWatchLogs.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.ELB.Tags != nil {
+		out.Spec.Mandatory.ELB.Tags = make(map[string]string, len(in.Spec.Mandatory.ELB.Tags))
+		for k, v := range in.Spec.Mandatory.ELB.Tags {
+			out.Spec.Mandatory.ELB.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.ELB.Tags != nil {
+		out.Spec.Defaults.ELB.Tags = make(map[string]string, len(in.Spec.Defaults.ELB.Tags))
+		for k, v := range in.Spec.Defaults.ELB.Tags {
+			out.Spec.Defaults.ELB.Tags[k] = v
 		}
 	}
 }
