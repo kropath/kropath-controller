@@ -132,6 +132,7 @@ chainsaw-setup: build kind-up ## Create kind cluster, apply CRDs, create test na
 		crd/awskmskeys.aws.kropath.run \
 		crd/awssecretsmanagersecrets.aws.kropath.run \
 		crd/snsconfigs.aws.kropath.run \
+		crd/cloudwatchlogsconfigs.aws.kropath.run \
 		crd/cloudstoragebucketconfigs.gcp.kropath.run \
 		crd/kropathconfigs.kropath.run
 	@for ns in $(TEST_NAMESPACES); do \

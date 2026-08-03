@@ -17,6 +17,9 @@
 #   - kind cluster with kropath-operator deployed (feature flag: --enable-cloudwatchlogs-cascade)
 #   - KropathConfig CRD applied (crds/kropathconfig.yaml from kropath-aws)
 #   - CloudWatchLogsConfig CRD applied (crds/cloudwatchlogsconfig.yaml from kropath-aws)
+#
+# Each AC step uses a unique resource name (acN-cwl-policy) so that Chainsaw's
+# deferred LIFO cleanup from prior steps cannot pollute later steps.
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
@@ -30,13 +33,13 @@ spec:
         - apply:
             file: 01-global-kpc-kms-l1.yaml
         - apply:
-            file: 02-cwlconfig.yaml
+            file: 02-cwlconfig-ac1.yaml
         - assert:
             file: 03-assert-ac1.yaml
             timeout: 30s
       cleanup:
         - delete:
-            file: 02-cwlconfig.yaml
+            file: 02-cwlconfig-ac1.yaml
         - delete:
             file: 01-global-kpc-kms-l1.yaml
 
@@ -46,13 +49,13 @@ spec:
         - apply:
             file: 04-global-cwlcfg-kms-l3.yaml
         - apply:
-            file: 02-cwlconfig.yaml
+            file: 02-cwlconfig-ac2.yaml
         - assert:
             file: 05-assert-ac2.yaml
             timeout: 30s
       cleanup:
         - delete:
-            file: 02-cwlconfig.yaml
+            file: 02-cwlconfig-ac2.yaml
         - delete:
             file: 04-global-cwlcfg-kms-l3.yaml
 
@@ -74,13 +77,13 @@ spec:
         - apply:
             file: 08-global-kpc-retention-l1.yaml
         - apply:
-            file: 02-cwlconfig.yaml
+            file: 02-cwlconfig-ac4.yaml
         - assert:
             file: 09-assert-ac4.yaml
             timeout: 30s
       cleanup:
         - delete:
-            file: 02-cwlconfig.yaml
+            file: 02-cwlconfig-ac4.yaml
         - delete:
             file: 08-global-kpc-retention-l1.yaml
 
@@ -90,13 +93,13 @@ spec:
         - apply:
             file: 10-global-cwlcfg-retention-l3.yaml
         - apply:
-            file: 02-cwlconfig.yaml
+            file: 02-cwlconfig-ac5.yaml
         - assert:
             file: 11-assert-ac5.yaml
             timeout: 30s
       cleanup:
         - delete:
-            file: 02-cwlconfig.yaml
+            file: 02-cwlconfig-ac5.yaml
         - delete:
             file: 10-global-cwlcfg-retention-l3.yaml
 
@@ -119,13 +122,13 @@ spec:
         - apply:
             file: 14-global-cwlcfg-defaults-naming-l7.yaml
         - apply:
-            file: 02-cwlconfig.yaml
+            file: 02-cwlconfig-ac7.yaml
         - assert:
             file: 15-assert-ac7.yaml
             timeout: 30s
       cleanup:
         - delete:
-            file: 02-cwlconfig.yaml
+            file: 02-cwlconfig-ac7.yaml
         - delete:
             file: 14-global-cwlcfg-defaults-naming-l7.yaml
 
@@ -136,13 +139,13 @@ spec:
         - apply:
             file: 16-global-cwlcfg-mandatory-naming-l3.yaml
         - apply:
-            file: 02-cwlconfig.yaml
+            file: 02-cwlconfig-ac8.yaml
         - assert:
             file: 17-assert-ac8.yaml
             timeout: 30s
       cleanup:
         - delete:
-            file: 02-cwlconfig.yaml
+            file: 02-cwlconfig-ac8.yaml
         - delete:
             file: 16-global-cwlcfg-mandatory-naming-l3.yaml
 
@@ -169,13 +172,13 @@ spec:
         - apply:
             file: 21-global-cwlcfg-synced-labels.yaml
         - apply:
-            file: 02-cwlconfig.yaml
+            file: 02-cwlconfig-ac10.yaml
         - assert:
             file: 22-assert-ac10.yaml
             timeout: 30s
       cleanup:
         - delete:
-            file: 02-cwlconfig.yaml
+            file: 02-cwlconfig-ac10.yaml
         - delete:
             file: 21-global-cwlcfg-synced-labels.yaml
 
@@ -186,12 +189,12 @@ spec:
         - apply:
             file: 23-global-kpc-aws-identity.yaml
         - apply:
-            file: 02-cwlconfig.yaml
+            file: 02-cwlconfig-ac11.yaml
         - assert:
             file: 24-assert-ac11.yaml
             timeout: 30s
       cleanup:
         - delete:
-            file: 02-cwlconfig.yaml
+            file: 02-cwlconfig-ac11.yaml
         - delete:
             file: 23-global-kpc-aws-identity.yaml

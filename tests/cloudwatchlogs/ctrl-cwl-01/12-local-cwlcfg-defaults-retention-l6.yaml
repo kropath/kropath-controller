@@ -2,10 +2,10 @@
 apiVersion: aws.kropath.run/v1alpha1
 kind: CloudWatchLogsConfig
 metadata:
-  name: general-policy
+  name: ac6-cwl-policy
   namespace: logging-prod
   labels:
-    aws.kropath.run/resource-name: general-policy
+    aws.kropath.run/resource-name: ac6-cwl-policy
 spec:
   mandatory: {}
   defaults:

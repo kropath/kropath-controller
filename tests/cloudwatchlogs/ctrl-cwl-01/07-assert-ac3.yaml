@@ -2,7 +2,7 @@
 apiVersion: aws.kropath.run/v1alpha1
 kind: CloudWatchLogsConfig
 metadata:
-  name: general-policy
+  name: ac3-cwl-policy
   namespace: logging-prod
 status:
   effectiveConfig:
