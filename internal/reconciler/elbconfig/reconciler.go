@@ -39,8 +39,8 @@ type Reconciler struct {
 }
 
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	cfg := &v1alpha1.AWSELBConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("AWSELBConfig"))
+	cfg := &v1alpha1.ELBConfig{}
+	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("ELBConfig"))
 	if err := r.Client.Get(ctx, req.NamespacedName, cfg); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -60,9 +60,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1alpha1.AWSELBConfig{}).
+		For(&v1alpha1.ELBConfig{}).
 		Watches(
-			&v1alpha1.AWSELBConfig{},
+			&v1alpha1.ELBConfig{},
 			handler.EnqueueRequestsFromMapFunc(r.requestsForELBConfigChange),
 		).
 		Watches(
@@ -72,7 +72,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.AWSELBConfig) (bool, ctrl.Result, error) {
+func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.ELBConfig) (bool, ctrl.Result, error) {
 	globalKropath, err := r.loadKropathConfig(ctx, kroSystemNamespace, cfg.Name)
 	if err != nil {
 		return false, ctrl.Result{}, err
@@ -120,7 +120,7 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.AWSELBConfig) 
 		ObservedGeneration: cfg.Generation,
 		LastTransitionTime: now,
 	}
-	newEffConfig := v1alpha1.EffectiveAWSELBConfig{
+	newEffConfig := v1alpha1.EffectiveELBConfig{
 		AWS:       mergeAWSIdentity(localKropath.Spec.AWS, globalKropath.Spec.AWS),
 		Mandatory: eff.Mandatory,
 		Defaults:  eff.Defaults,
@@ -150,12 +150,12 @@ func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name stri
 	return cfg, nil
 }
 
-func (r *Reconciler) loadELBConfig(ctx context.Context, namespace, name string) (*v1alpha1.AWSELBConfig, error) {
-	cfg := &v1alpha1.AWSELBConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("AWSELBConfig"))
+func (r *Reconciler) loadELBConfig(ctx context.Context, namespace, name string) (*v1alpha1.ELBConfig, error) {
+	cfg := &v1alpha1.ELBConfig{}
+	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("ELBConfig"))
 	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
 		if client.IgnoreNotFound(err) == nil {
-			return &v1alpha1.AWSELBConfig{}, nil
+			return &v1alpha1.ELBConfig{}, nil
 		}
 		return nil, err
 	}
@@ -168,7 +168,7 @@ func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj cli
 		return nil
 	}
 
-	var list v1alpha1.AWSELBConfigList
+	var list v1alpha1.ELBConfigList
 	if cfg.Namespace == kroSystemNamespace {
 		if err := r.Client.List(ctx, &list); err != nil {
 			r.Log.Error(err, "unable to list ELB configs for global KropathConfig change")
@@ -192,14 +192,14 @@ func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj cli
 }
 
 func (r *Reconciler) requestsForELBConfigChange(ctx context.Context, obj client.Object) []ctrl.Request {
-	cfg, ok := obj.(*v1alpha1.AWSELBConfig)
+	cfg, ok := obj.(*v1alpha1.ELBConfig)
 	if !ok || cfg.Namespace != kroSystemNamespace {
 		return nil
 	}
 
-	var list v1alpha1.AWSELBConfigList
+	var list v1alpha1.ELBConfigList
 	if err := r.Client.List(ctx, &list); err != nil {
-		r.Log.Error(err, "unable to list ELB configs for global AWSELBConfig change")
+		r.Log.Error(err, "unable to list ELB configs for global ELBConfig change")
 		return nil
 	}
 

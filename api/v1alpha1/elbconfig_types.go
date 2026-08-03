@@ -20,40 +20,40 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-type AWSELBConfig struct {
+type ELBConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   AWSELBConfigSpec   `json:"spec,omitempty"`
-	Status AWSELBConfigStatus `json:"status,omitempty"`
+	Spec   ELBConfigSpec   `json:"spec,omitempty"`
+	Status ELBConfigStatus `json:"status,omitempty"`
 }
 
-type AWSELBConfigList struct {
+type ELBConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []AWSELBConfig `json:"items"`
+	Items []ELBConfig `json:"items"`
 }
 
-type AWSELBConfigSpec struct {
+type ELBConfigSpec struct {
 	Mandatory cascade.ELBConfigSection `json:"mandatory,omitempty"`
 	Defaults  cascade.ELBConfigSection `json:"defaults,omitempty"`
 }
 
-type AWSELBConfigStatus struct {
-	EffectiveConfig    EffectiveAWSELBConfig `json:"effectiveConfig,omitempty"`
+type ELBConfigStatus struct {
+	EffectiveConfig    EffectiveELBConfig `json:"effectiveConfig,omitempty"`
 	Conditions         []metav1.Condition    `json:"conditions,omitempty"`
 	ObservedGeneration int64                 `json:"observedGeneration,omitempty"`
 	SyncedTimestamp    string                `json:"syncedTimestamp,omitempty"`
 }
 
-type EffectiveAWSELBConfig struct {
+type EffectiveELBConfig struct {
 	AWS       ProviderIdentity            `json:"aws,omitempty"`
 	Mandatory cascade.EffectiveELBSection `json:"mandatory,omitempty"`
 	Defaults  cascade.EffectiveELBSection `json:"defaults,omitempty"`
 }
 
-func (in *AWSELBConfig) DeepCopyInto(out *AWSELBConfig) {
+func (in *ELBConfig) DeepCopyInto(out *ELBConfig) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
@@ -137,44 +137,44 @@ func (in *AWSELBConfig) DeepCopyInto(out *AWSELBConfig) {
 	}
 }
 
-func (in *AWSELBConfig) DeepCopy() *AWSELBConfig {
+func (in *ELBConfig) DeepCopy() *ELBConfig {
 	if in == nil {
 		return nil
 	}
-	out := new(AWSELBConfig)
+	out := new(ELBConfig)
 	in.DeepCopyInto(out)
 	return out
 }
 
-func (in *AWSELBConfig) DeepCopyObject() runtime.Object {
+func (in *ELBConfig) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}
 	return nil
 }
 
-func (in *AWSELBConfigList) DeepCopyInto(out *AWSELBConfigList) {
+func (in *ELBConfigList) DeepCopyInto(out *ELBConfigList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
-		out.Items = make([]AWSELBConfig, len(in.Items))
+		out.Items = make([]ELBConfig, len(in.Items))
 		for i := range in.Items {
 			in.Items[i].DeepCopyInto(&out.Items[i])
 		}
 	}
 }
 
-func (in *AWSELBConfigList) DeepCopy() *AWSELBConfigList {
+func (in *ELBConfigList) DeepCopy() *ELBConfigList {
 	if in == nil {
 		return nil
 	}
-	out := new(AWSELBConfigList)
+	out := new(ELBConfigList)
 	in.DeepCopyInto(out)
 	return out
 }
 
-func (in *AWSELBConfigList) DeepCopyObject() runtime.Object {
+func (in *ELBConfigList) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}

@@ -50,8 +50,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&EventBridgeConfigList{},
 		&CloudWatchLogsConfig{},
 		&CloudWatchLogsConfigList{},
-		&AWSELBConfig{},
-		&AWSELBConfigList{},
+		&ELBConfig{},
+		&ELBConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil
