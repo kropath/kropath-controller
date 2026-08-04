@@ -293,16 +293,16 @@ spec:
                     serverlessV2ScalingMinCapacity:
                       type: number
                       default: 0
-                      description: Cluster-only: default minimum ACU for Aurora Serverless v2. 0 = no default.
+                      description: "Cluster-only: default minimum ACU for Aurora Serverless v2. 0 = no default."
                     serverlessV2ScalingMaxCapacity:
                       type: number
                       default: 0
-                      description: Cluster-only: default maximum ACU for Aurora Serverless v2. 0 = no default.
+                      description: "Cluster-only: default maximum ACU for Aurora Serverless v2. 0 = no default."
                     backtrackWindow:
                       type: integer
                       format: int64
                       default: 0
-                      description: Cluster-only: default backtrack window in seconds. 0 = no default.
+                      description: "Cluster-only: default backtrack window in seconds. 0 = no default."
                     tags:
                       type: object
                       default: {}
