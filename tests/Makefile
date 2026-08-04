@@ -14,7 +14,7 @@
 
 CHAINSAW ?= chainsaw
 
-.PHONY: setup test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-all
+.PHONY: setup test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-all
 
 ## setup: Apply all CRDs to the cluster. Run before any test target.
 setup:
@@ -69,5 +69,9 @@ test-cloudwatchlogs:
 test-rds:
 	$(CHAINSAW) test rds/ctrl-rds-01/
 
+## test-autoscaling: Run Auto Scaling cascade integration tests (ctrl-autoscaling-01).
+test-autoscaling:
+	$(CHAINSAW) test autoscaling/ctrl-autoscaling-01/
+
 ## test-all: Run all integration test suites.
-test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds
+test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling

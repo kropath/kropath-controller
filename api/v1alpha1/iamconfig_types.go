@@ -57,6 +57,7 @@ type KropathConfigTier struct {
 	CloudWatchLogs cascade.CloudWatchLogsKropathSection `json:"cloudwatchlogs,omitempty"`
 	ELB            cascade.ELBKropathSection            `json:"elb,omitempty"`
 	RDS            cascade.RDSKropathSection            `json:"rds,omitempty"`
+	AutoScaling    cascade.AutoScalingKropathSection    `json:"autoscaling,omitempty"`
 	Tags           map[string]string                    `json:"tags,omitempty"`
 }
 
@@ -211,6 +212,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.RDS.Tags = make(map[string]string, len(in.Spec.Defaults.RDS.Tags))
 		for k, v := range in.Spec.Defaults.RDS.Tags {
 			out.Spec.Defaults.RDS.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.AutoScaling.Tags != nil {
+		out.Spec.Mandatory.AutoScaling.Tags = make(map[string]string, len(in.Spec.Mandatory.AutoScaling.Tags))
+		for k, v := range in.Spec.Mandatory.AutoScaling.Tags {
+			out.Spec.Mandatory.AutoScaling.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.AutoScaling.Tags != nil {
+		out.Spec.Defaults.AutoScaling.Tags = make(map[string]string, len(in.Spec.Defaults.AutoScaling.Tags))
+		for k, v := range in.Spec.Defaults.AutoScaling.Tags {
+			out.Spec.Defaults.AutoScaling.Tags[k] = v
 		}
 	}
 }

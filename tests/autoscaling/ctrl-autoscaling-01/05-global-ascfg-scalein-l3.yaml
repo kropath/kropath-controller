@@ -1,0 +1,11 @@
+# AC-C2: globalAutoScalingConfig mandatory.newInstancesProtectedFromScaleIn=false (level 3).
+# Level 1 from KropathConfig must win over this.
+apiVersion: aws.kropath.run/v1alpha1
+kind: AutoScalingConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    newInstancesProtectedFromScaleIn: false
+  defaults: {}

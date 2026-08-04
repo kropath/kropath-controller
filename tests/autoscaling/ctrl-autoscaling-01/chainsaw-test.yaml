@@ -1,0 +1,178 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-autoscaling-01 Chainsaw integration tests — all 9 acceptance criteria.
+# Requires:
+#   - kind cluster with kropath-operator deployed (feature flag: --enable-autoscaling-cascade)
+#   - KropathConfig CRD applied (crds/kropathconfig.yaml from kropath-aws)
+#   - AutoScalingConfig CRD applied (crds/awsautoscalingconfig.yaml)
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-autoscaling-01-cascade
+spec:
+  steps:
+    # AC-C1: globalKropathConfig.mandatory.autoscaling.newInstancesProtectedFromScaleIn=true
+    # propagates to AutoScalingConfig.status.effectiveConfig.mandatory.newInstancesProtectedFromScaleIn=true.
+    - name: ac-c1-global-kpc-scalein-protection-propagates
+      try:
+        - apply:
+            file: 01-global-kpc-scalein-protection.yaml
+        - apply:
+            file: 02-autoscalingconfig.yaml
+        - assert:
+            file: 03-assert-ac-c1.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-autoscalingconfig.yaml
+        - delete:
+            file: 01-global-kpc-scalein-protection.yaml
+
+    # AC-C2: level-1 (KropathConfig mandatory.autoscaling.newInstancesProtectedFromScaleIn=true) wins
+    # over level-3 (globalAutoScalingConfig.mandatory.newInstancesProtectedFromScaleIn=false).
+    - name: ac-c2-level1-wins-over-level3-scalein
+      try:
+        - apply:
+            file: 04-global-kpc-scalein-l1.yaml
+        - apply:
+            file: 05-global-ascfg-scalein-l3.yaml
+        - apply:
+            file: 02-autoscalingconfig.yaml
+        - assert:
+            file: 06-assert-ac-c2.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-autoscalingconfig.yaml
+        - delete:
+            file: 05-global-ascfg-scalein-l3.yaml
+        - delete:
+            file: 04-global-kpc-scalein-l1.yaml
+
+    # AC-C3: Only globalAutoScalingConfig.defaults.capacityRebalance=true set;
+    # mandatory.capacityRebalance stays false.
+    - name: ac-c3-defaults-only-capacity-rebalance
+      try:
+        - apply:
+            file: 07-global-ascfg-defaults-capacity.yaml
+        - apply:
+            file: 02-autoscalingconfig.yaml
+        - assert:
+            file: 08-assert-ac-c3.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-autoscalingconfig.yaml
+        - delete:
+            file: 07-global-ascfg-defaults-capacity.yaml
+
+    # AC-C4: globalAutoScalingConfig.mandatory.healthCheckType="EC2,ELB" (level 3) wins
+    # over localAutoScalingConfig.mandatory.healthCheckType="EC2" (level 4).
+    - name: ac-c4-global-healthchecktype-wins-over-local
+      try:
+        - apply:
+            file: 09-global-ascfg-healthchecktype-l3.yaml
+        - apply:
+            file: 10-autoscalingconfig-healthchecktype-l4.yaml
+        - assert:
+            file: 11-assert-ac-c4.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 10-autoscalingconfig-healthchecktype-l4.yaml
+        - delete:
+            file: 09-global-ascfg-healthchecktype-l3.yaml
+
+    # AC-C5: Only globalAutoScalingConfig.defaults.healthCheckGracePeriod=600; mandatory stays 0.
+    - name: ac-c5-defaults-only-gracePeriod
+      try:
+        - apply:
+            file: 12-global-ascfg-defaults-graceperiod.yaml
+        - apply:
+            file: 02-autoscalingconfig.yaml
+        - assert:
+            file: 13-assert-ac-c5.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-autoscalingconfig.yaml
+        - delete:
+            file: 12-global-ascfg-defaults-graceperiod.yaml
+
+    # AC-C6: globalAutoScalingConfig.mandatory.maxInstanceLifetime=604800 propagates.
+    - name: ac-c6-maxinstancelifetime-propagates
+      try:
+        - apply:
+            file: 14-global-ascfg-maxinstancelifetime.yaml
+        - apply:
+            file: 02-autoscalingconfig.yaml
+        - assert:
+            file: 15-assert-ac-c6.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-autoscalingconfig.yaml
+        - delete:
+            file: 14-global-ascfg-maxinstancelifetime.yaml
+
+    # AC-C7: globalAutoScalingConfig.mandatory.namingTemplate="{namespace}-{name}" propagates.
+    - name: ac-c7-namingtemplate-propagates
+      try:
+        - apply:
+            file: 16-global-ascfg-namingtemplate.yaml
+        - apply:
+            file: 02-autoscalingconfig.yaml
+        - assert:
+            file: 17-assert-ac-c7.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-autoscalingconfig.yaml
+        - delete:
+            file: 16-global-ascfg-namingtemplate.yaml
+
+    # AC-C8: KropathConfig.mandatory.tags and AutoScalingConfig.mandatory.tags are
+    # union-merged into effectiveConfig.mandatory.tags, with KropathConfig winning on key conflicts.
+    - name: ac-c8-tag-union-merge
+      try:
+        - apply:
+            file: 18-global-kpc-mandatory-tags.yaml
+        - apply:
+            file: 19-autoscalingconfig-mandatory-tags.yaml
+        - assert:
+            file: 20-assert-ac-c8.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 19-autoscalingconfig-mandatory-tags.yaml
+        - delete:
+            file: 18-global-kpc-mandatory-tags.yaml
+
+    # AC-C9: globalKropathConfig.spec.aws.region and accountId propagate
+    # to effectiveConfig.aws.region and effectiveConfig.aws.accountId.
+    - name: ac-c9-provider-identity-propagates
+      try:
+        - apply:
+            file: 21-global-kpc-aws-identity.yaml
+        - apply:
+            file: 02-autoscalingconfig.yaml
+        - assert:
+            file: 22-assert-ac-c9.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-autoscalingconfig.yaml
+        - delete:
+            file: 21-global-kpc-aws-identity.yaml

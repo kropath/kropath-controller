@@ -1,0 +1,10 @@
+# AC-C5: globalAutoScalingConfig defaults.healthCheckGracePeriod=600 (level 7).
+apiVersion: aws.kropath.run/v1alpha1
+kind: AutoScalingConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  defaults:
+    healthCheckGracePeriod: 600
