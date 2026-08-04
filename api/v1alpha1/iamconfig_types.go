@@ -46,19 +46,22 @@ type KropathConfigSpec struct {
 }
 
 type KropathConfigTier struct {
-	IAM            cascade.IAMSection             `json:"iam,omitempty"`
-	S3             cascade.S3Section              `json:"s3,omitempty"`
-	KMS            cascade.KMSKropathSection      `json:"kms,omitempty"`
-	SQS            cascade.SQSKropathSection      `json:"sqs,omitempty"`
-	SecretsManager cascade.SMKropathSection       `json:"secretsManager,omitempty"`
-	SNS            cascade.SNSKropathSection      `json:"sns,omitempty"`
-	DynamoDB       cascade.DynamoDBKropathSection    `json:"dynamodb,omitempty"`
+	IAM            cascade.IAMSection                   `json:"iam,omitempty"`
+	S3             cascade.S3Section                    `json:"s3,omitempty"`
+	KMS            cascade.KMSKropathSection            `json:"kms,omitempty"`
+	SQS            cascade.SQSKropathSection            `json:"sqs,omitempty"`
+	SecretsManager cascade.SMKropathSection             `json:"secretsManager,omitempty"`
+	SNS            cascade.SNSKropathSection            `json:"sns,omitempty"`
+	DynamoDB       cascade.DynamoDBKropathSection       `json:"dynamodb,omitempty"`
 	EventBridge    cascade.EventBridgeKropathSection    `json:"eventbridge,omitempty"`
 	CloudWatchLogs cascade.CloudWatchLogsKropathSection `json:"cloudwatchlogs,omitempty"`
 	ELB            cascade.ELBKropathSection            `json:"elb,omitempty"`
 	RDS            cascade.RDSKropathSection            `json:"rds,omitempty"`
-	AutoScaling    cascade.AutoScalingKropathSection    `json:"autoscaling,omitempty"`
-	Tags           map[string]string                    `json:"tags,omitempty"`
+	AutoScaling       cascade.AutoScalingKropathSection    `json:"autoscaling,omitempty"`
+	EC2               cascade.EC2KropathSection            `json:"ec2,omitempty"`
+	Tags              map[string]string                    `json:"tags,omitempty"`
+	SyncedLabels      map[string]string                   `json:"syncedLabels,omitempty"`
+	SyncedAnnotations map[string]string                   `json:"syncedAnnotations,omitempty"`
 }
 
 type IAMConfig struct {
@@ -224,6 +227,66 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.AutoScaling.Tags = make(map[string]string, len(in.Spec.Defaults.AutoScaling.Tags))
 		for k, v := range in.Spec.Defaults.AutoScaling.Tags {
 			out.Spec.Defaults.AutoScaling.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.EC2.Tags != nil {
+		out.Spec.Mandatory.EC2.Tags = make(map[string]string, len(in.Spec.Mandatory.EC2.Tags))
+		for k, v := range in.Spec.Mandatory.EC2.Tags {
+			out.Spec.Mandatory.EC2.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.EC2.SyncedLabels != nil {
+		out.Spec.Mandatory.EC2.SyncedLabels = make(map[string]string, len(in.Spec.Mandatory.EC2.SyncedLabels))
+		for k, v := range in.Spec.Mandatory.EC2.SyncedLabels {
+			out.Spec.Mandatory.EC2.SyncedLabels[k] = v
+		}
+	}
+	if in.Spec.Mandatory.EC2.SyncedAnnotations != nil {
+		out.Spec.Mandatory.EC2.SyncedAnnotations = make(map[string]string, len(in.Spec.Mandatory.EC2.SyncedAnnotations))
+		for k, v := range in.Spec.Mandatory.EC2.SyncedAnnotations {
+			out.Spec.Mandatory.EC2.SyncedAnnotations[k] = v
+		}
+	}
+	if in.Spec.Defaults.EC2.Tags != nil {
+		out.Spec.Defaults.EC2.Tags = make(map[string]string, len(in.Spec.Defaults.EC2.Tags))
+		for k, v := range in.Spec.Defaults.EC2.Tags {
+			out.Spec.Defaults.EC2.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.EC2.SyncedLabels != nil {
+		out.Spec.Defaults.EC2.SyncedLabels = make(map[string]string, len(in.Spec.Defaults.EC2.SyncedLabels))
+		for k, v := range in.Spec.Defaults.EC2.SyncedLabels {
+			out.Spec.Defaults.EC2.SyncedLabels[k] = v
+		}
+	}
+	if in.Spec.Defaults.EC2.SyncedAnnotations != nil {
+		out.Spec.Defaults.EC2.SyncedAnnotations = make(map[string]string, len(in.Spec.Defaults.EC2.SyncedAnnotations))
+		for k, v := range in.Spec.Defaults.EC2.SyncedAnnotations {
+			out.Spec.Defaults.EC2.SyncedAnnotations[k] = v
+		}
+	}
+	if in.Spec.Mandatory.SyncedLabels != nil {
+		out.Spec.Mandatory.SyncedLabels = make(map[string]string, len(in.Spec.Mandatory.SyncedLabels))
+		for k, v := range in.Spec.Mandatory.SyncedLabels {
+			out.Spec.Mandatory.SyncedLabels[k] = v
+		}
+	}
+	if in.Spec.Mandatory.SyncedAnnotations != nil {
+		out.Spec.Mandatory.SyncedAnnotations = make(map[string]string, len(in.Spec.Mandatory.SyncedAnnotations))
+		for k, v := range in.Spec.Mandatory.SyncedAnnotations {
+			out.Spec.Mandatory.SyncedAnnotations[k] = v
+		}
+	}
+	if in.Spec.Defaults.SyncedLabels != nil {
+		out.Spec.Defaults.SyncedLabels = make(map[string]string, len(in.Spec.Defaults.SyncedLabels))
+		for k, v := range in.Spec.Defaults.SyncedLabels {
+			out.Spec.Defaults.SyncedLabels[k] = v
+		}
+	}
+	if in.Spec.Defaults.SyncedAnnotations != nil {
+		out.Spec.Defaults.SyncedAnnotations = make(map[string]string, len(in.Spec.Defaults.SyncedAnnotations))
+		for k, v := range in.Spec.Defaults.SyncedAnnotations {
+			out.Spec.Defaults.SyncedAnnotations[k] = v
 		}
 	}
 }

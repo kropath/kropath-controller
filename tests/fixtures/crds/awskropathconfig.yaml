@@ -384,7 +384,36 @@ spec:
                         kmsKeyArn:
                           type: string
                           default: ""
+                    ec2:
+                      type: object
+                      default: {}
+                      description: >-
+                        Mandatory EC2 governance fields promoted from KropathConfig.
+                        Only the three org-wide EC2 booleans are here.
+                      properties:
+                        flowLogsRequired:
+                          type: boolean
+                          default: false
+                          description: Force VPC flow logs enabled. false = not enforced.
+                        imdsv2Required:
+                          type: boolean
+                          default: false
+                          description: Force IMDSv2 token-required. false = not enforced.
+                        ebsEncryptionRequired:
+                          type: boolean
+                          default: false
+                          description: Force EBS encryption by default. false = not enforced.
                     tags:
+                      type: object
+                      additionalProperties:
+                        type: string
+                      default: {}
+                    syncedLabels:
+                      type: object
+                      additionalProperties:
+                        type: string
+                      default: {}
+                    syncedAnnotations:
                       type: object
                       additionalProperties:
                         type: string
@@ -635,7 +664,35 @@ spec:
                         kmsKeyArn:
                           type: string
                           default: ""
+                    ec2:
+                      type: object
+                      default: {}
+                      description: >-
+                        Default EC2 governance fields promoted from KropathConfig.
+                      properties:
+                        flowLogsRequired:
+                          type: boolean
+                          default: false
+                          description: Default flow logs setting. false = no default.
+                        imdsv2Required:
+                          type: boolean
+                          default: false
+                          description: Default IMDSv2 setting. false = no default.
+                        ebsEncryptionRequired:
+                          type: boolean
+                          default: false
+                          description: Default EBS encryption setting. false = no default.
                     tags:
+                      type: object
+                      additionalProperties:
+                        type: string
+                      default: {}
+                    syncedLabels:
+                      type: object
+                      additionalProperties:
+                        type: string
+                      default: {}
+                    syncedAnnotations:
                       type: object
                       additionalProperties:
                         type: string
