@@ -56,6 +56,7 @@ type KropathConfigTier struct {
 	EventBridge    cascade.EventBridgeKropathSection    `json:"eventbridge,omitempty"`
 	CloudWatchLogs cascade.CloudWatchLogsKropathSection `json:"cloudwatchlogs,omitempty"`
 	ELB            cascade.ELBKropathSection            `json:"elb,omitempty"`
+	RDS            cascade.RDSKropathSection            `json:"rds,omitempty"`
 	Tags           map[string]string                    `json:"tags,omitempty"`
 }
 
@@ -198,6 +199,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.ELB.Tags = make(map[string]string, len(in.Spec.Defaults.ELB.Tags))
 		for k, v := range in.Spec.Defaults.ELB.Tags {
 			out.Spec.Defaults.ELB.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.RDS.Tags != nil {
+		out.Spec.Mandatory.RDS.Tags = make(map[string]string, len(in.Spec.Mandatory.RDS.Tags))
+		for k, v := range in.Spec.Mandatory.RDS.Tags {
+			out.Spec.Mandatory.RDS.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.RDS.Tags != nil {
+		out.Spec.Defaults.RDS.Tags = make(map[string]string, len(in.Spec.Defaults.RDS.Tags))
+		for k, v := range in.Spec.Defaults.RDS.Tags {
+			out.Spec.Defaults.RDS.Tags[k] = v
 		}
 	}
 }
