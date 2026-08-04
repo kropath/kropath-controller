@@ -16,6 +16,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/kmsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/labeloperator"
 	"github.com/kropath/kropath-controller/internal/reconciler/policydocument"
+	"github.com/kropath/kropath-controller/internal/reconciler/rdsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/s3config"
 	"github.com/kropath/kropath-controller/internal/reconciler/secretsmanagerconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/snsconfig"
@@ -41,6 +42,7 @@ var (
 	enableEventBridgeCascade      bool
 	enableCloudWatchLogsCascade   bool
 	enableELBCascade              bool
+	enableRDSCascade              bool
 )
 
 func leaderElectionNamespace() string {
@@ -66,6 +68,7 @@ func main() {
 	flag.BoolVar(&enableEventBridgeCascade, "enable-eventbridge-cascade", false, "Enable the EventBridgeConfig cascade reconciler.")
 	flag.BoolVar(&enableCloudWatchLogsCascade, "enable-cloudwatchlogs-cascade", false, "Enable the CloudWatchLogsConfig cascade reconciler.")
 	flag.BoolVar(&enableELBCascade, "enable-elb-cascade", false, "Enable the AWSELBConfig cascade reconciler.")
+	flag.BoolVar(&enableRDSCascade, "enable-rds-cascade", false, "Enable the RDSConfig cascade reconciler.")
 	opts := zap.Options{Development: true}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
@@ -215,6 +218,17 @@ func main() {
 		}
 	}
 
+	if enableRDSCascade {
+		if err := (&rdsconfig.Reconciler{
+			Client: mgr.GetClient(),
+			Log:    ctrl.Log.WithName("controllers").WithName("RDSConfig"),
+			Scheme: mgr.GetScheme(),
+		}).SetupWithManager(mgr); err != nil {
+			ctrl.Log.Error(err, "unable to create RDSConfig reconciler")
+			os.Exit(1)
+		}
+	}
+
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		ctrl.Log.Error(err, "unable to set up health check")
 		os.Exit(1)
@@ -224,7 +238,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctrl.Log.Info("starting manager", "metrics", metricsAddr, "probes", probeAddr, "enable_poldoc", enablePolicyDoc, "enable_kms_cascade", enableKMSCascade, "enable_sqs_cascade", enableSQSCascade, "enable_secretsmanager_cascade", enableSMCascade, "enable_label_operator", enableLabelOperator, "enable_sns_cascade", enableSNSCascade, "enable_dynamodb_cascade", enableDynamoDBCascade, "enable_eventbridge_cascade", enableEventBridgeCascade, "enable_elb_cascade", enableELBCascade)
+	ctrl.Log.Info("starting manager", "metrics", metricsAddr, "probes", probeAddr, "enable_poldoc", enablePolicyDoc, "enable_kms_cascade", enableKMSCascade, "enable_sqs_cascade", enableSQSCascade, "enable_secretsmanager_cascade", enableSMCascade, "enable_label_operator", enableLabelOperator, "enable_sns_cascade", enableSNSCascade, "enable_dynamodb_cascade", enableDynamoDBCascade, "enable_eventbridge_cascade", enableEventBridgeCascade, "enable_elb_cascade", enableELBCascade, "enable_rds_cascade", enableRDSCascade)
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		ctrl.Log.Error(err, "problem running manager")
 		os.Exit(1)

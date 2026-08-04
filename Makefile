@@ -153,6 +153,7 @@ chainsaw-start: chainsaw-setup ## Build, set up CRDs, and start the operator in 
 			--enable-dynamodb-cascade \
 			--enable-eventbridge-cascade \
 			--enable-cloudwatchlogs-cascade \
+			--enable-rds-cascade \
 			--enable-poldoc \
 			--enable-label-operator \
 			> $(CONTROLLER_LOG) 2>&1 & echo $$! > $(CONTROLLER_PID); \

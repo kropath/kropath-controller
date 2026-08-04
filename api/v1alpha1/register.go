@@ -52,6 +52,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&CloudWatchLogsConfigList{},
 		&ELBConfig{},
 		&ELBConfigList{},
+		&RDSConfig{},
+		&RDSConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

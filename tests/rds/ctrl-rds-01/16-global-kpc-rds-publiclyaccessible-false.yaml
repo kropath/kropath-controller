@@ -1,0 +1,11 @@
+# AC-8: globalKropathConfig.mandatory.rds.publiclyAccessible: false (pointer sentinel,
+# forces private-only across all instances — OD-2 resolution).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: general-instance
+  namespace: kro-system
+spec:
+  mandatory:
+    rds:
+      publiclyAccessible: false

@@ -85,6 +85,32 @@ spec:
               message: "dynamodb.tableClass cannot be set in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.dynamodb) && self.spec.mandatory.dynamodb.contributorInsights != "" && has(self.spec.defaults.dynamodb) && self.spec.defaults.dynamodb.contributorInsights != "")'
               message: "dynamodb.contributorInsights cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.rds) && has(self.spec.mandatory.rds.storageEncrypted) && has(self.spec.defaults.rds) && has(self.spec.defaults.rds.storageEncrypted))'
+              message: "rds.storageEncrypted cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.rds) && has(self.spec.mandatory.rds.deletionProtection) && has(self.spec.defaults.rds) && has(self.spec.defaults.rds.deletionProtection))'
+              message: "rds.deletionProtection cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.rds) && has(self.spec.mandatory.rds.multiAZ) && has(self.spec.defaults.rds) && has(self.spec.defaults.rds.multiAZ))'
+              message: "rds.multiAZ cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.rds) && has(self.spec.mandatory.rds.publiclyAccessible) && has(self.spec.defaults.rds) && has(self.spec.defaults.rds.publiclyAccessible))'
+              message: "rds.publiclyAccessible cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.rds) && has(self.spec.mandatory.rds.autoMinorVersionUpgrade) && has(self.spec.defaults.rds) && has(self.spec.defaults.rds.autoMinorVersionUpgrade))'
+              message: "rds.autoMinorVersionUpgrade cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.rds) && has(self.spec.mandatory.rds.copyTagsToSnapshot) && has(self.spec.defaults.rds) && has(self.spec.defaults.rds.copyTagsToSnapshot))'
+              message: "rds.copyTagsToSnapshot cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.rds) && has(self.spec.mandatory.rds.performanceInsightsEnabled) && has(self.spec.defaults.rds) && has(self.spec.defaults.rds.performanceInsightsEnabled))'
+              message: "rds.performanceInsightsEnabled cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.rds) && has(self.spec.mandatory.rds.enableIAMDatabaseAuthentication) && has(self.spec.defaults.rds) && has(self.spec.defaults.rds.enableIAMDatabaseAuthentication))'
+              message: "rds.enableIAMDatabaseAuthentication cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.rds) && has(self.spec.mandatory.rds.manageMasterUserPassword) && has(self.spec.defaults.rds) && has(self.spec.defaults.rds.manageMasterUserPassword))'
+              message: "rds.manageMasterUserPassword cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.rds) && self.spec.mandatory.rds.kmsKeyID != "" && has(self.spec.defaults.rds) && self.spec.defaults.rds.kmsKeyID != "")'
+              message: "rds.kmsKeyID cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.rds) && self.spec.mandatory.rds.storageType != "" && has(self.spec.defaults.rds) && self.spec.defaults.rds.storageType != "")'
+              message: "rds.storageType cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.rds) && self.spec.mandatory.rds.namingTemplate != "" && has(self.spec.defaults.rds) && self.spec.defaults.rds.namingTemplate != "")'
+              message: "rds.namingTemplate cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.rds) && self.spec.mandatory.rds.backupRetentionPeriod > 0 && has(self.spec.defaults.rds) && self.spec.defaults.rds.backupRetentionPeriod > 0)'
+              message: "rds.backupRetentionPeriod cannot be set in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.eventbridge) && self.spec.mandatory.eventbridge.archiveRetentionDays > 0 && has(self.spec.defaults.eventbridge) && self.spec.defaults.eventbridge.archiveRetentionDays > 0)'
               message: "eventbridge.archiveRetentionDays cannot be set in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.cloudwatchlogs) && self.spec.mandatory.cloudwatchlogs.kmsKeyId != "" && has(self.spec.defaults.cloudwatchlogs) && self.spec.defaults.cloudwatchlogs.kmsKeyId != "")'
@@ -224,6 +250,65 @@ spec:
                         contributorInsights:
                           type: string
                           default: ""
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                    rds:
+                      type: object
+                      default: {}
+                      description: >-
+                        Mandatory RDS governance fields (13 instance-applicable fields).
+                        Cluster-only fields (serverlessV2ScalingMinCapacity,
+                        serverlessV2ScalingMaxCapacity, backtrackWindow) live in RDSConfig only.
+                      properties:
+                        storageEncrypted:
+                          type: boolean
+                          description: Force encryption at rest. Omit (nil) = not enforced.
+                        kmsKeyID:
+                          type: string
+                          default: ""
+                          description: KMS key ARN for encryption. Empty = not enforced.
+                        deletionProtection:
+                          type: boolean
+                          description: Prevent instance/cluster deletion. Omit (nil) = not enforced.
+                        backupRetentionPeriod:
+                          type: integer
+                          format: int64
+                          default: 0
+                          description: Minimum backup retention floor in days. 0 = not enforced.
+                        multiAZ:
+                          type: boolean
+                          description: Force Multi-AZ deployment. Omit (nil) = not enforced.
+                        publiclyAccessible:
+                          type: boolean
+                          description: >-
+                            Control public endpoint exposure. Omit (nil) = not enforced;
+                            false = forced private-only.
+                        storageType:
+                          type: string
+                          default: ""
+                          description: Forced storage type. Empty = not enforced.
+                        autoMinorVersionUpgrade:
+                          type: boolean
+                          description: Force auto minor version upgrades. Omit (nil) = not enforced.
+                        copyTagsToSnapshot:
+                          type: boolean
+                          description: Force tag copying to snapshots. Omit (nil) = not enforced.
+                        performanceInsightsEnabled:
+                          type: boolean
+                          description: Force Performance Insights on. Omit (nil) = not enforced.
+                        enableIAMDatabaseAuthentication:
+                          type: boolean
+                          description: Force IAM database authentication. Omit (nil) = not enforced.
+                        manageMasterUserPassword:
+                          type: boolean
+                          description: Force Secrets Manager password management. Omit (nil) = not enforced.
+                        namingTemplate:
+                          type: string
+                          default: ""
+                          description: Naming template. Empty = not enforced.
                         tags:
                           type: object
                           default: {}
@@ -383,6 +468,62 @@ spec:
                         contributorInsights:
                           type: string
                           default: ""
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                    rds:
+                      type: object
+                      default: {}
+                      description: >-
+                        Default RDS governance fields (13 instance-applicable fields).
+                        Cluster-only fields live in RDSConfig only.
+                      properties:
+                        storageEncrypted:
+                          type: boolean
+                          description: Default encryption setting. Omit (nil) = no default.
+                        kmsKeyID:
+                          type: string
+                          default: ""
+                          description: Default KMS key ARN. Empty = no default.
+                        deletionProtection:
+                          type: boolean
+                          description: Default deletion-protection setting. Omit (nil) = no default.
+                        backupRetentionPeriod:
+                          type: integer
+                          format: int64
+                          default: 0
+                          description: Default backup retention in days. 0 = no default.
+                        multiAZ:
+                          type: boolean
+                          description: Default Multi-AZ setting. Omit (nil) = no default.
+                        publiclyAccessible:
+                          type: boolean
+                          description: Default public-accessibility setting. Omit (nil) = no default.
+                        storageType:
+                          type: string
+                          default: ""
+                          description: Default storage type. Empty = no default.
+                        autoMinorVersionUpgrade:
+                          type: boolean
+                          description: Default auto-minor-version-upgrade setting. Omit (nil) = no default.
+                        copyTagsToSnapshot:
+                          type: boolean
+                          description: Default copy-tags-to-snapshot setting. Omit (nil) = no default.
+                        performanceInsightsEnabled:
+                          type: boolean
+                          description: Default Performance Insights setting. Omit (nil) = no default.
+                        enableIAMDatabaseAuthentication:
+                          type: boolean
+                          description: Default IAM database authentication. Omit (nil) = no default.
+                        manageMasterUserPassword:
+                          type: boolean
+                          description: Default Secrets Manager password management. Omit (nil) = no default.
+                        namingTemplate:
+                          type: string
+                          default: ""
+                          description: Default naming template. Empty = no default.
                         tags:
                           type: object
                           default: {}

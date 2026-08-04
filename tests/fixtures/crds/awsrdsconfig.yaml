@@ -1,0 +1,457 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: rdsconfigs.aws.kropath.run
+spec:
+  group: aws.kropath.run
+  names:
+    kind: RDSConfig
+    listKind: RDSConfigList
+    plural: rdsconfigs
+    singular: rdsconfig
+    shortNames:
+      - awsrdscfg
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      schema:
+        openAPIV3Schema:
+          type: object
+          x-kubernetes-validations:
+            # Boolean pointer fields: use has() to detect explicit set (nil = absent).
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.storageEncrypted) &&
+                  has(self.spec.defaults) && has(self.spec.defaults.storageEncrypted))
+              message: >-
+                storageEncrypted cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.deletionProtection) &&
+                  has(self.spec.defaults) && has(self.spec.defaults.deletionProtection))
+              message: >-
+                deletionProtection cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.multiAZ) &&
+                  has(self.spec.defaults) && has(self.spec.defaults.multiAZ))
+              message: >-
+                multiAZ cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.publiclyAccessible) &&
+                  has(self.spec.defaults) && has(self.spec.defaults.publiclyAccessible))
+              message: >-
+                publiclyAccessible cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.autoMinorVersionUpgrade) &&
+                  has(self.spec.defaults) && has(self.spec.defaults.autoMinorVersionUpgrade))
+              message: >-
+                autoMinorVersionUpgrade cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.copyTagsToSnapshot) &&
+                  has(self.spec.defaults) && has(self.spec.defaults.copyTagsToSnapshot))
+              message: >-
+                copyTagsToSnapshot cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.performanceInsightsEnabled) &&
+                  has(self.spec.defaults) && has(self.spec.defaults.performanceInsightsEnabled))
+              message: >-
+                performanceInsightsEnabled cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.enableIAMDatabaseAuthentication) &&
+                  has(self.spec.defaults) && has(self.spec.defaults.enableIAMDatabaseAuthentication))
+              message: >-
+                enableIAMDatabaseAuthentication cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.manageMasterUserPassword) &&
+                  has(self.spec.defaults) && has(self.spec.defaults.manageMasterUserPassword))
+              message: >-
+                manageMasterUserPassword cannot be set in both mandatory and defaults
+            # String fields: zero-value "" = not enforced.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.kmsKeyID) &&
+                  self.spec.mandatory.kmsKeyID != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.kmsKeyID) &&
+                  self.spec.defaults.kmsKeyID != "")
+              message: >-
+                kmsKeyID cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.storageType) &&
+                  self.spec.mandatory.storageType != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.storageType) &&
+                  self.spec.defaults.storageType != "")
+              message: >-
+                storageType cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.namingTemplate) &&
+                  self.spec.mandatory.namingTemplate != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.namingTemplate) &&
+                  self.spec.defaults.namingTemplate != "")
+              message: >-
+                namingTemplate cannot be set in both mandatory and defaults
+            # Integer fields: zero-value 0 = not enforced.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.backupRetentionPeriod) &&
+                  self.spec.mandatory.backupRetentionPeriod != 0 &&
+                  has(self.spec.defaults) && has(self.spec.defaults.backupRetentionPeriod) &&
+                  self.spec.defaults.backupRetentionPeriod != 0)
+              message: >-
+                backupRetentionPeriod cannot be set in both mandatory and defaults
+            # Cluster-only integer fields.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.backtrackWindow) &&
+                  self.spec.mandatory.backtrackWindow != 0 &&
+                  has(self.spec.defaults) && has(self.spec.defaults.backtrackWindow) &&
+                  self.spec.defaults.backtrackWindow != 0)
+              message: >-
+                backtrackWindow cannot be set in both mandatory and defaults
+            # Cluster-only float fields (stored as number).
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.serverlessV2ScalingMinCapacity) &&
+                  self.spec.mandatory.serverlessV2ScalingMinCapacity != 0.0 &&
+                  has(self.spec.defaults) && has(self.spec.defaults.serverlessV2ScalingMinCapacity) &&
+                  self.spec.defaults.serverlessV2ScalingMinCapacity != 0.0)
+              message: >-
+                serverlessV2ScalingMinCapacity cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.serverlessV2ScalingMaxCapacity) &&
+                  self.spec.mandatory.serverlessV2ScalingMaxCapacity != 0.0 &&
+                  has(self.spec.defaults) && has(self.spec.defaults.serverlessV2ScalingMaxCapacity) &&
+                  self.spec.defaults.serverlessV2ScalingMaxCapacity != 0.0)
+              message: >-
+                serverlessV2ScalingMaxCapacity cannot be set in both mandatory and defaults
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              default: {}
+              properties:
+                mandatory:
+                  type: object
+                  default: {}
+                  description: >-
+                    Mandatory RDS governance fields. Zero-value / nil means the field
+                    is not enforced at this tier.
+                  properties:
+                    storageEncrypted:
+                      type: boolean
+                      description: >-
+                        Force encryption at rest. Omit (nil) = not enforced; false = explicitly
+                        disabled. No default declared — nil (*bool) detection is required.
+                    kmsKeyID:
+                      type: string
+                      default: ""
+                      description: KMS key ARN for encryption. Empty = not enforced.
+                    deletionProtection:
+                      type: boolean
+                      description: Prevent instance/cluster deletion. Omit (nil) = not enforced.
+                    backupRetentionPeriod:
+                      type: integer
+                      format: int64
+                      default: 0
+                      description: >-
+                        Minimum backup retention floor in days. 0 = not enforced.
+                        Minimum-floor semantics: max(mandatory, instance) applied in RGD CEL.
+                    multiAZ:
+                      type: boolean
+                      description: Force Multi-AZ deployment. Omit (nil) = not enforced.
+                    publiclyAccessible:
+                      type: boolean
+                      description: >-
+                        Control public endpoint exposure. Omit (nil) = not enforced;
+                        false (explicit pointer) = forced private-only across all instances.
+                    storageType:
+                      type: string
+                      default: ""
+                      description: Forced storage type (e.g. "gp3", "io1"). Empty = not enforced.
+                    autoMinorVersionUpgrade:
+                      type: boolean
+                      description: Force auto minor version upgrades. Omit (nil) = not enforced.
+                    copyTagsToSnapshot:
+                      type: boolean
+                      description: Force tag copying to snapshots. Omit (nil) = not enforced.
+                    performanceInsightsEnabled:
+                      type: boolean
+                      description: Force Performance Insights on. Omit (nil) = not enforced.
+                    enableIAMDatabaseAuthentication:
+                      type: boolean
+                      description: Force IAM database authentication. Omit (nil) = not enforced.
+                    manageMasterUserPassword:
+                      type: boolean
+                      description: Force Secrets Manager password management. Omit (nil) = not enforced.
+                    namingTemplate:
+                      type: string
+                      default: ""
+                      description: Naming template (e.g. "{namespace}-{name}"). Empty = not enforced.
+                    # Cluster-only fields: controller applies only for RDSCluster reconciliation.
+                    serverlessV2ScalingMinCapacity:
+                      type: number
+                      default: 0
+                      description: >-
+                        Cluster-only: minimum ACU floor for Aurora Serverless v2.
+                        0 = not enforced. Ignored for RDSInstance reconciliation.
+                    serverlessV2ScalingMaxCapacity:
+                      type: number
+                      default: 0
+                      description: >-
+                        Cluster-only: maximum ACU cap for Aurora Serverless v2.
+                        0 = not enforced. Ignored for RDSInstance reconciliation.
+                    backtrackWindow:
+                      type: integer
+                      format: int64
+                      default: 0
+                      description: >-
+                        Cluster-only: Aurora MySQL backtrack window in seconds.
+                        0 = not enforced. Ignored for RDSInstance reconciliation.
+                    tags:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedLabels:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                defaults:
+                  type: object
+                  default: {}
+                  description: >-
+                    Default RDS governance fields. Zero-value / nil means no default
+                    is provided at this tier.
+                  properties:
+                    storageEncrypted:
+                      type: boolean
+                      description: Default encryption setting. Omit (nil) = no default at this tier.
+                    kmsKeyID:
+                      type: string
+                      default: ""
+                      description: Default KMS key ARN. Empty = no default.
+                    deletionProtection:
+                      type: boolean
+                      description: Default deletion-protection setting. Omit (nil) = no default.
+                    backupRetentionPeriod:
+                      type: integer
+                      format: int64
+                      default: 0
+                      description: Default backup retention in days. 0 = no automated backups by default.
+                    multiAZ:
+                      type: boolean
+                      description: Default Multi-AZ setting. Omit (nil) = no default.
+                    publiclyAccessible:
+                      type: boolean
+                      description: Default public-accessibility setting. Omit (nil) = no default.
+                    storageType:
+                      type: string
+                      default: ""
+                      description: Default storage type. Empty = no default.
+                    autoMinorVersionUpgrade:
+                      type: boolean
+                      description: Default auto-minor-version-upgrade setting. Omit (nil) = no default.
+                    copyTagsToSnapshot:
+                      type: boolean
+                      description: Default copy-tags-to-snapshot setting. Omit (nil) = no default.
+                    performanceInsightsEnabled:
+                      type: boolean
+                      description: Default Performance Insights setting. Omit (nil) = no default.
+                    enableIAMDatabaseAuthentication:
+                      type: boolean
+                      description: Default IAM database authentication. Omit (nil) = no default.
+                    manageMasterUserPassword:
+                      type: boolean
+                      description: Default Secrets Manager password management. Omit (nil) = no default.
+                    namingTemplate:
+                      type: string
+                      default: ""
+                      description: Default naming template. Empty = no default.
+                    # Cluster-only defaults.
+                    serverlessV2ScalingMinCapacity:
+                      type: number
+                      default: 0
+                      description: "Cluster-only: default minimum ACU for Aurora Serverless v2. 0 = no default."
+                    serverlessV2ScalingMaxCapacity:
+                      type: number
+                      default: 0
+                      description: "Cluster-only: default maximum ACU for Aurora Serverless v2. 0 = no default."
+                    backtrackWindow:
+                      type: integer
+                      format: int64
+                      default: 0
+                      description: "Cluster-only: default backtrack window in seconds. 0 = no default."
+                    tags:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedLabels:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+            status:
+              type: object
+              properties:
+                observedGeneration:
+                  type: integer
+                  format: int64
+                syncedTimestamp:
+                  type: string
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                      lastTransitionTime:
+                        type: string
+                      observedGeneration:
+                        type: integer
+                        format: int64
+                effectiveConfig:
+                  type: object
+                  description: >-
+                    Pre-merged RDS governance config written by kropath-controller.
+                    RGDs read exclusively from this field via a single externalRef lookup.
+                  properties:
+                    mandatory:
+                      type: object
+                      properties:
+                        storageEncrypted:
+                          type: boolean
+                        kmsKeyID:
+                          type: string
+                        deletionProtection:
+                          type: boolean
+                        backupRetentionPeriod:
+                          type: integer
+                          format: int64
+                        multiAZ:
+                          type: boolean
+                        publiclyAccessible:
+                          type: boolean
+                        storageType:
+                          type: string
+                        autoMinorVersionUpgrade:
+                          type: boolean
+                        copyTagsToSnapshot:
+                          type: boolean
+                        performanceInsightsEnabled:
+                          type: boolean
+                        enableIAMDatabaseAuthentication:
+                          type: boolean
+                        manageMasterUserPassword:
+                          type: boolean
+                        namingTemplate:
+                          type: string
+                        serverlessV2ScalingMinCapacity:
+                          type: number
+                        serverlessV2ScalingMaxCapacity:
+                          type: number
+                        backtrackWindow:
+                          type: integer
+                          format: int64
+                        tags:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedAnnotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                    defaults:
+                      type: object
+                      properties:
+                        storageEncrypted:
+                          type: boolean
+                        kmsKeyID:
+                          type: string
+                        deletionProtection:
+                          type: boolean
+                        backupRetentionPeriod:
+                          type: integer
+                          format: int64
+                        multiAZ:
+                          type: boolean
+                        publiclyAccessible:
+                          type: boolean
+                        storageType:
+                          type: string
+                        autoMinorVersionUpgrade:
+                          type: boolean
+                        copyTagsToSnapshot:
+                          type: boolean
+                        performanceInsightsEnabled:
+                          type: boolean
+                        enableIAMDatabaseAuthentication:
+                          type: boolean
+                        manageMasterUserPassword:
+                          type: boolean
+                        namingTemplate:
+                          type: string
+                        serverlessV2ScalingMinCapacity:
+                          type: number
+                        serverlessV2ScalingMaxCapacity:
+                          type: number
+                        backtrackWindow:
+                          type: integer
+                          format: int64
+                        tags:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedAnnotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                    aws:
+                      type: object
+                      properties:
+                        accountId:
+                          type: string
+                        region:
+                          type: string
