@@ -1,0 +1,280 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-ec2-01 Chainsaw integration tests — all 15 acceptance criteria.
+# Requires:
+#   - kind cluster with kropath-operator deployed (feature flag: --enable-ec2-cascade)
+#   - KropathConfig CRD applied (crds/kropathconfig.yaml from kropath-aws)
+#   - EC2Config CRD applied (crds/ec2config.yaml from kropath-aws)
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-ec2-01-cascade
+spec:
+  steps:
+    # AC-1: globalKropathConfig.mandatory.ec2.flowLogsRequired=true propagates
+    # to EC2Config.status.effectiveConfig.mandatory.flowLogsRequired=true.
+    - name: ac1-kc-mandatory-flowlogs
+      try:
+        - apply:
+            file: 01-global-kpc-flowlogs.yaml
+        - apply:
+            file: 02-ec2config.yaml
+        - assert:
+            file: 03-assert-ac1.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-ec2config.yaml
+        - delete:
+            file: 01-global-kpc-flowlogs.yaml
+
+    # AC-2: globalKropathConfig.mandatory.ec2.imdsv2Required=true propagates.
+    - name: ac2-kc-mandatory-imdsv2
+      try:
+        - apply:
+            file: 04-global-kpc-imdsv2.yaml
+        - apply:
+            file: 02-ec2config.yaml
+        - assert:
+            file: 05-assert-ac2.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-ec2config.yaml
+        - delete:
+            file: 04-global-kpc-imdsv2.yaml
+
+    # AC-3: globalKropathConfig.mandatory.ec2.ebsEncryptionRequired=true propagates.
+    - name: ac3-kc-mandatory-ebs-encryption
+      try:
+        - apply:
+            file: 06-global-kpc-ebs-encryption.yaml
+        - apply:
+            file: 02-ec2config.yaml
+        - assert:
+            file: 07-assert-ac3.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-ec2config.yaml
+        - delete:
+            file: 06-global-kpc-ebs-encryption.yaml
+
+    # AC-4: KropathConfig.mandatory.ec2.flowLogsRequired=true (L1) wins over
+    # globalEC2Config.mandatory.flowLogsRequired=false (L3).
+    - name: ac4-kc-wins-over-ec2config
+      try:
+        - apply:
+            file: 08-global-kpc-flowlogs-l1.yaml
+        - apply:
+            file: 09-global-ec2cfg-flowlogs-false-l3.yaml
+        - apply:
+            file: 02-ec2config.yaml
+        - assert:
+            file: 10-assert-ac4.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-ec2config.yaml
+        - delete:
+            file: 09-global-ec2cfg-flowlogs-false-l3.yaml
+        - delete:
+            file: 08-global-kpc-flowlogs-l1.yaml
+
+    # AC-5: KropathConfig.mandatory.ec2.imdsv2Required=true (L1) wins over
+    # globalEC2Config.mandatory.imdsv2Required=false (L3).
+    - name: ac5-kc-wins-imdsv2
+      try:
+        - apply:
+            file: 11-global-kpc-imdsv2-l1.yaml
+        - apply:
+            file: 12-global-ec2cfg-imdsv2-false-l3.yaml
+        - apply:
+            file: 02-ec2config.yaml
+        - assert:
+            file: 13-assert-ac5.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-ec2config.yaml
+        - delete:
+            file: 12-global-ec2cfg-imdsv2-false-l3.yaml
+        - delete:
+            file: 11-global-kpc-imdsv2-l1.yaml
+
+    # AC-6: globalEC2Config.mandatory.restrictPublicIpOnLaunch=true propagates (EC2Config-only field).
+    - name: ac6-ec2config-only-field
+      try:
+        - apply:
+            file: 14-global-ec2cfg-restrict-public-ip.yaml
+        - apply:
+            file: 02-ec2config.yaml
+        - assert:
+            file: 15-assert-ac6.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-ec2config.yaml
+        - delete:
+            file: 14-global-ec2cfg-restrict-public-ip.yaml
+
+    # AC-7: globalEC2Config.mandatory.ebsDefaultKmsKeyId propagates.
+    - name: ac7-ec2config-kms-key
+      try:
+        - apply:
+            file: 16-global-ec2cfg-kms-key.yaml
+        - apply:
+            file: 02-ec2config.yaml
+        - assert:
+            file: 17-assert-ac7.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-ec2config.yaml
+        - delete:
+            file: 16-global-ec2cfg-kms-key.yaml
+
+    # AC-8: globalEC2Config.defaults.allowSourceDestCheckDisable=true propagates.
+    - name: ac8-ec2config-defaults-sourcedest
+      try:
+        - apply:
+            file: 18-global-ec2cfg-defaults-sourcedest.yaml
+        - apply:
+            file: 02-ec2config.yaml
+        - assert:
+            file: 19-assert-ac8.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-ec2config.yaml
+        - delete:
+            file: 18-global-ec2cfg-defaults-sourcedest.yaml
+
+    # AC-9: Only EC2Config.defaults.imdsv2Required=true set; mandatory stays false.
+    - name: ac9-defaults-only
+      try:
+        - apply:
+            file: 20-global-ec2cfg-defaults-imdsv2.yaml
+        - apply:
+            file: 02-ec2config.yaml
+        - assert:
+            file: 21-assert-ac9.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-ec2config.yaml
+        - delete:
+            file: 20-global-ec2cfg-defaults-imdsv2.yaml
+
+    # AC-10: globalEC2Config.defaults.flowLogsRequired=true (L7) wins over
+    # globalKropathConfig.defaults.ec2.flowLogsRequired=true (L9) — more specific wins.
+    - name: ac10-defaults-priority
+      try:
+        - apply:
+            file: 22-global-ec2cfg-defaults-flowlogs-l7.yaml
+        - apply:
+            file: 23-global-kpc-defaults-flowlogs-l9.yaml
+        - apply:
+            file: 02-ec2config.yaml
+        - assert:
+            file: 24-assert-ac10.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-ec2config.yaml
+        - delete:
+            file: 23-global-kpc-defaults-flowlogs-l9.yaml
+        - delete:
+            file: 22-global-ec2cfg-defaults-flowlogs-l7.yaml
+
+    # AC-11: globalKropathConfig.mandatory.ec2.flowLogsRequired=true (L1) wins even
+    # when localKropathConfig.mandatory.ec2.flowLogsRequired=false (L2, zero).
+    - name: ac11-global-mandatory-wins
+      try:
+        - apply:
+            file: 25-global-kpc-flowlogs-l1.yaml
+        - apply:
+            file: 02-ec2config.yaml
+        - assert:
+            file: 26-assert-ac11.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-ec2config.yaml
+        - delete:
+            file: 25-global-kpc-flowlogs-l1.yaml
+
+    # AC-12: KropathConfig.mandatory.tags and EC2Config.mandatory.tags are union-merged.
+    - name: ac12-tag-merge
+      try:
+        - apply:
+            file: 27-global-kpc-mandatory-tags.yaml
+        - apply:
+            file: 28-ec2config-mandatory-tags.yaml
+        - assert:
+            file: 29-assert-ac12.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 28-ec2config-mandatory-tags.yaml
+        - delete:
+            file: 27-global-kpc-mandatory-tags.yaml
+
+    # AC-13: KropathConfig.mandatory.syncedLabels propagates to effCfg.mandatory.syncedLabels;
+    # EC2Config.defaults.syncedLabels propagates to effCfg.defaults.syncedLabels.
+    - name: ac13-synced-labels-merge
+      try:
+        - apply:
+            file: 30-global-kpc-syncedlabels.yaml
+        - apply:
+            file: 31-ec2config-defaults-syncedlabels.yaml
+        - assert:
+            file: 32-assert-ac13.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 31-ec2config-defaults-syncedlabels.yaml
+        - delete:
+            file: 30-global-kpc-syncedlabels.yaml
+
+    # AC-14: KropathConfig with both mandatory.ec2.flowLogsRequired=true and
+    # defaults.ec2.flowLogsRequired=true is rejected at admission.
+    - name: ac14-kc-mutual-exclusivity
+      try:
+        - apply:
+            file: 33-kropathconfig-both-flowlogs.yaml
+            expect:
+              - match:
+                  apiVersion: aws.kropath.run/v1alpha1
+                  kind: KropathConfig
+                check:
+                  ($error != null): true
+
+    # AC-15: globalKropathConfig.spec.aws.region and accountId propagate
+    # to effCfg.aws.region and effCfg.aws.accountId.
+    - name: ac15-aws-metadata
+      try:
+        - apply:
+            file: 34-global-kpc-aws-identity.yaml
+        - apply:
+            file: 02-ec2config.yaml
+        - assert:
+            file: 35-assert-ac15.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-ec2config.yaml
+        - delete:
+            file: 34-global-kpc-aws-identity.yaml
