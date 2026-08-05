@@ -117,6 +117,16 @@ spec:
               message: "cloudwatchlogs.kmsKeyId cannot be set in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.cloudwatchlogs) && self.spec.mandatory.cloudwatchlogs.retentionDays > 0 && has(self.spec.defaults.cloudwatchlogs) && self.spec.defaults.cloudwatchlogs.retentionDays > 0)'
               message: "cloudwatchlogs.retentionDays cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.lambda) && self.spec.mandatory.lambda.runtime != "" && has(self.spec.defaults.lambda) && self.spec.defaults.lambda.runtime != "")'
+              message: "lambda.runtime cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.lambda) && self.spec.mandatory.lambda.memorySize > 0 && has(self.spec.defaults.lambda) && self.spec.defaults.lambda.memorySize > 0)'
+              message: "lambda.memorySize cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.lambda) && self.spec.mandatory.lambda.timeout > 0 && has(self.spec.defaults.lambda) && self.spec.defaults.lambda.timeout > 0)'
+              message: "lambda.timeout cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.lambda) && self.spec.mandatory.lambda.tracingMode != "" && has(self.spec.defaults.lambda) && self.spec.defaults.lambda.tracingMode != "")'
+              message: "lambda.tracingMode cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.lambda) && self.spec.mandatory.lambda.kmsKeyArn != "" && has(self.spec.defaults.lambda) && self.spec.defaults.lambda.kmsKeyArn != "")'
+              message: "lambda.kmsKeyArn cannot be set in both mandatory and defaults"
           properties:
             spec:
               type: object
@@ -334,6 +344,27 @@ spec:
                           format: int64
                           default: 0
                           minimum: 0
+                    lambda:
+                      type: object
+                      default: {}
+                      properties:
+                        runtime:
+                          type: string
+                          default: ""
+                        memorySize:
+                          type: integer
+                          format: int64
+                          default: 0
+                        timeout:
+                          type: integer
+                          format: int64
+                          default: 0
+                        tracingMode:
+                          type: string
+                          default: ""
+                        kmsKeyArn:
+                          type: string
+                          default: ""
                     tags:
                       type: object
                       additionalProperties:
@@ -549,6 +580,27 @@ spec:
                           format: int64
                           default: 0
                           minimum: 0
+                    lambda:
+                      type: object
+                      default: {}
+                      properties:
+                        runtime:
+                          type: string
+                          default: ""
+                        memorySize:
+                          type: integer
+                          format: int64
+                          default: 0
+                        timeout:
+                          type: integer
+                          format: int64
+                          default: 0
+                        tracingMode:
+                          type: string
+                          default: ""
+                        kmsKeyArn:
+                          type: string
+                          default: ""
                     tags:
                       type: object
                       additionalProperties:
