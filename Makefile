@@ -33,7 +33,7 @@ CONTROLLER_PID   := /tmp/kropath-controller/pid
 # ─── Test config ───────────────────────────────────────────────────────────────
 KIND_CLUSTER     := kropath-controller-test
 HEALTH_PORT      := 18081
-TEST_NAMESPACES  := kro-system payments-prod events-prod
+TEST_NAMESPACES  := kro-system payments-prod events-prod network-prod
 CHAINSAW         ?= chainsaw
 GOLANGCI         ?= golangci-lint
 
@@ -135,6 +135,7 @@ chainsaw-setup: build kind-up ## Create kind cluster, apply CRDs, create test na
 		crd/cloudwatchlogsconfigs.aws.kropath.run \
 		crd/ecsconfigs.aws.kropath.run \
 		crd/eksconfigs.aws.kropath.run \
+		crd/ec2configs.aws.kropath.run \
 		crd/cloudstoragebucketconfigs.gcp.kropath.run \
 		crd/kropathconfigs.kropath.run
 	@for ns in $(TEST_NAMESPACES); do \
@@ -159,6 +160,7 @@ chainsaw-start: chainsaw-setup ## Build, set up CRDs, and start the operator in 
 			--enable-autoscaling-cascade \
 			--enable-ecs-cascade \
 			--enable-eks-cascade \
+			--enable-ec2-cascade \
 			--enable-poldoc \
 			--enable-label-operator \
 			> $(CONTROLLER_LOG) 2>&1 & echo $$! > $(CONTROLLER_PID); \
