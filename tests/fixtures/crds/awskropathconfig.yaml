@@ -131,6 +131,12 @@ spec:
               message: "lambda.tracingMode cannot be set in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.lambda) && self.spec.mandatory.lambda.kmsKeyArn != "" && has(self.spec.defaults.lambda) && self.spec.defaults.lambda.kmsKeyArn != "")'
               message: "lambda.kmsKeyArn cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory) && has(self.spec.mandatory.ec2) && self.spec.mandatory.ec2.flowLogsRequired == true && has(self.spec.defaults) && has(self.spec.defaults.ec2) && self.spec.defaults.ec2.flowLogsRequired == true)'
+              message: "spec.mandatory.ec2.flowLogsRequired and spec.defaults.ec2.flowLogsRequired cannot both be true. Set the field in exactly one tier."
+            - rule: '!(has(self.spec.mandatory) && has(self.spec.mandatory.ec2) && self.spec.mandatory.ec2.imdsv2Required == true && has(self.spec.defaults) && has(self.spec.defaults.ec2) && self.spec.defaults.ec2.imdsv2Required == true)'
+              message: "spec.mandatory.ec2.imdsv2Required and spec.defaults.ec2.imdsv2Required cannot both be true. Set the field in exactly one tier."
+            - rule: '!(has(self.spec.mandatory) && has(self.spec.mandatory.ec2) && self.spec.mandatory.ec2.ebsEncryptionRequired == true && has(self.spec.defaults) && has(self.spec.defaults.ec2) && self.spec.defaults.ec2.ebsEncryptionRequired == true)'
+              message: "spec.mandatory.ec2.ebsEncryptionRequired and spec.defaults.ec2.ebsEncryptionRequired cannot both be true. Set the field in exactly one tier."
           properties:
             spec:
               type: object
@@ -384,7 +390,36 @@ spec:
                         kmsKeyArn:
                           type: string
                           default: ""
+                    ec2:
+                      type: object
+                      default: {}
+                      description: >-
+                        Mandatory EC2 governance fields promoted from KropathConfig.
+                        Only the three org-wide EC2 booleans are here.
+                      properties:
+                        flowLogsRequired:
+                          type: boolean
+                          default: false
+                          description: Force VPC flow logs enabled. false = not enforced.
+                        imdsv2Required:
+                          type: boolean
+                          default: false
+                          description: Force IMDSv2 token-required. false = not enforced.
+                        ebsEncryptionRequired:
+                          type: boolean
+                          default: false
+                          description: Force EBS encryption by default. false = not enforced.
                     tags:
+                      type: object
+                      additionalProperties:
+                        type: string
+                      default: {}
+                    syncedLabels:
+                      type: object
+                      additionalProperties:
+                        type: string
+                      default: {}
+                    syncedAnnotations:
                       type: object
                       additionalProperties:
                         type: string
@@ -635,7 +670,35 @@ spec:
                         kmsKeyArn:
                           type: string
                           default: ""
+                    ec2:
+                      type: object
+                      default: {}
+                      description: >-
+                        Default EC2 governance fields promoted from KropathConfig.
+                      properties:
+                        flowLogsRequired:
+                          type: boolean
+                          default: false
+                          description: Default flow logs setting. false = no default.
+                        imdsv2Required:
+                          type: boolean
+                          default: false
+                          description: Default IMDSv2 setting. false = no default.
+                        ebsEncryptionRequired:
+                          type: boolean
+                          default: false
+                          description: Default EBS encryption setting. false = no default.
                     tags:
+                      type: object
+                      additionalProperties:
+                        type: string
+                      default: {}
+                    syncedLabels:
+                      type: object
+                      additionalProperties:
+                        type: string
+                      default: {}
+                    syncedAnnotations:
                       type: object
                       additionalProperties:
                         type: string

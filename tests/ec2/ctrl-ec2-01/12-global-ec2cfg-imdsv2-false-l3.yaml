@@ -1,0 +1,11 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: EC2Config
+metadata:
+  name: general-policy
+  namespace: kro-system
+  labels:
+    aws.kropath.run/resource-name: general-policy
+spec:
+  mandatory:
+    imdsv2Required: false
+  defaults: {}
