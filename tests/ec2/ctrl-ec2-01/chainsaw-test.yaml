@@ -163,8 +163,13 @@ spec:
             file: 18-global-ec2cfg-defaults-sourcedest.yaml
 
     # AC-9: Only EC2Config.defaults.imdsv2Required=true set; mandatory stays false.
+    # Delete the KropathConfig first — cleanup is deferred to test end so the stale
+    # KropathConfig from ac5 (mandatory.ec2.imdsv2Required=true) would otherwise make
+    # mandatory.imdsv2Required appear true when only defaults are set.
     - name: ac9-defaults-only
       try:
+        - script:
+            content: kubectl delete kropathconfigs.aws.kropath.run general-policy -n kro-system --ignore-not-found=true
         - apply:
             file: 20-global-ec2cfg-defaults-imdsv2.yaml
         - apply:
