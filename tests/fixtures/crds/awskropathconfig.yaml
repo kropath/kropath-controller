@@ -131,6 +131,12 @@ spec:
               message: "lambda.tracingMode cannot be set in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.lambda) && self.spec.mandatory.lambda.kmsKeyArn != "" && has(self.spec.defaults.lambda) && self.spec.defaults.lambda.kmsKeyArn != "")'
               message: "lambda.kmsKeyArn cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.eks) && self.spec.mandatory.eks.version != "" && has(self.spec.defaults.eks) && self.spec.defaults.eks.version != "")'
+              message: "eks.version cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.eks) && self.spec.mandatory.eks.authenticationMode != "" && has(self.spec.defaults.eks) && self.spec.defaults.eks.authenticationMode != "")'
+              message: "eks.authenticationMode cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.eks) && has(self.spec.mandatory.eks.loggingTypes) && size(self.spec.mandatory.eks.loggingTypes) > 0 && has(self.spec.defaults.eks) && has(self.spec.defaults.eks.loggingTypes) && size(self.spec.defaults.eks.loggingTypes) > 0)'
+              message: "eks.loggingTypes cannot be set in both mandatory and defaults"
           properties:
             spec:
               type: object
@@ -384,6 +390,21 @@ spec:
                         kmsKeyArn:
                           type: string
                           default: ""
+                    eks:
+                      type: object
+                      default: {}
+                      properties:
+                        version:
+                          type: string
+                          default: ""
+                        authenticationMode:
+                          type: string
+                          default: ""
+                        loggingTypes:
+                          type: array
+                          items:
+                            type: string
+                          default: []
                     tags:
                       type: object
                       additionalProperties:
@@ -635,6 +656,21 @@ spec:
                         kmsKeyArn:
                           type: string
                           default: ""
+                    eks:
+                      type: object
+                      default: {}
+                      properties:
+                        version:
+                          type: string
+                          default: ""
+                        authenticationMode:
+                          type: string
+                          default: ""
+                        loggingTypes:
+                          type: array
+                          items:
+                            type: string
+                          default: []
                     tags:
                       type: object
                       additionalProperties:

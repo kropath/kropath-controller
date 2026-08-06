@@ -56,6 +56,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&RDSConfigList{},
 		&AutoScalingConfig{},
 		&AutoScalingConfigList{},
+		&EKSConfig{},
+		&EKSConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

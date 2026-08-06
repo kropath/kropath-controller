@@ -1,0 +1,9 @@
+# AC-5a: global EKSConfig with defaults.authenticationMode="API" (level 7).
+apiVersion: aws.kropath.run/v1alpha1
+kind: EKSConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  defaults:
+    authenticationMode: "API"

@@ -1,0 +1,10 @@
+# Assert AC-2: mandatory.version="1.30" from level-3 global EKSConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: EKSConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      version: "1.30"
