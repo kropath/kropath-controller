@@ -141,6 +141,12 @@ spec:
               message: "eks.authenticationMode cannot be set in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.eks) && has(self.spec.mandatory.eks.loggingTypes) && size(self.spec.mandatory.eks.loggingTypes) > 0 && has(self.spec.defaults.eks) && has(self.spec.defaults.eks.loggingTypes) && size(self.spec.defaults.eks.loggingTypes) > 0)'
               message: "eks.loggingTypes cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory) && has(self.spec.mandatory.ec2) && self.spec.mandatory.ec2.flowLogsRequired == true && has(self.spec.defaults) && has(self.spec.defaults.ec2) && self.spec.defaults.ec2.flowLogsRequired == true)'
+              message: "spec.mandatory.ec2.flowLogsRequired and spec.defaults.ec2.flowLogsRequired cannot both be true. Set the field in exactly one tier."
+            - rule: '!(has(self.spec.mandatory) && has(self.spec.mandatory.ec2) && self.spec.mandatory.ec2.imdsv2Required == true && has(self.spec.defaults) && has(self.spec.defaults.ec2) && self.spec.defaults.ec2.imdsv2Required == true)'
+              message: "spec.mandatory.ec2.imdsv2Required and spec.defaults.ec2.imdsv2Required cannot both be true. Set the field in exactly one tier."
+            - rule: '!(has(self.spec.mandatory) && has(self.spec.mandatory.ec2) && self.spec.mandatory.ec2.ebsEncryptionRequired == true && has(self.spec.defaults) && has(self.spec.defaults.ec2) && self.spec.defaults.ec2.ebsEncryptionRequired == true)'
+              message: "spec.mandatory.ec2.ebsEncryptionRequired and spec.defaults.ec2.ebsEncryptionRequired cannot both be true. Set the field in exactly one tier."
           properties:
             spec:
               type: object
