@@ -1,0 +1,13 @@
+# Assert AC-11: mandatory.tags merged from KropathConfig.mandatory.tags + ECSConfig.mandatory.tags.
+apiVersion: aws.kropath.run/v1alpha1
+kind: ECSConfig
+metadata:
+  name: general-policy-ac11
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      tags:
+        cost-centre: infra
+        owner: platform
+        service-type: containers
