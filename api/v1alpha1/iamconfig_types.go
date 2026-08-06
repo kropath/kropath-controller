@@ -58,6 +58,7 @@ type KropathConfigTier struct {
 	ELB            cascade.ELBKropathSection            `json:"elb,omitempty"`
 	RDS            cascade.RDSKropathSection            `json:"rds,omitempty"`
 	AutoScaling    cascade.AutoScalingKropathSection    `json:"autoscaling,omitempty"`
+	EKS            cascade.EKSKropathSection            `json:"eks,omitempty"`
 	Tags           map[string]string                    `json:"tags,omitempty"`
 }
 
@@ -224,6 +225,26 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.AutoScaling.Tags = make(map[string]string, len(in.Spec.Defaults.AutoScaling.Tags))
 		for k, v := range in.Spec.Defaults.AutoScaling.Tags {
 			out.Spec.Defaults.AutoScaling.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.EKS.LoggingTypes != nil {
+		out.Spec.Mandatory.EKS.LoggingTypes = make([]string, len(in.Spec.Mandatory.EKS.LoggingTypes))
+		copy(out.Spec.Mandatory.EKS.LoggingTypes, in.Spec.Mandatory.EKS.LoggingTypes)
+	}
+	if in.Spec.Mandatory.EKS.Tags != nil {
+		out.Spec.Mandatory.EKS.Tags = make(map[string]string, len(in.Spec.Mandatory.EKS.Tags))
+		for k, v := range in.Spec.Mandatory.EKS.Tags {
+			out.Spec.Mandatory.EKS.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.EKS.LoggingTypes != nil {
+		out.Spec.Defaults.EKS.LoggingTypes = make([]string, len(in.Spec.Defaults.EKS.LoggingTypes))
+		copy(out.Spec.Defaults.EKS.LoggingTypes, in.Spec.Defaults.EKS.LoggingTypes)
+	}
+	if in.Spec.Defaults.EKS.Tags != nil {
+		out.Spec.Defaults.EKS.Tags = make(map[string]string, len(in.Spec.Defaults.EKS.Tags))
+		for k, v := range in.Spec.Defaults.EKS.Tags {
+			out.Spec.Defaults.EKS.Tags[k] = v
 		}
 	}
 }

@@ -1,0 +1,10 @@
+# Assert AC-9: defaults.endpointPrivateAccess=true from level-7 global EKSConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: EKSConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    defaults:
+      endpointPrivateAccess: true

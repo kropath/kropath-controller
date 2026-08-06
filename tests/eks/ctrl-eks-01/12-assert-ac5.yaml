@@ -1,0 +1,10 @@
+# Assert AC-5: defaults.authenticationMode="API" (level 7) wins over "API_AND_CONFIG_MAP" (level 9).
+apiVersion: aws.kropath.run/v1alpha1
+kind: EKSConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    defaults:
+      authenticationMode: "API"

@@ -1,0 +1,11 @@
+# Assert AC-13: effCfg.mandatory.syncedLabels from EKSConfig.mandatory.
+apiVersion: aws.kropath.run/v1alpha1
+kind: EKSConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      syncedLabels:
+        team: platform
