@@ -58,6 +58,7 @@ type KropathConfigTier struct {
 	ELB            cascade.ELBKropathSection            `json:"elb,omitempty"`
 	RDS            cascade.RDSKropathSection            `json:"rds,omitempty"`
 	AutoScaling    cascade.AutoScalingKropathSection    `json:"autoscaling,omitempty"`
+	ECS            cascade.ECSKropathSection            `json:"ecs,omitempty"`
 	Tags           map[string]string                    `json:"tags,omitempty"`
 }
 
@@ -224,6 +225,42 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.AutoScaling.Tags = make(map[string]string, len(in.Spec.Defaults.AutoScaling.Tags))
 		for k, v := range in.Spec.Defaults.AutoScaling.Tags {
 			out.Spec.Defaults.AutoScaling.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.ECS.Tags != nil {
+		out.Spec.Mandatory.ECS.Tags = make(map[string]string, len(in.Spec.Mandatory.ECS.Tags))
+		for k, v := range in.Spec.Mandatory.ECS.Tags {
+			out.Spec.Mandatory.ECS.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.ECS.SyncedLabels != nil {
+		out.Spec.Mandatory.ECS.SyncedLabels = make(map[string]string, len(in.Spec.Mandatory.ECS.SyncedLabels))
+		for k, v := range in.Spec.Mandatory.ECS.SyncedLabels {
+			out.Spec.Mandatory.ECS.SyncedLabels[k] = v
+		}
+	}
+	if in.Spec.Mandatory.ECS.SyncedAnnotations != nil {
+		out.Spec.Mandatory.ECS.SyncedAnnotations = make(map[string]string, len(in.Spec.Mandatory.ECS.SyncedAnnotations))
+		for k, v := range in.Spec.Mandatory.ECS.SyncedAnnotations {
+			out.Spec.Mandatory.ECS.SyncedAnnotations[k] = v
+		}
+	}
+	if in.Spec.Defaults.ECS.Tags != nil {
+		out.Spec.Defaults.ECS.Tags = make(map[string]string, len(in.Spec.Defaults.ECS.Tags))
+		for k, v := range in.Spec.Defaults.ECS.Tags {
+			out.Spec.Defaults.ECS.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.ECS.SyncedLabels != nil {
+		out.Spec.Defaults.ECS.SyncedLabels = make(map[string]string, len(in.Spec.Defaults.ECS.SyncedLabels))
+		for k, v := range in.Spec.Defaults.ECS.SyncedLabels {
+			out.Spec.Defaults.ECS.SyncedLabels[k] = v
+		}
+	}
+	if in.Spec.Defaults.ECS.SyncedAnnotations != nil {
+		out.Spec.Defaults.ECS.SyncedAnnotations = make(map[string]string, len(in.Spec.Defaults.ECS.SyncedAnnotations))
+		for k, v := range in.Spec.Defaults.ECS.SyncedAnnotations {
+			out.Spec.Defaults.ECS.SyncedAnnotations[k] = v
 		}
 	}
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/reconciler/autoscalingconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/ecsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/cloudwatchlogsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/dynamodbconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/elbconfig"
@@ -45,6 +46,7 @@ var (
 	enableELBCascade              bool
 	enableRDSCascade              bool
 	enableAutoScalingCascade      bool
+	enableECSCascade              bool
 )
 
 func leaderElectionNamespace() string {
@@ -72,6 +74,7 @@ func main() {
 	flag.BoolVar(&enableELBCascade, "enable-elb-cascade", false, "Enable the AWSELBConfig cascade reconciler.")
 	flag.BoolVar(&enableRDSCascade, "enable-rds-cascade", false, "Enable the RDSConfig cascade reconciler.")
 	flag.BoolVar(&enableAutoScalingCascade, "enable-autoscaling-cascade", false, "Enable the AutoScalingConfig cascade reconciler.")
+	flag.BoolVar(&enableECSCascade, "enable-ecs-cascade", false, "Enable the ECSConfig cascade reconciler.")
 	opts := zap.Options{Development: true}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
@@ -239,6 +242,17 @@ func main() {
 			Scheme: mgr.GetScheme(),
 		}).SetupWithManager(mgr); err != nil {
 			ctrl.Log.Error(err, "unable to create AutoScalingConfig reconciler")
+			os.Exit(1)
+		}
+	}
+
+	if enableECSCascade {
+		if err := (&ecsconfig.Reconciler{
+			Client: mgr.GetClient(),
+			Log:    ctrl.Log.WithName("controllers").WithName("ECSConfig"),
+			Scheme: mgr.GetScheme(),
+		}).SetupWithManager(mgr); err != nil {
+			ctrl.Log.Error(err, "unable to create ECSConfig reconciler")
 			os.Exit(1)
 		}
 	}
