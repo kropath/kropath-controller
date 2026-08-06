@@ -1,0 +1,14 @@
+# AC-11: globalKropathConfig with mandatory.tags that should merge into effectiveConfig.mandatory.tags.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: general-policy-ac11
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      cost-centre: infra
+      owner: platform
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"

@@ -1,0 +1,13 @@
+# AC-12: globalKropathConfig with mandatory.syncedLabels.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: general-policy-ac12
+  namespace: kro-system
+spec:
+  mandatory:
+    syncedLabels:
+      workload-type: ecs
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
