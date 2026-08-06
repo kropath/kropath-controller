@@ -1,0 +1,13 @@
+# AC-C1: globalKropathConfig with mandatory.autoscaling.newInstancesProtectedFromScaleIn=true (level 1).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    autoscaling:
+      newInstancesProtectedFromScaleIn: true
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"

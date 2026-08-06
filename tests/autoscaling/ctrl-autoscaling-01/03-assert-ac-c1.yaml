@@ -1,0 +1,10 @@
+# Assert AC-C1: mandatory.newInstancesProtectedFromScaleIn=true from level-1 globalKropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: AutoScalingConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      newInstancesProtectedFromScaleIn: true

@@ -111,6 +111,10 @@ spec:
               message: "rds.namingTemplate cannot be set in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.rds) && self.spec.mandatory.rds.backupRetentionPeriod > 0 && has(self.spec.defaults.rds) && self.spec.defaults.rds.backupRetentionPeriod > 0)'
               message: "rds.backupRetentionPeriod cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.autoscaling) && self.spec.mandatory.autoscaling.newInstancesProtectedFromScaleIn == true && has(self.spec.defaults.autoscaling) && self.spec.defaults.autoscaling.newInstancesProtectedFromScaleIn == true)'
+              message: "autoscaling.newInstancesProtectedFromScaleIn cannot be set to true in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.autoscaling) && self.spec.mandatory.autoscaling.capacityRebalance == true && has(self.spec.defaults.autoscaling) && self.spec.defaults.autoscaling.capacityRebalance == true)'
+              message: "autoscaling.capacityRebalance cannot be set to true in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.eventbridge) && self.spec.mandatory.eventbridge.archiveRetentionDays > 0 && has(self.spec.defaults.eventbridge) && self.spec.defaults.eventbridge.archiveRetentionDays > 0)'
               message: "eventbridge.archiveRetentionDays cannot be set in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.cloudwatchlogs) && self.spec.mandatory.cloudwatchlogs.kmsKeyId != "" && has(self.spec.defaults.cloudwatchlogs) && self.spec.defaults.cloudwatchlogs.kmsKeyId != "")'
@@ -319,6 +323,21 @@ spec:
                           type: string
                           default: ""
                           description: Naming template. Empty = not enforced.
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                    autoscaling:
+                      type: object
+                      default: {}
+                      properties:
+                        newInstancesProtectedFromScaleIn:
+                          type: boolean
+                          default: false
+                        capacityRebalance:
+                          type: boolean
+                          default: false
                         tags:
                           type: object
                           default: {}
@@ -555,6 +574,21 @@ spec:
                           type: string
                           default: ""
                           description: Default naming template. Empty = no default.
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                    autoscaling:
+                      type: object
+                      default: {}
+                      properties:
+                        newInstancesProtectedFromScaleIn:
+                          type: boolean
+                          default: false
+                        capacityRebalance:
+                          type: boolean
+                          default: false
                         tags:
                           type: object
                           default: {}

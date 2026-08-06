@@ -1,0 +1,11 @@
+# AC-C4: localAutoScalingConfig mandatory.healthCheckType="EC2" (level 4).
+# Level 3 from globalAutoScalingConfig must win.
+apiVersion: aws.kropath.run/v1alpha1
+kind: AutoScalingConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    healthCheckType: "EC2"
+  defaults: {}
