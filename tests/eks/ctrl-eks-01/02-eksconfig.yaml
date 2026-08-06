@@ -1,0 +1,7 @@
+# Base EKSConfig in payments-prod namespace — reused across many steps.
+apiVersion: aws.kropath.run/v1alpha1
+kind: EKSConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+spec: {}

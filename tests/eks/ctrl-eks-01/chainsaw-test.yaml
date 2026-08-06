@@ -1,0 +1,176 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-eks-01
+  labels:
+    suite: eks
+spec:
+  description: "EKS effectiveConfig cascade — all 16 acceptance criteria (ctrl-eks-01)"
+  steps:
+    # AC-1: globalKropathConfig.mandatory.eks.version flows to effCfg.mandatory.version
+    - name: ac-1-setup-global-kpc-version
+      try:
+        - apply:
+            file: 01-global-kpc-version.yaml
+        - apply:
+            file: 02-eksconfig.yaml
+    - name: ac-1-assert
+      try:
+        - assert:
+            file: 03-assert-ac1.yaml
+
+    # AC-2: global EKSConfig.mandatory.version (level 3) flows to effCfg.mandatory.version
+    - name: ac-2-setup-global-ekscfg-mandatory-version
+      try:
+        - apply:
+            file: 04-global-ekscfg-mandatory-version.yaml
+    - name: ac-2-assert
+      try:
+        - assert:
+            file: 05-assert-ac2.yaml
+
+    # AC-3: global EKSConfig.defaults.version flows to effCfg.defaults.version
+    - name: ac-3-setup-global-ekscfg-defaults-version
+      try:
+        - apply:
+            file: 06-global-ekscfg-defaults-version.yaml
+    - name: ac-3-assert
+      try:
+        - assert:
+            file: 07-assert-ac3.yaml
+
+    # AC-4: globalKropathConfig.mandatory.eks.authenticationMode flows to effCfg.mandatory
+    - name: ac-4-setup-global-kpc-authmode
+      try:
+        - apply:
+            file: 08-global-kpc-authmode.yaml
+    - name: ac-4-assert
+      try:
+        - assert:
+            file: 09-assert-ac4.yaml
+
+    # AC-5: level-7 authenticationMode wins over level-9 authenticationMode
+    - name: ac-5-setup-authmode-priority
+      try:
+        - apply:
+            file: 10-global-ekscfg-defaults-authmode.yaml
+        - apply:
+            file: 11-global-kpc-defaults-authmode.yaml
+    - name: ac-5-assert
+      try:
+        - assert:
+            file: 12-assert-ac5.yaml
+
+    # AC-6: globalKropathConfig.mandatory.eks.loggingTypes flows to effCfg.mandatory.loggingTypes
+    - name: ac-6-setup-logging-types
+      try:
+        - apply:
+            file: 13-global-kpc-logging.yaml
+    - name: ac-6-assert
+      try:
+        - assert:
+            file: 14-assert-ac6.yaml
+
+    # AC-7: global EKSConfig.mandatory.encryptionKeyArn flows to effCfg.mandatory
+    - name: ac-7-setup-encryption-key
+      try:
+        - apply:
+            file: 15-global-ekscfg-encryption.yaml
+    - name: ac-7-assert
+      try:
+        - assert:
+            file: 16-assert-ac7.yaml
+
+    # AC-8: global EKSConfig.defaults.endpointPublicAccess flows to effCfg.defaults
+    - name: ac-8-setup-endpoint-public
+      try:
+        - apply:
+            file: 17-global-ekscfg-endpoint-public.yaml
+    - name: ac-8-assert
+      try:
+        - assert:
+            file: 18-assert-ac8.yaml
+
+    # AC-9: global EKSConfig.defaults.endpointPrivateAccess flows to effCfg.defaults
+    - name: ac-9-setup-endpoint-private
+      try:
+        - apply:
+            file: 19-global-ekscfg-endpoint-private.yaml
+    - name: ac-9-assert
+      try:
+        - assert:
+            file: 20-assert-ac9.yaml
+
+    # AC-10: global EKSConfig.defaults.supportType flows to effCfg.defaults
+    - name: ac-10-setup-support-type
+      try:
+        - apply:
+            file: 21-global-ekscfg-supporttype.yaml
+    - name: ac-10-assert
+      try:
+        - assert:
+            file: 22-assert-ac10.yaml
+
+    # AC-11: global EKSConfig.defaults.namingTemplate flows to effCfg.defaults
+    - name: ac-11-setup-naming-template
+      try:
+        - apply:
+            file: 23-global-ekscfg-naming.yaml
+    - name: ac-11-assert
+      try:
+        - assert:
+            file: 24-assert-ac11.yaml
+
+    # AC-12: tags from KropathConfig.mandatory.tags and EKSConfig.mandatory.tags are union-merged
+    - name: ac-12-setup-tags
+      try:
+        - apply:
+            file: 25-global-kpc-mandatory-tags.yaml
+        - apply:
+            file: 26-eksconfig-mandatory-tags.yaml
+    - name: ac-12-assert
+      try:
+        - assert:
+            file: 27-assert-ac12.yaml
+
+    # AC-13: EKSConfig.mandatory.syncedLabels flows to effCfg.mandatory.syncedLabels
+    - name: ac-13-setup-synced-labels
+      try:
+        - apply:
+            file: 28-eksconfig-synced-labels.yaml
+    - name: ac-13-assert
+      try:
+        - assert:
+            file: 29-assert-ac13.yaml
+
+    # AC-14: globalKropathConfig spec.aws.accountId and region flow to effCfg.aws
+    - name: ac-14-setup-aws-identity
+      try:
+        - apply:
+            file: 30-global-kpc-aws-identity.yaml
+    - name: ac-14-assert
+      try:
+        - assert:
+            file: 31-assert-ac14.yaml
+
+    # AC-15: level-1 (KropathConfig.mandatory.eks.version) wins over level-3 (global EKSConfig.mandatory.version)
+    - name: ac-15-setup-level-priority
+      try:
+        - apply:
+            file: 32-global-kpc-version-l1.yaml
+        - apply:
+            file: 33-global-ekscfg-version-l3.yaml
+    - name: ac-15-assert
+      try:
+        - assert:
+            file: 34-assert-ac15.yaml
+
+    # AC-16: eks section in fixture CRD is present and accepted by API server
+    - name: ac-16-setup-fixture-crd-gate
+      try:
+        - apply:
+            file: 35-kpc-eks-fields-valid.yaml
+    - name: ac-16-assert
+      try:
+        - assert:
+            file: 36-assert-ac16.yaml

@@ -1,0 +1,10 @@
+# Assert AC-4: mandatory.authenticationMode="API" from level-1 KropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: EKSConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      authenticationMode: "API"

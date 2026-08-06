@@ -1,0 +1,10 @@
+# AC-13: EKSConfig with mandatory.syncedLabels (level 4).
+apiVersion: aws.kropath.run/v1alpha1
+kind: EKSConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    syncedLabels:
+      team: platform
