@@ -95,16 +95,20 @@ type EC2ConfigSection struct {
 
 // EffectiveEC2Section is one tier (mandatory or defaults) of the merged EC2 governance
 // result written into EC2Config.status.effectiveConfig by the controller.
+//
+// Bool fields omit omitempty so that false values are always serialized — Chainsaw
+// asserts on explicit false (e.g. "mandatory.imdsv2Required: false") require the
+// field to be present in the stored JSON, not absent.
 type EffectiveEC2Section struct {
-	FlowLogsRequired              bool              `json:"flowLogsRequired,omitempty"`
+	FlowLogsRequired              bool              `json:"flowLogsRequired"`
 	FlowLogTrafficType            string            `json:"flowLogTrafficType,omitempty"`
 	FlowLogMaxAggregationInterval int64             `json:"flowLogMaxAggregationInterval,omitempty"`
-	RestrictPublicIpOnLaunch      bool              `json:"restrictPublicIpOnLaunch,omitempty"`
-	IMDSv2Required                bool              `json:"imdsv2Required,omitempty"`
-	EBSEncryptionRequired         bool              `json:"ebsEncryptionRequired,omitempty"`
+	RestrictPublicIpOnLaunch      bool              `json:"restrictPublicIpOnLaunch"`
+	IMDSv2Required                bool              `json:"imdsv2Required"`
+	EBSEncryptionRequired         bool              `json:"ebsEncryptionRequired"`
 	EBSDefaultKMSKeyId            string            `json:"ebsDefaultKmsKeyId,omitempty"`
-	PublicIpRestricted            bool              `json:"publicIpRestricted,omitempty"`
-	AllowSourceDestCheckDisable   bool              `json:"allowSourceDestCheckDisable,omitempty"`
+	PublicIpRestricted            bool              `json:"publicIpRestricted"`
+	AllowSourceDestCheckDisable   bool              `json:"allowSourceDestCheckDisable"`
 	NamingTemplate                string            `json:"namingTemplate,omitempty"`
 	Tags                          map[string]string `json:"tags,omitempty"`
 	SyncedLabels                  map[string]string `json:"syncedLabels,omitempty"`

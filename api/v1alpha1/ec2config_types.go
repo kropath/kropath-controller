@@ -49,8 +49,8 @@ type EC2ConfigStatus struct {
 
 type EffectiveEC2Config struct {
 	AWS       ProviderIdentity            `json:"aws,omitempty"`
-	Mandatory cascade.EffectiveEC2Section `json:"mandatory,omitempty"`
-	Defaults  cascade.EffectiveEC2Section `json:"defaults,omitempty"`
+	Mandatory cascade.EffectiveEC2Section `json:"mandatory"`
+	Defaults  cascade.EffectiveEC2Section `json:"defaults"`
 }
 
 func copyStringMap(src map[string]string) map[string]string {
