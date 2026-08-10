@@ -1,0 +1,11 @@
+# Assert AC-12: effectiveConfig.mandatory.syncedLabels contains workload-type: ecs from ECSConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: ECSConfig
+metadata:
+  name: general-policy-ac12
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      syncedLabels:
+        workload-type: ecs

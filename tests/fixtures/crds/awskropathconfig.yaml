@@ -131,6 +131,10 @@ spec:
               message: "lambda.tracingMode cannot be set in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.lambda) && self.spec.mandatory.lambda.kmsKeyArn != "" && has(self.spec.defaults.lambda) && self.spec.defaults.lambda.kmsKeyArn != "")'
               message: "lambda.kmsKeyArn cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.ecs) && self.spec.mandatory.ecs.containerInsights == true && has(self.spec.defaults.ecs) && self.spec.defaults.ecs.containerInsights == true)'
+              message: "ecs.containerInsights cannot be set to true in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.ecs) && self.spec.mandatory.ecs.defaultLaunchType != "" && has(self.spec.defaults.ecs) && self.spec.defaults.ecs.defaultLaunchType != "")'
+              message: "ecs.defaultLaunchType cannot be set in both mandatory and defaults"
           properties:
             spec:
               type: object
@@ -384,11 +388,31 @@ spec:
                         kmsKeyArn:
                           type: string
                           default: ""
+                    ecs:
+                      type: object
+                      default: {}
+                      properties:
+                        containerInsights:
+                          type: boolean
+                          default: false
+                        defaultLaunchType:
+                          type: string
+                          default: ""
                     tags:
                       type: object
                       additionalProperties:
                         type: string
                       default: {}
+                    syncedLabels:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
                 defaults:
                   type: object
                   default: {}
@@ -635,11 +659,31 @@ spec:
                         kmsKeyArn:
                           type: string
                           default: ""
+                    ecs:
+                      type: object
+                      default: {}
+                      properties:
+                        containerInsights:
+                          type: boolean
+                          default: false
+                        defaultLaunchType:
+                          type: string
+                          default: ""
                     tags:
                       type: object
                       additionalProperties:
                         type: string
                       default: {}
+                    syncedLabels:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
                 aws:
                   type: object
                   properties:

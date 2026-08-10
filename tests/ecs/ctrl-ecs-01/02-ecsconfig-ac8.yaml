@@ -1,0 +1,9 @@
+# Shared empty local ECSConfig — cascade sources come from global KropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: ECSConfig
+metadata:
+  name: general-policy-ac8
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

@@ -1,0 +1,11 @@
+# AC-12: local ECSConfig with mandatory.syncedLabels.
+apiVersion: aws.kropath.run/v1alpha1
+kind: ECSConfig
+metadata:
+  name: general-policy-ac12
+  namespace: payments-prod
+spec:
+  mandatory:
+    syncedLabels:
+      workload-type: ecs
+  defaults: {}
