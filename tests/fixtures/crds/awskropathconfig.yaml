@@ -403,6 +403,16 @@ spec:
                       additionalProperties:
                         type: string
                       default: {}
+                    syncedLabels:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
                 defaults:
                   type: object
                   default: {}
@@ -664,6 +674,16 @@ spec:
                       additionalProperties:
                         type: string
                       default: {}
+                    syncedLabels:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
                 aws:
                   type: object
                   properties:
