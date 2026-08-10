@@ -1,0 +1,75 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-ecs-01 Chainsaw integration tests — AC-8, AC-11, AC-12.
+# Requires:
+#   - kind cluster with kropath-operator deployed (feature flag: --enable-ecs-cascade)
+#   - KropathConfig CRD applied (crds/kropathconfig.yaml from kropath-aws)
+#   - ECSConfig CRD applied (crds/ecsconfig.yaml from kropath-aws)
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-ecs-01-cascade
+spec:
+  steps:
+    # AC-8: globalKropathConfig.mandatory.ecs.containerInsights=true propagates
+    # to ECSConfig.status.effectiveConfig.mandatory.containerInsights=true.
+    - name: ac8-container-insights-propagates
+      try:
+        - apply:
+            file: 01-global-kpc-container-insights.yaml
+        - apply:
+            file: 02-ecsconfig-ac8.yaml
+        - assert:
+            file: 03-assert-ac-8.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-ecsconfig-ac8.yaml
+        - delete:
+            file: 01-global-kpc-container-insights.yaml
+
+    # AC-11: KropathConfig.mandatory.tags and ECSConfig.mandatory.tags are
+    # union-merged into effectiveConfig.mandatory.tags.
+    - name: ac11-tag-union-merge
+      try:
+        - apply:
+            file: 04-global-kpc-mandatory-tags.yaml
+        - apply:
+            file: 05-ecsconfig-mandatory-tags.yaml
+        - assert:
+            file: 06-assert-ac-11.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 05-ecsconfig-mandatory-tags.yaml
+        - delete:
+            file: 04-global-kpc-mandatory-tags.yaml
+
+    # AC-12: ECSConfig.mandatory.syncedLabels propagates into
+    # effectiveConfig.mandatory.syncedLabels.
+    - name: ac12-synced-labels-propagates
+      try:
+        - apply:
+            file: 07-global-kpc-synced-labels.yaml
+        - apply:
+            file: 08-ecsconfig-synced-labels.yaml
+        - assert:
+            file: 09-assert-ac-12.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 08-ecsconfig-synced-labels.yaml
+        - delete:
+            file: 07-global-kpc-synced-labels.yaml
