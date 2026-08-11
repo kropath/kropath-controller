@@ -63,6 +63,18 @@ spec:
         - assert:
             file: 09-assert-ac4.yaml
 
+    # Delete kro-system EKSConfig and KropathConfig before AC-5 to avoid the
+    # SSA-PATCH retry loop that fires when the Chainsaw manager re-applies to an
+    # object it created earlier with a different field set (KRO-531).
+    - name: ac-5-reset-global-ekscfg
+      try:
+        - delete:
+            file: 06-global-ekscfg-defaults-version.yaml
+    - name: ac-5-reset-global-kpc
+      try:
+        - delete:
+            file: 08-global-kpc-authmode.yaml
+
     # AC-5: level-7 authenticationMode wins over level-9 authenticationMode
     - name: ac-5-setup-authmode-priority
       try:
@@ -75,6 +87,12 @@ spec:
         - assert:
             file: 12-assert-ac5.yaml
 
+    # Delete kro-system KropathConfig before AC-6 to avoid SSA-PATCH retry loop (KRO-531).
+    - name: ac-6-reset-global-kpc
+      try:
+        - delete:
+            file: 11-global-kpc-defaults-authmode.yaml
+
     # AC-6: globalKropathConfig.mandatory.eks.loggingTypes flows to effCfg.mandatory.loggingTypes
     - name: ac-6-setup-logging-types
       try:
@@ -84,6 +102,12 @@ spec:
       try:
         - assert:
             file: 14-assert-ac6.yaml
+
+    # Delete kro-system EKSConfig before AC-7 to avoid SSA-PATCH retry loop (KRO-531).
+    - name: ac-7-reset-global-ekscfg
+      try:
+        - delete:
+            file: 10-global-ekscfg-defaults-authmode.yaml
 
     # AC-7: global EKSConfig.mandatory.encryptionKeyArn flows to effCfg.mandatory
     - name: ac-7-setup-encryption-key
@@ -95,6 +119,12 @@ spec:
         - assert:
             file: 16-assert-ac7.yaml
 
+    # Delete kro-system EKSConfig before AC-8 to avoid SSA-PATCH retry loop (KRO-531).
+    - name: ac-8-reset-global-ekscfg
+      try:
+        - delete:
+            file: 15-global-ekscfg-encryption.yaml
+
     # AC-8: global EKSConfig.defaults.endpointPublicAccess flows to effCfg.defaults
     - name: ac-8-setup-endpoint-public
       try:
@@ -104,6 +134,12 @@ spec:
       try:
         - assert:
             file: 18-assert-ac8.yaml
+
+    # Delete kro-system EKSConfig before AC-9 to avoid SSA-PATCH retry loop (KRO-531).
+    - name: ac-9-reset-global-ekscfg
+      try:
+        - delete:
+            file: 17-global-ekscfg-endpoint-public.yaml
 
     # AC-9: global EKSConfig.defaults.endpointPrivateAccess flows to effCfg.defaults
     - name: ac-9-setup-endpoint-private
@@ -115,6 +151,12 @@ spec:
         - assert:
             file: 20-assert-ac9.yaml
 
+    # Delete kro-system EKSConfig before AC-10 to avoid SSA-PATCH retry loop (KRO-531).
+    - name: ac-10-reset-global-ekscfg
+      try:
+        - delete:
+            file: 19-global-ekscfg-endpoint-private.yaml
+
     # AC-10: global EKSConfig.defaults.supportType flows to effCfg.defaults
     - name: ac-10-setup-support-type
       try:
@@ -125,6 +167,12 @@ spec:
         - assert:
             file: 22-assert-ac10.yaml
 
+    # Delete kro-system EKSConfig before AC-11 to avoid SSA-PATCH retry loop (KRO-531).
+    - name: ac-11-reset-global-ekscfg
+      try:
+        - delete:
+            file: 21-global-ekscfg-supporttype.yaml
+
     # AC-11: global EKSConfig.defaults.namingTemplate flows to effCfg.defaults
     - name: ac-11-setup-naming-template
       try:
@@ -134,6 +182,12 @@ spec:
       try:
         - assert:
             file: 24-assert-ac11.yaml
+
+    # Delete kro-system KropathConfig before AC-12 to avoid SSA-PATCH retry loop (KRO-531).
+    - name: ac-12-reset-global-kpc
+      try:
+        - delete:
+            file: 13-global-kpc-logging.yaml
 
     # AC-12: tags from KropathConfig.mandatory.tags and EKSConfig.mandatory.tags are union-merged
     - name: ac-12-setup-tags
@@ -147,6 +201,13 @@ spec:
         - assert:
             file: 27-assert-ac12.yaml
 
+    # Delete payments-prod EKSConfig before AC-13 to avoid SSA-PATCH retry loop
+    # (AC-12 added mandatory.tags.service; AC-13 changes the manager's claimed field set).
+    - name: ac-13-reset-payments-ekscfg
+      try:
+        - delete:
+            file: 26-eksconfig-mandatory-tags.yaml
+
     # AC-13: EKSConfig.mandatory.syncedLabels flows to effCfg.mandatory.syncedLabels
     - name: ac-13-setup-synced-labels
       try:
@@ -157,6 +218,12 @@ spec:
         - assert:
             file: 29-assert-ac13.yaml
 
+    # Delete kro-system KropathConfig before AC-14 to avoid SSA-PATCH retry loop (KRO-531).
+    - name: ac-14-reset-global-kpc
+      try:
+        - delete:
+            file: 25-global-kpc-mandatory-tags.yaml
+
     # AC-14: globalKropathConfig spec.aws.accountId and region flow to effCfg.aws
     - name: ac-14-setup-aws-identity
       try:
@@ -166,6 +233,17 @@ spec:
       try:
         - assert:
             file: 31-assert-ac14.yaml
+
+    # Delete kro-system KropathConfig and EKSConfig before AC-15 to avoid SSA-PATCH
+    # retry loops (KRO-531).
+    - name: ac-15-reset-global-kpc
+      try:
+        - delete:
+            file: 30-global-kpc-aws-identity.yaml
+    - name: ac-15-reset-global-ekscfg
+      try:
+        - delete:
+            file: 23-global-ekscfg-naming.yaml
 
     # AC-15: level-1 (KropathConfig.mandatory.eks.version) wins over level-3 (global EKSConfig.mandatory.version)
     - name: ac-15-setup-level-priority
@@ -178,6 +256,12 @@ spec:
       try:
         - assert:
             file: 34-assert-ac15.yaml
+
+    # Delete kro-system KropathConfig before AC-16 to avoid SSA-PATCH retry loop (KRO-531).
+    - name: ac-16-reset-global-kpc
+      try:
+        - delete:
+            file: 32-global-kpc-version-l1.yaml
 
     # AC-16: eks section in fixture CRD is present and accepted by API server
     - name: ac-16-setup-fixture-crd-gate
