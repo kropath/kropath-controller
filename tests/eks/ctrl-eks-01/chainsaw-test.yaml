@@ -19,13 +19,12 @@ spec:
         - assert:
             file: 03-assert-ac1.yaml
 
-    # Reset globalKPC mandatory.eks.version to empty before AC-2.
-    # Without this reset, AC-1's level-1 value ("1.31") would shadow AC-2's
-    # level-3 assertion ("1.30") because level-1 always beats level-3.
+    # Delete globalKPC entirely before AC-2 so no level-1 value shadows
+    # the level-3 globalEKSConfig version ("1.30").
     - name: ac-2-reset-global-kpc
       try:
-        - apply:
-            file: 01b-reset-global-kpc.yaml
+        - delete:
+            file: 01-global-kpc-version.yaml
 
     # AC-2: global EKSConfig.mandatory.version (level 3) flows to effCfg.mandatory.version
     - name: ac-2-setup-global-ekscfg-mandatory-version
