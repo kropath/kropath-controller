@@ -1,0 +1,9 @@
+# AC-11: global EKSConfig with defaults.namingTemplate (level 7).
+apiVersion: aws.kropath.run/v1alpha1
+kind: EKSConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  defaults:
+    namingTemplate: "{namespace}-{name}"

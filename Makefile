@@ -134,6 +134,7 @@ chainsaw-setup: build kind-up ## Create kind cluster, apply CRDs, create test na
 		crd/snsconfigs.aws.kropath.run \
 		crd/cloudwatchlogsconfigs.aws.kropath.run \
 		crd/ecsconfigs.aws.kropath.run \
+		crd/eksconfigs.aws.kropath.run \
 		crd/cloudstoragebucketconfigs.gcp.kropath.run \
 		crd/kropathconfigs.kropath.run
 	@for ns in $(TEST_NAMESPACES); do \
@@ -157,6 +158,7 @@ chainsaw-start: chainsaw-setup ## Build, set up CRDs, and start the operator in 
 			--enable-rds-cascade \
 			--enable-autoscaling-cascade \
 			--enable-ecs-cascade \
+			--enable-eks-cascade \
 			--enable-poldoc \
 			--enable-label-operator \
 			> $(CONTROLLER_LOG) 2>&1 & echo $$! > $(CONTROLLER_PID); \

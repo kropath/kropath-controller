@@ -58,6 +58,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&AutoScalingConfigList{},
 		&ECSConfig{},
 		&ECSConfigList{},
+		&EKSConfig{},
+		&EKSConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

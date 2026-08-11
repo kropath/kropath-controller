@@ -135,6 +135,12 @@ spec:
               message: "ecs.containerInsights cannot be set to true in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.ecs) && self.spec.mandatory.ecs.defaultLaunchType != "" && has(self.spec.defaults.ecs) && self.spec.defaults.ecs.defaultLaunchType != "")'
               message: "ecs.defaultLaunchType cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.eks) && self.spec.mandatory.eks.version != "" && has(self.spec.defaults.eks) && self.spec.defaults.eks.version != "")'
+              message: "eks.version cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.eks) && self.spec.mandatory.eks.authenticationMode != "" && has(self.spec.defaults.eks) && self.spec.defaults.eks.authenticationMode != "")'
+              message: "eks.authenticationMode cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.eks) && has(self.spec.mandatory.eks.loggingTypes) && size(self.spec.mandatory.eks.loggingTypes) > 0 && has(self.spec.defaults.eks) && has(self.spec.defaults.eks.loggingTypes) && size(self.spec.defaults.eks.loggingTypes) > 0)'
+              message: "eks.loggingTypes cannot be set in both mandatory and defaults"
           properties:
             spec:
               type: object
@@ -398,6 +404,21 @@ spec:
                         defaultLaunchType:
                           type: string
                           default: ""
+                    eks:
+                      type: object
+                      default: {}
+                      properties:
+                        version:
+                          type: string
+                          default: ""
+                        authenticationMode:
+                          type: string
+                          default: ""
+                        loggingTypes:
+                          type: array
+                          items:
+                            type: string
+                          default: []
                     tags:
                       type: object
                       additionalProperties:
@@ -669,6 +690,21 @@ spec:
                         defaultLaunchType:
                           type: string
                           default: ""
+                    eks:
+                      type: object
+                      default: {}
+                      properties:
+                        version:
+                          type: string
+                          default: ""
+                        authenticationMode:
+                          type: string
+                          default: ""
+                        loggingTypes:
+                          type: array
+                          items:
+                            type: string
+                          default: []
                     tags:
                       type: object
                       additionalProperties:

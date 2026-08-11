@@ -1,0 +1,9 @@
+# AC-3: global EKSConfig with defaults.version="1.29" (level 7).
+apiVersion: aws.kropath.run/v1alpha1
+kind: EKSConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  defaults:
+    version: "1.29"

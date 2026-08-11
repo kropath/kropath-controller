@@ -1,0 +1,10 @@
+# AC-15b: global EKSConfig with mandatory.version="1.30" (level 3).
+# Level 1 (KropathConfig mandatory) wins over level 3 (global EKSConfig mandatory).
+apiVersion: aws.kropath.run/v1alpha1
+kind: EKSConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    version: "1.30"

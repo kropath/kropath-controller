@@ -1,0 +1,11 @@
+# Assert AC-16: effCfg.mandatory.version="1.28" confirming eks section in the
+# fixture CRD is properly installed and the reconciler reads it.
+apiVersion: aws.kropath.run/v1alpha1
+kind: EKSConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      version: "1.28"
