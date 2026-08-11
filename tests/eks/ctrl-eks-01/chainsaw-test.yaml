@@ -36,6 +36,13 @@ spec:
         - assert:
             file: 05-assert-ac2.yaml
 
+    # Delete AC-2 EKSConfig before AC-3 to avoid SSA-PATCH on a freshly-created
+    # object — same pattern used for ac-2-reset-global-kpc (KRO-531).
+    - name: ac-3-reset-global-ekscfg
+      try:
+        - delete:
+            file: 04-global-ekscfg-mandatory-version.yaml
+
     # AC-3: global EKSConfig.defaults.version flows to effCfg.defaults.version
     - name: ac-3-setup-global-ekscfg-defaults-version
       try:
