@@ -206,8 +206,13 @@ spec:
 
     # AC-11: globalKropathConfig.mandatory.ec2.flowLogsRequired=true (L1) wins even
     # when localKropathConfig.mandatory.ec2.flowLogsRequired=false (L2, zero).
+    # Cleanup is deferred to test end, so the KropathConfig from ac10 (with
+    # defaults.ec2.flowLogsRequired=true) is still alive here. Delete it explicitly
+    # before applying the mandatory version to avoid a mutual-exclusivity violation.
     - name: ac11-global-mandatory-wins
       try:
+        - script:
+            content: kubectl delete kropathconfigs.aws.kropath.run general-policy -n kro-system --ignore-not-found=true
         - apply:
             file: 25-global-kpc-flowlogs-l1.yaml
         - apply:
