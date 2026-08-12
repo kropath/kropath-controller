@@ -1,0 +1,9 @@
+# Local StepFunctionsConfig (stepfunctions) — sets defaults.loggingLevel="FATAL" (level 6).
+apiVersion: aws.kropath.run/v1alpha1
+kind: StepFunctionsConfig
+metadata:
+  name: general-sfn
+  namespace: stepfunctions
+spec:
+  defaults:
+    loggingLevel: "FATAL"

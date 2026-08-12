@@ -14,7 +14,7 @@
 
 CHAINSAW ?= chainsaw
 
-.PHONY: setup test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigatewayv2 test-efs test-elasticache test-ecr test-all
+.PHONY: setup test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-all
 
 ## setup: Apply all CRDs to the cluster. Run before any test target.
 setup:
@@ -101,5 +101,9 @@ test-elasticache:
 test-ecr:
 	$(CHAINSAW) test ecr/ctrl-ecr-01/
 
+## test-stepfunctions: Run Step Functions cascade integration tests (ctrl-sfn-01).
+test-stepfunctions:
+	$(CHAINSAW) test stepfunctions/ctrl-sfn-01/
+
 ## test-all: Run all integration test suites.
-test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigatewayv2 test-efs test-elasticache test-ecr
+test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions

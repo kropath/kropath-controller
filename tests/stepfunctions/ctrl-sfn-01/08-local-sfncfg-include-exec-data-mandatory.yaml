@@ -1,0 +1,10 @@
+# Local StepFunctionsConfig (stepfunctions) — sets mandatory.includeExecutionData=false (level 4).
+# Explicit false must propagate as false, not be treated as nil/unset.
+apiVersion: aws.kropath.run/v1alpha1
+kind: StepFunctionsConfig
+metadata:
+  name: general-sfn
+  namespace: stepfunctions
+spec:
+  mandatory:
+    includeExecutionData: false

@@ -1,0 +1,8 @@
+# Local StepFunctionsConfig (namespace=stepfunctions) — base resource used across multiple AC steps.
+# No mandatory or defaults fields set; tests layer governance on top via KropathConfig/global config.
+apiVersion: aws.kropath.run/v1alpha1
+kind: StepFunctionsConfig
+metadata:
+  name: general-sfn
+  namespace: stepfunctions
+spec: {}

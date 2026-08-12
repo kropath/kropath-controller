@@ -1,0 +1,11 @@
+# AC-9: effectiveConfig.aws is populated from globalKropathConfig.spec.aws.
+apiVersion: aws.kropath.run/v1alpha1
+kind: StepFunctionsConfig
+metadata:
+  name: general-sfn
+  namespace: stepfunctions
+status:
+  effectiveConfig:
+    aws:
+      accountId: "123456789012"
+      region: us-east-1
