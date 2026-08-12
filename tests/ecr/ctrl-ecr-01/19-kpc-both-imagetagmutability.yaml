@@ -1,0 +1,15 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: both-imagetagmutability-rejected
+  namespace: kro-system
+spec:
+  mandatory:
+    ecr:
+      imageTagMutability: IMMUTABLE
+  defaults:
+    ecr:
+      imageTagMutability: MUTABLE
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"

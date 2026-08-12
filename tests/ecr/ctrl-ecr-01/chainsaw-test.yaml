@@ -1,0 +1,234 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-ecr-01 Chainsaw integration tests — representative acceptance criteria.
+# Requires:
+#   - kind cluster with kropath-operator deployed (feature flag: --enable-ecr-cascade)
+#   - KropathConfig CRD applied (crds/kropathconfig.yaml from kropath-aws)
+#   - ECRConfig CRD applied (crds/ecrconfig.yaml from kropath-aws)
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-ecr-01-cascade
+spec:
+  steps:
+    # AC-1: globalKropathConfig.mandatory.ecr.imageTagMutability=IMMUTABLE propagates
+    # to ECRConfig.status.effectiveConfig.mandatory.imageTagMutability.
+    - name: ac1-kc-mandatory-imagetagmutability
+      try:
+        - apply:
+            file: 02-global-kpc-imagetagmutability.yaml
+        - apply:
+            file: 01-ecrconfig.yaml
+        - assert:
+            file: 03-assert-ac1.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 01-ecrconfig.yaml
+        - delete:
+            file: 02-global-kpc-imagetagmutability.yaml
+
+    # AC-5: KropathConfig.mandatory.ecr.imageTagMutability=IMMUTABLE (L1) wins over
+    # globalECRConfig.mandatory.imageTagMutability=MUTABLE (L3).
+    - name: ac5-kc-l1-wins-ecrcfg-l3
+      try:
+        - apply:
+            file: 04-global-kpc-imagetagmutability-l1.yaml
+        - apply:
+            file: 05-global-ecrcfg-imagetagmutability-mutable.yaml
+        - apply:
+            file: 01-ecrconfig.yaml
+        - assert:
+            file: 06-assert-ac5.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 01-ecrconfig.yaml
+        - delete:
+            file: 05-global-ecrcfg-imagetagmutability-mutable.yaml
+        - delete:
+            file: 04-global-kpc-imagetagmutability-l1.yaml
+
+    # AC-6: globalECRConfig.mandatory.kmsKeyID propagates (ECRConfig-only field — not in KropathConfig.ecr).
+    - name: ac6-ecrcfg-mandatory-kmskey
+      try:
+        - apply:
+            file: 07-global-ecrcfg-mandatory-kmskey.yaml
+        - apply:
+            file: 01-ecrconfig.yaml
+        - assert:
+            file: 08-assert-ac6.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 01-ecrconfig.yaml
+        - delete:
+            file: 07-global-ecrcfg-mandatory-kmskey.yaml
+
+    # AC-8: globalECRConfig.defaults.imageTagMutability=MUTABLE propagates to
+    # effectiveConfig.defaults; mandatory stays empty.
+    - name: ac8-ecrcfg-defaults-only
+      try:
+        - apply:
+            file: 09-global-ecrcfg-defaults-imagetagmutability.yaml
+        - apply:
+            file: 01-ecrconfig.yaml
+        - assert:
+            file: 10-assert-ac8.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 01-ecrconfig.yaml
+        - delete:
+            file: 09-global-ecrcfg-defaults-imagetagmutability.yaml
+
+    # AC-9: globalECRConfig.defaults.imageTagMutability=MUTABLE (L6) wins over
+    # globalKropathConfig.defaults.ecr.imageTagMutability=IMMUTABLE (L9).
+    - name: ac9-ecrcfg-defaults-l6-wins-kpc-l9
+      try:
+        - script:
+            content: kubectl delete kropathconfigs.aws.kropath.run general-policy -n kro-system --ignore-not-found=true
+        - apply:
+            file: 11-global-ecrcfg-defaults-imagetagmutability-l6.yaml
+        - apply:
+            file: 12-global-kpc-defaults-ecr-l9.yaml
+        - apply:
+            file: 01-ecrconfig.yaml
+        - assert:
+            file: 13-assert-ac9.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 01-ecrconfig.yaml
+        - delete:
+            file: 12-global-kpc-defaults-ecr-l9.yaml
+        - delete:
+            file: 11-global-ecrcfg-defaults-imagetagmutability-l6.yaml
+
+    # AC-11: KropathConfig.mandatory.tags and ECRConfig.mandatory.tags are union-merged
+    # into effectiveConfig.mandatory.tags.
+    - name: ac11-mandatory-tag-merge
+      try:
+        - apply:
+            file: 14-global-kpc-mandatory-tags.yaml
+        - apply:
+            file: 15-ecrconfig-mandatory-tags.yaml
+        - assert:
+            file: 16-assert-ac11.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 15-ecrconfig-mandatory-tags.yaml
+        - delete:
+            file: 14-global-kpc-mandatory-tags.yaml
+
+    # AC-13: globalECRConfig.mandatory.syncedLabels propagates to effectiveConfig.mandatory.syncedLabels.
+    - name: ac13-mandatory-syncedlabels
+      try:
+        - apply:
+            file: 17-global-ecrcfg-mandatory-syncedlabels.yaml
+        - apply:
+            file: 01-ecrconfig.yaml
+        - assert:
+            file: 18-assert-ac13.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 01-ecrconfig.yaml
+        - delete:
+            file: 17-global-ecrcfg-mandatory-syncedlabels.yaml
+
+    # AC-15: KropathConfig with imageTagMutability in both mandatory.ecr and defaults.ecr
+    # is rejected at admission.
+    - name: ac15-kc-imagetagmutability-mutual-exclusivity
+      try:
+        - apply:
+            file: 19-kpc-both-imagetagmutability.yaml
+            expect:
+              - match:
+                  apiVersion: aws.kropath.run/v1alpha1
+                  kind: KropathConfig
+                check:
+                  ($error != null): true
+
+    # AC-16: KropathConfig with encryptionType in both mandatory.ecr and defaults.ecr
+    # is rejected at admission.
+    - name: ac16-kc-encryptiontype-mutual-exclusivity
+      try:
+        - apply:
+            file: 20-kpc-both-encryptiontype.yaml
+            expect:
+              - match:
+                  apiVersion: aws.kropath.run/v1alpha1
+                  kind: KropathConfig
+                check:
+                  ($error != null): true
+
+    # AC-17: AES256 encryptionType + non-empty kmsKeyID in the same mandatory tier is invalid.
+    # Controller must set conditions[Valid]=False and must NOT write effectiveConfig.
+    - name: ac17-cross-field-validation-aes256-kmskey
+      try:
+        - script:
+            content: kubectl delete kropathconfigs.aws.kropath.run general-policy -n kro-system --ignore-not-found=true
+        - apply:
+            file: 21-global-ecrcfg-aes256-kmskey.yaml
+        - apply:
+            file: 01-ecrconfig.yaml
+        - assert:
+            file: 22-assert-ac17.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 01-ecrconfig.yaml
+        - delete:
+            file: 21-global-ecrcfg-aes256-kmskey.yaml
+
+    # AC-18: globalKropathConfig.spec.aws.accountId and region propagate
+    # to effectiveConfig.aws.accountId and effectiveConfig.aws.region.
+    - name: ac18-aws-metadata
+      try:
+        - script:
+            content: kubectl delete ecrconfigs.aws.kropath.run general-policy -n kro-system --ignore-not-found=true
+        - apply:
+            file: 23-global-kpc-aws-identity.yaml
+        - apply:
+            file: 01-ecrconfig.yaml
+        - assert:
+            file: 24-assert-ac18.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 01-ecrconfig.yaml
+        - delete:
+            file: 23-global-kpc-aws-identity.yaml
+
+    # AC-19: globalECRConfig.mandatory.encryptionType=KMS propagates to
+    # effectiveConfig.mandatory.encryptionType.
+    - name: ac19-ecrcfg-mandatory-encryptiontype
+      try:
+        - script:
+            content: kubectl delete kropathconfigs.aws.kropath.run general-policy -n kro-system --ignore-not-found=true
+        - apply:
+            file: 25-global-ecrcfg-encryptiontype.yaml
+        - apply:
+            file: 01-ecrconfig.yaml
+        - assert:
+            file: 26-assert-ac19.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 01-ecrconfig.yaml
+        - delete:
+            file: 25-global-ecrcfg-encryptiontype.yaml

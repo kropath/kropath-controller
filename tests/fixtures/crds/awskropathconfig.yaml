@@ -151,6 +151,12 @@ spec:
               message: "elasticache.atRestEncryptionEnabled cannot be set to true in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.elasticache) && self.spec.mandatory.elasticache.transitEncryptionEnabled == true && has(self.spec.defaults.elasticache) && self.spec.defaults.elasticache.transitEncryptionEnabled == true)'
               message: "elasticache.transitEncryptionEnabled cannot be set to true in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory) && has(self.spec.mandatory.ecr) && self.spec.mandatory.ecr.imageTagMutability != "" && has(self.spec.defaults) && has(self.spec.defaults.ecr) && self.spec.defaults.ecr.imageTagMutability != "")'
+              message: "ecr.imageTagMutability cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory) && has(self.spec.mandatory.ecr) && self.spec.mandatory.ecr.encryptionType != "" && has(self.spec.defaults) && has(self.spec.defaults.ecr) && self.spec.defaults.ecr.encryptionType != "")'
+              message: "ecr.encryptionType cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory) && has(self.spec.mandatory.ecr) && self.spec.mandatory.ecr.lifecyclePolicy != "" && has(self.spec.defaults) && has(self.spec.defaults.ecr) && self.spec.defaults.ecr.lifecyclePolicy != "")'
+              message: "ecr.lifecyclePolicy cannot be set in both mandatory and defaults"
           properties:
             spec:
               type: object
@@ -476,6 +482,19 @@ spec:
                           additionalProperties:
                             type: string
                           default: {}
+                    ecr:
+                      type: object
+                      default: {}
+                      properties:
+                        imageTagMutability:
+                          type: string
+                          description: Enforce IMMUTABLE or MUTABLE image tags. Empty = not enforced.
+                        encryptionType:
+                          type: string
+                          description: Enforce AES256 or KMS encryption. Empty = not enforced.
+                        lifecyclePolicy:
+                          type: string
+                          description: Lifecycle policy JSON template. Empty = not enforced.
                     tags:
                       type: object
                       additionalProperties:
@@ -808,6 +827,19 @@ spec:
                           additionalProperties:
                             type: string
                           default: {}
+                    ecr:
+                      type: object
+                      default: {}
+                      properties:
+                        imageTagMutability:
+                          type: string
+                          description: Default image tag mutability. Empty = no default.
+                        encryptionType:
+                          type: string
+                          description: Default encryption type. Empty = no default.
+                        lifecyclePolicy:
+                          type: string
+                          description: Default lifecycle policy template. Empty = no default.
                     tags:
                       type: object
                       additionalProperties:

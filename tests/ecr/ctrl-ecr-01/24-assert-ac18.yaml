@@ -1,0 +1,10 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: ECRConfig
+metadata:
+  name: general-policy
+  namespace: registry-prod
+status:
+  effectiveConfig:
+    aws:
+      accountId: "987654321098"
+      region: eu-west-1
