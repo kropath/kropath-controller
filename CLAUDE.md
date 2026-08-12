@@ -2,7 +2,7 @@
 
 ## This Repo
 
-**kropath-controller** — Multi-reconciler `kropath-operator` binary. One `controller-runtime` Manager, one Reconciler struct per feature, each enabled by a feature flag. See `kropath-core/docs/design/policy-document-crd.md` §11 (P-1) for the architecture decision.
+**kropath-controller** — Multi-reconciler `kropath-operator` binary. One `controller-runtime` Manager, one Reconciler struct per feature. Every reconciler registered in `internal/features.All` runs unconditionally — there are no per-feature flags. See `kropath-core/docs/design/policy-document-crd.md` §11 (P-1) for the architecture decision.
 
 ### Reconciler 1 — Config merge (ADR-010)
 
@@ -34,7 +34,8 @@
 - Supports multiple replicas with leader election
 - Single Deployment, single RBAC manifest, single `/metrics` endpoint (port 8080)
 - Health probes: `/healthz` port 8081 (manager alive), `/readyz` port 8081 (leader lease + watches established)
-- All reconcilers are always enabled. The supported set is queryable at `/features` (see generated `docs/features.yaml`). Feature availability is determined by which image version is deployed, not by runtime flags.
+- `/features` endpoint on `:8080` — returns version, git commit, and the live reconciler list as JSON
+- **No per-feature flags.** Every reconciler in `internal/features.All` runs unconditionally. To add a reconciler: create its package under `internal/reconciler/<pkg>/`, add an entry to `features.All`, and run `make generate-features`. Missing registrations fail `TestRegistryCoversAllPackages`.
 
 ### Chainsaw Test Assertion Stability
 

@@ -14,6 +14,10 @@
 
 FROM golang:1.26.5 AS builder
 
+ARG VERSION=dev
+ARG GIT_COMMIT=none
+ARG BUILD_DATE=unknown
+
 WORKDIR /workspace
 
 COPY go.mod go.sum ./
@@ -23,7 +27,12 @@ COPY api/ api/
 COPY cmd/ cmd/
 COPY internal/ internal/
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /kropath-operator ./cmd/manager
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -ldflags "-s -w \
+        -X github.com/kropath/kropath-controller/internal/version.Version=${VERSION} \
+        -X github.com/kropath/kropath-controller/internal/version.GitCommit=${GIT_COMMIT} \
+        -X github.com/kropath/kropath-controller/internal/version.BuildDate=${BUILD_DATE}" \
+    -o /kropath-operator ./cmd/manager
 
 FROM gcr.io/distroless/static:nonroot
 

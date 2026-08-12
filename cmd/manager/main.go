@@ -4,10 +4,14 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
+	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/kropath/kropath-controller/api/v1alpha1"
+	"github.com/kropath/kropath-controller/internal/features"
 	"github.com/kropath/kropath-controller/internal/reconciler/apigatewayv2config"
 	"github.com/kropath/kropath-controller/internal/reconciler/autoscalingconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/ecsconfig"
@@ -30,6 +34,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/snsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/sqsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/stepfunctionsconfig"
+	"github.com/kropath/kropath-controller/internal/version"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -39,28 +44,8 @@ import (
 )
 
 var (
-	metricsAddr              string
-	probeAddr                string
-	enablePolicyDoc          bool
-	enableKMSCascade         bool
-	enableSQSCascade         bool
-	enableSMCascade          bool
-	enableLabelOperator      bool
-	enableSNSCascade           bool
-	enableDynamoDBCascade      bool
-	enableEventBridgeCascade      bool
-	enableCloudWatchLogsCascade   bool
-	enableELBCascade              bool
-	enableRDSCascade              bool
-	enableAutoScalingCascade      bool
-	enableECSCascade              bool
-	enableEKSCascade              bool
-	enableEC2Cascade              bool
-	enableApiGatewayV2Cascade     bool
-	enableEFSCascade              bool
-	enableElastiCacheCascade      bool
-	enableECRCascade              bool
-	enableStepFunctionsCascade    bool
+	metricsAddr string
+	probeAddr   string
 )
 
 func leaderElectionNamespace() string {
@@ -73,34 +58,61 @@ func leaderElectionNamespace() string {
 	return "default"
 }
 
+// featuresHandler returns an http.Handler for GET /features.
+// The response is static (computed once at startup) because the feature list
+// and version are both baked into the binary.
+func featuresHandler() http.Handler {
+	type response struct {
+		Version     string              `json:"version"`
+		GitCommit   string              `json:"gitCommit"`
+		BuildDate   string              `json:"buildDate"`
+		Reconcilers []features.Reconciler `json:"reconcilers"`
+	}
+	body, err := json.Marshal(response{
+		Version:     version.Version,
+		GitCommit:   version.GitCommit,
+		BuildDate:   version.BuildDate,
+		Reconcilers: features.All,
+	})
+	if err != nil {
+		// This cannot happen: features.Reconciler only contains string fields.
+		panic(fmt.Sprintf("featuresHandler: marshal: %v", err))
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(body)
+	})
+}
+
 func main() {
+	// "features" subcommand: print build info and reconciler list, then exit.
+	if len(os.Args) > 1 && os.Args[1] == "features" {
+		fmt.Printf("version:    %s\n", version.Version)
+		fmt.Printf("gitCommit:  %s\n", version.GitCommit)
+		fmt.Printf("buildDate:  %s\n", version.BuildDate)
+		fmt.Printf("reconcilers (%d):\n", len(features.All))
+		for _, r := range features.All {
+			fmt.Printf("  - %s (%s)\n", r.Name, r.Package)
+		}
+		return
+	}
+
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.BoolVar(&enablePolicyDoc, "enable-poldoc", false, "Enable the PolicyDocument reconciler.")
-	flag.BoolVar(&enableKMSCascade, "enable-kms-cascade", false, "Enable the KMSConfig cascade reconciler.")
-	flag.BoolVar(&enableSQSCascade, "enable-sqs-cascade", false, "Enable the SQSConfig cascade reconciler.")
-	flag.BoolVar(&enableSMCascade, "enable-secretsmanager-cascade", false, "Enable the SecretsManagerConfig cascade reconciler.")
-	flag.BoolVar(&enableLabelOperator, "enable-label-operator", false, "Enable the label-operator reconciler.")
-	flag.BoolVar(&enableSNSCascade, "enable-sns-cascade", false, "Enable the SNSConfig cascade reconciler.")
-	flag.BoolVar(&enableDynamoDBCascade, "enable-dynamodb-cascade", false, "Enable the DynamoDBConfig cascade reconciler.")
-	flag.BoolVar(&enableEventBridgeCascade, "enable-eventbridge-cascade", false, "Enable the EventBridgeConfig cascade reconciler.")
-	flag.BoolVar(&enableCloudWatchLogsCascade, "enable-cloudwatchlogs-cascade", false, "Enable the CloudWatchLogsConfig cascade reconciler.")
-	flag.BoolVar(&enableELBCascade, "enable-elb-cascade", false, "Enable the AWSELBConfig cascade reconciler.")
-	flag.BoolVar(&enableRDSCascade, "enable-rds-cascade", false, "Enable the RDSConfig cascade reconciler.")
-	flag.BoolVar(&enableAutoScalingCascade, "enable-autoscaling-cascade", false, "Enable the AutoScalingConfig cascade reconciler.")
-	flag.BoolVar(&enableECSCascade, "enable-ecs-cascade", false, "Enable the ECSConfig cascade reconciler.")
-	flag.BoolVar(&enableEKSCascade, "enable-eks-cascade", false, "Enable the EKSConfig cascade reconciler.")
-	flag.BoolVar(&enableEC2Cascade, "enable-ec2-cascade", false, "Enable the EC2Config cascade reconciler.")
-	flag.BoolVar(&enableApiGatewayV2Cascade, "enable-apigatewayv2-cascade", false, "Enable the ApiGatewayV2Config cascade reconciler.")
-	flag.BoolVar(&enableEFSCascade, "enable-efs-cascade", false, "Enable the EFSConfig cascade reconciler.")
-	flag.BoolVar(&enableElastiCacheCascade, "enable-elasticache-cascade", false, "Enable the ElastiCacheConfig cascade reconciler.")
-	flag.BoolVar(&enableECRCascade, "enable-ecr-cascade", false, "Enable the ECRConfig cascade reconciler.")
-	flag.BoolVar(&enableStepFunctionsCascade, "enable-stepfunctions-cascade", false, "Enable the StepFunctionsConfig cascade reconciler.")
 	opts := zap.Options{Development: true}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
+	ctrl.Log.Info("starting manager",
+		"version", version.Version,
+		"gitCommit", version.GitCommit,
+		"buildDate", version.BuildDate,
+		"metrics", metricsAddr,
+		"probes", probeAddr,
+		"reconcilers", len(features.All),
+	)
 
 	sch := runtime.NewScheme()
 	if err := clientgoscheme.AddToScheme(sch); err != nil {
@@ -125,6 +137,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	// /features endpoint: returns version + live reconciler list as JSON.
+	if err := mgr.AddMetricsServerExtraHandler("/features", featuresHandler()); err != nil {
+		ctrl.Log.Error(err, "unable to register /features handler")
+		os.Exit(1)
+	}
+
+	// Every reconciler runs unconditionally — no per-feature flags.
 	if err := (&iamconfig.Reconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("IAMConfig"),
@@ -143,216 +162,176 @@ func main() {
 		os.Exit(1)
 	}
 
-	if enablePolicyDoc {
-		if err := (&policydocument.Reconciler{Client: mgr.GetClient()}).SetupWithManager(mgr); err != nil {
-			ctrl.Log.Error(err, "unable to create PolicyDocument reconciler")
-			os.Exit(1)
-		}
+	if err := (&policydocument.Reconciler{Client: mgr.GetClient()}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create PolicyDocument reconciler")
+		os.Exit(1)
 	}
 
-	if enableKMSCascade {
-		if err := (&kmsconfig.Reconciler{
-			Client: mgr.GetClient(),
-			Log:    ctrl.Log.WithName("controllers").WithName("KMSConfig"),
-			Scheme: mgr.GetScheme(),
-		}).SetupWithManager(mgr); err != nil {
-			ctrl.Log.Error(err, "unable to create KMSConfig reconciler")
-			os.Exit(1)
-		}
+	if err := (&kmsconfig.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("KMSConfig"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create KMSConfig reconciler")
+		os.Exit(1)
 	}
 
-	if enableSQSCascade {
-		if err := (&sqsconfig.Reconciler{
-			Client: mgr.GetClient(),
-			Log:    ctrl.Log.WithName("controllers").WithName("SQSConfig"),
-			Scheme: mgr.GetScheme(),
-		}).SetupWithManager(mgr); err != nil {
-			ctrl.Log.Error(err, "unable to create SQSConfig reconciler")
-			os.Exit(1)
-		}
+	if err := (&sqsconfig.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("SQSConfig"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create SQSConfig reconciler")
+		os.Exit(1)
 	}
 
-	if enableSMCascade {
-		if err := (&secretsmanagerconfig.Reconciler{
-			Client: mgr.GetClient(),
-			Log:    ctrl.Log.WithName("controllers").WithName("SecretsManagerConfig"),
-			Scheme: mgr.GetScheme(),
-		}).SetupWithManager(mgr); err != nil {
-			ctrl.Log.Error(err, "unable to create SecretsManagerConfig reconciler")
-			os.Exit(1)
-		}
+	if err := (&secretsmanagerconfig.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("SecretsManagerConfig"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create SecretsManagerConfig reconciler")
+		os.Exit(1)
 	}
 
-	if enableLabelOperator {
-		if err := labeloperator.Setup(mgr, ctrl.Log.WithName("controllers").WithName("LabelOperator")); err != nil {
-			ctrl.Log.Error(err, "unable to setup label-operator")
-			os.Exit(1)
-		}
+	if err := labeloperator.Setup(mgr, ctrl.Log.WithName("controllers").WithName("LabelOperator")); err != nil {
+		ctrl.Log.Error(err, "unable to setup label-operator")
+		os.Exit(1)
 	}
 
-	if enableSNSCascade {
-		if err := (&snsconfig.Reconciler{
-			Client: mgr.GetClient(),
-			Log:    ctrl.Log.WithName("controllers").WithName("SNSConfig"),
-			Scheme: mgr.GetScheme(),
-		}).SetupWithManager(mgr); err != nil {
-			ctrl.Log.Error(err, "unable to create SNSConfig reconciler")
-			os.Exit(1)
-		}
+	if err := (&snsconfig.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("SNSConfig"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create SNSConfig reconciler")
+		os.Exit(1)
 	}
 
-	if enableDynamoDBCascade {
-		if err := (&dynamodbconfig.Reconciler{
-			Client: mgr.GetClient(),
-			Log:    ctrl.Log.WithName("controllers").WithName("DynamoDBConfig"),
-			Scheme: mgr.GetScheme(),
-		}).SetupWithManager(mgr); err != nil {
-			ctrl.Log.Error(err, "unable to create DynamoDBConfig reconciler")
-			os.Exit(1)
-		}
+	if err := (&dynamodbconfig.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("DynamoDBConfig"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create DynamoDBConfig reconciler")
+		os.Exit(1)
 	}
 
-	if enableEventBridgeCascade {
-		if err := (&eventbridgeconfig.Reconciler{
-			Client: mgr.GetClient(),
-			Log:    ctrl.Log.WithName("controllers").WithName("EventBridgeConfig"),
-			Scheme: mgr.GetScheme(),
-		}).SetupWithManager(mgr); err != nil {
-			ctrl.Log.Error(err, "unable to create EventBridgeConfig reconciler")
-			os.Exit(1)
-		}
+	if err := (&eventbridgeconfig.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("EventBridgeConfig"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create EventBridgeConfig reconciler")
+		os.Exit(1)
 	}
 
-	if enableCloudWatchLogsCascade {
-		if err := (&cloudwatchlogsconfig.Reconciler{
-			Client: mgr.GetClient(),
-			Log:    ctrl.Log.WithName("controllers").WithName("CloudWatchLogsConfig"),
-			Scheme: mgr.GetScheme(),
-		}).SetupWithManager(mgr); err != nil {
-			ctrl.Log.Error(err, "unable to create CloudWatchLogsConfig reconciler")
-			os.Exit(1)
-		}
+	if err := (&cloudwatchlogsconfig.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("CloudWatchLogsConfig"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create CloudWatchLogsConfig reconciler")
+		os.Exit(1)
 	}
 
-	if enableELBCascade {
-		if err := (&elbconfig.Reconciler{
-			Client: mgr.GetClient(),
-			Log:    ctrl.Log.WithName("controllers").WithName("AWSELBConfig"),
-			Scheme: mgr.GetScheme(),
-		}).SetupWithManager(mgr); err != nil {
-			ctrl.Log.Error(err, "unable to create AWSELBConfig reconciler")
-			os.Exit(1)
-		}
+	if err := (&elbconfig.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("AWSELBConfig"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create AWSELBConfig reconciler")
+		os.Exit(1)
 	}
 
-	if enableRDSCascade {
-		if err := (&rdsconfig.Reconciler{
-			Client: mgr.GetClient(),
-			Log:    ctrl.Log.WithName("controllers").WithName("RDSConfig"),
-			Scheme: mgr.GetScheme(),
-		}).SetupWithManager(mgr); err != nil {
-			ctrl.Log.Error(err, "unable to create RDSConfig reconciler")
-			os.Exit(1)
-		}
+	if err := (&rdsconfig.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("RDSConfig"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create RDSConfig reconciler")
+		os.Exit(1)
 	}
 
-	if enableAutoScalingCascade {
-		if err := (&autoscalingconfig.Reconciler{
-			Client: mgr.GetClient(),
-			Log:    ctrl.Log.WithName("controllers").WithName("AutoScalingConfig"),
-			Scheme: mgr.GetScheme(),
-		}).SetupWithManager(mgr); err != nil {
-			ctrl.Log.Error(err, "unable to create AutoScalingConfig reconciler")
-			os.Exit(1)
-		}
+	if err := (&autoscalingconfig.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("AutoScalingConfig"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create AutoScalingConfig reconciler")
+		os.Exit(1)
 	}
 
-	if enableECSCascade {
-		if err := (&ecsconfig.Reconciler{
-			Client: mgr.GetClient(),
-			Log:    ctrl.Log.WithName("controllers").WithName("ECSConfig"),
-			Scheme: mgr.GetScheme(),
-		}).SetupWithManager(mgr); err != nil {
-			ctrl.Log.Error(err, "unable to create ECSConfig reconciler")
-			os.Exit(1)
-		}
+	if err := (&ecsconfig.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("ECSConfig"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create ECSConfig reconciler")
+		os.Exit(1)
 	}
 
-	if enableEKSCascade {
-		if err := (&eksconfig.Reconciler{
-			Client: mgr.GetClient(),
-			Log:    ctrl.Log.WithName("controllers").WithName("EKSConfig"),
-			Scheme: mgr.GetScheme(),
-		}).SetupWithManager(mgr); err != nil {
-			ctrl.Log.Error(err, "unable to create EKSConfig reconciler")
-			os.Exit(1)
-		}
+	if err := (&eksconfig.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("EKSConfig"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create EKSConfig reconciler")
+		os.Exit(1)
 	}
 
-	if enableEC2Cascade {
-		if err := (&ec2config.Reconciler{
-			Client: mgr.GetClient(),
-			Log:    ctrl.Log.WithName("controllers").WithName("EC2Config"),
-			Scheme: mgr.GetScheme(),
-		}).SetupWithManager(mgr); err != nil {
-			ctrl.Log.Error(err, "unable to create EC2Config reconciler")
-			os.Exit(1)
-		}
+	if err := (&ec2config.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("EC2Config"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create EC2Config reconciler")
+		os.Exit(1)
 	}
 
-	if enableApiGatewayV2Cascade {
-		if err := (&apigatewayv2config.Reconciler{
-			Client: mgr.GetClient(),
-			Log:    ctrl.Log.WithName("controllers").WithName("ApiGatewayV2Config"),
-			Scheme: mgr.GetScheme(),
-		}).SetupWithManager(mgr); err != nil {
-			ctrl.Log.Error(err, "unable to create ApiGatewayV2Config reconciler")
-			os.Exit(1)
-		}
+	if err := (&apigatewayv2config.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("ApiGatewayV2Config"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create ApiGatewayV2Config reconciler")
+		os.Exit(1)
 	}
 
-	if enableEFSCascade {
-		if err := (&efsconfig.Reconciler{
-			Client: mgr.GetClient(),
-			Log:    ctrl.Log.WithName("controllers").WithName("EFSConfig"),
-			Scheme: mgr.GetScheme(),
-		}).SetupWithManager(mgr); err != nil {
-			ctrl.Log.Error(err, "unable to create EFSConfig reconciler")
-			os.Exit(1)
-		}
+	if err := (&efsconfig.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("EFSConfig"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create EFSConfig reconciler")
+		os.Exit(1)
 	}
 
-	if enableElastiCacheCascade {
-		if err := (&elasticacheconfig.Reconciler{
-			Client: mgr.GetClient(),
-			Log:    ctrl.Log.WithName("controllers").WithName("ElastiCacheConfig"),
-			Scheme: mgr.GetScheme(),
-		}).SetupWithManager(mgr); err != nil {
-			ctrl.Log.Error(err, "unable to create ElastiCacheConfig reconciler")
-			os.Exit(1)
-		}
+	if err := (&elasticacheconfig.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("ElastiCacheConfig"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create ElastiCacheConfig reconciler")
+		os.Exit(1)
 	}
 
-	if enableECRCascade {
-		if err := (&ecrconfig.Reconciler{
-			Client: mgr.GetClient(),
-			Log:    ctrl.Log.WithName("controllers").WithName("ECRConfig"),
-			Scheme: mgr.GetScheme(),
-		}).SetupWithManager(mgr); err != nil {
-			ctrl.Log.Error(err, "unable to create ECRConfig reconciler")
-			os.Exit(1)
-		}
+	if err := (&ecrconfig.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("ECRConfig"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create ECRConfig reconciler")
+		os.Exit(1)
 	}
 
-	if enableStepFunctionsCascade {
-		if err := (&stepfunctionsconfig.Reconciler{
-			Client: mgr.GetClient(),
-			Log:    ctrl.Log.WithName("controllers").WithName("StepFunctionsConfig"),
-			Scheme: mgr.GetScheme(),
-		}).SetupWithManager(mgr); err != nil {
-			ctrl.Log.Error(err, "unable to create StepFunctionsConfig reconciler")
-			os.Exit(1)
-		}
+	if err := (&stepfunctionsconfig.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("StepFunctionsConfig"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create StepFunctionsConfig reconciler")
+		os.Exit(1)
 	}
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
@@ -364,7 +343,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctrl.Log.Info("starting manager", "metrics", metricsAddr, "probes", probeAddr, "enable_poldoc", enablePolicyDoc, "enable_kms_cascade", enableKMSCascade, "enable_sqs_cascade", enableSQSCascade, "enable_secretsmanager_cascade", enableSMCascade, "enable_label_operator", enableLabelOperator, "enable_sns_cascade", enableSNSCascade, "enable_dynamodb_cascade", enableDynamoDBCascade, "enable_eventbridge_cascade", enableEventBridgeCascade, "enable_elb_cascade", enableELBCascade, "enable_rds_cascade", enableRDSCascade, "enable_autoscaling_cascade", enableAutoScalingCascade, "enable_ecs_cascade", enableECSCascade, "enable_eks_cascade", enableEKSCascade, "enable_ec2_cascade", enableEC2Cascade, "enable_apigatewayv2_cascade", enableApiGatewayV2Cascade, "enable_efs_cascade", enableEFSCascade, "enable_elasticache_cascade", enableElastiCacheCascade, "enable_ecr_cascade", enableECRCascade, "enable_stepfunctions_cascade", enableStepFunctionsCascade)
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		ctrl.Log.Error(err, "problem running manager")
 		os.Exit(1)

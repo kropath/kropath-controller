@@ -25,10 +25,20 @@ BINARY           := bin/kropath-operator
 MAIN_PKG         := ./cmd/manager
 IMAGE_REGISTRY   := ghcr.io/kropath
 IMAGE_NAME       := kropath-controller
-IMAGE_TAG        ?= $(shell git rev-parse --short HEAD)
+IMAGE_TAG        ?= $(shell git rev-parse --short=7 HEAD)
 REPORT_DIR       := test-results
 CONTROLLER_LOG   := /tmp/kropath-controller/controller.log
 CONTROLLER_PID   := /tmp/kropath-controller/pid
+
+# ─── Version stamping ──────────────────────────────────────────────────────────
+VERSION    ?= dev
+GIT_COMMIT := $(shell git rev-parse --short=7 HEAD 2>/dev/null || echo none)
+BUILD_DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+MODULE     := github.com/kropath/kropath-controller
+LDFLAGS    := -s -w \
+    -X $(MODULE)/internal/version.Version=$(VERSION) \
+    -X $(MODULE)/internal/version.GitCommit=$(GIT_COMMIT) \
+    -X "$(MODULE)/internal/version.BuildDate=$(BUILD_DATE)"
 
 # ─── Test config ───────────────────────────────────────────────────────────────
 KIND_CLUSTER     := kropath-controller-test
@@ -40,6 +50,7 @@ GOLANGCI         ?= golangci-lint
 CHAINSAW_FLAGS   := --parallel 1 --report-format JUNIT-TEST --report-path $(REPORT_DIR)/
 
 .PHONY: all build test test-cover vet fmt lint \
+        generate-features check-features \
         docker-build docker-push \
         kind-up kind-down \
         chainsaw-setup chainsaw-start chainsaw-wait chainsaw-stop \
@@ -53,14 +64,26 @@ all: build ## Build the operator binary (default target).
 
 # ─── Build ─────────────────────────────────────────────────────────────────────
 
-build: ## Compile the operator binary → bin/kropath-operator.
+build: ## Compile the operator binary → bin/kropath-operator (with version ldflags).
 	@mkdir -p bin
-	go build -o $(BINARY) $(MAIN_PKG)
+	go build -ldflags "$(LDFLAGS)" -o $(BINARY) $(MAIN_PKG)
+
+# ─── Feature registry ──────────────────────────────────────────────────────────
+
+generate-features: ## Regenerate docs/features.yaml from internal/features.All.
+	go run ./cmd/gen-features
+
+check-features: ## CI gate: fail if docs/features.yaml is stale (run make generate-features to fix).
+	go run ./cmd/gen-features --check
 
 # ─── Container image ────────────────────────────────────────────────────────────
 
-docker-build: ## Build the container image, tagged with the short git SHA and 'latest'.
-	docker build -t $(IMAGE_REGISTRY)/$(IMAGE_NAME):$(IMAGE_TAG) \
+docker-build: ## Build the container image (version-stamped), tagged with the short git SHA and 'latest'.
+	docker build \
+		--build-arg VERSION=$(VERSION) \
+		--build-arg GIT_COMMIT=$(GIT_COMMIT) \
+		--build-arg BUILD_DATE="$(BUILD_DATE)" \
+		-t $(IMAGE_REGISTRY)/$(IMAGE_NAME):$(IMAGE_TAG) \
 		-t $(IMAGE_REGISTRY)/$(IMAGE_NAME):latest .
 
 docker-push: ## Push the SHA-tagged and 'latest' images (CI use; requires prior registry login).
@@ -139,6 +162,7 @@ chainsaw-setup: build kind-up ## Create kind cluster, apply CRDs, create test na
 		crd/efsconfigs.aws.kropath.run \
 		crd/elasticacheconfigs.aws.kropath.run \
 		crd/ecrconfigs.aws.kropath.run \
+		crd/stepfunctionsconfigs.aws.kropath.run \
 		crd/cloudstoragebucketconfigs.gcp.kropath.run \
 		crd/kropathconfigs.kropath.run
 	@for ns in $(TEST_NAMESPACES); do \
@@ -152,25 +176,6 @@ chainsaw-start: chainsaw-setup ## Build, set up CRDs, and start the operator in 
 	else \
 		KUBECONFIG="$${HOME}/.kube/config" $(BINARY) \
 			--health-probe-bind-address=:$(HEALTH_PORT) \
-			--enable-kms-cascade \
-			--enable-sqs-cascade \
-			--enable-secretsmanager-cascade \
-			--enable-sns-cascade \
-			--enable-dynamodb-cascade \
-			--enable-eventbridge-cascade \
-			--enable-cloudwatchlogs-cascade \
-			--enable-rds-cascade \
-			--enable-autoscaling-cascade \
-			--enable-ecs-cascade \
-			--enable-eks-cascade \
-			--enable-ec2-cascade \
-			--enable-apigatewayv2-cascade \
-			--enable-efs-cascade \
-			--enable-elasticache-cascade \
-			--enable-ecr-cascade \
-			--enable-stepfunctions-cascade \
-			--enable-poldoc \
-			--enable-label-operator \
 			> $(CONTROLLER_LOG) 2>&1 & echo $$! > $(CONTROLLER_PID); \
 		echo "Controller started (PID $$(cat $(CONTROLLER_PID)))."; \
 	fi
