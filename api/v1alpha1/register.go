@@ -64,6 +64,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&EC2ConfigList{},
 		&ApiGatewayV2Config{},
 		&ApiGatewayV2ConfigList{},
+		&EFSConfig{},
+		&EFSConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

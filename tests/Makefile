@@ -14,7 +14,7 @@
 
 CHAINSAW ?= chainsaw
 
-.PHONY: setup test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigatewayv2 test-all
+.PHONY: setup test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigatewayv2 test-efs test-all
 
 ## setup: Apply all CRDs to the cluster. Run before any test target.
 setup:
@@ -89,5 +89,9 @@ test-ec2:
 test-apigatewayv2:
 	$(CHAINSAW) test apigatewayv2/ctrl-apigwv2-01/
 
+## test-efs: Run EFS cascade integration tests (ctrl-efs-01).
+test-efs:
+	$(CHAINSAW) test efs/ctrl-efs-01/
+
 ## test-all: Run all integration test suites.
-test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigatewayv2
+test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigatewayv2 test-efs

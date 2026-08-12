@@ -11,6 +11,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/apigatewayv2config"
 	"github.com/kropath/kropath-controller/internal/reconciler/autoscalingconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/ecsconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/efsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/eksconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/cloudwatchlogsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/dynamodbconfig"
@@ -53,6 +54,7 @@ var (
 	enableEKSCascade              bool
 	enableEC2Cascade              bool
 	enableApiGatewayV2Cascade     bool
+	enableEFSCascade              bool
 )
 
 func leaderElectionNamespace() string {
@@ -84,6 +86,7 @@ func main() {
 	flag.BoolVar(&enableEKSCascade, "enable-eks-cascade", false, "Enable the EKSConfig cascade reconciler.")
 	flag.BoolVar(&enableEC2Cascade, "enable-ec2-cascade", false, "Enable the EC2Config cascade reconciler.")
 	flag.BoolVar(&enableApiGatewayV2Cascade, "enable-apigatewayv2-cascade", false, "Enable the ApiGatewayV2Config cascade reconciler.")
+	flag.BoolVar(&enableEFSCascade, "enable-efs-cascade", false, "Enable the EFSConfig cascade reconciler.")
 	opts := zap.Options{Development: true}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
@@ -299,6 +302,17 @@ func main() {
 		}
 	}
 
+	if enableEFSCascade {
+		if err := (&efsconfig.Reconciler{
+			Client: mgr.GetClient(),
+			Log:    ctrl.Log.WithName("controllers").WithName("EFSConfig"),
+			Scheme: mgr.GetScheme(),
+		}).SetupWithManager(mgr); err != nil {
+			ctrl.Log.Error(err, "unable to create EFSConfig reconciler")
+			os.Exit(1)
+		}
+	}
+
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		ctrl.Log.Error(err, "unable to set up health check")
 		os.Exit(1)
@@ -308,7 +322,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctrl.Log.Info("starting manager", "metrics", metricsAddr, "probes", probeAddr, "enable_poldoc", enablePolicyDoc, "enable_kms_cascade", enableKMSCascade, "enable_sqs_cascade", enableSQSCascade, "enable_secretsmanager_cascade", enableSMCascade, "enable_label_operator", enableLabelOperator, "enable_sns_cascade", enableSNSCascade, "enable_dynamodb_cascade", enableDynamoDBCascade, "enable_eventbridge_cascade", enableEventBridgeCascade, "enable_elb_cascade", enableELBCascade, "enable_rds_cascade", enableRDSCascade, "enable_autoscaling_cascade", enableAutoScalingCascade, "enable_ecs_cascade", enableECSCascade, "enable_eks_cascade", enableEKSCascade, "enable_ec2_cascade", enableEC2Cascade, "enable_apigatewayv2_cascade", enableApiGatewayV2Cascade)
+	ctrl.Log.Info("starting manager", "metrics", metricsAddr, "probes", probeAddr, "enable_poldoc", enablePolicyDoc, "enable_kms_cascade", enableKMSCascade, "enable_sqs_cascade", enableSQSCascade, "enable_secretsmanager_cascade", enableSMCascade, "enable_label_operator", enableLabelOperator, "enable_sns_cascade", enableSNSCascade, "enable_dynamodb_cascade", enableDynamoDBCascade, "enable_eventbridge_cascade", enableEventBridgeCascade, "enable_elb_cascade", enableELBCascade, "enable_rds_cascade", enableRDSCascade, "enable_autoscaling_cascade", enableAutoScalingCascade, "enable_ecs_cascade", enableECSCascade, "enable_eks_cascade", enableEKSCascade, "enable_ec2_cascade", enableEC2Cascade, "enable_apigatewayv2_cascade", enableApiGatewayV2Cascade, "enable_efs_cascade", enableEFSCascade)
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		ctrl.Log.Error(err, "problem running manager")
 		os.Exit(1)

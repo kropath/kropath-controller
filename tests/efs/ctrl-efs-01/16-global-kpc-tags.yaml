@@ -1,0 +1,10 @@
+# Global KropathConfig — sets mandatory.tags (level 1 org-wide tags).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: general-storage
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      cost-centre: platform

@@ -1,0 +1,8 @@
+# Local EFSConfig (namespace=efs) — base resource used across multiple AC steps.
+# No mandatory or defaults fields set; tests layer governance on top.
+apiVersion: aws.kropath.run/v1alpha1
+kind: EFSConfig
+metadata:
+  name: general-storage
+  namespace: efs
+spec: {}

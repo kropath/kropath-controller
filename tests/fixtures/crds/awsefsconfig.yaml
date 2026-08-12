@@ -1,0 +1,298 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: efsconfigs.aws.kropath.run
+spec:
+  group: aws.kropath.run
+  names:
+    kind: EFSConfig
+    listKind: EFSConfigList
+    plural: efsconfigs
+    singular: efsconfig
+    shortNames:
+      - awsefscfg
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      schema:
+        openAPIV3Schema:
+          type: object
+          x-kubernetes-validations:
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.encrypted) &&
+                  self.spec.mandatory.encrypted == true &&
+                  has(self.spec.defaults) && has(self.spec.defaults.encrypted) &&
+                  self.spec.defaults.encrypted == true)
+              message: >-
+                encrypted cannot be set to true in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.kmsKeyId) &&
+                  self.spec.mandatory.kmsKeyId != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.kmsKeyId) &&
+                  self.spec.defaults.kmsKeyId != "")
+              message: >-
+                kmsKeyId cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.performanceMode) &&
+                  self.spec.mandatory.performanceMode != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.performanceMode) &&
+                  self.spec.defaults.performanceMode != "")
+              message: >-
+                performanceMode cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.throughputMode) &&
+                  self.spec.mandatory.throughputMode != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.throughputMode) &&
+                  self.spec.defaults.throughputMode != "")
+              message: >-
+                throughputMode cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.backupEnabled) &&
+                  self.spec.mandatory.backupEnabled == true &&
+                  has(self.spec.defaults) && has(self.spec.defaults.backupEnabled) &&
+                  self.spec.defaults.backupEnabled == true)
+              message: >-
+                backupEnabled cannot be set to true in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.replicationOverwriteProtection) &&
+                  self.spec.mandatory.replicationOverwriteProtection != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.replicationOverwriteProtection) &&
+                  self.spec.defaults.replicationOverwriteProtection != "")
+              message: >-
+                replicationOverwriteProtection cannot be set in both mandatory and defaults
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              default: {}
+              properties:
+                mandatory:
+                  type: object
+                  default: {}
+                  description: >-
+                    Mandatory EFS governance fields. Zero-value / nil means the field
+                    is not enforced at this tier.
+                  properties:
+                    encrypted:
+                      type: boolean
+                      description: >-
+                        Enforce SSE for all EFS file systems. Omit (nil) = not enforced;
+                        false = explicitly disabled. No scalar default — nil (*bool)
+                        detection required for the cascade priority chain.
+                    kmsKeyId:
+                      type: string
+                      description: KMS key ARN/alias for SSE-KMS. Empty = AWS-managed key.
+                    performanceMode:
+                      type: string
+                      description: EFS performance mode ("generalPurpose" or "maxIO"). Empty = not enforced.
+                    throughputMode:
+                      type: string
+                      description: EFS throughput mode ("bursting", "elastic", or "provisioned"). Empty = not enforced.
+                    backupEnabled:
+                      type: boolean
+                      description: Enforce AWS Backup for EFS file systems. Omit (nil) = not enforced.
+                    transitionToIA:
+                      type: string
+                      description: Lifecycle policy for IA transition. Empty = not enforced.
+                    transitionToArchive:
+                      type: string
+                      description: Lifecycle policy for Archive transition. Empty = not enforced.
+                    transitionToPrimaryStorage:
+                      type: string
+                      description: Lifecycle policy for back-transition to primary storage. Empty = not enforced.
+                    replicationOverwriteProtection:
+                      type: string
+                      description: Replication overwrite protection ("ENABLED" or "DISABLED"). Empty = not enforced.
+                    tags:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedLabels:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                defaults:
+                  type: object
+                  default: {}
+                  description: >-
+                    Default EFS governance fields. Zero-value / nil means no default
+                    is provided at this tier.
+                  properties:
+                    encrypted:
+                      type: boolean
+                      description: >-
+                        Default encryption setting. Omit (nil) = no default; false = explicitly disabled.
+                    kmsKeyId:
+                      type: string
+                      description: Default KMS key ARN/alias. Empty = no default.
+                    performanceMode:
+                      type: string
+                      description: Default performance mode. Empty = no default.
+                    throughputMode:
+                      type: string
+                      description: Default throughput mode. Empty = no default.
+                    backupEnabled:
+                      type: boolean
+                      description: Default backup setting. Omit (nil) = no default.
+                    transitionToIA:
+                      type: string
+                      description: Default IA lifecycle transition. Empty = no default.
+                    transitionToArchive:
+                      type: string
+                      description: Default Archive lifecycle transition. Empty = no default.
+                    transitionToPrimaryStorage:
+                      type: string
+                      description: Default back-transition to primary storage. Empty = no default.
+                    replicationOverwriteProtection:
+                      type: string
+                      description: Default replication overwrite protection. Empty = no default.
+                    tags:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedLabels:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+            status:
+              type: object
+              properties:
+                observedGeneration:
+                  type: integer
+                  format: int64
+                syncedTimestamp:
+                  type: string
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                      lastTransitionTime:
+                        type: string
+                      observedGeneration:
+                        type: integer
+                        format: int64
+                effectiveConfig:
+                  type: object
+                  description: >-
+                    Pre-merged EFS governance config written by kropath-controller.
+                    RGDs read exclusively from this field via a single externalRef lookup.
+                  properties:
+                    mandatory:
+                      type: object
+                      properties:
+                        encrypted:
+                          type: boolean
+                        kmsKeyId:
+                          type: string
+                        performanceMode:
+                          type: string
+                        throughputMode:
+                          type: string
+                        backupEnabled:
+                          type: boolean
+                        transitionToIA:
+                          type: string
+                        transitionToArchive:
+                          type: string
+                        transitionToPrimaryStorage:
+                          type: string
+                        replicationOverwriteProtection:
+                          type: string
+                        tags:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedAnnotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                    defaults:
+                      type: object
+                      properties:
+                        encrypted:
+                          type: boolean
+                        kmsKeyId:
+                          type: string
+                        performanceMode:
+                          type: string
+                        throughputMode:
+                          type: string
+                        backupEnabled:
+                          type: boolean
+                        transitionToIA:
+                          type: string
+                        transitionToArchive:
+                          type: string
+                        transitionToPrimaryStorage:
+                          type: string
+                        replicationOverwriteProtection:
+                          type: string
+                        tags:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedAnnotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                    aws:
+                      type: object
+                      properties:
+                        accountId:
+                          type: string
+                        region:
+                          type: string

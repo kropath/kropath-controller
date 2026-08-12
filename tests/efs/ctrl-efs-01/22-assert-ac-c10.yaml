@@ -1,0 +1,11 @@
+# AC-C10: effectiveConfig.aws.accountId and region populated from KropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: EFSConfig
+metadata:
+  name: general-storage
+  namespace: efs
+status:
+  effectiveConfig:
+    aws:
+      accountId: "123456789012"
+      region: us-east-1

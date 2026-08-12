@@ -1,0 +1,10 @@
+# AC-C1: effectiveConfig.mandatory.encrypted=true when globalEFSConfig.mandatory.encrypted=true.
+apiVersion: aws.kropath.run/v1alpha1
+kind: EFSConfig
+metadata:
+  name: general-storage
+  namespace: efs
+status:
+  effectiveConfig:
+    mandatory:
+      encrypted: true

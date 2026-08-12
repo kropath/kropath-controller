@@ -1,0 +1,10 @@
+# AC-C4: effectiveConfig.defaults.performanceMode propagates from localEFSConfig.defaults.
+apiVersion: aws.kropath.run/v1alpha1
+kind: EFSConfig
+metadata:
+  name: general-storage
+  namespace: efs
+status:
+  effectiveConfig:
+    defaults:
+      performanceMode: generalPurpose

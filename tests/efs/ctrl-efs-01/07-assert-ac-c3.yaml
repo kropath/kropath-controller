@@ -1,0 +1,10 @@
+# AC-C3: effectiveConfig.defaults.encrypted=false preserved; mandatory.encrypted absent.
+apiVersion: aws.kropath.run/v1alpha1
+kind: EFSConfig
+metadata:
+  name: general-storage
+  namespace: efs
+status:
+  effectiveConfig:
+    defaults:
+      encrypted: false
