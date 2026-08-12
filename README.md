@@ -9,12 +9,14 @@ See `docs/STANDARDS.md` and ADR-015 (`kropath-core`) for the full architecture r
 
 ## Reconcilers
 
-| Reconciler | CR(s) watched | Flag | Purpose |
-|---|---|---|---|
-| IAM config merge | `KropathConfig`, `IAMConfig` | always on | Merges org/namespace/instance config layers, writes `status.effectiveConfig` (ADR-010) |
-| S3 config merge | `KropathConfig`, `S3Config` | always on | Same merge pattern, scoped to S3 resource config |
-| KMS config cascade | `KropathConfig`, `KMSConfig` | `--enable-kms-cascade` | Cascades KMS key-spec and policy config to `status.effectiveConfig` |
-| PolicyDocument | `PolicyDocument`, `KropathConfig` | `--enable-poldoc` | Resolves principal/resource refs to ARNs, merges statement sources, writes `status.resolvedDocumentJSON` |
+All reconcilers are always enabled. Feature availability is determined by which image version is deployed, not by runtime flags. For the full list of reconcilers active in a given image, query the `/features` endpoint or see the generated `docs/features.yaml`.
+
+| Reconciler | CR(s) watched | Purpose |
+|---|---|---|
+| IAM config merge | `KropathConfig`, `IAMConfig` | Merges org/namespace/instance config layers, writes `status.effectiveConfig` (ADR-010) |
+| S3 config merge | `KropathConfig`, `S3Config` | Same merge pattern, scoped to S3 resource config |
+| KMS config cascade | `KropathConfig`, `KMSConfig` | Cascades KMS key-spec and policy config to `status.effectiveConfig` |
+| PolicyDocument | `PolicyDocument`, `KropathConfig` | Resolves principal/resource refs to ARNs, merges statement sources, writes `status.resolvedDocumentJSON` |
 
 Config-merge reconcilers write the single `status.effectiveConfig` object that kro RGDs read via
 one `externalRef` lookup per RGD (see the CEL cascade pattern in `docs/STANDARDS.md`).
@@ -45,17 +47,15 @@ make docker-build    # build the container image (tag = short git SHA + latest)
 ```bash
 ./bin/kropath-operator \
   --metrics-bind-address=:8080 \
-  --health-probe-bind-address=:8081 \
-  --enable-poldoc \
-  --enable-kms-cascade
+  --health-probe-bind-address=:8081
 ```
 
 | Flag | Default | Description |
 |---|---|---|
 | `--metrics-bind-address` | `:8080` | Prometheus `/metrics` endpoint |
 | `--health-probe-bind-address` | `:8081` | `/healthz` and `/readyz` endpoints |
-| `--enable-poldoc` | `false` | Enable the PolicyDocument reconciler |
-| `--enable-kms-cascade` | `false` | Enable the KMSConfig cascade reconciler |
+
+All reconcilers start automatically. To see which reconcilers are active, query `GET /features` on the running operator or check the generated `docs/features.yaml`.
 
 The manager runs with leader election on by default (`LEADER_ELECTION_NAMESPACE` or
 `POD_NAMESPACE` env var selects the lease namespace; defaults to `default`).
