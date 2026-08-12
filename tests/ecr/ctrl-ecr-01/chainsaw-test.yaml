@@ -410,7 +410,9 @@ spec:
     - name: ecrcfg-defaults-l6-wins-kpc-l9
       try:
         - script:
-            content: kubectl delete kropathconfigs.aws.kropath.run general-policy -n kro-system --ignore-not-found=true
+            content: |
+              kubectl delete kropathconfigs.aws.kropath.run general-policy -n kro-system --ignore-not-found=true
+              kubectl delete ecrconfigs.aws.kropath.run general-policy -n kro-system --ignore-not-found=true
         - apply:
             file: 11-global-ecrcfg-defaults-imagetagmutability-l6.yaml
         - apply:
