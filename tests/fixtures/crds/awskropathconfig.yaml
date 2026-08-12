@@ -151,11 +151,11 @@ spec:
               message: "elasticache.atRestEncryptionEnabled cannot be set to true in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.elasticache) && self.spec.mandatory.elasticache.transitEncryptionEnabled == true && has(self.spec.defaults.elasticache) && self.spec.defaults.elasticache.transitEncryptionEnabled == true)'
               message: "elasticache.transitEncryptionEnabled cannot be set to true in both mandatory and defaults"
-            - rule: '!(has(self.spec.mandatory) && has(self.spec.mandatory.ecr) && self.spec.mandatory.ecr.imageTagMutability != "" && has(self.spec.defaults) && has(self.spec.defaults.ecr) && self.spec.defaults.ecr.imageTagMutability != "")'
+            - rule: '!(has(self.spec.mandatory) && has(self.spec.mandatory.ecr) && has(self.spec.mandatory.ecr.imageTagMutability) && self.spec.mandatory.ecr.imageTagMutability != "" && has(self.spec.defaults) && has(self.spec.defaults.ecr) && has(self.spec.defaults.ecr.imageTagMutability) && self.spec.defaults.ecr.imageTagMutability != "")'
               message: "ecr.imageTagMutability cannot be set in both mandatory and defaults"
-            - rule: '!(has(self.spec.mandatory) && has(self.spec.mandatory.ecr) && self.spec.mandatory.ecr.encryptionType != "" && has(self.spec.defaults) && has(self.spec.defaults.ecr) && self.spec.defaults.ecr.encryptionType != "")'
+            - rule: '!(has(self.spec.mandatory) && has(self.spec.mandatory.ecr) && has(self.spec.mandatory.ecr.encryptionType) && self.spec.mandatory.ecr.encryptionType != "" && has(self.spec.defaults) && has(self.spec.defaults.ecr) && has(self.spec.defaults.ecr.encryptionType) && self.spec.defaults.ecr.encryptionType != "")'
               message: "ecr.encryptionType cannot be set in both mandatory and defaults"
-            - rule: '!(has(self.spec.mandatory) && has(self.spec.mandatory.ecr) && self.spec.mandatory.ecr.lifecyclePolicy != "" && has(self.spec.defaults) && has(self.spec.defaults.ecr) && self.spec.defaults.ecr.lifecyclePolicy != "")'
+            - rule: '!(has(self.spec.mandatory) && has(self.spec.mandatory.ecr) && has(self.spec.mandatory.ecr.lifecyclePolicy) && self.spec.mandatory.ecr.lifecyclePolicy != "" && has(self.spec.defaults) && has(self.spec.defaults.ecr) && has(self.spec.defaults.ecr.lifecyclePolicy) && self.spec.defaults.ecr.lifecyclePolicy != "")'
               message: "ecr.lifecyclePolicy cannot be set in both mandatory and defaults"
           properties:
             spec:
