@@ -1,0 +1,10 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: ApiGatewayV2Config
+metadata:
+  name: my-api
+  namespace: apigatewayv2
+status:
+  effectiveConfig:
+    aws:
+      accountId: "123456789012"
+      region: us-east-1

@@ -1,0 +1,9 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: ApiGatewayV2Config
+metadata:
+  name: my-api
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      owner: apigw-team

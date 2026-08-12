@@ -1,0 +1,9 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: my-api
+  namespace: kro-system
+spec:
+  mandatory:
+    apigatewayv2:
+      minimumTlsVersion: TLS_1_2
