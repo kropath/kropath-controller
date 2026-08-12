@@ -60,6 +60,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&ECSConfigList{},
 		&EKSConfig{},
 		&EKSConfigList{},
+		&EC2Config{},
+		&EC2ConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil
