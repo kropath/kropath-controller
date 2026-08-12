@@ -131,9 +131,9 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.ECRConfig) (bo
 		// We still update the condition but leave EffectiveConfig nil / unchanged.
 	} else {
 		newCond = metav1.Condition{
-			Type:               "Reconciled",
+			Type:               "Valid",
 			Status:             metav1.ConditionTrue,
-			Reason:             "CascadeMerged",
+			Reason:             "ValidationPassed",
 			Message:            "",
 			ObservedGeneration: cfg.Generation,
 			LastTransitionTime: now,
