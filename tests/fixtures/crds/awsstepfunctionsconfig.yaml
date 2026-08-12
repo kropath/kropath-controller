@@ -118,9 +118,9 @@ spec:
                   properties:
                     loggingLevel:
                       type: string
-                      default: "OFF"
+                      default: ""
                       description: >-
-                        Default execution logging level. "OFF" = no logging (AWS default).
+                        Default execution logging level. "" = no default (RGD built-in default applies).
                         Valid values: "" | "ALL" | "ERROR" | "FATAL" | "OFF".
                     tracingEnabled:
                       type: boolean
