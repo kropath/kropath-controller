@@ -63,6 +63,7 @@ type KropathConfigTier struct {
 	EC2               cascade.EC2KropathSection            `json:"ec2,omitempty"`
 	ApiGatewayV2      cascade.ApiGatewayV2KropathSection  `json:"apigatewayv2,omitempty"`
 	ElastiCache       cascade.ElastiCacheKropathSection   `json:"elasticache,omitempty"`
+	ECR               cascade.ECRKropathSection            `json:"ecr,omitempty"`
 	Tags              map[string]string                    `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
@@ -347,6 +348,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.ElastiCache.Tags = make(map[string]string, len(in.Spec.Defaults.ElastiCache.Tags))
 		for k, v := range in.Spec.Defaults.ElastiCache.Tags {
 			out.Spec.Defaults.ElastiCache.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.ECR.Tags != nil {
+		out.Spec.Mandatory.ECR.Tags = make(map[string]string, len(in.Spec.Mandatory.ECR.Tags))
+		for k, v := range in.Spec.Mandatory.ECR.Tags {
+			out.Spec.Mandatory.ECR.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.ECR.Tags != nil {
+		out.Spec.Defaults.ECR.Tags = make(map[string]string, len(in.Spec.Defaults.ECR.Tags))
+		for k, v := range in.Spec.Defaults.ECR.Tags {
+			out.Spec.Defaults.ECR.Tags[k] = v
 		}
 	}
 	if in.Spec.Mandatory.SyncedLabels != nil {

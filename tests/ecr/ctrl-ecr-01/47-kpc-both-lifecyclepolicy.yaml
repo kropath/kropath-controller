@@ -1,0 +1,12 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: global-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    ecr:
+      lifecyclePolicy: '{"rules":[{"type":"expireAfterDays"}]}'
+  defaults:
+    ecr:
+      lifecyclePolicy: '{"rules":[{"type":"countBased"}]}'

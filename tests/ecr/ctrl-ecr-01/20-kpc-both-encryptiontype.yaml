@@ -1,0 +1,15 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: both-encryptiontype-rejected
+  namespace: kro-system
+spec:
+  mandatory:
+    ecr:
+      encryptionType: KMS
+  defaults:
+    ecr:
+      encryptionType: AES256
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
