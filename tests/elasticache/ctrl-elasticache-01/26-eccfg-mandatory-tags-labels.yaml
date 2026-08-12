@@ -1,0 +1,13 @@
+# AC-12: localElastiCacheConfig with mandatory.tags and mandatory.syncedLabels (level 4).
+apiVersion: aws.kropath.run/v1alpha1
+kind: ElastiCacheConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    tags:
+      cache-tier: shared
+    syncedLabels:
+      data-class: internal
+  defaults: {}

@@ -12,6 +12,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/autoscalingconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/ecsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/efsconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/elasticacheconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/eksconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/cloudwatchlogsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/dynamodbconfig"
@@ -55,6 +56,7 @@ var (
 	enableEC2Cascade              bool
 	enableApiGatewayV2Cascade     bool
 	enableEFSCascade              bool
+	enableElastiCacheCascade      bool
 )
 
 func leaderElectionNamespace() string {
@@ -87,6 +89,7 @@ func main() {
 	flag.BoolVar(&enableEC2Cascade, "enable-ec2-cascade", false, "Enable the EC2Config cascade reconciler.")
 	flag.BoolVar(&enableApiGatewayV2Cascade, "enable-apigatewayv2-cascade", false, "Enable the ApiGatewayV2Config cascade reconciler.")
 	flag.BoolVar(&enableEFSCascade, "enable-efs-cascade", false, "Enable the EFSConfig cascade reconciler.")
+	flag.BoolVar(&enableElastiCacheCascade, "enable-elasticache-cascade", false, "Enable the ElastiCacheConfig cascade reconciler.")
 	opts := zap.Options{Development: true}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
@@ -313,6 +316,17 @@ func main() {
 		}
 	}
 
+	if enableElastiCacheCascade {
+		if err := (&elasticacheconfig.Reconciler{
+			Client: mgr.GetClient(),
+			Log:    ctrl.Log.WithName("controllers").WithName("ElastiCacheConfig"),
+			Scheme: mgr.GetScheme(),
+		}).SetupWithManager(mgr); err != nil {
+			ctrl.Log.Error(err, "unable to create ElastiCacheConfig reconciler")
+			os.Exit(1)
+		}
+	}
+
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		ctrl.Log.Error(err, "unable to set up health check")
 		os.Exit(1)
@@ -322,7 +336,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctrl.Log.Info("starting manager", "metrics", metricsAddr, "probes", probeAddr, "enable_poldoc", enablePolicyDoc, "enable_kms_cascade", enableKMSCascade, "enable_sqs_cascade", enableSQSCascade, "enable_secretsmanager_cascade", enableSMCascade, "enable_label_operator", enableLabelOperator, "enable_sns_cascade", enableSNSCascade, "enable_dynamodb_cascade", enableDynamoDBCascade, "enable_eventbridge_cascade", enableEventBridgeCascade, "enable_elb_cascade", enableELBCascade, "enable_rds_cascade", enableRDSCascade, "enable_autoscaling_cascade", enableAutoScalingCascade, "enable_ecs_cascade", enableECSCascade, "enable_eks_cascade", enableEKSCascade, "enable_ec2_cascade", enableEC2Cascade, "enable_apigatewayv2_cascade", enableApiGatewayV2Cascade, "enable_efs_cascade", enableEFSCascade)
+	ctrl.Log.Info("starting manager", "metrics", metricsAddr, "probes", probeAddr, "enable_poldoc", enablePolicyDoc, "enable_kms_cascade", enableKMSCascade, "enable_sqs_cascade", enableSQSCascade, "enable_secretsmanager_cascade", enableSMCascade, "enable_label_operator", enableLabelOperator, "enable_sns_cascade", enableSNSCascade, "enable_dynamodb_cascade", enableDynamoDBCascade, "enable_eventbridge_cascade", enableEventBridgeCascade, "enable_elb_cascade", enableELBCascade, "enable_rds_cascade", enableRDSCascade, "enable_autoscaling_cascade", enableAutoScalingCascade, "enable_ecs_cascade", enableECSCascade, "enable_eks_cascade", enableEKSCascade, "enable_ec2_cascade", enableEC2Cascade, "enable_apigatewayv2_cascade", enableApiGatewayV2Cascade, "enable_efs_cascade", enableEFSCascade, "enable_elasticache_cascade", enableElastiCacheCascade)
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		ctrl.Log.Error(err, "problem running manager")
 		os.Exit(1)

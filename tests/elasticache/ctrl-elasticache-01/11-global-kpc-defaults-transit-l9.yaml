@@ -1,0 +1,14 @@
+# AC-5: globalKropathConfig with defaults.elasticache.transitEncryptionEnabled=false (level 9).
+# Level 7 (ECConfig defaults) must win over this level 9 value.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  defaults:
+    elasticache:
+      transitEncryptionEnabled: false
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
