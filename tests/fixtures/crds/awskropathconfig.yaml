@@ -444,6 +444,19 @@ spec:
                           type: boolean
                           default: false
                           description: Force EBS encryption by default. false = not enforced.
+                    apigatewayv2:
+                      type: object
+                      default: {}
+                      properties:
+                        corsEnabled:
+                          type: boolean
+                          default: false
+                        disableExecuteApiEndpoint:
+                          type: boolean
+                          default: false
+                        minimumTlsVersion:
+                          type: string
+                          default: ""
                     tags:
                       type: object
                       additionalProperties:
@@ -748,6 +761,19 @@ spec:
                           type: boolean
                           default: false
                           description: Default EBS encryption setting. false = no default.
+                    apigatewayv2:
+                      type: object
+                      default: {}
+                      properties:
+                        corsEnabled:
+                          type: boolean
+                          default: false
+                        disableExecuteApiEndpoint:
+                          type: boolean
+                          default: false
+                        minimumTlsVersion:
+                          type: string
+                          default: ""
                     tags:
                       type: object
                       additionalProperties:

@@ -1,0 +1,9 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: ApiGatewayV2Config
+metadata:
+  name: my-api
+  namespace: apigatewayv2
+status:
+  effectiveConfig:
+    mandatory:
+      minimumTlsVersion: TLS_1_2

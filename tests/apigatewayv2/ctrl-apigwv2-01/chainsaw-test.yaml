@@ -1,0 +1,207 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-apigwv2-01
+spec:
+  namespace: apigatewayv2
+  steps:
+
+  - name: purge-stale-leftovers
+    try:
+    - script:
+        content: |
+          kubectl delete apigatewayv2config my-api -n apigatewayv2 --ignore-not-found
+          kubectl delete apigatewayv2config my-api -n kro-system --ignore-not-found
+          kubectl delete kropathconfig my-api -n apigatewayv2 --ignore-not-found
+          kubectl delete kropathconfig my-api -n kro-system --ignore-not-found
+
+  # AC-1: globalKropathConfig.mandatory.apigatewayv2.corsEnabled propagates to
+  # effectiveConfig.mandatory.corsEnabled (L1 — highest mandatory priority).
+  - name: ac1-l1-global-kpc-mandatory-cors-enabled
+    try:
+    - apply:
+        file: 01-global-kpc-cors-mandatory.yaml
+    - apply:
+        file: 02-apigwv2config.yaml
+    - assert:
+        file: 03-assert-ac1.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 02-apigwv2config.yaml
+    - delete:
+        file: 01-global-kpc-cors-mandatory.yaml
+
+  # AC-2: global ApiGatewayV2Config.mandatory.corsEnabled propagates when L1-L2 absent (L3).
+  - name: ac2-l3-global-apigwv2cfg-mandatory-cors-enabled
+    try:
+    - script:
+        content: |
+          kubectl delete kropathconfig my-api -n kro-system --ignore-not-found
+          kubectl delete apigatewayv2config my-api -n kro-system --ignore-not-found
+          kubectl delete apigatewayv2config my-api -n apigatewayv2 --ignore-not-found
+    - apply:
+        file: 04-global-apigwv2cfg-cors-mandatory.yaml
+    - apply:
+        file: 02-apigwv2config.yaml
+    - assert:
+        file: 05-assert-ac2.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 02-apigwv2config.yaml
+    - delete:
+        file: 04-global-apigwv2cfg-cors-mandatory.yaml
+
+  # AC-3: local ApiGatewayV2Config.spec.defaults.corsEnabled propagates to
+  # effectiveConfig.defaults when no mandatory source is set (L6).
+  - name: ac3-l6-local-apigwv2cfg-defaults-cors-enabled
+    try:
+    - script:
+        content: |
+          kubectl delete kropathconfig my-api -n kro-system --ignore-not-found
+          kubectl delete apigatewayv2config my-api -n kro-system --ignore-not-found
+          kubectl delete apigatewayv2config my-api -n apigatewayv2 --ignore-not-found
+    - apply:
+        file: 06-local-apigwv2cfg-cors-defaults.yaml
+    - assert:
+        file: 07-assert-ac3.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 06-local-apigwv2cfg-cors-defaults.yaml
+
+  # AC-4: global ApiGatewayV2Config.defaults.corsEnabled (L7) propagates when L6 absent.
+  - name: ac4-l7-global-apigwv2cfg-defaults-cors-enabled
+    try:
+    - script:
+        content: |
+          kubectl delete kropathconfig my-api -n kro-system --ignore-not-found
+          kubectl delete apigatewayv2config my-api -n kro-system --ignore-not-found
+          kubectl delete apigatewayv2config my-api -n apigatewayv2 --ignore-not-found
+    - apply:
+        file: 08-global-apigwv2cfg-cors-defaults.yaml
+    - apply:
+        file: 02-apigwv2config.yaml
+    - assert:
+        file: 09-assert-ac4.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 02-apigwv2config.yaml
+    - delete:
+        file: 08-global-apigwv2cfg-cors-defaults.yaml
+
+  # AC-5: mandatory tags additive union — globalKPC.mandatory.tags (L1) and
+  # global ApiGatewayV2Config.mandatory.tags (L3) union into effectiveConfig.mandatory.tags.
+  - name: ac5-tags-additive-union-l1-and-l3
+    try:
+    - script:
+        content: |
+          kubectl delete kropathconfig my-api -n kro-system --ignore-not-found
+          kubectl delete apigatewayv2config my-api -n kro-system --ignore-not-found
+          kubectl delete apigatewayv2config my-api -n apigatewayv2 --ignore-not-found
+    - apply:
+        file: 10-global-kpc-tags-mandatory.yaml
+    - apply:
+        file: 11-global-apigwv2cfg-tags-mandatory.yaml
+    - apply:
+        file: 02-apigwv2config.yaml
+    - assert:
+        file: 12-assert-ac5.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 02-apigwv2config.yaml
+    - delete:
+        file: 11-global-apigwv2cfg-tags-mandatory.yaml
+    - delete:
+        file: 10-global-kpc-tags-mandatory.yaml
+
+  # AC-6: global ApiGatewayV2Config.mandatory.defaultThrottlingBurstLimit (L3) propagates
+  # to effectiveConfig.mandatory.defaultThrottlingBurstLimit.
+  - name: ac6-l3-global-apigwv2cfg-mandatory-burst-limit
+    try:
+    - script:
+        content: |
+          kubectl delete kropathconfig my-api -n kro-system --ignore-not-found
+          kubectl delete apigatewayv2config my-api -n kro-system --ignore-not-found
+          kubectl delete apigatewayv2config my-api -n apigatewayv2 --ignore-not-found
+    - apply:
+        file: 13-global-apigwv2cfg-burst-mandatory.yaml
+    - apply:
+        file: 02-apigwv2config.yaml
+    - assert:
+        file: 14-assert-ac6.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 02-apigwv2config.yaml
+    - delete:
+        file: 13-global-apigwv2cfg-burst-mandatory.yaml
+
+  # AC-7: global ApiGatewayV2Config.defaults.defaultThrottlingRateLimit (L7) propagates
+  # to effectiveConfig.defaults.defaultThrottlingRateLimit.
+  - name: ac7-l7-global-apigwv2cfg-defaults-rate-limit
+    try:
+    - script:
+        content: |
+          kubectl delete kropathconfig my-api -n kro-system --ignore-not-found
+          kubectl delete apigatewayv2config my-api -n kro-system --ignore-not-found
+          kubectl delete apigatewayv2config my-api -n apigatewayv2 --ignore-not-found
+    - apply:
+        file: 15-global-apigwv2cfg-rate-defaults.yaml
+    - apply:
+        file: 02-apigwv2config.yaml
+    - assert:
+        file: 16-assert-ac7.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 02-apigwv2config.yaml
+    - delete:
+        file: 15-global-apigwv2cfg-rate-defaults.yaml
+
+  # AC-8: globalKropathConfig.mandatory.apigatewayv2.minimumTlsVersion (L1) propagates
+  # to effectiveConfig.mandatory.minimumTlsVersion.
+  - name: ac8-l1-global-kpc-mandatory-minimum-tls
+    try:
+    - script:
+        content: |
+          kubectl delete kropathconfig my-api -n kro-system --ignore-not-found
+          kubectl delete apigatewayv2config my-api -n kro-system --ignore-not-found
+          kubectl delete apigatewayv2config my-api -n apigatewayv2 --ignore-not-found
+    - apply:
+        file: 17-global-kpc-tls-mandatory.yaml
+    - apply:
+        file: 02-apigwv2config.yaml
+    - assert:
+        file: 18-assert-ac8.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 02-apigwv2config.yaml
+    - delete:
+        file: 17-global-kpc-tls-mandatory.yaml
+
+  # AC-9: AWS identity (accountId + region) from globalKropathConfig.spec.aws propagates
+  # to effectiveConfig.aws.
+  - name: ac9-aws-identity-from-global-kpc
+    try:
+    - script:
+        content: |
+          kubectl delete kropathconfig my-api -n kro-system --ignore-not-found
+          kubectl delete apigatewayv2config my-api -n kro-system --ignore-not-found
+          kubectl delete apigatewayv2config my-api -n apigatewayv2 --ignore-not-found
+    - apply:
+        file: 19-global-kpc-aws-identity.yaml
+    - apply:
+        file: 02-apigwv2config.yaml
+    - assert:
+        file: 20-assert-ac9.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 02-apigwv2config.yaml
+    - delete:
+        file: 19-global-kpc-aws-identity.yaml

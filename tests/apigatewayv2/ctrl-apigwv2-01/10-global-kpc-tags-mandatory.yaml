@@ -1,0 +1,10 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: my-api
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      env: production
+      cost-centre: platform

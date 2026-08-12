@@ -61,6 +61,7 @@ type KropathConfigTier struct {
 	ECS               cascade.ECSKropathSection            `json:"ecs,omitempty"`
 	EKS               cascade.EKSKropathSection            `json:"eks,omitempty"`
 	EC2               cascade.EC2KropathSection            `json:"ec2,omitempty"`
+	ApiGatewayV2      cascade.ApiGatewayV2KropathSection  `json:"apigatewayv2,omitempty"`
 	Tags              map[string]string                    `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
@@ -321,6 +322,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.EC2.SyncedAnnotations = make(map[string]string, len(in.Spec.Defaults.EC2.SyncedAnnotations))
 		for k, v := range in.Spec.Defaults.EC2.SyncedAnnotations {
 			out.Spec.Defaults.EC2.SyncedAnnotations[k] = v
+		}
+	}
+	if in.Spec.Mandatory.ApiGatewayV2.Tags != nil {
+		out.Spec.Mandatory.ApiGatewayV2.Tags = make(map[string]string, len(in.Spec.Mandatory.ApiGatewayV2.Tags))
+		for k, v := range in.Spec.Mandatory.ApiGatewayV2.Tags {
+			out.Spec.Mandatory.ApiGatewayV2.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.ApiGatewayV2.Tags != nil {
+		out.Spec.Defaults.ApiGatewayV2.Tags = make(map[string]string, len(in.Spec.Defaults.ApiGatewayV2.Tags))
+		for k, v := range in.Spec.Defaults.ApiGatewayV2.Tags {
+			out.Spec.Defaults.ApiGatewayV2.Tags[k] = v
 		}
 	}
 	if in.Spec.Mandatory.SyncedLabels != nil {

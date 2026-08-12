@@ -161,6 +161,7 @@ chainsaw-start: chainsaw-setup ## Build, set up CRDs, and start the operator in 
 			--enable-ecs-cascade \
 			--enable-eks-cascade \
 			--enable-ec2-cascade \
+			--enable-apigatewayv2-cascade \
 			--enable-poldoc \
 			--enable-label-operator \
 			> $(CONTROLLER_LOG) 2>&1 & echo $$! > $(CONTROLLER_PID); \
