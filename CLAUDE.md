@@ -13,7 +13,7 @@
 - Also copies provider identity (`aws.accountId`, `aws.region`) into `effCfg.aws.*` (ADR-010 D-3)
 - Unit tests required for merge logic; integration tests required for full controller reconcile path
 
-### Reconciler 2 — PolicyDocument (`--enable-poldoc`)
+### Reconciler 2 — PolicyDocument
 
 - Watches `PolicyDocument` CRs and `KropathConfig` CRs (account ID / region lookup)
 - Resolves `spec.statements[].principals[].ref` and `spec.statements[].resources[].ref` to ARNs using ARN prediction; falls back to `status.arn` for non-predictable kinds
@@ -34,7 +34,7 @@
 - Supports multiple replicas with leader election
 - Single Deployment, single RBAC manifest, single `/metrics` endpoint (port 8080)
 - Health probes: `/healthz` port 8081 (manager alive), `/readyz` port 8081 (leader lease + watches established)
-- Feature flags: `--enable-poldoc`, `--enable-sequencer` (future) — allows incremental rollout
+- All reconcilers are always enabled. The supported set is queryable at `/features` (see generated `docs/features.yaml`). Feature availability is determined by which image version is deployed, not by runtime flags.
 
 ### Chainsaw Test Assertion Stability
 
