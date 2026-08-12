@@ -104,34 +104,27 @@ spec:
                         detection required for the cascade priority chain.
                     kmsKeyId:
                       type: string
-                      default: ""
                       description: KMS key ARN/alias for SSE-KMS. Empty = AWS-managed key.
                     performanceMode:
                       type: string
-                      default: ""
                       description: EFS performance mode ("generalPurpose" or "maxIO"). Empty = not enforced.
                     throughputMode:
                       type: string
-                      default: ""
                       description: EFS throughput mode ("bursting", "elastic", or "provisioned"). Empty = not enforced.
                     backupEnabled:
                       type: boolean
                       description: Enforce AWS Backup for EFS file systems. Omit (nil) = not enforced.
                     transitionToIA:
                       type: string
-                      default: ""
                       description: Lifecycle policy for IA transition. Empty = not enforced.
                     transitionToArchive:
                       type: string
-                      default: ""
                       description: Lifecycle policy for Archive transition. Empty = not enforced.
                     transitionToPrimaryStorage:
                       type: string
-                      default: ""
                       description: Lifecycle policy for back-transition to primary storage. Empty = not enforced.
                     replicationOverwriteProtection:
                       type: string
-                      default: ""
                       description: Replication overwrite protection ("ENABLED" or "DISABLED"). Empty = not enforced.
                     tags:
                       type: object
@@ -161,34 +154,27 @@ spec:
                         Default encryption setting. Omit (nil) = no default; false = explicitly disabled.
                     kmsKeyId:
                       type: string
-                      default: ""
                       description: Default KMS key ARN/alias. Empty = no default.
                     performanceMode:
                       type: string
-                      default: ""
                       description: Default performance mode. Empty = no default.
                     throughputMode:
                       type: string
-                      default: ""
                       description: Default throughput mode. Empty = no default.
                     backupEnabled:
                       type: boolean
                       description: Default backup setting. Omit (nil) = no default.
                     transitionToIA:
                       type: string
-                      default: ""
                       description: Default IA lifecycle transition. Empty = no default.
                     transitionToArchive:
                       type: string
-                      default: ""
                       description: Default Archive lifecycle transition. Empty = no default.
                     transitionToPrimaryStorage:
                       type: string
-                      default: ""
                       description: Default back-transition to primary storage. Empty = no default.
                     replicationOverwriteProtection:
                       type: string
-                      default: ""
                       description: Default replication overwrite protection. Empty = no default.
                     tags:
                       type: object
