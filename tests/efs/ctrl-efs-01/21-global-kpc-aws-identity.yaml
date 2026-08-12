@@ -1,0 +1,10 @@
+# Global KropathConfig — sets aws.accountId and aws.region.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: general-storage
+  namespace: kro-system
+spec:
+  aws:
+    accountId: "123456789012"
+    region: us-east-1

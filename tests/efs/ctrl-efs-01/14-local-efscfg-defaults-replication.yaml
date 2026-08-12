@@ -1,0 +1,9 @@
+# Local EFSConfig (namespace=efs) — sets defaults.replicationOverwriteProtection (level 6).
+apiVersion: aws.kropath.run/v1alpha1
+kind: EFSConfig
+metadata:
+  name: general-storage
+  namespace: efs
+spec:
+  defaults:
+    replicationOverwriteProtection: ENABLED
