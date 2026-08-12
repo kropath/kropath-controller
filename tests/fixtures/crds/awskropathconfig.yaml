@@ -147,6 +147,10 @@ spec:
               message: "spec.mandatory.ec2.imdsv2Required and spec.defaults.ec2.imdsv2Required cannot both be true. Set the field in exactly one tier."
             - rule: '!(has(self.spec.mandatory) && has(self.spec.mandatory.ec2) && self.spec.mandatory.ec2.ebsEncryptionRequired == true && has(self.spec.defaults) && has(self.spec.defaults.ec2) && self.spec.defaults.ec2.ebsEncryptionRequired == true)'
               message: "spec.mandatory.ec2.ebsEncryptionRequired and spec.defaults.ec2.ebsEncryptionRequired cannot both be true. Set the field in exactly one tier."
+            - rule: '!(has(self.spec.mandatory.elasticache) && self.spec.mandatory.elasticache.atRestEncryptionEnabled == true && has(self.spec.defaults.elasticache) && self.spec.defaults.elasticache.atRestEncryptionEnabled == true)'
+              message: "elasticache.atRestEncryptionEnabled cannot be set to true in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.elasticache) && self.spec.mandatory.elasticache.transitEncryptionEnabled == true && has(self.spec.defaults.elasticache) && self.spec.defaults.elasticache.transitEncryptionEnabled == true)'
+              message: "elasticache.transitEncryptionEnabled cannot be set to true in both mandatory and defaults"
           properties:
             spec:
               type: object
