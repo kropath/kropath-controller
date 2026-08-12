@@ -1,0 +1,10 @@
+# AC-2: globalElastiCacheConfig with mandatory.atRestEncryptionEnabled=true (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: ElastiCacheConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    atRestEncryptionEnabled: true
+  defaults: {}

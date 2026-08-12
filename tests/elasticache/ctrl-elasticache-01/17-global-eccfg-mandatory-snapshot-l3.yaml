@@ -1,0 +1,10 @@
+# AC-8: globalElastiCacheConfig with mandatory.snapshotRetentionLimit=7 (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: ElastiCacheConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    snapshotRetentionLimit: 7
+  defaults: {}

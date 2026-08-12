@@ -457,6 +457,21 @@ spec:
                         minimumTlsVersion:
                           type: string
                           default: ""
+                    elasticache:
+                      type: object
+                      default: {}
+                      properties:
+                        atRestEncryptionEnabled:
+                          type: boolean
+                          default: false
+                        transitEncryptionEnabled:
+                          type: boolean
+                          default: false
+                        tags:
+                          type: object
+                          additionalProperties:
+                            type: string
+                          default: {}
                     tags:
                       type: object
                       additionalProperties:
@@ -774,6 +789,21 @@ spec:
                         minimumTlsVersion:
                           type: string
                           default: ""
+                    elasticache:
+                      type: object
+                      default: {}
+                      properties:
+                        atRestEncryptionEnabled:
+                          type: boolean
+                          default: false
+                        transitEncryptionEnabled:
+                          type: boolean
+                          default: false
+                        tags:
+                          type: object
+                          additionalProperties:
+                            type: string
+                          default: {}
                     tags:
                       type: object
                       additionalProperties:
