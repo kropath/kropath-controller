@@ -98,11 +98,22 @@ All agents use these standard keys in the Multica issue metadata bag. Keys outsi
 
 ### Format specification for `blocked_by`
 
-`blocked_by` contains one or more prerequisite issue UUIDs. For single blockers, write the UUID directly. For multiple blockers, comma-separate UUIDs with no spaces (e.g. `12345678-1234-1234-1234-123456789abc,87654321-4321-4321-4321-abcdef123456`). The ticket is unblocked only when every referenced blocker is `done`. Prefer UUIDs over `KRO-nnn` identifiers (though both parse correctly). Never write logs, prose, or descriptions into this key.
+`blocked_by` contains one or more prerequisite issue UUIDs. For single blockers, write the UUID
+directly. For multiple blockers, comma-separate UUIDs with no spaces (e.g.
+`12345678-1234-1234-1234-123456789abc,87654321-4321-4321-4321-abcdef123456`). The ticket is
+unblocked only when every referenced blocker is `done`. Prefer UUIDs over `KRO-nnn` identifiers
+(though both parse correctly). Never write logs, prose, or descriptions into this key.
 
 ### Native table scaffolding (do not migrate)
 
-The Multica database defines `issue_dependency`, `issue_pull_request`, and `github_pull_request` tables in migration `001_init.up.sql`, but **these are unimplemented scaffolding and must not be migrated onto.** The `issue_dependency` table has zero rows and no service-layer wiring. The PR tables are implemented in the GitHub handler but inactive because the GitHub App is never installed on this workspace. The metadata bag (`blocked_by`, `pr_url`, `pr_number`) is the canonical and correct home for these values. If the GitHub App is ever installed in the future, `issue_pull_request` and `github_pull_request` will begin populating from webhooks alongside the metadata keys agents write — flag that moment as a thing to revisit for potential consolidation.
+The Multica database defines `issue_dependency`, `issue_pull_request`, and `github_pull_request`
+tables in migration `001_init.up.sql`, but **these are unimplemented scaffolding and must not be
+migrated onto.** The `issue_dependency` table has zero rows and no service-layer wiring. The PR
+tables are implemented in the GitHub handler but inactive because the GitHub App is never
+installed on this workspace. The metadata bag (`blocked_by`, `pr_url`, `pr_number`) is the
+canonical and correct home for these values. If the GitHub App is ever installed in the future,
+`issue_pull_request` and `github_pull_request` will begin populating from webhooks alongside the
+metadata keys agents write — flag that moment as a thing to revisit for potential consolidation.
 
 ### Usage rules
 
