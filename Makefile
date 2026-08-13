@@ -82,7 +82,9 @@ check-features: ## CI gate: fail if docs/features.yaml is stale (run make genera
 
 # ─── Container image ────────────────────────────────────────────────────────────
 
-docker-build: ## Build the container image (version-stamped), tagged with the short git SHA and 'latest'.
+# Single-architecture (the host's) on purpose: buildx cannot --load a multi-platform
+# image into the local daemon. CI publishes linux/amd64 + linux/arm64 manifests.
+docker-build: ## Build the container image for the host architecture (version-stamped), tagged with the short git SHA and 'latest'.
 	docker build \
 		--build-arg VERSION=$(VERSION) \
 		--build-arg GIT_COMMIT=$(GIT_COMMIT) \

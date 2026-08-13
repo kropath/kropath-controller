@@ -12,7 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.26.5 AS builder
+# Pin the builder to the *build* platform and let Go cross-compile to the target.
+# Go cross-compiles natively, so this is far faster than emulating the target
+# platform under QEMU.
+FROM --platform=$BUILDPLATFORM golang:1.26.5 AS builder
+
+# Supplied automatically by BuildKit; defaults keep a plain `docker build` working.
+ARG TARGETOS=linux
+ARG TARGETARCH
 
 ARG VERSION=dev
 ARG GIT_COMMIT=none
@@ -27,7 +34,7 @@ COPY api/ api/
 COPY cmd/ cmd/
 COPY internal/ internal/
 
-RUN CGO_ENABLED=0 GOOS=linux go build \
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build \
     -ldflags "-s -w \
         -X github.com/kropath/kropath-controller/internal/version.Version=${VERSION} \
         -X github.com/kropath/kropath-controller/internal/version.GitCommit=${GIT_COMMIT} \
