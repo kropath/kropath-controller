@@ -58,6 +58,7 @@ CHAINSAW_FLAGS   := --parallel 1 --report-format JUNIT-TEST --report-path $(REPO
         test-apigatewayv2 test-autoscaling test-cwl test-dynamodb test-ec2 \
         test-ecr test-ecs test-efs test-eks test-elasticache test-eventbridge \
         test-rds test-secretsmanager test-sns test-sqs test-stepfunctions \
+        test-version \
         test-chainsaw \
         install-tools gosec vulncheck security \
         help default
@@ -278,6 +279,10 @@ test-sqs: ## Run SQS cascade Chainsaw suite (ctrl-sqs-01).
 test-stepfunctions: ## Run Step Functions cascade Chainsaw suite (ctrl-sfn-01).
 	@mkdir -p $(REPORT_DIR)
 	$(CHAINSAW) test tests/stepfunctions/ctrl-sfn-01/ $(CHAINSAW_FLAGS)
+
+test-version: ## Run build-info and feature-enabled metrics Chainsaw suite (ctrl-version-01).
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/version/ctrl-version-01/ $(CHAINSAW_FLAGS)
 
 test-chainsaw: chainsaw-stop chainsaw-start chainsaw-wait ## Stop any stale controller, start fresh, run ALL Chainsaw suites, then stop it.
 	@mkdir -p $(REPORT_DIR)
