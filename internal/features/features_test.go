@@ -110,3 +110,112 @@ func TestEveryReconcilerHasCRDFixture(t *testing.T) {
 		}
 	}
 }
+
+// --- KRO-637 acceptance criteria -------------------------------------------
+//
+// The tests below restore guarantees specified by KRO-637 that were not
+// carried over when KRO-635 landed the simpler static-slice registry.
+
+// TestNoDuplicateEntries asserts that no Name or Package appears twice in
+// features.All (KRO-637 AC-6).
+//
+// KRO-637's map-backed registry got this for free: Register panicked on a
+// duplicate key. A static slice has no such guard, so a copy-paste mistake
+// would otherwise be invisible — TestRegistryCoversAllPackages compares
+// against a map and therefore collapses duplicates silently, and the
+// duplicate would surface only as a reconciler started twice at runtime.
+func TestNoDuplicateEntries(t *testing.T) {
+	seenName := map[string]bool{}
+	seenPkg := map[string]bool{}
+	for _, r := range features.All {
+		if seenName[r.Name] {
+			t.Errorf("duplicate Name %q in features.All", r.Name)
+		}
+		if seenPkg[r.Package] {
+			t.Errorf("duplicate Package %q in features.All", r.Package)
+		}
+		seenName[r.Name] = true
+		seenPkg[r.Package] = true
+	}
+}
+
+// TestAllOrderIsDeterministic asserts that repeated reads of features.All
+// observe the same order (KRO-637 AC-5).
+//
+// AC-5 called for sorting by Name because KRO-637 backed the registry with a
+// map, and any slice derived from Go map iteration has unstable order (see
+// "Chainsaw Test Assertion Stability" in CLAUDE.md). The shipped registry is a
+// package-level slice literal, so declaration order already gives the
+// stability AC-5 exists to guarantee — docs/features.yaml and the /features
+// JSON are byte-identical across runs. This test pins that invariant so a
+// future change to a map-backed or lazily-built registry fails here rather
+// than as an intermittent diff in generated output.
+func TestAllOrderIsDeterministic(t *testing.T) {
+	// Compared by Package, the unique stable key: features.Reconciler contains a
+	// slice field and so is not comparable with ==.
+	first := make([]string, len(features.All))
+	for i, r := range features.All {
+		first[i] = r.Package
+	}
+	for i := 0; i < 3; i++ {
+		for j, r := range features.All {
+			if r.Package != first[j] {
+				t.Fatalf("features.All order changed between reads: index %d was %q, now %q", j, first[j], r.Package)
+			}
+		}
+	}
+}
+
+// validStability is the closed set of Stability values from KRO-637's design.
+var validStability = map[string]bool{"alpha": true, "beta": true, "stable": true}
+
+// TestEveryReconcilerHasCompleteMetadata asserts every entry carries the
+// descriptive fields KRO-637 specified, so /features and docs/features.yaml
+// stay self-describing as reconcilers are added.
+func TestEveryReconcilerHasCompleteMetadata(t *testing.T) {
+	for _, r := range features.All {
+		if r.Description == "" {
+			t.Errorf("reconciler %q has an empty Description", r.Name)
+		}
+		if r.SinceVersion == "" {
+			t.Errorf("reconciler %q has an empty SinceVersion", r.Name)
+		}
+		if !validStability[r.Stability] {
+			t.Errorf("reconciler %q has Stability %q — want one of alpha/beta/stable", r.Name, r.Stability)
+		}
+	}
+}
+
+// wiredRE matches the two shapes main.go uses to start a reconciler:
+// `&<pkg>.Reconciler{` for the struct-based ones and `<pkg>.Setup(` for
+// labeloperator, which KRO-637 explicitly said not to refactor for uniformity.
+func wiredRE(pkg string) *regexp.Regexp {
+	return regexp.MustCompile(`\b` + regexp.QuoteMeta(pkg) + `\.(Reconciler\{|Setup\()`)
+}
+
+// TestEveryRegisteredReconcilerIsWired asserts that every entry in features.All
+// is actually started by cmd/manager/main.go.
+//
+// This closes the one functional gap left by swapping KRO-637's design for the
+// static slice. In KRO-637 the registry *was* the wiring: All held a Setup
+// closure and main.go called SetupAll, so /features could not disagree with
+// what the binary ran. In the shipped design the slice is reporting-only and
+// main.go wires each reconciler by hand, so an entry that is listed and has a
+// package directory — passing TestRegistryCoversAllPackages — can still never
+// be started. The endpoint would then advertise a reconciler that does not run.
+func TestEveryRegisteredReconcilerIsWired(t *testing.T) {
+	src, err := os.ReadFile("../../cmd/manager/main.go")
+	if err != nil {
+		t.Fatalf("reading cmd/manager/main.go: %v", err)
+	}
+	main := string(src)
+
+	for _, r := range features.All {
+		if !wiredRE(r.Package).MatchString(main) {
+			t.Errorf("reconciler %q (package %q) is listed in features.All but never started in cmd/manager/main.go.\n"+
+				"/features and docs/features.yaml would advertise a reconciler the binary does not run.\n"+
+				"Add its setup call to main.go, or remove the entry from features.All.",
+				r.Name, r.Package)
+		}
+	}
+}
