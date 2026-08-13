@@ -2,8 +2,7 @@
 
 Go controller for [kropath](https://github.com/kropath) (kro + golden path), a multi-cloud golden
 path platform. `kropath-controller` is a multi-reconciler `kropath-operator` binary built on a
-single `controller-runtime` Manager — one Reconciler struct per feature, each independently
-enabled by a feature flag.
+single `controller-runtime` Manager — one Reconciler struct per feature.
 
 See `docs/STANDARDS.md` and ADR-015 (`kropath-core`) for the full architecture reference.
 
@@ -95,9 +94,18 @@ make security        # gosec (SAST) + govulncheck (dependency CVEs)
 
 ## CI
 
-`.github/workflows/ci.yaml` runs lint, unit tests, security scans, Chainsaw integration tests, and
-(on push to `main`) builds and pushes the container image to
-`ghcr.io/kropath/kropath-controller`.
+`.github/workflows/ci.yaml` runs on pull requests and on push to `main`, with two exceptions:
+
+- **Chainsaw integration tests** run on pull requests only. A push to `main` runs lint, unit
+  tests, feature-registry drift check, security scans, and the image build — it does not
+  re-run Chainsaw against an identical tree that already passed on the PR head.
+- **Markdown-only changes** skip CI entirely. A commit or PR that touches only `*.md` files
+  produces no workflow run. (Branch protection is not enabled on `main`, so skipped runs do
+  not block merges.)
+
+On push to `main`, the image build publishes `ghcr.io/kropath/kropath-controller:latest` and
+`ghcr.io/kropath/kropath-controller:sha-<short>`. `release.yaml` keeps its unfiltered push
+trigger so release-please sees doc-only commits for its changelog.
 
 ## Repository layout
 
