@@ -35,7 +35,7 @@
 - Single Deployment, single RBAC manifest, single `/metrics` endpoint (port 8080)
 - Health probes: `/healthz` port 8081 (manager alive), `/readyz` port 8081 (leader lease + watches established)
 - `/features` endpoint on `:8080` — returns version, git commit, and the live reconciler list as JSON
-- **No per-feature flags.** Every reconciler in `internal/features.All` runs unconditionally. To add a reconciler: create its package under `internal/reconciler/<pkg>/`, add an entry to `features.All`, and run `make generate-features`. Missing registrations fail `TestRegistryCoversAllPackages`.
+- **No per-feature flags.** Every reconciler in `internal/features.All` runs unconditionally. To add a reconciler: create its package under `internal/reconciler/<pkg>/`, add an entry to `features.All`, and run `make features-gen`. Missing registrations fail `TestRegistryCoversAllPackages`.
 - **Every watched kind must have a CRD in `tests/fixtures/crds/`.** With the flags retired, a reconciler whose CRD is missing from the test cluster takes down the **whole manager** two minutes after startup, which surfaces as unrelated Chainsaw suites timing out. `TestEveryReconcilerHasCRDFixture` catches it at unit-test time; `make chainsaw-setup` derives its `kubectl wait` list from the fixture directory. See `docs/frequent-chainsaw-errors.md` §1.
 
 ### Chainsaw tests
