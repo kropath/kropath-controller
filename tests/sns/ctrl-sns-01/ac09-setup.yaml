@@ -1,0 +1,24 @@
+# AC-9: globalSNSConfig with defaults.deliveryFeedback.sqs (level 7).
+apiVersion: aws.kropath.run/v1alpha1
+kind: SNSConfig
+metadata:
+  name: ac9-general-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  defaults:
+    deliveryFeedback:
+      sqs:
+        successFeedbackRoleArn: "arn:aws:iam::123456789012:role/sqs-success-default"
+        successFeedbackSampleRate: "50"
+---
+# Base local SNSConfig in events-prod — empty mandatory and defaults.
+# Reused across multiple AC steps as the namespaced resource under test.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SNSConfig
+metadata:
+  name: ac9-general-policy
+  namespace: events-prod
+spec:
+  mandatory: {}
+  defaults: {}

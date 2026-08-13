@@ -1,0 +1,9 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: DynamoDBConfig
+metadata:
+  name: ac11-general-table
+  namespace: dynamodb
+status:
+  effectiveConfig:
+    mandatory:
+      kmsMasterKeyId: "arn:aws:kms:us-east-1:111122223333:key/test-key"

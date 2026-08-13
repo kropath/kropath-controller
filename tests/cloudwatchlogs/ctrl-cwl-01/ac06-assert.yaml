@@ -1,0 +1,10 @@
+# Assert AC-6: defaults.retentionDays=90 from level-6 localCWLConfig; mandatory stays 0.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: ac6-ac6-cwl-policy
+  namespace: logging-prod
+status:
+  effectiveConfig:
+    defaults:
+      retentionDays: 90

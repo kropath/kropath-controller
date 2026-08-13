@@ -1,0 +1,20 @@
+# AC-14: globalRDSConfig.mandatory.backtrackWindow: 86400 (cluster-only, Aurora MySQL).
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac14-general-instance
+  namespace: kro-system
+  labels:
+    aws.kropath.run/resource-name: ac14-general-instance
+spec:
+  mandatory:
+    backtrackWindow: 86400
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac14-general-instance
+  namespace: rds
+  labels:
+    aws.kropath.run/resource-name: ac14-general-instance
+spec: {}

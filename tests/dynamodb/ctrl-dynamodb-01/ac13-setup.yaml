@@ -1,0 +1,16 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: DynamoDBConfig
+metadata:
+  name: ac13-general-table
+  namespace: kro-system
+spec:
+  mandatory:
+    syncedLabels:
+      data-class: "internal"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: DynamoDBConfig
+metadata:
+  name: ac13-general-table
+  namespace: dynamodb
+spec: {}

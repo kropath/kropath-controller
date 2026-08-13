@@ -61,7 +61,8 @@ job; runs in parallel with it, not blocking on it):
 
 ## Out of Scope
 
-- Multi-arch builds (linux/amd64 only for now).
+- Multi-arch builds (linux/amd64 only for now). *(Superseded 2026-08-13: CI and
+  release now publish `linux/amd64` + `linux/arm64` manifests.)*
 - Image signing / SBOM attestation.
 - Helm chart or Deployment manifest updates to reference the new image (tracked
   separately if/when needed).

@@ -1,0 +1,15 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: DynamoDBConfig
+metadata:
+  name: ac12-general-table
+  namespace: kro-system
+spec:
+  defaults:
+    namingTemplate: "{namespace}-{name}"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: DynamoDBConfig
+metadata:
+  name: ac12-general-table
+  namespace: dynamodb
+spec: {}

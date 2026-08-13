@@ -1,0 +1,19 @@
+# AC-16: globalKropathConfig with aws.region and aws.accountId for provider identity.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac16-general-instance
+  namespace: kro-system
+spec:
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac16-general-instance
+  namespace: rds
+  labels:
+    aws.kropath.run/resource-name: ac16-general-instance
+spec: {}

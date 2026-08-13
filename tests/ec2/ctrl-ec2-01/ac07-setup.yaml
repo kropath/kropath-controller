@@ -1,0 +1,22 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: EC2Config
+metadata:
+  name: ac7-general-policy
+  namespace: kro-system
+  labels:
+    aws.kropath.run/resource-name: ac7-general-policy
+spec:
+  mandatory:
+    ebsDefaultKmsKeyId: "arn:aws:kms:us-east-1:123456789012:key/abc12345"
+  defaults: {}
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: EC2Config
+metadata:
+  name: ac7-general-policy
+  namespace: network-prod
+  labels:
+    aws.kropath.run/resource-name: ac7-general-policy
+spec:
+  mandatory: {}
+  defaults: {}

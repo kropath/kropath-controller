@@ -1,0 +1,30 @@
+# Global KropathConfig — sets mandatory.tags (level 1 org-wide tags).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac8-general-storage
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      cost-centre: platform
+---
+# Global EFSConfig — sets mandatory.tags (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: EFSConfig
+metadata:
+  name: ac8-general-storage
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      resource-type: storage
+---
+# Local EFSConfig (namespace=efs) — base resource used across multiple AC steps.
+# No mandatory or defaults fields set; tests layer governance on top.
+apiVersion: aws.kropath.run/v1alpha1
+kind: EFSConfig
+metadata:
+  name: ac8-general-storage
+  namespace: efs
+spec: {}

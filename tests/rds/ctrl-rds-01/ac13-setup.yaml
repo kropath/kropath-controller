@@ -1,0 +1,20 @@
+# AC-13: globalRDSConfig.mandatory.serverlessV2ScalingMaxCapacity: 128.0 (cluster-only).
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac13-general-instance
+  namespace: kro-system
+  labels:
+    aws.kropath.run/resource-name: ac13-general-instance
+spec:
+  mandatory:
+    serverlessV2ScalingMaxCapacity: 128.0
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac13-general-instance
+  namespace: rds
+  labels:
+    aws.kropath.run/resource-name: ac13-general-instance
+spec: {}

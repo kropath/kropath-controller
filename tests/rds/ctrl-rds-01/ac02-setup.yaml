@@ -1,0 +1,20 @@
+# AC-2: globalRDSConfig.mandatory.storageEncrypted: true (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac2-general-instance
+  namespace: kro-system
+  labels:
+    aws.kropath.run/resource-name: ac2-general-instance
+spec:
+  mandatory:
+    storageEncrypted: true
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac2-general-instance
+  namespace: rds
+  labels:
+    aws.kropath.run/resource-name: ac2-general-instance
+spec: {}

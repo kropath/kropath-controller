@@ -1,0 +1,15 @@
+# Assert AC-12: effCfg.mandatory.tags is the union of KropathConfig.mandatory.tags
+# and ElastiCacheConfig.mandatory.tags; syncedLabels propagates from ElastiCacheConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: ElastiCacheConfig
+metadata:
+  name: ac12-general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      tags:
+        cost-centre: infra
+        cache-tier: shared
+      syncedLabels:
+        data-class: internal

@@ -1,0 +1,21 @@
+# AC-12: globalSQSConfig with mandatory.syncedLabels={data-class: internal} (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: SQSConfig
+metadata:
+  name: ac12-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    syncedLabels:
+      data-class: internal
+  defaults: {}
+---
+# Shared empty local SQSConfig — all cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SQSConfig
+metadata:
+  name: ac12-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

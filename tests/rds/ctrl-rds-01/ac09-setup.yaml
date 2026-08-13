@@ -1,0 +1,19 @@
+# AC-9: globalKropathConfig.mandatory.rds.kmsKeyID (level 1) forces org-wide KMS key.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac9-general-instance
+  namespace: kro-system
+spec:
+  mandatory:
+    rds:
+      kmsKeyID: "arn:aws:kms:ap-southeast-2:123456789012:key/org-rds-key"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac9-general-instance
+  namespace: rds
+  labels:
+    aws.kropath.run/resource-name: ac9-general-instance
+spec: {}

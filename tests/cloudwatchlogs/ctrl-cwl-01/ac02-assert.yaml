@@ -1,0 +1,10 @@
+# Assert AC-2: mandatory.kmsKeyId="arn:aws:kms:ap-southeast-2:123:key/rc-key" from level-3 globalCWLConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: ac2-ac2-cwl-policy
+  namespace: logging-prod
+status:
+  effectiveConfig:
+    mandatory:
+      kmsKeyId: "arn:aws:kms:ap-southeast-2:123:key/rc-key"

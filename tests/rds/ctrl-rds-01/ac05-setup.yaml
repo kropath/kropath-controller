@@ -1,0 +1,20 @@
+# AC-5: globalRDSConfig.mandatory.deletionProtection: true (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac5-general-instance
+  namespace: kro-system
+  labels:
+    aws.kropath.run/resource-name: ac5-general-instance
+spec:
+  mandatory:
+    deletionProtection: true
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac5-general-instance
+  namespace: rds
+  labels:
+    aws.kropath.run/resource-name: ac5-general-instance
+spec: {}

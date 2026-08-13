@@ -1,0 +1,22 @@
+# AC-5: globalKMSConfig defaults.keySpec="SYMMETRIC_DEFAULT" (level 7).
+# mandatory.keySpec is not set.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
+metadata:
+  name: ac5-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    keySpec: ""
+  defaults:
+    keySpec: "SYMMETRIC_DEFAULT"
+---
+# Shared empty local KMSConfig — all cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
+metadata:
+  name: ac5-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

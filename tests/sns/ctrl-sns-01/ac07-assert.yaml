@@ -1,0 +1,10 @@
+# Assert AC-7: mandatory.dataProtectionPolicy from level-3 globalSNSConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SNSConfig
+metadata:
+  name: ac7-general-policy
+  namespace: events-prod
+status:
+  effectiveConfig:
+    mandatory:
+      dataProtectionPolicy: '{"Name":"org-policy","Statements":[]}'

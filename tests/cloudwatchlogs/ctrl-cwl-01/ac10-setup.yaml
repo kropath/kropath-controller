@@ -1,0 +1,25 @@
+# AC-10: globalCloudWatchLogsConfig with mandatory.syncedLabels (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: ac10-ac10-cwl-policy
+  namespace: kro-system
+  labels:
+    aws.kropath.run/resource-name: ac10-ac10-cwl-policy
+spec:
+  mandatory:
+    syncedLabels:
+      data-class: internal
+  defaults: {}
+---
+# Empty local CloudWatchLogsConfig for ac10 — cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: ac10-ac10-cwl-policy
+  namespace: logging-prod
+  labels:
+    aws.kropath.run/resource-name: ac10-ac10-cwl-policy
+spec:
+  mandatory: {}
+  defaults: {}

@@ -1,0 +1,43 @@
+# AC-5: globalIAMConfig with only defaults.maxSessionDurationSeconds=3600 set.
+apiVersion: aws.kropath.run/v1alpha1
+kind: IAMConfig
+metadata:
+  name: ac5-general-policy-defaults
+  namespace: kro-system
+spec:
+  mandatory:
+    permissionsBoundaryArn: ""
+    blockIamUserAccessKeys: false
+    maxSessionDurationSeconds: 0
+    tags: {}
+    syncedLabels: {}
+    syncedAnnotations: {}
+  defaults:
+    permissionsBoundaryArn: ""
+    blockIamUserAccessKeys: false
+    maxSessionDurationSeconds: 3600
+    tags: {}
+    syncedLabels: {}
+    syncedAnnotations: {}
+---
+# AC-5: namespaced IAMConfig used to validate defaults-only propagation.
+apiVersion: aws.kropath.run/v1alpha1
+kind: IAMConfig
+metadata:
+  name: ac5-general-policy-defaults
+  namespace: payments-prod
+spec:
+  mandatory:
+    permissionsBoundaryArn: ""
+    blockIamUserAccessKeys: false
+    maxSessionDurationSeconds: 0
+    tags: {}
+    syncedLabels: {}
+    syncedAnnotations: {}
+  defaults:
+    permissionsBoundaryArn: ""
+    blockIamUserAccessKeys: false
+    maxSessionDurationSeconds: 0
+    tags: {}
+    syncedLabels: {}
+    syncedAnnotations: {}

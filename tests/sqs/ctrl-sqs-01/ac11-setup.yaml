@@ -1,0 +1,21 @@
+# AC-11: globalSQSConfig with defaults.namingTemplate="{namespace}-{name}" (level 7).
+# KropathConfig.sqs does not carry namingTemplate — governed only at SQSConfig levels.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SQSConfig
+metadata:
+  name: ac11-general-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  defaults:
+    namingTemplate: "{namespace}-{name}"
+---
+# Shared empty local SQSConfig — all cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SQSConfig
+metadata:
+  name: ac11-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

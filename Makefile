@@ -25,10 +25,20 @@ BINARY           := bin/kropath-operator
 MAIN_PKG         := ./cmd/manager
 IMAGE_REGISTRY   := ghcr.io/kropath
 IMAGE_NAME       := kropath-controller
-IMAGE_TAG        ?= $(shell git rev-parse --short HEAD)
+IMAGE_TAG        ?= $(shell git rev-parse --short=7 HEAD)
 REPORT_DIR       := test-results
 CONTROLLER_LOG   := /tmp/kropath-controller/controller.log
 CONTROLLER_PID   := /tmp/kropath-controller/pid
+
+# ─── Version stamping ──────────────────────────────────────────────────────────
+VERSION    ?= dev
+GIT_COMMIT := $(shell git rev-parse --short=7 HEAD 2>/dev/null || echo none)
+BUILD_DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+MODULE     := github.com/kropath/kropath-controller
+LDFLAGS    := -s -w \
+    -X $(MODULE)/internal/version.Version=$(VERSION) \
+    -X $(MODULE)/internal/version.GitCommit=$(GIT_COMMIT) \
+    -X "$(MODULE)/internal/version.BuildDate=$(BUILD_DATE)"
 
 # ─── Test config ───────────────────────────────────────────────────────────────
 KIND_CLUSTER     := kropath-controller-test
@@ -40,10 +50,15 @@ GOLANGCI         ?= golangci-lint
 CHAINSAW_FLAGS   := --parallel 1 --report-format JUNIT-TEST --report-path $(REPORT_DIR)/
 
 .PHONY: all build test test-cover vet fmt lint \
+        generate-features check-features \
         docker-build docker-push \
         kind-up kind-down \
         chainsaw-setup chainsaw-start chainsaw-wait chainsaw-stop \
-        test-iam test-s3 test-kms test-policy test-label-operator test-chainsaw \
+        test-iam test-s3 test-kms test-policy test-label-operator \
+        test-apigatewayv2 test-autoscaling test-cwl test-dynamodb test-ec2 \
+        test-ecr test-ecs test-efs test-eks test-elasticache test-eventbridge \
+        test-rds test-secretsmanager test-sns test-sqs test-stepfunctions \
+        test-chainsaw \
         install-tools gosec vulncheck security \
         help default
 
@@ -53,14 +68,28 @@ all: build ## Build the operator binary (default target).
 
 # ─── Build ─────────────────────────────────────────────────────────────────────
 
-build: ## Compile the operator binary → bin/kropath-operator.
+build: ## Compile the operator binary → bin/kropath-operator (with version ldflags).
 	@mkdir -p bin
-	go build -o $(BINARY) $(MAIN_PKG)
+	go build -ldflags "$(LDFLAGS)" -o $(BINARY) $(MAIN_PKG)
+
+# ─── Feature registry ──────────────────────────────────────────────────────────
+
+generate-features: ## Regenerate docs/features.yaml from internal/features.All.
+	go run ./cmd/gen-features
+
+check-features: ## CI gate: fail if docs/features.yaml is stale (run make generate-features to fix).
+	go run ./cmd/gen-features --check
 
 # ─── Container image ────────────────────────────────────────────────────────────
 
-docker-build: ## Build the container image, tagged with the short git SHA and 'latest'.
-	docker build -t $(IMAGE_REGISTRY)/$(IMAGE_NAME):$(IMAGE_TAG) \
+# Single-architecture (the host's) on purpose: buildx cannot --load a multi-platform
+# image into the local daemon. CI publishes linux/amd64 + linux/arm64 manifests.
+docker-build: ## Build the container image for the host architecture (version-stamped), tagged with the short git SHA and 'latest'.
+	docker build \
+		--build-arg VERSION=$(VERSION) \
+		--build-arg GIT_COMMIT=$(GIT_COMMIT) \
+		--build-arg BUILD_DATE="$(BUILD_DATE)" \
+		-t $(IMAGE_REGISTRY)/$(IMAGE_NAME):$(IMAGE_TAG) \
 		-t $(IMAGE_REGISTRY)/$(IMAGE_NAME):latest .
 
 docker-push: ## Push the SHA-tagged and 'latest' images (CI use; requires prior registry login).
@@ -116,31 +145,18 @@ kind-down: ## Delete the kind cluster.
 #
 # On failure mid-run, clean up manually: make chainsaw-stop kind-down
 
+# Every CRD shipped under tests/fixtures/crds/, as `crd/<metadata.name>` arguments.
+# Derived from the fixture files rather than hand-listed: a kind that a reconciler
+# watches but whose CRD is absent from the cluster makes controller-runtime's informer
+# never sync, and the manager exits with a fatal error after the 2-minute cache-sync
+# timeout. That surfaces as every Chainsaw suite after the ~2-minute mark timing out,
+# which is confusing to diagnose and has nothing to do with those suites. Deriving the
+# list keeps it from drifting out of sync with the fixtures again (KRO-635).
+CRD_WAIT_TARGETS := $(shell awk '/^  name: [a-z0-9.]+$$/ {print "crd/" $$2}' tests/fixtures/crds/*.yaml | sort -u)
+
 chainsaw-setup: build kind-up ## Create kind cluster, apply CRDs, create test namespaces.
 	kubectl apply -f tests/fixtures/crds/
-	kubectl wait --for=condition=Established --timeout=60s \
-		crd/kropathconfigs.aws.kropath.run \
-		crd/iamconfigs.aws.kropath.run \
-		crd/s3configs.aws.kropath.run \
-		crd/kmsconfigs.aws.kropath.run \
-		crd/sqsconfigs.aws.kropath.run \
-		crd/policydocuments.aws.kropath.run \
-		crd/awsiamroles.aws.kropath.run \
-		crd/awss3buckets.aws.kropath.run \
-		crd/awslambdafunctions.aws.kropath.run \
-		crd/awssqsqueues.aws.kropath.run \
-		crd/awskmskeys.aws.kropath.run \
-		crd/awssecretsmanagersecrets.aws.kropath.run \
-		crd/snsconfigs.aws.kropath.run \
-		crd/cloudwatchlogsconfigs.aws.kropath.run \
-		crd/ecsconfigs.aws.kropath.run \
-		crd/eksconfigs.aws.kropath.run \
-		crd/ec2configs.aws.kropath.run \
-		crd/efsconfigs.aws.kropath.run \
-		crd/elasticacheconfigs.aws.kropath.run \
-		crd/ecrconfigs.aws.kropath.run \
-		crd/cloudstoragebucketconfigs.gcp.kropath.run \
-		crd/kropathconfigs.kropath.run
+	kubectl wait --for=condition=Established --timeout=60s $(CRD_WAIT_TARGETS)
 	@for ns in $(TEST_NAMESPACES); do \
 		kubectl create namespace "$$ns" --dry-run=client -o yaml | kubectl apply -f -; \
 	done
@@ -152,25 +168,6 @@ chainsaw-start: chainsaw-setup ## Build, set up CRDs, and start the operator in 
 	else \
 		KUBECONFIG="$${HOME}/.kube/config" $(BINARY) \
 			--health-probe-bind-address=:$(HEALTH_PORT) \
-			--enable-kms-cascade \
-			--enable-sqs-cascade \
-			--enable-secretsmanager-cascade \
-			--enable-sns-cascade \
-			--enable-dynamodb-cascade \
-			--enable-eventbridge-cascade \
-			--enable-cloudwatchlogs-cascade \
-			--enable-rds-cascade \
-			--enable-autoscaling-cascade \
-			--enable-ecs-cascade \
-			--enable-eks-cascade \
-			--enable-ec2-cascade \
-			--enable-apigatewayv2-cascade \
-			--enable-efs-cascade \
-			--enable-elasticache-cascade \
-			--enable-ecr-cascade \
-			--enable-stepfunctions-cascade \
-			--enable-poldoc \
-			--enable-label-operator \
 			> $(CONTROLLER_LOG) 2>&1 & echo $$! > $(CONTROLLER_PID); \
 		echo "Controller started (PID $$(cat $(CONTROLLER_PID)))."; \
 	fi
@@ -217,6 +214,70 @@ test-policy: ## Run policy document Chainsaw suites (phase2-refs + phase3-merge)
 test-label-operator: ## Run label-operator Chainsaw suite (ctrl-label-op-01).
 	@mkdir -p $(REPORT_DIR)
 	$(CHAINSAW) test tests/label-operator/ctrl-label-op-01/ $(CHAINSAW_FLAGS)
+
+test-apigatewayv2: ## Run API Gateway v2 cascade Chainsaw suite (ctrl-apigwv2-01).
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/apigatewayv2/ctrl-apigwv2-01/ $(CHAINSAW_FLAGS)
+
+test-autoscaling: ## Run Auto Scaling cascade Chainsaw suite (ctrl-autoscaling-01).
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/autoscaling/ctrl-autoscaling-01/ $(CHAINSAW_FLAGS)
+
+test-cwl: ## Run CloudWatch Logs cascade Chainsaw suite (ctrl-cwl-01).
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/cloudwatchlogs/ctrl-cwl-01/ $(CHAINSAW_FLAGS)
+
+test-dynamodb: ## Run DynamoDB cascade Chainsaw suite (ctrl-dynamodb-01).
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/dynamodb/ctrl-dynamodb-01/ $(CHAINSAW_FLAGS)
+
+test-ec2: ## Run EC2 cascade Chainsaw suite (ctrl-ec2-01).
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/ec2/ctrl-ec2-01/ $(CHAINSAW_FLAGS)
+
+test-ecr: ## Run ECR cascade Chainsaw suite (ctrl-ecr-01).
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/ecr/ctrl-ecr-01/ $(CHAINSAW_FLAGS)
+
+test-ecs: ## Run ECS cascade Chainsaw suite (ctrl-ecs-01).
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/ecs/ctrl-ecs-01/ $(CHAINSAW_FLAGS)
+
+test-efs: ## Run EFS cascade Chainsaw suite (ctrl-efs-01).
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/efs/ctrl-efs-01/ $(CHAINSAW_FLAGS)
+
+test-eks: ## Run EKS cascade Chainsaw suite (ctrl-eks-01).
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/eks/ctrl-eks-01/ $(CHAINSAW_FLAGS)
+
+test-elasticache: ## Run ElastiCache cascade Chainsaw suite (ctrl-elasticache-01).
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/elasticache/ctrl-elasticache-01/ $(CHAINSAW_FLAGS)
+
+test-eventbridge: ## Run EventBridge cascade Chainsaw suite (ctrl-eventbridge-01).
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/eventbridge/ctrl-eventbridge-01/ $(CHAINSAW_FLAGS)
+
+test-rds: ## Run RDS cascade Chainsaw suite (ctrl-rds-01).
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/rds/ctrl-rds-01/ $(CHAINSAW_FLAGS)
+
+test-secretsmanager: ## Run Secrets Manager cascade Chainsaw suite (ctrl-secretsmanager-01).
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/secretsmanager/ctrl-secretsmanager-01/ $(CHAINSAW_FLAGS)
+
+test-sns: ## Run SNS cascade Chainsaw suite (ctrl-sns-01).
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/sns/ctrl-sns-01/ $(CHAINSAW_FLAGS)
+
+test-sqs: ## Run SQS cascade Chainsaw suite (ctrl-sqs-01).
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/sqs/ctrl-sqs-01/ $(CHAINSAW_FLAGS)
+
+test-stepfunctions: ## Run Step Functions cascade Chainsaw suite (ctrl-sfn-01).
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/stepfunctions/ctrl-sfn-01/ $(CHAINSAW_FLAGS)
 
 test-chainsaw: chainsaw-stop chainsaw-start chainsaw-wait ## Stop any stale controller, start fresh, run ALL Chainsaw suites, then stop it.
 	@mkdir -p $(REPORT_DIR)

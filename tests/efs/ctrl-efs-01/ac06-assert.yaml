@@ -1,0 +1,10 @@
+# AC-C6: effectiveConfig.mandatory.backupEnabled=true from globalEFSConfig.mandatory.
+apiVersion: aws.kropath.run/v1alpha1
+kind: EFSConfig
+metadata:
+  name: ac6-general-storage
+  namespace: efs
+status:
+  effectiveConfig:
+    mandatory:
+      backupEnabled: true

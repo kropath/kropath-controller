@@ -1,0 +1,20 @@
+# AC-6: globalElastiCacheConfig with mandatory.automaticFailoverEnabled=true (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: ElastiCacheConfig
+metadata:
+  name: ac6-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    automaticFailoverEnabled: true
+  defaults: {}
+---
+# Shared empty local ElastiCacheConfig — all cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: ElastiCacheConfig
+metadata:
+  name: ac6-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

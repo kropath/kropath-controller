@@ -1,0 +1,12 @@
+# Assert AC-7: mandatory.allowedKeySpecs=["SYMMETRIC_DEFAULT","RSA_4096"] from level-1.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
+metadata:
+  name: ac7-general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      allowedKeySpecs:
+        - "SYMMETRIC_DEFAULT"
+        - "RSA_4096"

@@ -1,0 +1,10 @@
+# Assert AC-C5: defaults.healthCheckGracePeriod=600; mandatory.healthCheckGracePeriod absent.
+apiVersion: aws.kropath.run/v1alpha1
+kind: AutoScalingConfig
+metadata:
+  name: ac5-general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    defaults:
+      healthCheckGracePeriod: 600

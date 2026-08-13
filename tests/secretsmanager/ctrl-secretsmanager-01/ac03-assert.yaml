@@ -1,0 +1,10 @@
+# Assert AC-3: defaults.kmsKeyID from L7; mandatory.kmsKeyID must be absent.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SecretsManagerConfig
+metadata:
+  name: ac3-general-policy
+  namespace: secrets-prod
+status:
+  effectiveConfig:
+    defaults:
+      kmsKeyID: "alias/sm-default-key"

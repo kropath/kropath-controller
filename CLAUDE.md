@@ -2,7 +2,7 @@
 
 ## This Repo
 
-**kropath-controller** — Multi-reconciler `kropath-operator` binary. One `controller-runtime` Manager, one Reconciler struct per feature, each enabled by a feature flag. See `kropath-core/docs/design/policy-document-crd.md` §11 (P-1) for the architecture decision.
+**kropath-controller** — Multi-reconciler `kropath-operator` binary. One `controller-runtime` Manager, one Reconciler struct per feature. Every reconciler registered in `internal/features.All` runs unconditionally — there are no per-feature flags. See `kropath-core/docs/design/policy-document-crd.md` §11 (P-1) for the architecture decision.
 
 ### Reconciler 1 — Config merge (ADR-010)
 
@@ -34,27 +34,25 @@
 - Supports multiple replicas with leader election
 - Single Deployment, single RBAC manifest, single `/metrics` endpoint (port 8080)
 - Health probes: `/healthz` port 8081 (manager alive), `/readyz` port 8081 (leader lease + watches established)
-- All reconcilers are always enabled. The supported set is queryable at `/features` (see generated `docs/features.yaml`). Feature availability is determined by which image version is deployed, not by runtime flags.
+- `/features` endpoint on `:8080` — returns version, git commit, and the live reconciler list as JSON
+- **No per-feature flags.** Every reconciler in `internal/features.All` runs unconditionally. To add a reconciler: create its package under `internal/reconciler/<pkg>/`, add an entry to `features.All`, and run `make generate-features`. Missing registrations fail `TestRegistryCoversAllPackages`.
+- **Every watched kind must have a CRD in `tests/fixtures/crds/`.** With the flags retired, a reconciler whose CRD is missing from the test cluster takes down the **whole manager** two minutes after startup, which surfaces as unrelated Chainsaw suites timing out. `TestEveryReconcilerHasCRDFixture` catches it at unit-test time; `make chainsaw-setup` derives its `kubectl wait` list from the fixture directory. See `docs/frequent-chainsaw-errors.md` §1.
 
-### Chainsaw Test Assertion Stability
+### Chainsaw tests
 
-**Never assert a list/array field by exact position when its element order is not guaranteed deterministic — use item-level `(?...)` matching instead.**
+**Read `docs/frequent-chainsaw-errors.md` before writing or debugging a Chainsaw suite.**
+It covers the failure modes that are specific to this repo and expensive to rediscover:
+a missing CRD killing the manager mid-run, why suites use a unique resource name per
+step, why `skipDelete` does *not* transfer from kropath-aws, why a dropped `expect:`
+block masquerades as a rate-limiter error, and order-stable list assertions.
 
-**Why:** Any list built by iterating a Go map (or, in the sibling `kropath-aws` repo, a kro CEL `.merge().transformList()` chain) has iteration order that is not guaranteed stable across runs. A positional chainsaw `assert` on such a list is a latent flake — it can pass locally and fail in CI, or pass in isolation and fail under parallel execution, purely from map-order nondeterminism.
+The short version for a new suite: give every acceptance criterion its own resource
+name (`ac<N>-<family>-policy`), delete nothing between steps, and use one
+`ac<NN>-setup.yaml` plus one `ac<NN>-assert.yaml` per AC. `tests/eks/ctrl-eks-01/` is
+the reference layout. The controller pairs a namespaced config with its `kro-system`
+counterpart *by name*, so a per-step name is a complete isolation boundary.
 
-**How to apply:** This repo's current `effectiveConfig.mandatory.tags` / `.defaults.tags` / `syncedLabels` / `syncedAnnotations` fields are all **maps**, not lists, so today's asserts (e.g. `tests/kms/ctrl-kms-01/33-assert-ac15.yaml`) are order-stable and need no change. `PolicyDocument` statement merges are also stable — `spec.sources` are concatenated in source order, not iterated from a map. But if a future change adds or asserts a **list built from a map** (e.g. a config field ever serialized as `[]{key,value}`, or a merge algorithm that starts ranging over a map), pair a length check with a per-item match instead of a positional list:
-
-```yaml
-spec:
-  (length(tags)): 2
-  tags:
-    - (key == 'cost-centre'): true
-      value: platform
-    - (key == 'environment'): true
-      value: mandatory
-```
-
-See `kropath-aws/docs/frequent-rgd-errors.md` §6 "Flaky List/Array Asserts — CEL Map-to-List Transforms Have Unstable Order" for the fuller writeup and the pattern applied to that repo's kro RGD chainsaw tests.
+Dated write-ups of specific incidents live in `docs/troubleshooting-logs/`.
 
 ### Before Creating a PR
 

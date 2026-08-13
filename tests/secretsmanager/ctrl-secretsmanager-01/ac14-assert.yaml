@@ -1,0 +1,11 @@
+# Assert AC-14: effectiveConfig.aws.accountId and .region from globalKropathConfig.spec.aws.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SecretsManagerConfig
+metadata:
+  name: ac14-general-policy
+  namespace: secrets-prod
+status:
+  effectiveConfig:
+    aws:
+      accountId: "123456789012"
+      region: "ap-southeast-2"

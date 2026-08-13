@@ -48,6 +48,22 @@ jobs:
       - name: Unit tests
         run: make test
 
+  check-features:
+    name: Feature registry drift gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Check docs/features.yaml is up to date
+        run: make check-features
+
   security:
     name: Security scan
     runs-on: ubuntu-latest
@@ -73,7 +89,7 @@ jobs:
   image:
     name: Build image
     runs-on: ubuntu-latest
-    needs: [lint, unit, security]
+    needs: [lint, unit, check-features, security]
     permissions:
       contents: read
       packages: write
@@ -81,6 +97,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Compute short SHA
+        id: sha
+        run: echo "short=$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -97,15 +117,19 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          build-args: |
+            GIT_COMMIT=${{ steps.sha.outputs.short }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
           tags: |
             ghcr.io/kropath/kropath-controller:latest
-            ghcr.io/kropath/kropath-controller:sha-${{ github.sha }}
+            ghcr.io/kropath/kropath-controller:sha-${{ steps.sha.outputs.short }}
 
   e2e:
     name: Chainsaw integration tests
     runs-on: ubuntu-latest
-    needs: [lint, unit, security]
+    needs: [lint, unit, check-features, security]
 
     steps:
       - name: Checkout

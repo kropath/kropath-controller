@@ -1,0 +1,10 @@
+# Assert AC-11: mandatory.namingTemplate from L3 global SecretsManagerConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SecretsManagerConfig
+metadata:
+  name: ac11-general-policy
+  namespace: secrets-prod
+status:
+  effectiveConfig:
+    mandatory:
+      namingTemplate: "{namespace}-{configRef}-{name}"

@@ -1,0 +1,10 @@
+# Assert AC-9: mandatory.engine="redis" (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: ElastiCacheConfig
+metadata:
+  name: ac9-general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      engine: "redis"

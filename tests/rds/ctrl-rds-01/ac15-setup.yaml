@@ -1,0 +1,35 @@
+# AC-15: globalKropathConfig.mandatory.tags (level 1) contributes to tag union.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac15-general-instance
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      cost-centre: platform
+      env: prod
+---
+# AC-15: globalRDSConfig.mandatory.tags (level 3) contributes to tag union.
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac15-general-instance
+  namespace: kro-system
+  labels:
+    aws.kropath.run/resource-name: ac15-general-instance
+spec:
+  mandatory:
+    tags:
+      resource-type: rds
+    syncedLabels:
+      data-class: confidential
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac15-general-instance
+  namespace: rds
+  labels:
+    aws.kropath.run/resource-name: ac15-general-instance
+spec: {}

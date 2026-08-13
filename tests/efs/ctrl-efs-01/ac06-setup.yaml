@@ -1,0 +1,18 @@
+# Global EFSConfig (kro-system) — sets mandatory.backupEnabled=true (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: EFSConfig
+metadata:
+  name: ac6-general-storage
+  namespace: kro-system
+spec:
+  mandatory:
+    backupEnabled: true
+---
+# Local EFSConfig (namespace=efs) — base resource used across multiple AC steps.
+# No mandatory or defaults fields set; tests layer governance on top.
+apiVersion: aws.kropath.run/v1alpha1
+kind: EFSConfig
+metadata:
+  name: ac6-general-storage
+  namespace: efs
+spec: {}

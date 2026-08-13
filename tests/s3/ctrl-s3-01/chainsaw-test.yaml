@@ -12,6 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
+#
+# Test isolation — unique name per step, no inter-step deletes:
+#   Each step owns a distinct set of resource names (ac<N>-*). The controller
+#   pairs a namespaced config with its kro-system counterpart by *name*, so a
+#   per-step name isolates each step completely — no step can shadow another,
+#   in either direction, regardless of order. That removes the need for the
+#   per-step cleanup deletes and inline reset steps this suite used to carry.
+#   See kropath-aws docs/frequent-rgd-errors.md §6 for the full rationale.
+#
+#   Unlike that reference, this suite does NOT set skipDelete. Chainsaw's
+#   end-of-test cleanup is cheap here — these are plain config CRs with no
+#   finalizers and no cloud calls, so there is no deletion queue to back up,
+#   which is the only reason skipDelete is mandated there. Letting Chainsaw
+#   reclaim each suite's objects keeps the shared kind cluster small; leaving
+#   every suite's objects behind for a whole run puts enough reconcile load on
+#   the API server to trip the test client's rate limiter in later suites.
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
@@ -21,122 +37,74 @@ spec:
     - name: ac1-global-mandatory-encryption
       try:
         - apply:
-            file: 01-global-kpc-encryption.yaml
-        - apply:
-            file: 02-local-s3config-payments.yaml
+            file: ac01-setup.yaml
         - assert:
-            file: 03-assert-ac1-encryption.yaml
+            file: ac01-assert.yaml
             timeout: 30s
-      cleanup:
-        - delete:
-            file: 02-local-s3config-payments.yaml
-        - delete:
-            file: 01-global-kpc-encryption.yaml
 
     - name: ac2-level1-wins-over-level3
       try:
         - apply:
-            file: 04-global-kpc-level1-encryption.yaml
-        - apply:
-            file: 05-global-s3config-level3-encryption.yaml
+            file: ac02-setup.yaml
         - assert:
-            file: 06-assert-ac2-level1-wins.yaml
+            file: ac02-assert.yaml
             timeout: 30s
-      cleanup:
-        - delete:
-            file: 05-global-s3config-level3-encryption.yaml
-        - delete:
-            file: 04-global-kpc-level1-encryption.yaml
 
     - name: ac3-global-block-public
       try:
         - apply:
-            file: 07-global-kpc-block-public.yaml
-        - apply:
-            file: 08-local-s3config-ac3.yaml
+            file: ac03-setup.yaml
         - assert:
-            file: 08-assert-ac3-block-public.yaml
+            file: ac03-assert.yaml
             timeout: 30s
-      cleanup:
-        - delete:
-            file: 08-local-s3config-ac3.yaml
-        - delete:
-            file: 07-global-kpc-block-public.yaml
 
     - name: ac4-level1-enforce-https-wins
       try:
         - apply:
-            file: 09-global-kpc-enforce-https.yaml
-        - apply:
-            file: 10-local-s3config-ac4.yaml
+            file: ac04-setup.yaml
         - assert:
-            file: 10-assert-ac4-enforce-https.yaml
+            file: ac04-assert.yaml
             timeout: 30s
-      cleanup:
-        - delete:
-            file: 10-local-s3config-ac4.yaml
-        - delete:
-            file: 09-global-kpc-enforce-https.yaml
 
     - name: ac5-defaults-only
       try:
         - apply:
-            file: 11-global-s3config-defaults-only.yaml
+            file: ac05-setup.yaml
         - assert:
-            file: 12-assert-ac5-defaults-only.yaml
+            file: ac05-assert.yaml
             timeout: 30s
-      cleanup:
-        - delete:
-            file: 11-global-s3config-defaults-only.yaml
 
     - name: ac6-global-kms-wins
       try:
         - apply:
-            file: 13-global-kpc-kms.yaml
-        - apply:
-            file: 14-local-s3config-kms.yaml
+            file: ac06-setup.yaml
         - assert:
-            file: 15-assert-ac6-global-kms-wins.yaml
+            file: ac06-assert.yaml
             timeout: 30s
-      cleanup:
-        - delete:
-            file: 14-local-s3config-kms.yaml
-        - delete:
-            file: 13-global-kpc-kms.yaml
 
     - name: ac7-mutual-exclusivity-validation
       try:
         - apply:
-            file: 16-kropathconfig-both-tiers-versioning.yaml
+            file: ac07-setup-1.yaml
             expect:
-              - match:
-                  apiVersion: aws.kropath.run/v1alpha1
-                  kind: KropathConfig
-                check:
-                  ($error != null): true
+            - match:
+                apiVersion: aws.kropath.run/v1alpha1
+                kind: KropathConfig
+              check:
+                ($error != null): true
 
     - name: ac8-logging-cascades-as-pair
       try:
         - apply:
-            file: 17-global-kpc-logging.yaml
-        - apply:
-            file: 18-local-s3config-ac8.yaml
+            file: ac08-setup.yaml
         - assert:
-            file: 18-assert-ac8-logging-pair.yaml
+            file: ac08-assert.yaml
             timeout: 30s
-      cleanup:
-        - delete:
-            file: 18-local-s3config-ac8.yaml
-        - delete:
-            file: 17-global-kpc-logging.yaml
 
     - name: ac9-zero-value-object-lock
       try:
         - apply:
-            file: 19-local-s3config-object-lock-zero.yaml
+            file: ac09-setup.yaml
         - assert:
-            file: 20-assert-ac9-object-lock-zero.yaml
+            file: ac09-assert.yaml
             timeout: 30s
-      cleanup:
-        - delete:
-            file: 19-local-s3config-object-lock-zero.yaml

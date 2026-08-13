@@ -1,0 +1,10 @@
+# Assert AC-11: defaults.namingTemplate="{namespace}-{name}" (level 7).
+apiVersion: aws.kropath.run/v1alpha1
+kind: ElastiCacheConfig
+metadata:
+  name: ac11-general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    defaults:
+      namingTemplate: "{namespace}-{name}"

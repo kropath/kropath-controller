@@ -1,0 +1,10 @@
+# Assert AC-7: mandatory.multiAZEnabled=true (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: ElastiCacheConfig
+metadata:
+  name: ac7-general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      multiAZEnabled: true

@@ -1,0 +1,21 @@
+# AC-11: globalElastiCacheConfig with defaults.namingTemplate="{namespace}-{name}" (level 7).
+# No KropathConfig.elasticache.namingTemplate equivalent exists.
+apiVersion: aws.kropath.run/v1alpha1
+kind: ElastiCacheConfig
+metadata:
+  name: ac11-general-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  defaults:
+    namingTemplate: "{namespace}-{name}"
+---
+# Shared empty local ElastiCacheConfig — all cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: ElastiCacheConfig
+metadata:
+  name: ac11-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

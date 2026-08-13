@@ -1,0 +1,24 @@
+# AC-2: globalCloudWatchLogsConfig with mandatory.kmsKeyId (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: ac2-ac2-cwl-policy
+  namespace: kro-system
+  labels:
+    aws.kropath.run/resource-name: ac2-ac2-cwl-policy
+spec:
+  mandatory:
+    kmsKeyId: "arn:aws:kms:ap-southeast-2:123:key/rc-key"
+  defaults: {}
+---
+# Empty local CloudWatchLogsConfig for ac2 — cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: ac2-ac2-cwl-policy
+  namespace: logging-prod
+  labels:
+    aws.kropath.run/resource-name: ac2-ac2-cwl-policy
+spec:
+  mandatory: {}
+  defaults: {}

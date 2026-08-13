@@ -1,0 +1,10 @@
+# AC-C5: effectiveConfig.defaults.throughputMode propagates from localEFSConfig.defaults.
+apiVersion: aws.kropath.run/v1alpha1
+kind: EFSConfig
+metadata:
+  name: ac5-general-storage
+  namespace: efs
+status:
+  effectiveConfig:
+    defaults:
+      throughputMode: elastic

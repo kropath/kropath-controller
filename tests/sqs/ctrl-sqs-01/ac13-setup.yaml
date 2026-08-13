@@ -1,0 +1,20 @@
+# AC-13: globalKropathConfig with aws.region and aws.accountId set.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac13-general-policy
+  namespace: kro-system
+spec:
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+# Shared empty local SQSConfig — all cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SQSConfig
+metadata:
+  name: ac13-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

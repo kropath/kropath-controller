@@ -1,0 +1,10 @@
+# Assert AC-3: only defaults.enableKeyRotation=true; mandatory not enforced.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
+metadata:
+  name: ac3-general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    defaults:
+      enableKeyRotation: true

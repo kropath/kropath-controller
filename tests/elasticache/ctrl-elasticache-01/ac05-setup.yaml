@@ -1,0 +1,35 @@
+# AC-5: globalKropathConfig with defaults.elasticache.transitEncryptionEnabled=false (level 9).
+# Level 7 (ECConfig defaults) must win over this level 9 value.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac5-general-policy
+  namespace: kro-system
+spec:
+  defaults:
+    elasticache:
+      transitEncryptionEnabled: false
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+# AC-5: globalElastiCacheConfig with defaults.transitEncryptionEnabled=true (level 7).
+apiVersion: aws.kropath.run/v1alpha1
+kind: ElastiCacheConfig
+metadata:
+  name: ac5-general-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  defaults:
+    transitEncryptionEnabled: true
+---
+# Shared empty local ElastiCacheConfig — all cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: ElastiCacheConfig
+metadata:
+  name: ac5-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

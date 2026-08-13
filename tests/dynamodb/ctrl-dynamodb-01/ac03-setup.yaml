@@ -1,0 +1,8 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: DynamoDBConfig
+metadata:
+  name: ac3-general-table
+  namespace: dynamodb
+spec:
+  defaults:
+    encryptionEnabled: false

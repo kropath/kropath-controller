@@ -1,9 +1,0 @@
-apiVersion: aws.kropath.run/v1alpha1
-kind: S3Config
-metadata:
-  name: ac3-general-policy
-  namespace: payments-prod
-status:
-  effectiveConfig:
-    mandatory:
-      blockPublicAccess: true

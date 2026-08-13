@@ -1,0 +1,19 @@
+# AC-7: globalKropathConfig.mandatory.rds.multiAZ: true (level 1).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac7-general-instance
+  namespace: kro-system
+spec:
+  mandatory:
+    rds:
+      multiAZ: true
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac7-general-instance
+  namespace: rds
+  labels:
+    aws.kropath.run/resource-name: ac7-general-instance
+spec: {}

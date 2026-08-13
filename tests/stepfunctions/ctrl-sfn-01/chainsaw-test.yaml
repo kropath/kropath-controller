@@ -14,7 +14,7 @@
 #
 # ctrl-sfn-01 Chainsaw integration tests — 10 controller acceptance criteria.
 # Requires:
-#   - kind cluster with kropath-operator deployed (feature flag: --enable-stepfunctions-cascade)
+#   - kind cluster with kropath-operator deployed
 #   - KropathConfig CRD applied (fixtures/crds/awskropathconfig.yaml)
 #   - StepFunctionsConfig CRD applied (fixtures/crds/awsstepfunctionsconfig.yaml)
 apiVersion: chainsaw.kyverno.io/v1alpha1

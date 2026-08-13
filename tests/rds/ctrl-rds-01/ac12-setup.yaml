@@ -1,0 +1,20 @@
+# AC-12: globalRDSConfig.mandatory.serverlessV2ScalingMinCapacity: 0.5 (cluster-only).
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac12-general-instance
+  namespace: kro-system
+  labels:
+    aws.kropath.run/resource-name: ac12-general-instance
+spec:
+  mandatory:
+    serverlessV2ScalingMinCapacity: 0.5
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac12-general-instance
+  namespace: rds
+  labels:
+    aws.kropath.run/resource-name: ac12-general-instance
+spec: {}

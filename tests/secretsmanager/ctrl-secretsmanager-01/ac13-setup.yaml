@@ -1,0 +1,21 @@
+# AC-13: globalSecretsManagerConfig.mandatory.syncedLabels (level 3) propagates.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SecretsManagerConfig
+metadata:
+  name: ac13-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    syncedLabels:
+      data-class: "confidential"
+  defaults: {}
+---
+# Shared empty local SecretsManagerConfig — governance comes from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SecretsManagerConfig
+metadata:
+  name: ac13-general-policy
+  namespace: secrets-prod
+spec:
+  mandatory: {}
+  defaults: {}

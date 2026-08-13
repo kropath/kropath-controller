@@ -1,8 +1,0 @@
-apiVersion: aws.kropath.run/v1alpha1
-kind: RDSConfig
-metadata:
-  name: general-instance
-  namespace: rds
-  labels:
-    aws.kropath.run/resource-name: general-instance
-spec: {}

@@ -1,0 +1,27 @@
+# AC-C8: globalKropathConfig with mandatory.tags (tier-level tags, level 1).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac8-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      cost-centre: platform
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+# AC-C8: localAutoScalingConfig with mandatory.tags (level 4).
+# cost-centre is also set by KropathConfig; KropathConfig must win.
+apiVersion: aws.kropath.run/v1alpha1
+kind: AutoScalingConfig
+metadata:
+  name: ac8-general-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    tags:
+      cost-centre: app
+      asg-type: spot
+  defaults: {}

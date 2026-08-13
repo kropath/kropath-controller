@@ -1,0 +1,16 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac4-general-table
+  namespace: kro-system
+spec:
+  mandatory:
+    dynamodb:
+      billingMode: "PROVISIONED"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: DynamoDBConfig
+metadata:
+  name: ac4-general-table
+  namespace: dynamodb
+spec: {}

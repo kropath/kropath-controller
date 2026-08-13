@@ -1,0 +1,18 @@
+# AC-13: Should be rejected — allowedKeySpecs set in both mandatory and defaults kms.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac13-invalid-both-allowedkeyspecs
+  namespace: kro-system
+spec:
+  mandatory:
+    kms:
+      allowedKeySpecs:
+        - "SYMMETRIC_DEFAULT"
+  defaults:
+    kms:
+      allowedKeySpecs:
+        - "RSA_4096"
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
