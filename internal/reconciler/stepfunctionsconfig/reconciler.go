@@ -88,16 +88,17 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.StepFunctionsC
 
 	cfg.Status.ObservedGeneration = cfg.Generation
 
-	// Augment each StepFunctionsKropathSection with the tier-level tags so they
-	// flow through MergeStepFunctionsCascade alongside Step Functions-specific fields.
+	// Build cascade sections. Tags from spec.*.stepfunctions.tags (family-level) are merged
+	// with spec.*.tags (tier-level); family-level wins on key conflict because the
+	// stepfunctions section is more specific than the org-wide tier.
 	globalKropathMandatorySFN := globalKropath.Spec.Mandatory.StepFunctions
-	globalKropathMandatorySFN.Tags = globalKropath.Spec.Mandatory.Tags
+	globalKropathMandatorySFN.Tags = mergeTierTags(globalKropath.Spec.Mandatory.Tags, globalKropath.Spec.Mandatory.StepFunctions.Tags)
 	localKropathMandatorySFN := localKropath.Spec.Mandatory.StepFunctions
-	localKropathMandatorySFN.Tags = localKropath.Spec.Mandatory.Tags
+	localKropathMandatorySFN.Tags = mergeTierTags(localKropath.Spec.Mandatory.Tags, localKropath.Spec.Mandatory.StepFunctions.Tags)
 	localKropathDefaultsSFN := localKropath.Spec.Defaults.StepFunctions
-	localKropathDefaultsSFN.Tags = localKropath.Spec.Defaults.Tags
+	localKropathDefaultsSFN.Tags = mergeTierTags(localKropath.Spec.Defaults.Tags, localKropath.Spec.Defaults.StepFunctions.Tags)
 	globalKropathDefaultsSFN := globalKropath.Spec.Defaults.StepFunctions
-	globalKropathDefaultsSFN.Tags = globalKropath.Spec.Defaults.Tags
+	globalKropathDefaultsSFN.Tags = mergeTierTags(globalKropath.Spec.Defaults.Tags, globalKropath.Spec.Defaults.StepFunctions.Tags)
 
 	eff := cascade.MergeStepFunctionsCascade(
 		globalKropathMandatorySFN,
@@ -244,4 +245,20 @@ func setCondition(conditions []metav1.Condition, new metav1.Condition) []metav1.
 		}
 	}
 	return append(conditions, new)
+}
+
+// mergeTierTags merges org-wide tier-level tags with family-specific tags.
+// Family-level tags take priority over tier-level on key conflict.
+func mergeTierTags(tier, family map[string]string) map[string]string {
+	if len(tier) == 0 {
+		return family
+	}
+	out := make(map[string]string, len(tier)+len(family))
+	for k, v := range tier {
+		out[k] = v
+	}
+	for k, v := range family {
+		out[k] = v
+	}
+	return out
 }
