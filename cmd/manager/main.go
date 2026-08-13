@@ -77,7 +77,8 @@ func featuresHandler() http.Handler {
 		Reconcilers: features.All,
 	})
 	if err != nil {
-		// This cannot happen: features.Reconciler only contains string fields.
+		// This cannot happen: features.Reconciler holds only strings and string
+		// slices, all of which marshal unconditionally.
 		panic(fmt.Sprintf("featuresHandler: marshal: %v", err))
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {

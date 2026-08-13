@@ -17,34 +17,77 @@ type Reconciler struct {
 	// Name is the human-readable controller name (e.g. "KMSConfig").
 	Name string `json:"name" yaml:"name"`
 	// Package is the Go sub-package under internal/reconciler/ (e.g. "kmsconfig").
+	// It is the unique, stable machine identifier for a reconciler.
 	Package string `json:"package" yaml:"package"`
+	// Description is a short human-readable summary of what the reconciler does.
+	Description string `json:"description" yaml:"description"`
+	// Kinds lists the CRD kinds this reconciler watches
+	// (e.g. ["KMSConfig", "KropathConfig"]). Empty for LabelOperator, which
+	// watches every already-registered config kind rather than a fixed set.
+	Kinds []string `json:"kinds,omitempty" yaml:"kinds,omitempty"`
+	// SinceVersion is the semver of the first release containing this reconciler.
+	SinceVersion string `json:"sinceVersion" yaml:"sinceVersion"`
+	// Stability is one of "alpha", "beta", or "stable".
+	Stability string `json:"stability" yaml:"stability"`
 }
+
+// cascade builds the entry for a standard <Family>Config cascade reconciler.
+// Every one of them watches its own config kind plus KropathConfig, and carries
+// the same description shape, so spelling that out 20 times would be noise.
+func cascade(name, pkg string) Reconciler {
+	return Reconciler{
+		Name:         name,
+		Package:      pkg,
+		Description:  "Reconciles " + name + " CRs and propagates effective config.",
+		Kinds:        []string{name, "KropathConfig"},
+		SinceVersion: seedVersion,
+		Stability:    "stable",
+	}
+}
+
+// seedVersion is the release in which every reconciler present at the
+// per-feature-flag migration first shipped. Reconcilers added after the
+// migration get their own later version.
+const seedVersion = "v0.0.1"
 
 // All is the canonical list of reconcilers in the kropath-operator binary.
 // Every entry must correspond to a directory in internal/reconciler/.
 // Adding a directory there without adding an entry here causes
 // TestRegistryCoversAllPackages to fail.
 var All = []Reconciler{
-	{Name: "IAMConfig", Package: "iamconfig"},
-	{Name: "S3Config", Package: "s3config"},
-	{Name: "KMSConfig", Package: "kmsconfig"},
-	{Name: "SQSConfig", Package: "sqsconfig"},
-	{Name: "SecretsManagerConfig", Package: "secretsmanagerconfig"},
-	{Name: "PolicyDocument", Package: "policydocument"},
-	{Name: "LabelOperator", Package: "labeloperator"},
-	{Name: "SNSConfig", Package: "snsconfig"},
-	{Name: "DynamoDBConfig", Package: "dynamodbconfig"},
-	{Name: "EventBridgeConfig", Package: "eventbridgeconfig"},
-	{Name: "CloudWatchLogsConfig", Package: "cloudwatchlogsconfig"},
-	{Name: "ELBConfig", Package: "elbconfig"},
-	{Name: "RDSConfig", Package: "rdsconfig"},
-	{Name: "AutoScalingConfig", Package: "autoscalingconfig"},
-	{Name: "ECSConfig", Package: "ecsconfig"},
-	{Name: "EKSConfig", Package: "eksconfig"},
-	{Name: "EC2Config", Package: "ec2config"},
-	{Name: "ApiGatewayV2Config", Package: "apigatewayv2config"},
-	{Name: "EFSConfig", Package: "efsconfig"},
-	{Name: "ElastiCacheConfig", Package: "elasticacheconfig"},
-	{Name: "ECRConfig", Package: "ecrconfig"},
-	{Name: "StepFunctionsConfig", Package: "stepfunctionsconfig"},
+	cascade("IAMConfig", "iamconfig"),
+	cascade("S3Config", "s3config"),
+	cascade("KMSConfig", "kmsconfig"),
+	cascade("SQSConfig", "sqsconfig"),
+	cascade("SecretsManagerConfig", "secretsmanagerconfig"),
+	{
+		Name:         "PolicyDocument",
+		Package:      "policydocument",
+		Description:  "Reconciles PolicyDocument CRs and resolves IAM policy references.",
+		Kinds:        []string{"PolicyDocument", "KropathConfig"},
+		SinceVersion: seedVersion,
+		Stability:    "stable",
+	},
+	{
+		Name:         "LabelOperator",
+		Package:      "labeloperator",
+		Description:  "Applies provider resource-name labels to all CRs across all provider API groups.",
+		SinceVersion: seedVersion,
+		Stability:    "stable",
+	},
+	cascade("SNSConfig", "snsconfig"),
+	cascade("DynamoDBConfig", "dynamodbconfig"),
+	cascade("EventBridgeConfig", "eventbridgeconfig"),
+	cascade("CloudWatchLogsConfig", "cloudwatchlogsconfig"),
+	cascade("ELBConfig", "elbconfig"),
+	cascade("RDSConfig", "rdsconfig"),
+	cascade("AutoScalingConfig", "autoscalingconfig"),
+	cascade("ECSConfig", "ecsconfig"),
+	cascade("EKSConfig", "eksconfig"),
+	cascade("EC2Config", "ec2config"),
+	cascade("ApiGatewayV2Config", "apigatewayv2config"),
+	cascade("EFSConfig", "efsconfig"),
+	cascade("ElastiCacheConfig", "elasticacheconfig"),
+	cascade("ECRConfig", "ecrconfig"),
+	cascade("StepFunctionsConfig", "stepfunctionsconfig"),
 }
