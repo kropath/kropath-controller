@@ -50,7 +50,7 @@ GOLANGCI         ?= golangci-lint
 CHAINSAW_FLAGS   := --parallel 1 --report-format JUNIT-TEST --report-path $(REPORT_DIR)/
 
 .PHONY: all build test test-cover vet fmt lint \
-        generate-features check-features \
+        features-gen features-verify \
         docker-build docker-push \
         kind-up kind-down \
         chainsaw-setup chainsaw-start chainsaw-wait chainsaw-stop \
@@ -74,10 +74,10 @@ build: ## Compile the operator binary → bin/kropath-operator (with version ldf
 
 # ─── Feature registry ──────────────────────────────────────────────────────────
 
-generate-features: ## Regenerate docs/features.yaml from internal/features.All.
+features-gen: ## Regenerate docs/features.yaml from internal/features.All.
 	go run ./cmd/gen-features
 
-check-features: ## CI gate: fail if docs/features.yaml is stale (run make generate-features to fix).
+features-verify: ## CI gate: fail if docs/features.yaml is stale (run make features-gen to fix).
 	go run ./cmd/gen-features --check
 
 # ─── Container image ────────────────────────────────────────────────────────────
@@ -116,7 +116,7 @@ fmt: ## Format Go source files with gofmt and goimports.
 	@goimports -w . 2>/dev/null || \
 		echo "goimports not installed; run: go install golang.org/x/tools/cmd/goimports@latest"
 
-lint: vet ## Run golangci-lint (required gate before every commit).
+lint: vet features-verify ## Run golangci-lint (required gate before every commit).
 	$(GOLANGCI) run ./...
 
 # ─── Kind cluster ──────────────────────────────────────────────────────────────

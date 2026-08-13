@@ -8,7 +8,7 @@
 // When adding a new reconciler:
 //  1. Create its package under internal/reconciler/<pkg>/.
 //  2. Add an entry to All below.
-//  3. Run `make generate-features` to regenerate docs/features.yaml.
+//  3. Run `make features-gen` to regenerate docs/features.yaml.
 //  4. Failing to do step 2 causes TestRegistryCoversAllPackages to fail.
 package features
 

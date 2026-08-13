@@ -46,6 +46,7 @@ FROM gcr.io/distroless/static:nonroot
 WORKDIR /
 
 COPY --from=builder /kropath-operator /kropath-operator
+COPY docs/features.yaml /features.yaml
 
 USER 65532:65532
 
