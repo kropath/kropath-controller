@@ -1,0 +1,10 @@
+# Assert AC-3: defaults.atRestEncryptionEnabled=true (level 6); mandatory stays false.
+apiVersion: aws.kropath.run/v1alpha1
+kind: ElastiCacheConfig
+metadata:
+  name: ac3-general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    defaults:
+      atRestEncryptionEnabled: true

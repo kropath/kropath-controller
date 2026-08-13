@@ -1,0 +1,21 @@
+# AC-7: globalSecretsManagerConfig.defaults.replicaRegions (level 7) propagates.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SecretsManagerConfig
+metadata:
+  name: ac7-general-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  defaults:
+    replicaRegions:
+      - region: "us-east-1"
+---
+# Shared empty local SecretsManagerConfig — governance comes from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SecretsManagerConfig
+metadata:
+  name: ac7-general-policy
+  namespace: secrets-prod
+spec:
+  mandatory: {}
+  defaults: {}

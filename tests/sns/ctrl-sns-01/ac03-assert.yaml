@@ -1,0 +1,10 @@
+# Assert AC-3: defaults.kmsMasterKeyId="alias/aws/sns" from level-6 localSNSConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SNSConfig
+metadata:
+  name: ac3-general-policy
+  namespace: events-prod
+status:
+  effectiveConfig:
+    defaults:
+      kmsMasterKeyId: "alias/aws/sns"

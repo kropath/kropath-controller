@@ -1,0 +1,15 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac14-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    ec2:
+      flowLogsRequired: true
+  defaults:
+    ec2:
+      flowLogsRequired: true
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"

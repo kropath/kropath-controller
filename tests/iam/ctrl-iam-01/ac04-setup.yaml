@@ -1,0 +1,57 @@
+# AC-4: level-1 globalKropathConfig mandatory maxSessionDurationSeconds=3600.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac4-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    iam:
+      maxSessionDurationSeconds: 3600
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+# AC-4: level-3 globalIAMConfig mandatory maxSessionDurationSeconds=7200 (should lose).
+apiVersion: aws.kropath.run/v1alpha1
+kind: IAMConfig
+metadata:
+  name: ac4-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    permissionsBoundaryArn: ""
+    blockIamUserAccessKeys: false
+    maxSessionDurationSeconds: 7200
+    tags: {}
+    syncedLabels: {}
+    syncedAnnotations: {}
+  defaults:
+    permissionsBoundaryArn: ""
+    blockIamUserAccessKeys: false
+    maxSessionDurationSeconds: 0
+    tags: {}
+    syncedLabels: {}
+    syncedAnnotations: {}
+---
+# IAMConfig used across multiple AC tests as the namespaced config.
+apiVersion: aws.kropath.run/v1alpha1
+kind: IAMConfig
+metadata:
+  name: ac4-general-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    permissionsBoundaryArn: ""
+    blockIamUserAccessKeys: false
+    maxSessionDurationSeconds: 0
+    tags: {}
+    syncedLabels: {}
+    syncedAnnotations: {}
+  defaults:
+    permissionsBoundaryArn: ""
+    blockIamUserAccessKeys: false
+    maxSessionDurationSeconds: 0
+    tags: {}
+    syncedLabels: {}
+    syncedAnnotations: {}

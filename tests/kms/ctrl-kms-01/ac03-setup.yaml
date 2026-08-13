@@ -1,0 +1,22 @@
+# AC-3: globalKMSConfig with defaults.enableKeyRotation=true (level 7).
+# mandatory.enableKeyRotation is not set (false = permissive sentinel).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
+metadata:
+  name: ac3-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    enableKeyRotation: false
+  defaults:
+    enableKeyRotation: true
+---
+# Shared empty local KMSConfig — all cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
+metadata:
+  name: ac3-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

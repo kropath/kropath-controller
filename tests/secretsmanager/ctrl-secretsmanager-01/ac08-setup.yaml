@@ -1,0 +1,20 @@
+# AC-8: globalSecretsManagerConfig.mandatory.forceOverwriteReplicaSecret=true (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: SecretsManagerConfig
+metadata:
+  name: ac8-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    forceOverwriteReplicaSecret: true
+  defaults: {}
+---
+# Shared empty local SecretsManagerConfig — governance comes from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SecretsManagerConfig
+metadata:
+  name: ac8-general-policy
+  namespace: secrets-prod
+spec:
+  mandatory: {}
+  defaults: {}

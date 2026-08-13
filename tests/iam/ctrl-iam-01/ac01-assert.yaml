@@ -1,0 +1,11 @@
+# Assert: mandatory.permissionsBoundaryArn from level-1 globalKropathConfig
+# must appear in status.effectiveConfig of namespaced IAMConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: IAMConfig
+metadata:
+  name: ac1-general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      permissionsBoundaryArn: "arn:aws:iam::123456789012:policy/GlobalBlanket"

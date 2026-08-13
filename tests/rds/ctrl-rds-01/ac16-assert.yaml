@@ -1,0 +1,10 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac16-general-instance
+  namespace: rds
+status:
+  effectiveConfig:
+    aws:
+      accountId: "123456789012"
+      region: "ap-southeast-2"

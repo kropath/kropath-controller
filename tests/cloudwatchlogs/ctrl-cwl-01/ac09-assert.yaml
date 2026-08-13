@@ -1,0 +1,13 @@
+# Assert AC-9: effCfg.mandatory.tags is the union of KropathConfig.mandatory.tags
+# and CloudWatchLogsConfig.mandatory.tags.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: ac9-ac9-cwl-policy
+  namespace: logging-prod
+status:
+  effectiveConfig:
+    mandatory:
+      tags:
+        cost-centre: infra
+        log-class: production

@@ -1,0 +1,9 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac3-general-instance
+  namespace: rds
+status:
+  effectiveConfig:
+    defaults:
+      storageEncrypted: true

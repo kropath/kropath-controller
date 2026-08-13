@@ -14,12 +14,28 @@
 #
 # ctrl-cwl-01 Chainsaw integration tests — all 11 acceptance criteria.
 # Requires:
-#   - kind cluster with kropath-operator deployed (feature flag: --enable-cloudwatchlogs-cascade)
+#   - kind cluster with kropath-operator deployed
 #   - KropathConfig CRD applied (crds/kropathconfig.yaml from kropath-aws)
 #   - CloudWatchLogsConfig CRD applied (crds/cloudwatchlogsconfig.yaml from kropath-aws)
 #
 # Each AC step uses a unique resource name (acN-cwl-policy) so that Chainsaw's
 # deferred LIFO cleanup from prior steps cannot pollute later steps.
+#
+# Test isolation — unique name per step, no inter-step deletes:
+#   Each step owns a distinct set of resource names (ac<N>-*). The controller
+#   pairs a namespaced config with its kro-system counterpart by *name*, so a
+#   per-step name isolates each step completely — no step can shadow another,
+#   in either direction, regardless of order. That removes the need for the
+#   per-step cleanup deletes and inline reset steps this suite used to carry.
+#   See kropath-aws docs/frequent-rgd-errors.md §6 for the full rationale.
+#
+#   Unlike that reference, this suite does NOT set skipDelete. Chainsaw's
+#   end-of-test cleanup is cheap here — these are plain config CRs with no
+#   finalizers and no cloud calls, so there is no deletion queue to back up,
+#   which is the only reason skipDelete is mandated there. Letting Chainsaw
+#   reclaim each suite's objects keeps the shared kind cluster small; leaving
+#   every suite's objects behind for a whole run puts enough reconcile load on
+#   the API server to trip the test client's rate limiter in later suites.
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
@@ -31,170 +47,101 @@ spec:
     - name: ac1-global-kpc-kms-level1
       try:
         - apply:
-            file: 01-global-kpc-kms-l1.yaml
-        - apply:
-            file: 02-cwlconfig-ac1.yaml
+            file: ac01-setup.yaml
         - assert:
-            file: 03-assert-ac1.yaml
+            file: ac01-assert.yaml
             timeout: 30s
-      cleanup:
-        - delete:
-            file: 02-cwlconfig-ac1.yaml
-        - delete:
-            file: 01-global-kpc-kms-l1.yaml
 
     # AC-2: globalCWLConfig.mandatory.kmsKeyId (level 3) wins when levels 1-2 are empty.
     - name: ac2-global-cwlcfg-kms-level3
       try:
         - apply:
-            file: 04-global-cwlcfg-kms-l3.yaml
-        - apply:
-            file: 02-cwlconfig-ac2.yaml
+            file: ac02-setup.yaml
         - assert:
-            file: 05-assert-ac2.yaml
+            file: ac02-assert.yaml
             timeout: 30s
-      cleanup:
-        - delete:
-            file: 02-cwlconfig-ac2.yaml
-        - delete:
-            file: 04-global-cwlcfg-kms-l3.yaml
 
     # AC-3: localCWLConfig.defaults.kmsKeyId (level 6) propagates; mandatory stays empty.
     - name: ac3-local-cwlcfg-defaults-kms-level6
       try:
         - apply:
-            file: 06-local-cwlcfg-defaults-kms-l6.yaml
+            file: ac03-setup.yaml
         - assert:
-            file: 07-assert-ac3.yaml
+            file: ac03-assert.yaml
             timeout: 30s
-      cleanup:
-        - delete:
-            file: 06-local-cwlcfg-defaults-kms-l6.yaml
 
     # AC-4: globalKropathConfig.mandatory.cloudwatchlogs.retentionDays=365 (level 1) propagates.
     - name: ac4-global-kpc-retention-level1
       try:
         - apply:
-            file: 08-global-kpc-retention-l1.yaml
-        - apply:
-            file: 02-cwlconfig-ac4.yaml
+            file: ac04-setup.yaml
         - assert:
-            file: 09-assert-ac4.yaml
+            file: ac04-assert.yaml
             timeout: 30s
-      cleanup:
-        - delete:
-            file: 02-cwlconfig-ac4.yaml
-        - delete:
-            file: 08-global-kpc-retention-l1.yaml
 
     # AC-5: globalCWLConfig.mandatory.retentionDays=2557 (level 3) wins when levels 1-2 are 0.
     - name: ac5-global-cwlcfg-retention-level3
       try:
         - apply:
-            file: 10-global-cwlcfg-retention-l3.yaml
-        - apply:
-            file: 02-cwlconfig-ac5.yaml
+            file: ac05-setup.yaml
         - assert:
-            file: 11-assert-ac5.yaml
+            file: ac05-assert.yaml
             timeout: 30s
-      cleanup:
-        - delete:
-            file: 02-cwlconfig-ac5.yaml
-        - delete:
-            file: 10-global-cwlcfg-retention-l3.yaml
 
     # AC-6: localCWLConfig.defaults.retentionDays=90 (level 6) propagates; mandatory stays 0.
     - name: ac6-local-cwlcfg-defaults-retention-level6
       try:
         - apply:
-            file: 12-local-cwlcfg-defaults-retention-l6.yaml
+            file: ac06-setup.yaml
         - assert:
-            file: 13-assert-ac6.yaml
+            file: ac06-assert.yaml
             timeout: 30s
-      cleanup:
-        - delete:
-            file: 12-local-cwlcfg-defaults-retention-l6.yaml
 
     # AC-7: globalCWLConfig.defaults.namingTemplate="{namespace}-{name}" (level 7) propagates.
     # KropathConfig.cloudwatchlogs has no namingTemplate field.
     - name: ac7-global-cwlcfg-defaults-naming-level7
       try:
         - apply:
-            file: 14-global-cwlcfg-defaults-naming-l7.yaml
-        - apply:
-            file: 02-cwlconfig-ac7.yaml
+            file: ac07-setup.yaml
         - assert:
-            file: 15-assert-ac7.yaml
+            file: ac07-assert.yaml
             timeout: 30s
-      cleanup:
-        - delete:
-            file: 02-cwlconfig-ac7.yaml
-        - delete:
-            file: 14-global-cwlcfg-defaults-naming-l7.yaml
 
     # AC-8: globalCWLConfig.mandatory.namingTemplate="corp-{namespace}-{name}" (level 3)
     # propagates to effCfg.mandatory.namingTemplate.
     - name: ac8-global-cwlcfg-mandatory-naming-level3
       try:
         - apply:
-            file: 16-global-cwlcfg-mandatory-naming-l3.yaml
-        - apply:
-            file: 02-cwlconfig-ac8.yaml
+            file: ac08-setup.yaml
         - assert:
-            file: 17-assert-ac8.yaml
+            file: ac08-assert.yaml
             timeout: 30s
-      cleanup:
-        - delete:
-            file: 02-cwlconfig-ac8.yaml
-        - delete:
-            file: 16-global-cwlcfg-mandatory-naming-l3.yaml
 
     # AC-9: KropathConfig.mandatory.tags and CloudWatchLogsConfig.mandatory.tags are
     # union-merged into effCfg.mandatory.tags.
     - name: ac9-tag-union-merge
       try:
         - apply:
-            file: 18-global-kpc-mandatory-tags.yaml
-        - apply:
-            file: 19-cwlconfig-mandatory-tags.yaml
+            file: ac09-setup.yaml
         - assert:
-            file: 20-assert-ac9.yaml
+            file: ac09-assert.yaml
             timeout: 30s
-      cleanup:
-        - delete:
-            file: 19-cwlconfig-mandatory-tags.yaml
-        - delete:
-            file: 18-global-kpc-mandatory-tags.yaml
 
     # AC-10: globalCWLConfig.mandatory.syncedLabels={data-class: internal} (level 3) propagates.
     - name: ac10-global-cwlcfg-synced-labels
       try:
         - apply:
-            file: 21-global-cwlcfg-synced-labels.yaml
-        - apply:
-            file: 02-cwlconfig-ac10.yaml
+            file: ac10-setup.yaml
         - assert:
-            file: 22-assert-ac10.yaml
+            file: ac10-assert.yaml
             timeout: 30s
-      cleanup:
-        - delete:
-            file: 02-cwlconfig-ac10.yaml
-        - delete:
-            file: 21-global-cwlcfg-synced-labels.yaml
 
     # AC-11: globalKropathConfig.spec.aws.region and accountId propagate to
     # effCfg.aws.region and effCfg.aws.accountId.
     - name: ac11-provider-identity-propagates
       try:
         - apply:
-            file: 23-global-kpc-aws-identity.yaml
-        - apply:
-            file: 02-cwlconfig-ac11.yaml
+            file: ac11-setup.yaml
         - assert:
-            file: 24-assert-ac11.yaml
+            file: ac11-assert.yaml
             timeout: 30s
-      cleanup:
-        - delete:
-            file: 02-cwlconfig-ac11.yaml
-        - delete:
-            file: 23-global-kpc-aws-identity.yaml

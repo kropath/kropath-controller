@@ -1,0 +1,20 @@
+# AC-C7: globalAutoScalingConfig mandatory.namingTemplate="{namespace}-{name}" (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: AutoScalingConfig
+metadata:
+  name: ac7-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    namingTemplate: "{namespace}-{name}"
+  defaults: {}
+---
+# Shared empty local AutoScalingConfig — all cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: AutoScalingConfig
+metadata:
+  name: ac7-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

@@ -1,0 +1,10 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: DynamoDBConfig
+metadata:
+  name: ac13-general-table
+  namespace: dynamodb
+status:
+  effectiveConfig:
+    mandatory:
+      syncedLabels:
+        data-class: "internal"

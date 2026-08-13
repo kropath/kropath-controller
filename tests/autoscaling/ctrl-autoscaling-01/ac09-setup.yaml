@@ -1,0 +1,21 @@
+# AC-C9: globalKropathConfig with aws.accountId and aws.region.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac9-general-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+# Shared empty local AutoScalingConfig — all cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: AutoScalingConfig
+metadata:
+  name: ac9-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

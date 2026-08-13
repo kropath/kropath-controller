@@ -1,0 +1,16 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac1-general-table
+  namespace: kro-system
+spec:
+  mandatory:
+    dynamodb:
+      encryptionEnabled: true
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: DynamoDBConfig
+metadata:
+  name: ac1-general-table
+  namespace: dynamodb
+spec: {}

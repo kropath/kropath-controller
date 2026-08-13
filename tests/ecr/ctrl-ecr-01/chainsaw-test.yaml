@@ -14,7 +14,7 @@
 #
 # ctrl-ecr-01 Chainsaw integration tests — all 20 acceptance criteria.
 # Requires:
-#   - kind cluster with kropath-operator deployed (feature flag: --enable-ecr-cascade)
+#   - kind cluster with kropath-operator deployed
 #   - KropathConfig CRD applied (crds/kropathconfig.yaml from kropath-aws)
 #   - ECRConfig CRD applied (crds/ecrconfig.yaml from kropath-aws)
 apiVersion: chainsaw.kyverno.io/v1alpha1

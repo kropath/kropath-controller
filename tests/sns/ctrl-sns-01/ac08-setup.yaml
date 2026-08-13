@@ -1,0 +1,25 @@
+# AC-8: globalSNSConfig with mandatory.deliveryFeedback.http (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: SNSConfig
+metadata:
+  name: ac8-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    deliveryFeedback:
+      http:
+        successFeedbackRoleArn: "arn:aws:iam::123456789012:role/http-success"
+        failureFeedbackRoleArn: "arn:aws:iam::123456789012:role/http-failure"
+        successFeedbackSampleRate: "100"
+  defaults: {}
+---
+# Base local SNSConfig in events-prod — empty mandatory and defaults.
+# Reused across multiple AC steps as the namespaced resource under test.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SNSConfig
+metadata:
+  name: ac8-general-policy
+  namespace: events-prod
+spec:
+  mandatory: {}
+  defaults: {}

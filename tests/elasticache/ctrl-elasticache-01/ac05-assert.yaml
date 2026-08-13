@@ -1,0 +1,10 @@
+# Assert AC-5: defaults.transitEncryptionEnabled=true (level 7 wins over level 9).
+apiVersion: aws.kropath.run/v1alpha1
+kind: ElastiCacheConfig
+metadata:
+  name: ac5-general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    defaults:
+      transitEncryptionEnabled: true

@@ -1,0 +1,10 @@
+# AC-3: localElastiCacheConfig with defaults.atRestEncryptionEnabled=true (level 6).
+apiVersion: aws.kropath.run/v1alpha1
+kind: ElastiCacheConfig
+metadata:
+  name: ac3-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults:
+    atRestEncryptionEnabled: true

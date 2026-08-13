@@ -1,0 +1,26 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac10-general-table
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      cost-centre: "infra"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: DynamoDBConfig
+metadata:
+  name: ac10-general-table
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      resource-type: "database"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: DynamoDBConfig
+metadata:
+  name: ac10-general-table
+  namespace: dynamodb
+spec: {}

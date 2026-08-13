@@ -1,0 +1,9 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: S3Config
+metadata:
+  name: ac5-ac5-general-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  defaults:
+    encryptionAlgorithm: aws:kms

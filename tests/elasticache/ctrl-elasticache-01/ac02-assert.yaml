@@ -1,0 +1,10 @@
+# Assert AC-2: mandatory.atRestEncryptionEnabled=true from level-3 globalElastiCacheConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: ElastiCacheConfig
+metadata:
+  name: ac2-general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      atRestEncryptionEnabled: true

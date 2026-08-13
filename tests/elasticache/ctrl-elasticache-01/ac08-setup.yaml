@@ -1,0 +1,20 @@
+# AC-8: globalElastiCacheConfig with mandatory.snapshotRetentionLimit=7 (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: ElastiCacheConfig
+metadata:
+  name: ac8-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    snapshotRetentionLimit: 7
+  defaults: {}
+---
+# Shared empty local ElastiCacheConfig — all cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: ElastiCacheConfig
+metadata:
+  name: ac8-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

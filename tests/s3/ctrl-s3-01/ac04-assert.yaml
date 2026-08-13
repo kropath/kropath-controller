@@ -1,0 +1,9 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: S3Config
+metadata:
+  name: ac4-ac4-general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      enforceHttpsOnly: true

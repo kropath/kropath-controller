@@ -1,0 +1,13 @@
+# Assert AC-9: defaults.deliveryFeedback.sqs from level-7 globalSNSConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SNSConfig
+metadata:
+  name: ac9-general-policy
+  namespace: events-prod
+status:
+  effectiveConfig:
+    defaults:
+      deliveryFeedback:
+        sqs:
+          successFeedbackRoleArn: "arn:aws:iam::123456789012:role/sqs-success-default"
+          successFeedbackSampleRate: "50"

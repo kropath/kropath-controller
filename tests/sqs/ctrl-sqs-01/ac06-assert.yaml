@@ -1,0 +1,10 @@
+# Assert AC-6: mandatory.messageRetentionPeriod=604800 from level-1 globalKropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SQSConfig
+metadata:
+  name: ac6-general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      messageRetentionPeriod: 604800

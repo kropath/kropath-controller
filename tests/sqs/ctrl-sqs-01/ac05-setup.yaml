@@ -1,0 +1,35 @@
+# AC-5: globalKropathConfig with defaults.sqs.visibilityTimeout=60 (level 9).
+# Level 7 (globalSQSConfig.defaults) should win over level 9.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac5-general-policy
+  namespace: kro-system
+spec:
+  defaults:
+    sqs:
+      visibilityTimeout: 60
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+# AC-5: globalSQSConfig with defaults.visibilityTimeout=30 (level 7).
+apiVersion: aws.kropath.run/v1alpha1
+kind: SQSConfig
+metadata:
+  name: ac5-general-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  defaults:
+    visibilityTimeout: 30
+---
+# Shared empty local SQSConfig — all cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SQSConfig
+metadata:
+  name: ac5-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

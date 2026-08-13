@@ -1,0 +1,10 @@
+# Assert AC-10: defaults.namingTemplate from L7 global SecretsManagerConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SecretsManagerConfig
+metadata:
+  name: ac10-general-policy
+  namespace: secrets-prod
+status:
+  effectiveConfig:
+    defaults:
+      namingTemplate: "{namespace}-{name}"

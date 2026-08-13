@@ -1,0 +1,15 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: DynamoDBConfig
+metadata:
+  name: ac8-general-table
+  namespace: kro-system
+spec:
+  defaults:
+    tableClass: "STANDARD_INFREQUENT_ACCESS"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: DynamoDBConfig
+metadata:
+  name: ac8-general-table
+  namespace: dynamodb
+spec: {}

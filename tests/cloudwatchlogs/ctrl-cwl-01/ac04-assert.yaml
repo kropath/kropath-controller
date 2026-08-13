@@ -1,0 +1,10 @@
+# Assert AC-4: mandatory.retentionDays=365 from level-1 globalKropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: ac4-ac4-cwl-policy
+  namespace: logging-prod
+status:
+  effectiveConfig:
+    mandatory:
+      retentionDays: 365

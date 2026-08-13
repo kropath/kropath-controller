@@ -32,16 +32,16 @@
 #   kropath-aws/docs/frequent-rgd-errors.md §6 "CANONICAL: Unique-Name-Per-Step
 #   + skipDelete" for the full rationale.
 #
-#   skipDelete: true stops Chainsaw's end-of-test cascade delete. Resources are
-#   tiny config CRs with no finalizers and no cloud calls, so leaving them costs
-#   nothing; re-running the suite simply re-applies the same names idempotently.
+#   skipDelete is deliberately NOT set, unlike the reference pattern: Chainsaw's
+#   end-of-test cleanup is cheap here (plain config CRs, no finalizers, no cloud
+#   calls), so reclaiming each suite's objects costs little and keeps the shared
+#   kind cluster small.
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
   name: ctrl-eks-01
 spec:
   description: "EKS effectiveConfig cascade — all 16 acceptance criteria (ctrl-eks-01)"
-  skipDelete: true
   steps:
     # AC-1: globalKropathConfig.mandatory.eks.version (level 1) → effCfg.mandatory.version
     - name: ac1-global-kpc-mandatory-version

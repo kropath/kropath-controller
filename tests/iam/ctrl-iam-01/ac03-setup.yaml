@@ -1,0 +1,35 @@
+# AC-3: globalKropathConfig with mandatory.iam.blockIamUserAccessKeys=true.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac3-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    iam:
+      blockIamUserAccessKeys: true
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+# IAMConfig used across multiple AC tests as the namespaced config.
+apiVersion: aws.kropath.run/v1alpha1
+kind: IAMConfig
+metadata:
+  name: ac3-general-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    permissionsBoundaryArn: ""
+    blockIamUserAccessKeys: false
+    maxSessionDurationSeconds: 0
+    tags: {}
+    syncedLabels: {}
+    syncedAnnotations: {}
+  defaults:
+    permissionsBoundaryArn: ""
+    blockIamUserAccessKeys: false
+    maxSessionDurationSeconds: 0
+    tags: {}
+    syncedLabels: {}
+    syncedAnnotations: {}

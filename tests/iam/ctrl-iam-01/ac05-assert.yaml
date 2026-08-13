@@ -1,0 +1,12 @@
+# Assert: defaults.maxSession=3600 populated; mandatory.maxSession=0 (not set).
+apiVersion: aws.kropath.run/v1alpha1
+kind: IAMConfig
+metadata:
+  name: ac5-general-policy-defaults
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      maxSessionDurationSeconds: 0
+    defaults:
+      maxSessionDurationSeconds: 3600

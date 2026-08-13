@@ -1,0 +1,21 @@
+# AC-5: globalSecretsManagerConfig.mandatory.replicaRegions (level 3) propagates.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SecretsManagerConfig
+metadata:
+  name: ac5-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    replicaRegions:
+      - region: "us-west-2"
+  defaults: {}
+---
+# Shared empty local SecretsManagerConfig — governance comes from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SecretsManagerConfig
+metadata:
+  name: ac5-general-policy
+  namespace: secrets-prod
+spec:
+  mandatory: {}
+  defaults: {}

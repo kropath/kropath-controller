@@ -1,0 +1,20 @@
+# AC-10: globalRDSConfig.defaults.storageType: "gp3" (level 7).
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac10-general-instance
+  namespace: kro-system
+  labels:
+    aws.kropath.run/resource-name: ac10-general-instance
+spec:
+  defaults:
+    storageType: "gp3"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac10-general-instance
+  namespace: rds
+  labels:
+    aws.kropath.run/resource-name: ac10-general-instance
+spec: {}

@@ -1,0 +1,19 @@
+# Global KropathConfig — sets aws.accountId and aws.region.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac10-general-storage
+  namespace: kro-system
+spec:
+  aws:
+    accountId: "123456789012"
+    region: us-east-1
+---
+# Local EFSConfig (namespace=efs) — base resource used across multiple AC steps.
+# No mandatory or defaults fields set; tests layer governance on top.
+apiVersion: aws.kropath.run/v1alpha1
+kind: EFSConfig
+metadata:
+  name: ac10-general-storage
+  namespace: efs
+spec: {}

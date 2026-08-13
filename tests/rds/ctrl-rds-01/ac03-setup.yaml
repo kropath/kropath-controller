@@ -1,0 +1,11 @@
+# AC-3: localRDSConfig.defaults.storageEncrypted: true (level 6); mandatory absent.
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac3-general-instance
+  namespace: rds
+  labels:
+    aws.kropath.run/resource-name: ac3-general-instance
+spec:
+  defaults:
+    storageEncrypted: true

@@ -1,0 +1,10 @@
+# AC-3: localSNSConfig with defaults.kmsMasterKeyId="alias/aws/sns" (level 6).
+apiVersion: aws.kropath.run/v1alpha1
+kind: SNSConfig
+metadata:
+  name: ac3-general-policy
+  namespace: events-prod
+spec:
+  mandatory: {}
+  defaults:
+    kmsMasterKeyId: "alias/aws/sns"

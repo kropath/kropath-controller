@@ -1,0 +1,21 @@
+# AC-C3: globalAutoScalingConfig defaults.capacityRebalance=true (level 7).
+# Mandatory must stay false; only defaults gets the value.
+apiVersion: aws.kropath.run/v1alpha1
+kind: AutoScalingConfig
+metadata:
+  name: ac3-general-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  defaults:
+    capacityRebalance: true
+---
+# Shared empty local AutoScalingConfig — all cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: AutoScalingConfig
+metadata:
+  name: ac3-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

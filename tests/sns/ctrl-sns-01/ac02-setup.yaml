@@ -1,0 +1,23 @@
+# AC-2: globalSNSConfig with mandatory.kmsMasterKeyId (level 3).
+# Uses the same value as AC-1's KropathConfig so that deferred cleanup from AC-1
+# does not cause level-1 to override level-3 (follows the SQS test pattern).
+apiVersion: aws.kropath.run/v1alpha1
+kind: SNSConfig
+metadata:
+  name: ac2-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    kmsMasterKeyId: "arn:aws:kms:ap-southeast-2:123456789012:key/org-key"
+  defaults: {}
+---
+# Base local SNSConfig in events-prod — empty mandatory and defaults.
+# Reused across multiple AC steps as the namespaced resource under test.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SNSConfig
+metadata:
+  name: ac2-general-policy
+  namespace: events-prod
+spec:
+  mandatory: {}
+  defaults: {}

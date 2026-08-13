@@ -1,0 +1,12 @@
+# AC-C8: tags union — both KropathConfig and EFSConfig mandatory tags appear.
+apiVersion: aws.kropath.run/v1alpha1
+kind: EFSConfig
+metadata:
+  name: ac8-general-storage
+  namespace: efs
+status:
+  effectiveConfig:
+    mandatory:
+      tags:
+        cost-centre: platform
+        resource-type: storage

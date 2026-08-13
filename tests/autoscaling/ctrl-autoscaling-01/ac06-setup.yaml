@@ -1,0 +1,20 @@
+# AC-C6: globalAutoScalingConfig mandatory.maxInstanceLifetime=604800 (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: AutoScalingConfig
+metadata:
+  name: ac6-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    maxInstanceLifetime: 604800
+  defaults: {}
+---
+# Shared empty local AutoScalingConfig — all cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: AutoScalingConfig
+metadata:
+  name: ac6-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

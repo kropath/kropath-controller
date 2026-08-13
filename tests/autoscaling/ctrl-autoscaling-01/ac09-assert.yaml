@@ -1,0 +1,11 @@
+# Assert AC-C9: effectiveConfig.aws.accountId and effectiveConfig.aws.region from globalKropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: AutoScalingConfig
+metadata:
+  name: ac9-general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    aws:
+      accountId: "123456789012"
+      region: "us-east-1"

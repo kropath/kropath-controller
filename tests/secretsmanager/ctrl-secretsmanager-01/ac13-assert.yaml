@@ -1,0 +1,11 @@
+# Assert AC-13: mandatory.syncedLabels from L3 global SecretsManagerConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SecretsManagerConfig
+metadata:
+  name: ac13-general-policy
+  namespace: secrets-prod
+status:
+  effectiveConfig:
+    mandatory:
+      syncedLabels:
+        data-class: "confidential"

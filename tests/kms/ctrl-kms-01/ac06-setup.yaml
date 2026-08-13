@@ -1,0 +1,20 @@
+# AC-6: globalKMSConfig mandatory.keyUsage="ENCRYPT_DECRYPT" (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
+metadata:
+  name: ac6-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    keyUsage: "ENCRYPT_DECRYPT"
+  defaults: {}
+---
+# Shared empty local KMSConfig — all cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
+metadata:
+  name: ac6-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

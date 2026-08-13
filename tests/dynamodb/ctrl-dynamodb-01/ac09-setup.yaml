@@ -1,0 +1,16 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac9-general-table
+  namespace: kro-system
+spec:
+  mandatory:
+    dynamodb:
+      contributorInsights: "ENABLE"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: DynamoDBConfig
+metadata:
+  name: ac9-general-table
+  namespace: dynamodb
+spec: {}

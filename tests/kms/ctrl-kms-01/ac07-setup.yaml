@@ -1,0 +1,25 @@
+# AC-7: globalKropathConfig mandatory.kms.allowedKeySpecs (level 1).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac7-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    kms:
+      allowedKeySpecs:
+        - "SYMMETRIC_DEFAULT"
+        - "RSA_4096"
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+# Shared empty local KMSConfig — all cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
+metadata:
+  name: ac7-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

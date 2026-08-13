@@ -1,9 +1,0 @@
-apiVersion: aws.kropath.run/v1alpha1
-kind: EC2Config
-metadata:
-  name: general-policy
-  namespace: network-prod
-status:
-  effectiveConfig:
-    mandatory:
-      restrictPublicIpOnLaunch: true

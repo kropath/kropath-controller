@@ -1,0 +1,11 @@
+# Assert AC-7: defaults.replicaRegions from L7; mandatory.replicaRegions absent.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SecretsManagerConfig
+metadata:
+  name: ac7-general-policy
+  namespace: secrets-prod
+status:
+  effectiveConfig:
+    defaults:
+      replicaRegions:
+        - region: "us-east-1"

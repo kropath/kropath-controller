@@ -1,0 +1,20 @@
+# AC-11: globalRDSConfig.mandatory.manageMasterUserPassword: true (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac11-general-instance
+  namespace: kro-system
+  labels:
+    aws.kropath.run/resource-name: ac11-general-instance
+spec:
+  mandatory:
+    manageMasterUserPassword: true
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: RDSConfig
+metadata:
+  name: ac11-general-instance
+  namespace: rds
+  labels:
+    aws.kropath.run/resource-name: ac11-general-instance
+spec: {}

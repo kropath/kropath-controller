@@ -1,0 +1,25 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: DynamoDBConfig
+metadata:
+  name: ac5-general-table
+  namespace: kro-system
+spec:
+  defaults:
+    billingMode: "PAY_PER_REQUEST"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac5-general-table
+  namespace: kro-system
+spec:
+  defaults:
+    dynamodb:
+      billingMode: "PROVISIONED"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: DynamoDBConfig
+metadata:
+  name: ac5-general-table
+  namespace: dynamodb
+spec: {}

@@ -42,9 +42,14 @@
 
 **Give every AC its own resource name (`ac<N>-<family>-policy`) and do not delete anything between steps.**
 
-**Why:** the controller resolves a config's global counterpart **by name** — `payments-prod/ac3-eks-policy` merges only `kro-system/ac3-eks-policy` — so a per-AC name isolates each AC completely and no AC can shadow another in either direction. Suites that reuse one name across ACs need interleaved `delete` "reset" steps to stop the previous AC's values leaking into the next, and Chainsaw defers `cleanup:` blocks to the end of the file (LIFO), so those resets have to be inline `try:` steps. That is pure overhead and makes the suite order-fragile. Converting `tests/eks/ctrl-eks-01` from one reused `general-policy` name plus 16 inline deletes to unique per-AC names with zero deletes cut its cold runtime from 7.8s to 3.1s.
+**Why:** the controller resolves a config's global counterpart **by name** — `payments-prod/ac3-eks-policy` merges only `kro-system/ac3-eks-policy` — so a per-AC name isolates each AC completely and no AC can shadow another in either direction. Suites that reuse one name across ACs need interleaved `delete` "reset" steps to stop the previous AC's values leaking into the next, and Chainsaw defers `cleanup:` blocks to the end of the file (LIFO), so those resets have to be inline `try:` steps. That is pure overhead and makes the suite order-fragile. Converting `tests/eks/ctrl-eks-01` from one reused `general-policy` name plus 16 inline deletes to unique per-AC names with zero deletes cut its cold runtime from 7.8s to 3.1s; across all 14 converted suites the full run went from 205s to 179s with 439 per-step deletes removed.
 
-**How to apply:** one `ac<NN>-setup.yaml` (all inputs for that AC as a multi-document YAML) plus one `ac<NN>-assert.yaml` per AC; set `spec.skipDelete: true` on the Test so Chainsaw skips its end-of-test cascade delete. See `tests/eks/ctrl-eks-01/` for the reference layout and kropath-aws `docs/frequent-rgd-errors.md` §6 for the fuller rationale.
+**How to apply:** one `ac<NN>-setup.yaml` (all inputs for that AC as a multi-document YAML) plus one `ac<NN>-assert.yaml` per AC. See `tests/eks/ctrl-eks-01/` for the reference layout and kropath-aws `docs/frequent-rgd-errors.md` §6 for the fuller rationale.
+
+Two deliberate deviations from the kropath-aws reference pattern:
+
+- **Do not set `spec.skipDelete: true`.** It exists there to dodge cleanup-phase timeouts caused by ACK finalizers, which this repo has none of — these are plain config CRs with no finalizers and no cloud calls, so Chainsaw's end-of-test cleanup is cheap. Letting it reclaim each suite's objects keeps the shared kind cluster small.
+- **A negative-path step keeps its own file.** An `apply:` carrying `expect:` (a deliberately invalid manifest asserting the API server rejects it) must not be merged into a shared `ac<NN>-setup.yaml`, because `expect:` applies per-manifest. Give those a dedicated `ac<NN>-setup-<i>.yaml`. Dropping the `expect:` block does not fail loudly — the rejected apply just fails the step, and the retry loop surfaces as a confusing `client rate limiter ... context deadline exceeded` rather than a validation error.
 
 ### Chainsaw Test Assertion Stability
 

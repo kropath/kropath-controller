@@ -1,0 +1,24 @@
+# AC-5: globalCloudWatchLogsConfig with mandatory.retentionDays=2557 (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: ac5-ac5-cwl-policy
+  namespace: kro-system
+  labels:
+    aws.kropath.run/resource-name: ac5-ac5-cwl-policy
+spec:
+  mandatory:
+    retentionDays: 2557
+  defaults: {}
+---
+# Empty local CloudWatchLogsConfig for ac5 — cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchLogsConfig
+metadata:
+  name: ac5-ac5-cwl-policy
+  namespace: logging-prod
+  labels:
+    aws.kropath.run/resource-name: ac5-ac5-cwl-policy
+spec:
+  mandatory: {}
+  defaults: {}

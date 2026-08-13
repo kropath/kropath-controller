@@ -1,0 +1,20 @@
+# AC-13: globalKropathConfig with provider identity fields.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac13-general-policy
+  namespace: kro-system
+spec:
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+# Shared empty local ElastiCacheConfig — all cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: ElastiCacheConfig
+metadata:
+  name: ac13-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

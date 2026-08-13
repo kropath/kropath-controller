@@ -1,9 +1,0 @@
-# Global EFSConfig (kro-system) — sets mandatory.kmsKeyId (level 3).
-apiVersion: aws.kropath.run/v1alpha1
-kind: EFSConfig
-metadata:
-  name: general-storage
-  namespace: kro-system
-spec:
-  mandatory:
-    kmsKeyId: "arn:aws:kms:us-east-1:123456789012:key/global-key"

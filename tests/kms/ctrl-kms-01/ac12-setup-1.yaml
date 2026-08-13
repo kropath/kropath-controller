@@ -1,0 +1,16 @@
+# AC-12: Should be rejected — enableKeyRotation set to true in both mandatory and defaults kms.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac12-invalid-both-rotation
+  namespace: kro-system
+spec:
+  mandatory:
+    kms:
+      enableKeyRotation: true
+  defaults:
+    kms:
+      enableKeyRotation: true
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"

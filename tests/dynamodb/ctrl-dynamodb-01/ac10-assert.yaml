@@ -1,0 +1,11 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: DynamoDBConfig
+metadata:
+  name: ac10-general-table
+  namespace: dynamodb
+status:
+  effectiveConfig:
+    mandatory:
+      tags:
+        cost-centre: "infra"
+        resource-type: "database"

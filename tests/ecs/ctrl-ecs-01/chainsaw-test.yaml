@@ -14,7 +14,7 @@
 #
 # ctrl-ecs-01 Chainsaw integration tests — AC-8, AC-11, AC-12.
 # Requires:
-#   - kind cluster with kropath-operator deployed (feature flag: --enable-ecs-cascade)
+#   - kind cluster with kropath-operator deployed
 #   - KropathConfig CRD applied (crds/kropathconfig.yaml from kropath-aws)
 #   - ECSConfig CRD applied (crds/ecsconfig.yaml from kropath-aws)
 apiVersion: chainsaw.kyverno.io/v1alpha1

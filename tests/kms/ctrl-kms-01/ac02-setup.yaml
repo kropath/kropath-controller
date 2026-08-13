@@ -1,0 +1,35 @@
+# AC-2: globalKropathConfig mandatory.kms.enableKeyRotation=true (level 1).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac2-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    kms:
+      enableKeyRotation: true
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+# AC-2: globalKMSConfig mandatory.enableKeyRotation=false (zero value = not enforced, level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
+metadata:
+  name: ac2-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    enableKeyRotation: false
+  defaults:
+    enableKeyRotation: false
+---
+# Shared empty local KMSConfig — all cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
+metadata:
+  name: ac2-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

@@ -1,0 +1,23 @@
+# AC-10: globalKropathConfig with mandatory.sqs.kmsMasterKeyId (level 1).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac10-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    sqs:
+      kmsMasterKeyId: "arn:aws:kms:ap-southeast-2:123:key/org-key"
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+# Shared empty local SQSConfig — all cascade sources come from global configs.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SQSConfig
+metadata:
+  name: ac10-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

@@ -1,0 +1,22 @@
+# AC-12: globalSNSConfig with mandatory.syncedLabels={data-class: internal} (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: SNSConfig
+metadata:
+  name: ac12-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    syncedLabels:
+      data-class: internal
+  defaults: {}
+---
+# Base local SNSConfig in events-prod — empty mandatory and defaults.
+# Reused across multiple AC steps as the namespaced resource under test.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SNSConfig
+metadata:
+  name: ac12-general-policy
+  namespace: events-prod
+spec:
+  mandatory: {}
+  defaults: {}

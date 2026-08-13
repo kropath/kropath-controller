@@ -1,0 +1,25 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac12-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      cost-centre: platform
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: EC2Config
+metadata:
+  name: ac12-general-policy
+  namespace: network-prod
+  labels:
+    aws.kropath.run/resource-name: ac12-general-policy
+spec:
+  mandatory:
+    tags:
+      resource-type: networking
+  defaults: {}
