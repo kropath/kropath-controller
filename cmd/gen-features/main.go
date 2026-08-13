@@ -67,7 +67,7 @@ func main() {
 		return
 	}
 
-	if err := os.WriteFile(outPath, buf.Bytes(), 0o644); err != nil {
+	if err := os.WriteFile(outPath, buf.Bytes(), 0o644); err != nil { // #nosec G306 -- docs/features.yaml is a world-readable checked-in documentation file
 		fmt.Fprintf(os.Stderr, "gen-features: %v\n", err)
 		os.Exit(1)
 	}
