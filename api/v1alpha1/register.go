@@ -70,6 +70,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&ElastiCacheConfigList{},
 		&ECRConfig{},
 		&ECRConfigList{},
+		&StepFunctionsConfig{},
+		&StepFunctionsConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

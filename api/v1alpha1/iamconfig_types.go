@@ -61,10 +61,11 @@ type KropathConfigTier struct {
 	ECS               cascade.ECSKropathSection            `json:"ecs,omitempty"`
 	EKS               cascade.EKSKropathSection            `json:"eks,omitempty"`
 	EC2               cascade.EC2KropathSection            `json:"ec2,omitempty"`
-	ApiGatewayV2      cascade.ApiGatewayV2KropathSection  `json:"apigatewayv2,omitempty"`
-	ElastiCache       cascade.ElastiCacheKropathSection   `json:"elasticache,omitempty"`
-	ECR               cascade.ECRKropathSection            `json:"ecr,omitempty"`
-	Tags              map[string]string                    `json:"tags,omitempty"`
+	ApiGatewayV2      cascade.ApiGatewayV2KropathSection      `json:"apigatewayv2,omitempty"`
+	ElastiCache       cascade.ElastiCacheKropathSection       `json:"elasticache,omitempty"`
+	ECR               cascade.ECRKropathSection               `json:"ecr,omitempty"`
+	StepFunctions     cascade.StepFunctionsKropathSection     `json:"stepfunctions,omitempty"`
+	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
 }
@@ -360,6 +361,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.ECR.Tags = make(map[string]string, len(in.Spec.Defaults.ECR.Tags))
 		for k, v := range in.Spec.Defaults.ECR.Tags {
 			out.Spec.Defaults.ECR.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.StepFunctions.Tags != nil {
+		out.Spec.Mandatory.StepFunctions.Tags = make(map[string]string, len(in.Spec.Mandatory.StepFunctions.Tags))
+		for k, v := range in.Spec.Mandatory.StepFunctions.Tags {
+			out.Spec.Mandatory.StepFunctions.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.StepFunctions.Tags != nil {
+		out.Spec.Defaults.StepFunctions.Tags = make(map[string]string, len(in.Spec.Defaults.StepFunctions.Tags))
+		for k, v := range in.Spec.Defaults.StepFunctions.Tags {
+			out.Spec.Defaults.StepFunctions.Tags[k] = v
 		}
 	}
 	if in.Spec.Mandatory.SyncedLabels != nil {

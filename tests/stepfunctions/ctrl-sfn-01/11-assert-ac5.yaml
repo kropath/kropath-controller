@@ -1,0 +1,11 @@
+# AC-5: effectiveConfig.defaults.loggingLevel="FATAL" when
+# localSFNConfig.defaults.loggingLevel="FATAL" (L6).
+apiVersion: aws.kropath.run/v1alpha1
+kind: StepFunctionsConfig
+metadata:
+  name: general-sfn
+  namespace: stepfunctions
+status:
+  effectiveConfig:
+    defaults:
+      loggingLevel: "FATAL"

@@ -1,0 +1,9 @@
+# Global StepFunctionsConfig (kro-system) — sets mandatory.loggingLevel="ERROR" (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: StepFunctionsConfig
+metadata:
+  name: general-sfn
+  namespace: kro-system
+spec:
+  mandatory:
+    loggingLevel: "ERROR"

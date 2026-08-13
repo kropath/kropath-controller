@@ -1,0 +1,11 @@
+# AC-4: effectiveConfig.mandatory.includeExecutionData=false when
+# localSFNConfig.mandatory.includeExecutionData=false (L4 — explicit false, not nil).
+apiVersion: aws.kropath.run/v1alpha1
+kind: StepFunctionsConfig
+metadata:
+  name: general-sfn
+  namespace: stepfunctions
+status:
+  effectiveConfig:
+    mandatory:
+      includeExecutionData: false

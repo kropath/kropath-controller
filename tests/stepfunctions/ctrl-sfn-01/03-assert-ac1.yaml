@@ -1,0 +1,11 @@
+# AC-1: effectiveConfig.mandatory.loggingLevel="ALL" when
+# globalKPC.mandatory.stepfunctions.loggingLevel="ALL" (L1).
+apiVersion: aws.kropath.run/v1alpha1
+kind: StepFunctionsConfig
+metadata:
+  name: general-sfn
+  namespace: stepfunctions
+status:
+  effectiveConfig:
+    mandatory:
+      loggingLevel: "ALL"

@@ -29,6 +29,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/secretsmanagerconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/snsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/sqsconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/stepfunctionsconfig"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -59,6 +60,7 @@ var (
 	enableEFSCascade              bool
 	enableElastiCacheCascade      bool
 	enableECRCascade              bool
+	enableStepFunctionsCascade    bool
 )
 
 func leaderElectionNamespace() string {
@@ -93,6 +95,7 @@ func main() {
 	flag.BoolVar(&enableEFSCascade, "enable-efs-cascade", false, "Enable the EFSConfig cascade reconciler.")
 	flag.BoolVar(&enableElastiCacheCascade, "enable-elasticache-cascade", false, "Enable the ElastiCacheConfig cascade reconciler.")
 	flag.BoolVar(&enableECRCascade, "enable-ecr-cascade", false, "Enable the ECRConfig cascade reconciler.")
+	flag.BoolVar(&enableStepFunctionsCascade, "enable-stepfunctions-cascade", false, "Enable the StepFunctionsConfig cascade reconciler.")
 	opts := zap.Options{Development: true}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
@@ -341,6 +344,17 @@ func main() {
 		}
 	}
 
+	if enableStepFunctionsCascade {
+		if err := (&stepfunctionsconfig.Reconciler{
+			Client: mgr.GetClient(),
+			Log:    ctrl.Log.WithName("controllers").WithName("StepFunctionsConfig"),
+			Scheme: mgr.GetScheme(),
+		}).SetupWithManager(mgr); err != nil {
+			ctrl.Log.Error(err, "unable to create StepFunctionsConfig reconciler")
+			os.Exit(1)
+		}
+	}
+
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		ctrl.Log.Error(err, "unable to set up health check")
 		os.Exit(1)
@@ -350,7 +364,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctrl.Log.Info("starting manager", "metrics", metricsAddr, "probes", probeAddr, "enable_poldoc", enablePolicyDoc, "enable_kms_cascade", enableKMSCascade, "enable_sqs_cascade", enableSQSCascade, "enable_secretsmanager_cascade", enableSMCascade, "enable_label_operator", enableLabelOperator, "enable_sns_cascade", enableSNSCascade, "enable_dynamodb_cascade", enableDynamoDBCascade, "enable_eventbridge_cascade", enableEventBridgeCascade, "enable_elb_cascade", enableELBCascade, "enable_rds_cascade", enableRDSCascade, "enable_autoscaling_cascade", enableAutoScalingCascade, "enable_ecs_cascade", enableECSCascade, "enable_eks_cascade", enableEKSCascade, "enable_ec2_cascade", enableEC2Cascade, "enable_apigatewayv2_cascade", enableApiGatewayV2Cascade, "enable_efs_cascade", enableEFSCascade, "enable_elasticache_cascade", enableElastiCacheCascade, "enable_ecr_cascade", enableECRCascade)
+	ctrl.Log.Info("starting manager", "metrics", metricsAddr, "probes", probeAddr, "enable_poldoc", enablePolicyDoc, "enable_kms_cascade", enableKMSCascade, "enable_sqs_cascade", enableSQSCascade, "enable_secretsmanager_cascade", enableSMCascade, "enable_label_operator", enableLabelOperator, "enable_sns_cascade", enableSNSCascade, "enable_dynamodb_cascade", enableDynamoDBCascade, "enable_eventbridge_cascade", enableEventBridgeCascade, "enable_elb_cascade", enableELBCascade, "enable_rds_cascade", enableRDSCascade, "enable_autoscaling_cascade", enableAutoScalingCascade, "enable_ecs_cascade", enableECSCascade, "enable_eks_cascade", enableEKSCascade, "enable_ec2_cascade", enableEC2Cascade, "enable_apigatewayv2_cascade", enableApiGatewayV2Cascade, "enable_efs_cascade", enableEFSCascade, "enable_elasticache_cascade", enableElastiCacheCascade, "enable_ecr_cascade", enableECRCascade, "enable_stepfunctions_cascade", enableStepFunctionsCascade)
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		ctrl.Log.Error(err, "problem running manager")
 		os.Exit(1)

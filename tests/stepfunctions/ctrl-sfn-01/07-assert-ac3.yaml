@@ -1,0 +1,11 @@
+# AC-3: effectiveConfig.mandatory.tracingEnabled=true when
+# localSFNConfig.mandatory.tracingEnabled=true (L4).
+apiVersion: aws.kropath.run/v1alpha1
+kind: StepFunctionsConfig
+metadata:
+  name: general-sfn
+  namespace: stepfunctions
+status:
+  effectiveConfig:
+    mandatory:
+      tracingEnabled: true

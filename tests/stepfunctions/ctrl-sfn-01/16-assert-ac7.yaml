@@ -1,0 +1,13 @@
+# AC-7: effectiveConfig.mandatory.tags contains both L1 (env) and L3 (cost-centre) tags
+# after additive union — L1 wins on key conflict.
+apiVersion: aws.kropath.run/v1alpha1
+kind: StepFunctionsConfig
+metadata:
+  name: general-sfn
+  namespace: stepfunctions
+status:
+  effectiveConfig:
+    mandatory:
+      tags:
+        env: prod
+        cost-centre: platform

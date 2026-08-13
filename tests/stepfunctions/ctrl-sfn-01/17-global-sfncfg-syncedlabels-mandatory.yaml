@@ -1,0 +1,10 @@
+# Global StepFunctionsConfig (kro-system) — sets mandatory.syncedLabels (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: StepFunctionsConfig
+metadata:
+  name: general-sfn
+  namespace: kro-system
+spec:
+  mandatory:
+    syncedLabels:
+      team: platform

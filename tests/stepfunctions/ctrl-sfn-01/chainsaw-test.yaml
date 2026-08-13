@@ -1,0 +1,241 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-sfn-01 Chainsaw integration tests — 10 controller acceptance criteria.
+# Requires:
+#   - kind cluster with kropath-operator deployed (feature flag: --enable-stepfunctions-cascade)
+#   - KropathConfig CRD applied (fixtures/crds/awskropathconfig.yaml)
+#   - StepFunctionsConfig CRD applied (fixtures/crds/awsstepfunctionsconfig.yaml)
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-sfn-01-cascade
+spec:
+  namespace: stepfunctions
+  steps:
+    # Purge any stale resources from prior runs before the suite starts.
+    - name: purge-stale-leftovers
+      try:
+        - script:
+            content: |
+              kubectl delete stepfunctionsconfig general-sfn -n stepfunctions --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n kro-system --ignore-not-found
+              kubectl delete kropathconfig general-sfn -n kro-system --ignore-not-found
+              kubectl delete kropathconfig general-sfn -n stepfunctions --ignore-not-found
+
+    # AC-1: globalKropathConfig.mandatory.stepfunctions.loggingLevel="ALL" (L1) propagates to
+    # effectiveConfig.mandatory.loggingLevel (highest mandatory priority).
+    - name: ac1-l1-global-kpc-mandatory-logging-level
+      try:
+        - apply:
+            file: 01-global-kpc-logging-mandatory.yaml
+        - apply:
+            file: 02-sfnconfig.yaml
+        - assert:
+            file: 03-assert-ac1.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-sfnconfig.yaml
+        - delete:
+            file: 01-global-kpc-logging-mandatory.yaml
+
+    # AC-2: globalSFNConfig.mandatory.loggingLevel="ERROR" (L3) propagates when L1/L2 absent.
+    - name: ac2-l3-global-sfncfg-mandatory-logging-level
+      try:
+        - script:
+            content: |
+              kubectl delete kropathconfig general-sfn -n kro-system --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n kro-system --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n stepfunctions --ignore-not-found
+        - apply:
+            file: 04-global-sfncfg-logging-mandatory.yaml
+        - apply:
+            file: 02-sfnconfig.yaml
+        - assert:
+            file: 05-assert-ac2.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-sfnconfig.yaml
+        - delete:
+            file: 04-global-sfncfg-logging-mandatory.yaml
+
+    # AC-3: localSFNConfig.mandatory.tracingEnabled=true (L4) propagates to
+    # effectiveConfig.mandatory.tracingEnabled.
+    - name: ac3-l4-local-sfncfg-mandatory-tracing-true
+      try:
+        - script:
+            content: |
+              kubectl delete kropathconfig general-sfn -n kro-system --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n kro-system --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n stepfunctions --ignore-not-found
+        - apply:
+            file: 06-local-sfncfg-tracing-mandatory.yaml
+        - assert:
+            file: 07-assert-ac3.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 06-local-sfncfg-tracing-mandatory.yaml
+
+    # AC-4: localSFNConfig.mandatory.includeExecutionData=false (L4) — explicit false must
+    # propagate, not be treated as nil/unset.
+    - name: ac4-l4-local-sfncfg-mandatory-include-exec-data-false
+      try:
+        - script:
+            content: |
+              kubectl delete kropathconfig general-sfn -n kro-system --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n kro-system --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n stepfunctions --ignore-not-found
+        - apply:
+            file: 08-local-sfncfg-include-exec-data-mandatory.yaml
+        - assert:
+            file: 09-assert-ac4.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 08-local-sfncfg-include-exec-data-mandatory.yaml
+
+    # AC-5: localSFNConfig.defaults.loggingLevel="FATAL" (L6) propagates to
+    # effectiveConfig.defaults.loggingLevel.
+    - name: ac5-l6-local-sfncfg-defaults-logging-level
+      try:
+        - script:
+            content: |
+              kubectl delete kropathconfig general-sfn -n kro-system --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n kro-system --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n stepfunctions --ignore-not-found
+        - apply:
+            file: 10-local-sfncfg-logging-defaults.yaml
+        - assert:
+            file: 11-assert-ac5.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 10-local-sfncfg-logging-defaults.yaml
+
+    # AC-6: globalSFNConfig.defaults.tracingEnabled=false (L7) — explicit false propagates
+    # to effectiveConfig.defaults.tracingEnabled.
+    - name: ac6-l7-global-sfncfg-defaults-tracing-false
+      try:
+        - script:
+            content: |
+              kubectl delete kropathconfig general-sfn -n kro-system --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n kro-system --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n stepfunctions --ignore-not-found
+        - apply:
+            file: 12-global-sfncfg-tracing-defaults.yaml
+        - apply:
+            file: 02-sfnconfig.yaml
+        - assert:
+            file: 13-assert-ac6.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-sfnconfig.yaml
+        - delete:
+            file: 12-global-sfncfg-tracing-defaults.yaml
+
+    # AC-7: Tags are additive-merged — globalKPC.mandatory.stepfunctions.tags (L1) and
+    # globalSFNConfig.mandatory.tags (L3) union into effectiveConfig.mandatory.tags.
+    - name: ac7-tags-additive-union-l1-and-l3
+      try:
+        - script:
+            content: |
+              kubectl delete kropathconfig general-sfn -n kro-system --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n kro-system --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n stepfunctions --ignore-not-found
+        - apply:
+            file: 14-global-kpc-tags-mandatory.yaml
+        - apply:
+            file: 15-global-sfncfg-tags-mandatory.yaml
+        - apply:
+            file: 02-sfnconfig.yaml
+        - assert:
+            file: 16-assert-ac7.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-sfnconfig.yaml
+        - delete:
+            file: 15-global-sfncfg-tags-mandatory.yaml
+        - delete:
+            file: 14-global-kpc-tags-mandatory.yaml
+
+    # AC-8: globalSFNConfig.mandatory.syncedLabels (L3) propagates to
+    # effectiveConfig.mandatory.syncedLabels.
+    - name: ac8-l3-global-sfncfg-mandatory-synced-labels
+      try:
+        - script:
+            content: |
+              kubectl delete kropathconfig general-sfn -n kro-system --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n kro-system --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n stepfunctions --ignore-not-found
+        - apply:
+            file: 17-global-sfncfg-syncedlabels-mandatory.yaml
+        - apply:
+            file: 02-sfnconfig.yaml
+        - assert:
+            file: 18-assert-ac8.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-sfnconfig.yaml
+        - delete:
+            file: 17-global-sfncfg-syncedlabels-mandatory.yaml
+
+    # AC-9: AWS identity (accountId + region) from globalKropathConfig.spec.aws propagates
+    # to effectiveConfig.aws.
+    - name: ac9-aws-identity-from-global-kpc
+      try:
+        - script:
+            content: |
+              kubectl delete kropathconfig general-sfn -n kro-system --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n kro-system --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n stepfunctions --ignore-not-found
+        - apply:
+            file: 19-global-kpc-aws-identity.yaml
+        - apply:
+            file: 02-sfnconfig.yaml
+        - assert:
+            file: 20-assert-ac9.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-sfnconfig.yaml
+        - delete:
+            file: 19-global-kpc-aws-identity.yaml
+
+    # AC-10: globalSFNConfig.mandatory.namingTemplate (L3) propagates to
+    # effectiveConfig.mandatory.namingTemplate.
+    - name: ac10-l3-global-sfncfg-mandatory-naming-template
+      try:
+        - script:
+            content: |
+              kubectl delete kropathconfig general-sfn -n kro-system --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n kro-system --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n stepfunctions --ignore-not-found
+        - apply:
+            file: 21-global-sfncfg-naming-mandatory.yaml
+        - apply:
+            file: 02-sfnconfig.yaml
+        - assert:
+            file: 22-assert-ac10.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-sfnconfig.yaml
+        - delete:
+            file: 21-global-sfncfg-naming-mandatory.yaml

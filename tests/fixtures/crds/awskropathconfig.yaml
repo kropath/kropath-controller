@@ -157,6 +157,8 @@ spec:
               message: "ecr.encryptionType cannot be set in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory) && has(self.spec.mandatory.ecr) && has(self.spec.mandatory.ecr.lifecyclePolicy) && self.spec.mandatory.ecr.lifecyclePolicy != "" && has(self.spec.defaults) && has(self.spec.defaults.ecr) && has(self.spec.defaults.ecr.lifecyclePolicy) && self.spec.defaults.ecr.lifecyclePolicy != "")'
               message: "ecr.lifecyclePolicy cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.stepfunctions) && self.spec.mandatory.stepfunctions.loggingLevel != "" && has(self.spec.defaults.stepfunctions) && self.spec.defaults.stepfunctions.loggingLevel != "")'
+              message: "stepfunctions.loggingLevel cannot be set in both mandatory and defaults"
           properties:
             spec:
               type: object
@@ -495,6 +497,21 @@ spec:
                         lifecyclePolicy:
                           type: string
                           description: Lifecycle policy JSON template. Empty = not enforced.
+                    stepfunctions:
+                      type: object
+                      default: {}
+                      properties:
+                        loggingLevel:
+                          type: string
+                          default: ""
+                          description: >-
+                            Mandatory execution logging level. "" = not enforced.
+                            Valid values: "" | "ALL" | "ERROR" | "FATAL" | "OFF".
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
                     tags:
                       type: object
                       additionalProperties:
@@ -840,6 +857,21 @@ spec:
                         lifecyclePolicy:
                           type: string
                           description: Default lifecycle policy template. Empty = no default.
+                    stepfunctions:
+                      type: object
+                      default: {}
+                      properties:
+                        loggingLevel:
+                          type: string
+                          default: ""
+                          description: >-
+                            Default execution logging level. "OFF" = no logging (AWS default).
+                            Valid values: "" | "ALL" | "ERROR" | "FATAL" | "OFF".
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
                     tags:
                       type: object
                       additionalProperties:

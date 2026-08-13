@@ -1,0 +1,10 @@
+# Global StepFunctionsConfig (kro-system) — sets defaults.tracingEnabled=false (level 7).
+# Explicit false must propagate, not be treated as nil/unset.
+apiVersion: aws.kropath.run/v1alpha1
+kind: StepFunctionsConfig
+metadata:
+  name: general-sfn
+  namespace: kro-system
+spec:
+  defaults:
+    tracingEnabled: false

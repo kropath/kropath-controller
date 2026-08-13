@@ -1,0 +1,11 @@
+# AC-2: effectiveConfig.mandatory.loggingLevel="ERROR" when
+# globalSFNConfig.mandatory.loggingLevel="ERROR" (L3) with no L1/L2 set.
+apiVersion: aws.kropath.run/v1alpha1
+kind: StepFunctionsConfig
+metadata:
+  name: general-sfn
+  namespace: stepfunctions
+status:
+  effectiveConfig:
+    mandatory:
+      loggingLevel: "ERROR"

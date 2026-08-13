@@ -1,0 +1,11 @@
+# Global KropathConfig (kro-system) — sets mandatory.stepfunctions.tags (level 1).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: general-sfn
+  namespace: kro-system
+spec:
+  mandatory:
+    stepfunctions:
+      tags:
+        env: prod
