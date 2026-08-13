@@ -4,11 +4,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/features"
@@ -338,7 +340,14 @@ func main() {
 		ctrl.Log.Error(err, "unable to set up health check")
 		os.Exit(1)
 	}
-	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+	if err := mgr.AddReadyzCheck("readyz", func(req *http.Request) error {
+		ctx, cancel := context.WithTimeout(req.Context(), 100*time.Millisecond)
+		defer cancel()
+		if !mgr.GetCache().WaitForCacheSync(ctx) {
+			return fmt.Errorf("informer cache not synced")
+		}
+		return nil
+	}); err != nil {
 		ctrl.Log.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
