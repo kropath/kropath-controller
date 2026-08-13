@@ -36,40 +36,23 @@
 - Health probes: `/healthz` port 8081 (manager alive), `/readyz` port 8081 (leader lease + watches established)
 - `/features` endpoint on `:8080` — returns version, git commit, and the live reconciler list as JSON
 - **No per-feature flags.** Every reconciler in `internal/features.All` runs unconditionally. To add a reconciler: create its package under `internal/reconciler/<pkg>/`, add an entry to `features.All`, and run `make generate-features`. Missing registrations fail `TestRegistryCoversAllPackages`.
-- **Every watched kind must have a CRD in `tests/fixtures/crds/`.** Since the flags were retired, a reconciler whose CRD is absent from the test cluster is no longer harmless: its informer never syncs and controller-runtime **kills the whole manager** once the 2-minute cache-sync timeout elapses. The operator serves traffic for two minutes and then exits, so the symptom is that every Chainsaw suite running after the ~2-minute mark fails on a 30s assert timeout while earlier suites pass — the set of "failing" families is decided by machine speed and test order, not by anything wrong with those families. `TestEveryReconcilerHasCRDFixture` now catches this at unit-test time. `make chainsaw-setup` derives its `kubectl wait` list from the fixture directory, so adding the CRD file is the only step required.
+- **Every watched kind must have a CRD in `tests/fixtures/crds/`.** With the flags retired, a reconciler whose CRD is missing from the test cluster takes down the **whole manager** two minutes after startup, which surfaces as unrelated Chainsaw suites timing out. `TestEveryReconcilerHasCRDFixture` catches it at unit-test time; `make chainsaw-setup` derives its `kubectl wait` list from the fixture directory. See `docs/frequent-chainsaw-errors.md` §1.
 
-### Adding a Chainsaw suite — unique name per acceptance criterion
+### Chainsaw tests
 
-**Give every AC its own resource name (`ac<N>-<family>-policy`) and do not delete anything between steps.**
+**Read `docs/frequent-chainsaw-errors.md` before writing or debugging a Chainsaw suite.**
+It covers the failure modes that are specific to this repo and expensive to rediscover:
+a missing CRD killing the manager mid-run, why suites use a unique resource name per
+step, why `skipDelete` does *not* transfer from kropath-aws, why a dropped `expect:`
+block masquerades as a rate-limiter error, and order-stable list assertions.
 
-**Why:** the controller resolves a config's global counterpart **by name** — `payments-prod/ac3-eks-policy` merges only `kro-system/ac3-eks-policy` — so a per-AC name isolates each AC completely and no AC can shadow another in either direction. Suites that reuse one name across ACs need interleaved `delete` "reset" steps to stop the previous AC's values leaking into the next, and Chainsaw defers `cleanup:` blocks to the end of the file (LIFO), so those resets have to be inline `try:` steps. That is pure overhead and makes the suite order-fragile. Converting `tests/eks/ctrl-eks-01` from one reused `general-policy` name plus 16 inline deletes to unique per-AC names with zero deletes cut its cold runtime from 7.8s to 3.1s; across all 14 converted suites the full run went from 205s to 179s with 439 per-step deletes removed.
+The short version for a new suite: give every acceptance criterion its own resource
+name (`ac<N>-<family>-policy`), delete nothing between steps, and use one
+`ac<NN>-setup.yaml` plus one `ac<NN>-assert.yaml` per AC. `tests/eks/ctrl-eks-01/` is
+the reference layout. The controller pairs a namespaced config with its `kro-system`
+counterpart *by name*, so a per-step name is a complete isolation boundary.
 
-**How to apply:** one `ac<NN>-setup.yaml` (all inputs for that AC as a multi-document YAML) plus one `ac<NN>-assert.yaml` per AC. See `tests/eks/ctrl-eks-01/` for the reference layout and kropath-aws `docs/frequent-rgd-errors.md` §6 for the fuller rationale.
-
-Two deliberate deviations from the kropath-aws reference pattern:
-
-- **Do not set `spec.skipDelete: true`.** It exists there to dodge cleanup-phase timeouts caused by ACK finalizers, which this repo has none of — these are plain config CRs with no finalizers and no cloud calls, so Chainsaw's end-of-test cleanup is cheap. Letting it reclaim each suite's objects keeps the shared kind cluster small.
-- **A negative-path step keeps its own file.** An `apply:` carrying `expect:` (a deliberately invalid manifest asserting the API server rejects it) must not be merged into a shared `ac<NN>-setup.yaml`, because `expect:` applies per-manifest. Give those a dedicated `ac<NN>-setup-<i>.yaml`. Dropping the `expect:` block does not fail loudly — the rejected apply just fails the step, and the retry loop surfaces as a confusing `client rate limiter ... context deadline exceeded` rather than a validation error.
-
-### Chainsaw Test Assertion Stability
-
-**Never assert a list/array field by exact position when its element order is not guaranteed deterministic — use item-level `(?...)` matching instead.**
-
-**Why:** Any list built by iterating a Go map (or, in the sibling `kropath-aws` repo, a kro CEL `.merge().transformList()` chain) has iteration order that is not guaranteed stable across runs. A positional chainsaw `assert` on such a list is a latent flake — it can pass locally and fail in CI, or pass in isolation and fail under parallel execution, purely from map-order nondeterminism.
-
-**How to apply:** This repo's current `effectiveConfig.mandatory.tags` / `.defaults.tags` / `syncedLabels` / `syncedAnnotations` fields are all **maps**, not lists, so today's asserts (e.g. `tests/kms/ctrl-kms-01/33-assert-ac15.yaml`) are order-stable and need no change. `PolicyDocument` statement merges are also stable — `spec.sources` are concatenated in source order, not iterated from a map. But if a future change adds or asserts a **list built from a map** (e.g. a config field ever serialized as `[]{key,value}`, or a merge algorithm that starts ranging over a map), pair a length check with a per-item match instead of a positional list:
-
-```yaml
-spec:
-  (length(tags)): 2
-  tags:
-    - (key == 'cost-centre'): true
-      value: platform
-    - (key == 'environment'): true
-      value: mandatory
-```
-
-See `kropath-aws/docs/frequent-rgd-errors.md` §6 "Flaky List/Array Asserts — CEL Map-to-List Transforms Have Unstable Order" for the fuller writeup and the pattern applied to that repo's kro RGD chainsaw tests.
+Dated write-ups of specific incidents live in `docs/troubleshooting-logs/`.
 
 ### Before Creating a PR
 
