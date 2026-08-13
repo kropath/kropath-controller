@@ -36,6 +36,15 @@
 - Health probes: `/healthz` port 8081 (manager alive), `/readyz` port 8081 (leader lease + watches established)
 - `/features` endpoint on `:8080` — returns version, git commit, and the live reconciler list as JSON
 - **No per-feature flags.** Every reconciler in `internal/features.All` runs unconditionally. To add a reconciler: create its package under `internal/reconciler/<pkg>/`, add an entry to `features.All`, and run `make generate-features`. Missing registrations fail `TestRegistryCoversAllPackages`.
+- **Every watched kind must have a CRD in `tests/fixtures/crds/`.** Since the flags were retired, a reconciler whose CRD is absent from the test cluster is no longer harmless: its informer never syncs and controller-runtime **kills the whole manager** once the 2-minute cache-sync timeout elapses. The operator serves traffic for two minutes and then exits, so the symptom is that every Chainsaw suite running after the ~2-minute mark fails on a 30s assert timeout while earlier suites pass — the set of "failing" families is decided by machine speed and test order, not by anything wrong with those families. `TestEveryReconcilerHasCRDFixture` now catches this at unit-test time. `make chainsaw-setup` derives its `kubectl wait` list from the fixture directory, so adding the CRD file is the only step required.
+
+### Adding a Chainsaw suite — unique name per acceptance criterion
+
+**Give every AC its own resource name (`ac<N>-<family>-policy`) and do not delete anything between steps.**
+
+**Why:** the controller resolves a config's global counterpart **by name** — `payments-prod/ac3-eks-policy` merges only `kro-system/ac3-eks-policy` — so a per-AC name isolates each AC completely and no AC can shadow another in either direction. Suites that reuse one name across ACs need interleaved `delete` "reset" steps to stop the previous AC's values leaking into the next, and Chainsaw defers `cleanup:` blocks to the end of the file (LIFO), so those resets have to be inline `try:` steps. That is pure overhead and makes the suite order-fragile. Converting `tests/eks/ctrl-eks-01` from one reused `general-policy` name plus 16 inline deletes to unique per-AC names with zero deletes cut its cold runtime from 7.8s to 3.1s.
+
+**How to apply:** one `ac<NN>-setup.yaml` (all inputs for that AC as a multi-document YAML) plus one `ac<NN>-assert.yaml` per AC; set `spec.skipDelete: true` on the Test so Chainsaw skips its end-of-test cascade delete. See `tests/eks/ctrl-eks-01/` for the reference layout and kropath-aws `docs/frequent-rgd-errors.md` §6 for the fuller rationale.
 
 ### Chainsaw Test Assertion Stability
 

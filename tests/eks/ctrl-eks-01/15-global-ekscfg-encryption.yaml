@@ -1,9 +1,0 @@
-# AC-7: global EKSConfig with mandatory.encryptionKeyArn (level 3).
-apiVersion: aws.kropath.run/v1alpha1
-kind: EKSConfig
-metadata:
-  name: general-policy
-  namespace: kro-system
-spec:
-  mandatory:
-    encryptionKeyArn: "arn:aws:kms:us-east-1:123456789012:key/test-key-id"
