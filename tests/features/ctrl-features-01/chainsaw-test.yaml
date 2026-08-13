@@ -1,0 +1,154 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-features-01 — /features endpoint: listing, query filtering, and method enforcement.
+#
+# Requires the controller to be running on :8080 (the default metrics address).
+# Launched by `make chainsaw-start chainsaw-wait` before running this suite.
+#
+# No Kubernetes resources are created or deleted; the test is purely read-only
+# HTTP calls against the running controller process.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-features-01
+spec:
+  description: "/features endpoint — listing, query filtering, method enforcement (ctrl-features-01)"
+  steps:
+    # AC-2: GET /features returns HTTP 200, Content-Type: application/json, and lists 22 reconcilers.
+    - name: ac2-get-returns-200-and-22-reconcilers
+      try:
+        - script:
+            timeout: 30s
+            content: |
+              set -e
+              response=$(curl -fsS -D - http://127.0.0.1:8080/features)
+              # Verify 200 OK in headers
+              if ! echo "$response" | grep -q 'HTTP/1.1 200'; then
+                echo "FAIL: expected HTTP 200"
+                echo "$response" | head -5
+                exit 1
+              fi
+              # Verify Content-Type header
+              if ! echo "$response" | grep -qi 'content-type: application/json'; then
+                echo "FAIL: expected Content-Type: application/json"
+                echo "$response" | grep -i content-type || true
+                exit 1
+              fi
+              # Extract body (after blank line)
+              body=$(echo "$response" | sed -n '/^[[:space:]]*$/,$ p' | tail -n +2)
+              # Verify it is valid JSON with a features array
+              count=$(echo "$body" | python3 -c "import json,sys; d=json.load(sys.stdin); print(len(d['features']))")
+              echo "reconciler count: $count"
+              if [ "$count" -ne 22 ]; then
+                echo "FAIL: expected 22 reconcilers, got $count"
+                echo "$body" | python3 -m json.tool || true
+                exit 1
+              fi
+              # Verify version field is non-empty
+              ver=$(echo "$body" | python3 -c "import json,sys; print(json.load(sys.stdin)['version'])")
+              if [ -z "$ver" ]; then
+                echo "FAIL: version field is empty"
+                exit 1
+              fi
+              echo "PASS: GET /features → 200, application/json, 22 reconcilers, version=$ver"
+
+    # AC-2 (ordering): Repeated calls must return features in the same order (determinism).
+    - name: ac2-ordering-is-deterministic
+      try:
+        - script:
+            timeout: 30s
+            content: |
+              set -e
+              extract_pkgs() {
+                curl -fsS http://127.0.0.1:8080/features | \
+                  python3 -c "import json,sys; [print(r['package']) for r in json.load(sys.stdin)['features']]"
+              }
+              first=$(extract_pkgs)
+              second=$(extract_pkgs)
+              if [ "$first" != "$second" ]; then
+                echo "FAIL: features order differs between calls"
+                echo "--- first ---"
+                echo "$first"
+                echo "--- second ---"
+                echo "$second"
+                exit 1
+              fi
+              echo "PASS: features order is deterministic across repeated calls"
+
+    # AC-3a: ?name=<known-package> returns exactly that one reconciler with HTTP 200.
+    - name: ac3-known-name-returns-single-entry
+      try:
+        - script:
+            timeout: 30s
+            content: |
+              set -e
+              body=$(curl -fsS 'http://127.0.0.1:8080/features?name=kmsconfig')
+              count=$(echo "$body" | python3 -c "import json,sys; print(len(json.load(sys.stdin)['features']))")
+              pkg=$(echo "$body" | python3 -c "import json,sys; print(json.load(sys.stdin)['features'][0]['package'])")
+              if [ "$count" -ne 1 ]; then
+                echo "FAIL: expected 1 feature, got $count"
+                exit 1
+              fi
+              if [ "$pkg" != "kmsconfig" ]; then
+                echo "FAIL: expected package kmsconfig, got $pkg"
+                exit 1
+              fi
+              echo "PASS: ?name=kmsconfig → 1 entry, package=$pkg"
+
+    # AC-3b: ?name=<unknown> returns HTTP 404 with a JSON error body.
+    - name: ac3-unknown-name-returns-404
+      try:
+        - script:
+            timeout: 30s
+            content: |
+              set -e
+              # curl -f exits non-zero on HTTP errors; use -s -o to capture body and check status
+              status=$(curl -s -o /tmp/features-404-body.json -w '%{http_code}' \
+                'http://127.0.0.1:8080/features?name=doesnotexist')
+              if [ "$status" -ne 404 ]; then
+                echo "FAIL: expected HTTP 404, got $status"
+                cat /tmp/features-404-body.json || true
+                exit 1
+              fi
+              # Verify the body is valid JSON with an error field
+              err=$(python3 -c "import json,sys; d=json.load(open('/tmp/features-404-body.json')); print(d.get('error',''))" 2>/dev/null)
+              if [ -z "$err" ]; then
+                echo "FAIL: 404 response body does not contain a non-empty 'error' field"
+                cat /tmp/features-404-body.json || true
+                exit 1
+              fi
+              echo "PASS: ?name=doesnotexist → 404 with JSON error: $err"
+
+    # AC-4: POST /features returns HTTP 405 with Content-Type: application/json.
+    - name: ac4-post-returns-405
+      try:
+        - script:
+            timeout: 30s
+            content: |
+              set -e
+              status=$(curl -s -o /tmp/features-405-body.json -w '%{http_code}' \
+                -X POST http://127.0.0.1:8080/features)
+              if [ "$status" -ne 405 ]; then
+                echo "FAIL: expected HTTP 405, got $status"
+                cat /tmp/features-405-body.json || true
+                exit 1
+              fi
+              # Verify the body is valid JSON
+              if ! python3 -m json.tool /tmp/features-405-body.json > /dev/null 2>&1; then
+                echo "FAIL: 405 response body is not valid JSON"
+                cat /tmp/features-405-body.json || true
+                exit 1
+              fi
+              echo "PASS: POST /features → 405 with JSON body"
