@@ -4,4 +4,5 @@ test-results/
 coverage.out
 coverage.html
 docs/
+!docs/features.yaml
 *.md

@@ -48,7 +48,7 @@ jobs:
       - name: Unit tests
         run: make test
 
-  features-verify:
+  check-features:
     name: Feature registry drift gate
     runs-on: ubuntu-latest
     steps:
@@ -62,7 +62,7 @@ jobs:
           cache: true
 
       - name: Check docs/features.yaml is up to date
-        run: make features-verify
+        run: make check-features
 
   security:
     name: Security scan
@@ -89,7 +89,7 @@ jobs:
   image:
     name: Build image
     runs-on: ubuntu-latest
-    needs: [lint, unit, features-verify, security]
+    needs: [lint, unit, check-features, security]
     permissions:
       contents: read
       packages: write
@@ -129,7 +129,7 @@ jobs:
   e2e:
     name: Chainsaw integration tests
     runs-on: ubuntu-latest
-    needs: [lint, unit, features-verify, security]
+    needs: [lint, unit, check-features, security]
 
     steps:
       - name: Checkout
