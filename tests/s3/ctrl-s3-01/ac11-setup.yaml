@@ -1,0 +1,21 @@
+# Gap 2 — KropathConfig named "default" in the resource namespace takes effect at levels 2 and 8.
+# The controller must look up the local KropathConfig by the literal name "default",
+# not by the S3Config's name.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: default
+  namespace: payments-prod
+spec:
+  mandatory:
+    s3:
+      enforceHttpsOnly: true
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: S3Config
+metadata:
+  name: ac11-ac11-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

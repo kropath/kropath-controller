@@ -1,0 +1,33 @@
+# Gap 1 — annotated namespace picks up its custom global namespace's KropathConfig.
+# The ac10-app-ns namespace carries aws.kropath.run/global-config-namespace: ac10-global-ns,
+# so the controller must read the KropathConfig from ac10-global-ns instead of kro-system.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac10-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac10-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac10-global-ns
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac10-ac10-general-policy
+  namespace: ac10-global-ns
+spec:
+  mandatory:
+    s3:
+      encryptionAlgorithm: aws:kms
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: S3Config
+metadata:
+  name: ac10-ac10-general-policy
+  namespace: ac10-app-ns
+spec:
+  mandatory: {}
+  defaults: {}

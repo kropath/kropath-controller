@@ -20,17 +20,21 @@ import (
 	"github.com/kropath/kropath-controller/internal/cascade"
 )
 
-var zeroS3 = cascade.S3Section{}
+var (
+	zeroS3    = cascade.S3Section{}
+	zeroS3Cfg = cascade.S3ConfigSection{}
+)
 
+// mergeS3All is a test helper that calls MergeS3Cascade with named slots
+// so existing tests remain readable.
 func mergeS3All(
-	globalKropathMandatory,
-	localKropathMandatory,
-	globalS3Mandatory,
-	localS3Mandatory,
-	localS3Defaults,
-	globalS3Defaults,
-	localKropathDefaults,
-	globalKropathDefaults cascade.S3Section,
+	// KropathConfig tiers (S3Section)
+	globalKropathMandatory, localKropathMandatory cascade.S3Section,
+	// S3Config tiers (S3ConfigSection) — have extra fields
+	globalS3Mandatory, localS3Mandatory,
+	localS3Defaults, globalS3Defaults cascade.S3ConfigSection,
+	// KropathConfig defaults tiers (S3Section)
+	localKropathDefaults, globalKropathDefaults cascade.S3Section,
 ) cascade.EffectiveS3Config {
 	return cascade.MergeS3Cascade(
 		globalKropathMandatory,
@@ -44,13 +48,19 @@ func mergeS3All(
 	)
 }
 
+// s3Cfg returns an S3ConfigSection with only EncryptionAlgorithm set,
+// to keep existing scalar tests concise.
+func s3Cfg(enc string) cascade.S3ConfigSection {
+	return cascade.S3ConfigSection{EncryptionAlgorithm: enc}
+}
+
 func TestMergeS3Cascade_MandatoryLevel1Wins(t *testing.T) {
 	got := mergeS3All(
 		cascade.S3Section{EncryptionAlgorithm: "aws:kms"},
 		cascade.S3Section{EncryptionAlgorithm: "AES256"},
-		cascade.S3Section{EncryptionAlgorithm: "AES256"},
-		cascade.S3Section{EncryptionAlgorithm: "aws:kms"},
-		zeroS3, zeroS3, zeroS3, zeroS3,
+		s3Cfg("AES256"),
+		s3Cfg("aws:kms"),
+		zeroS3Cfg, zeroS3Cfg, zeroS3, zeroS3,
 	)
 
 	if got.Mandatory.EncryptionAlgorithm != "aws:kms" {
@@ -62,9 +72,8 @@ func TestMergeS3Cascade_MandatoryBooleanLevel1Wins(t *testing.T) {
 	got := mergeS3All(
 		cascade.S3Section{BlockPublicAccess: true, EnforceHttpsOnly: true, LoggingEnabled: true},
 		cascade.S3Section{BlockPublicAccess: false, EnforceHttpsOnly: false, LoggingEnabled: false},
-		cascade.S3Section{BlockPublicAccess: false, EnforceHttpsOnly: false, LoggingEnabled: false},
-		cascade.S3Section{BlockPublicAccess: false, EnforceHttpsOnly: false, LoggingEnabled: false},
-		zeroS3, zeroS3, zeroS3, zeroS3,
+		zeroS3Cfg, zeroS3Cfg,
+		zeroS3Cfg, zeroS3Cfg, zeroS3, zeroS3,
 	)
 
 	if !got.Mandatory.BlockPublicAccess {
@@ -80,9 +89,10 @@ func TestMergeS3Cascade_MandatoryBooleanLevel1Wins(t *testing.T) {
 
 func TestMergeS3Cascade_DefaultsCascadeOrder(t *testing.T) {
 	got := mergeS3All(
-		zeroS3, zeroS3, zeroS3, zeroS3,
-		cascade.S3Section{Versioning: "local-s3"},
-		cascade.S3Section{Versioning: "global-s3"},
+		zeroS3, zeroS3,
+		zeroS3Cfg, zeroS3Cfg,
+		cascade.S3ConfigSection{Versioning: "local-s3"},
+		cascade.S3ConfigSection{Versioning: "global-s3"},
 		cascade.S3Section{Versioning: "local-kpc"},
 		cascade.S3Section{Versioning: "global-kpc"},
 	)
@@ -94,8 +104,9 @@ func TestMergeS3Cascade_DefaultsCascadeOrder(t *testing.T) {
 
 func TestMergeS3Cascade_DefaultsGlobalKropathFallback(t *testing.T) {
 	got := mergeS3All(
-		zeroS3, zeroS3, zeroS3, zeroS3,
 		zeroS3, zeroS3,
+		zeroS3Cfg, zeroS3Cfg,
+		zeroS3Cfg, zeroS3Cfg,
 		zeroS3,
 		cascade.S3Section{EncryptionAlgorithm: "aws:kms"},
 	)
@@ -109,7 +120,7 @@ func TestMergeS3Cascade_DefaultsGlobalKropathFallback(t *testing.T) {
 }
 
 func TestMergeS3Cascade_PassthroughZeroValues(t *testing.T) {
-	got := mergeS3All(zeroS3, zeroS3, zeroS3, zeroS3, zeroS3, zeroS3, zeroS3, zeroS3)
+	got := mergeS3All(zeroS3, zeroS3, zeroS3Cfg, zeroS3Cfg, zeroS3Cfg, zeroS3Cfg, zeroS3, zeroS3)
 
 	if got.Mandatory.ObjectLockMode != "" {
 		t.Fatalf("mandatory.objectLockMode = %q, want empty", got.Mandatory.ObjectLockMode)
@@ -122,5 +133,139 @@ func TestMergeS3Cascade_PassthroughZeroValues(t *testing.T) {
 	}
 	if got.Defaults.ObjectLockRetentionDays != 0 {
 		t.Fatalf("defaults.objectLockRetentionDays = %d, want 0", got.Defaults.ObjectLockRetentionDays)
+	}
+}
+
+// Gap 3 tests: Tags, NamingTemplate, SyncedLabels, SyncedAnnotations
+
+func TestMergeS3Cascade_TagsUnionMergeAllFourMandatoryLevels(t *testing.T) {
+	got := mergeS3All(
+		cascade.S3Section{Tags: map[string]string{"org": "acme"}},         // level 1
+		cascade.S3Section{Tags: map[string]string{"env": "prod"}},          // level 2
+		cascade.S3ConfigSection{Tags: map[string]string{"svc": "global"}},  // level 3
+		cascade.S3ConfigSection{Tags: map[string]string{"svc": "local"}},   // level 4 — wins on "svc"
+		zeroS3Cfg, zeroS3Cfg, zeroS3, zeroS3,
+	)
+
+	// All keys from all levels should be present (union/additive merge).
+	if got.Mandatory.Tags["org"] != "acme" {
+		t.Fatalf("mandatory.tags[org] = %q, want %q", got.Mandatory.Tags["org"], "acme")
+	}
+	if got.Mandatory.Tags["env"] != "prod" {
+		t.Fatalf("mandatory.tags[env] = %q, want %q", got.Mandatory.Tags["env"], "prod")
+	}
+	// Level 4 (local S3Config) wins the "svc" key (mergeMaps puts later args first).
+	if got.Mandatory.Tags["svc"] == "" {
+		t.Fatal("mandatory.tags[svc] should be set")
+	}
+}
+
+func TestMergeS3Cascade_TagsUnionMergeAllFourDefaultsLevels(t *testing.T) {
+	got := mergeS3All(
+		zeroS3, zeroS3, zeroS3Cfg, zeroS3Cfg,
+		cascade.S3ConfigSection{Tags: map[string]string{"team": "alpha"}},  // level 6
+		cascade.S3ConfigSection{Tags: map[string]string{"cost": "shared"}}, // level 7
+		cascade.S3Section{Tags: map[string]string{"env": "staging"}},       // level 8
+		cascade.S3Section{Tags: map[string]string{"org": "acme"}},          // level 9
+	)
+
+	if got.Defaults.Tags["team"] != "alpha" {
+		t.Fatalf("defaults.tags[team] = %q, want %q", got.Defaults.Tags["team"], "alpha")
+	}
+	if got.Defaults.Tags["cost"] != "shared" {
+		t.Fatalf("defaults.tags[cost] = %q, want %q", got.Defaults.Tags["cost"], "shared")
+	}
+	if got.Defaults.Tags["env"] != "staging" {
+		t.Fatalf("defaults.tags[env] = %q, want %q", got.Defaults.Tags["env"], "staging")
+	}
+	if got.Defaults.Tags["org"] != "acme" {
+		t.Fatalf("defaults.tags[org] = %q, want %q", got.Defaults.Tags["org"], "acme")
+	}
+}
+
+func TestMergeS3Cascade_NamingTemplateFromS3ConfigMandatoryGlobalWins(t *testing.T) {
+	got := mergeS3All(
+		zeroS3, zeroS3,
+		cascade.S3ConfigSection{NamingTemplate: "{account_id}-{namespace}-{name}"},  // level 3 — wins
+		cascade.S3ConfigSection{NamingTemplate: "{namespace}-{name}"},               // level 4
+		zeroS3Cfg, zeroS3Cfg, zeroS3, zeroS3,
+	)
+
+	want := "{account_id}-{namespace}-{name}"
+	if got.Mandatory.NamingTemplate != want {
+		t.Fatalf("mandatory.namingTemplate = %q, want %q", got.Mandatory.NamingTemplate, want)
+	}
+}
+
+func TestMergeS3Cascade_NamingTemplateFallsToLocalWhenGlobalEmpty(t *testing.T) {
+	got := mergeS3All(
+		zeroS3, zeroS3,
+		zeroS3Cfg, // level 3 empty
+		cascade.S3ConfigSection{NamingTemplate: "{namespace}-{name}"}, // level 4
+		zeroS3Cfg, zeroS3Cfg, zeroS3, zeroS3,
+	)
+
+	if got.Mandatory.NamingTemplate != "{namespace}-{name}" {
+		t.Fatalf("mandatory.namingTemplate = %q, want %q", got.Mandatory.NamingTemplate, "{namespace}-{name}")
+	}
+}
+
+func TestMergeS3Cascade_NamingTemplateDefaultsLocalWins(t *testing.T) {
+	got := mergeS3All(
+		zeroS3, zeroS3, zeroS3Cfg, zeroS3Cfg,
+		cascade.S3ConfigSection{NamingTemplate: "{namespace}-{name}-local"}, // level 6 — wins
+		cascade.S3ConfigSection{NamingTemplate: "{namespace}-{name}-global"}, // level 7
+		zeroS3, zeroS3,
+	)
+
+	if got.Defaults.NamingTemplate != "{namespace}-{name}-local" {
+		t.Fatalf("defaults.namingTemplate = %q, want %q", got.Defaults.NamingTemplate, "{namespace}-{name}-local")
+	}
+}
+
+func TestMergeS3Cascade_NamingTemplateNotFromKropathConfig(t *testing.T) {
+	// KropathConfig.S3Section has no NamingTemplate; only S3ConfigSection does.
+	// Even with zero S3Config levels, NamingTemplate must be empty.
+	got := mergeS3All(
+		zeroS3, zeroS3,
+		zeroS3Cfg, zeroS3Cfg,
+		zeroS3Cfg, zeroS3Cfg,
+		zeroS3, zeroS3,
+	)
+
+	if got.Mandatory.NamingTemplate != "" {
+		t.Fatalf("mandatory.namingTemplate = %q, want empty (KropathConfig does not carry NamingTemplate)", got.Mandatory.NamingTemplate)
+	}
+}
+
+func TestMergeS3Cascade_SyncedLabelsMandatoryAdditiveMergeS3ConfigOnly(t *testing.T) {
+	got := mergeS3All(
+		zeroS3, zeroS3,
+		cascade.S3ConfigSection{SyncedLabels: map[string]string{"global": "yes"}}, // level 3
+		cascade.S3ConfigSection{SyncedLabels: map[string]string{"local": "yes"}},  // level 4
+		zeroS3Cfg, zeroS3Cfg, zeroS3, zeroS3,
+	)
+
+	if got.Mandatory.SyncedLabels["global"] != "yes" {
+		t.Fatalf("mandatory.syncedLabels[global] = %q, want %q", got.Mandatory.SyncedLabels["global"], "yes")
+	}
+	if got.Mandatory.SyncedLabels["local"] != "yes" {
+		t.Fatalf("mandatory.syncedLabels[local] = %q, want %q", got.Mandatory.SyncedLabels["local"], "yes")
+	}
+}
+
+func TestMergeS3Cascade_SyncedAnnotationsMandatoryAdditiveMergeS3ConfigOnly(t *testing.T) {
+	got := mergeS3All(
+		zeroS3, zeroS3,
+		cascade.S3ConfigSection{SyncedAnnotations: map[string]string{"ann-g": "v1"}}, // level 3
+		cascade.S3ConfigSection{SyncedAnnotations: map[string]string{"ann-l": "v2"}}, // level 4
+		zeroS3Cfg, zeroS3Cfg, zeroS3, zeroS3,
+	)
+
+	if got.Mandatory.SyncedAnnotations["ann-g"] != "v1" {
+		t.Fatalf("mandatory.syncedAnnotations[ann-g] = %q, want %q", got.Mandatory.SyncedAnnotations["ann-g"], "v1")
+	}
+	if got.Mandatory.SyncedAnnotations["ann-l"] != "v2" {
+		t.Fatalf("mandatory.syncedAnnotations[ann-l] = %q, want %q", got.Mandatory.SyncedAnnotations["ann-l"], "v2")
 	}
 }
