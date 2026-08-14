@@ -108,3 +108,27 @@ spec:
         - assert:
             file: ac09-assert.yaml
             timeout: 30s
+
+    - name: ac10-annotated-namespace-custom-global-tier
+      try:
+        - apply:
+            file: ac10-setup.yaml
+        - assert:
+            file: ac10-assert.yaml
+            timeout: 30s
+
+    - name: ac11-local-default-kpc-takes-effect
+      try:
+        - apply:
+            file: ac11-setup.yaml
+        - assert:
+            file: ac11-assert.yaml
+            timeout: 30s
+
+    - name: ac12-naming-template-from-s3config
+      try:
+        - apply:
+            file: ac12-setup.yaml
+        - assert:
+            file: ac12-assert.yaml
+            timeout: 30s

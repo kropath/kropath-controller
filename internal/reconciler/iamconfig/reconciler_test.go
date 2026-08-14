@@ -163,7 +163,7 @@ func TestRequestsForIAMConfigChangeGlobal(t *testing.T) {
 	got := rec.requestsForIAMConfigChange(context.Background(), &v1alpha1.IAMConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "general-policy",
-			Namespace: kroSystemNamespace,
+			Namespace: "kro-system",
 		},
 	})
 
@@ -228,7 +228,7 @@ func globalKropathConfig(name string, iam cascade.IAMSection) *v1alpha1.KropathC
 		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "KropathConfig"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: kroSystemNamespace,
+			Namespace: "kro-system",
 		},
 		Spec: v1alpha1.KropathConfigSpec{
 			Mandatory: v1alpha1.KropathConfigTier{IAM: iam},
@@ -254,7 +254,7 @@ func globalIAMConfig(name string, mandatory cascade.IAMSection) *v1alpha1.IAMCon
 		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "IAMConfig"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: kroSystemNamespace,
+			Namespace: "kro-system",
 		},
 		Spec: v1alpha1.IAMConfigSpec{
 			Mandatory: mandatory,

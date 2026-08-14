@@ -12,6 +12,12 @@ import (
 	"github.com/kropath/kropath-controller/internal/features"
 )
 
+// helperPackages lists directories under internal/reconciler/ that contain shared
+// helpers rather than a Reconciler struct and should not appear in features.All.
+var helperPackages = map[string]bool{
+	"util": true,
+}
+
 // TestRegistryCoversAllPackages ensures that every directory under
 // internal/reconciler/ is listed in features.All, and vice versa.
 // This is the CI gate that makes "adding a reconciler without registering it"
@@ -24,7 +30,7 @@ func TestRegistryCoversAllPackages(t *testing.T) {
 
 	dirs := map[string]bool{}
 	for _, e := range entries {
-		if e.IsDir() {
+		if e.IsDir() && !helperPackages[e.Name()] {
 			dirs[e.Name()] = true
 		}
 	}

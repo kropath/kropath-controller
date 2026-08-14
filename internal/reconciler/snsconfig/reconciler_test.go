@@ -338,7 +338,7 @@ func TestRequestsForKropathConfigChangeGlobal(t *testing.T) {
 	)
 
 	got := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.KropathConfig{
-		ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: kroSystemNamespace},
+		ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: "kro-system"},
 	})
 
 	want := map[string]bool{
@@ -363,20 +363,41 @@ func TestRequestsForKropathConfigChangeGlobal(t *testing.T) {
 }
 
 func TestRequestsForKropathConfigChangeNonGlobalScopedToNamespace(t *testing.T) {
+	// After Gap 2: only KPC named "default" is a local KPC.
+	// A KPC with any other name in a non-global namespace triggers 0 requests.
 	rec, _ := testReconciler(t,
 		localSNSConfig("events-prod", "general-policy", cascade.SNSConfigSection{}, cascade.SNSConfigSection{}),
+		localSNSConfig("payments-prod", "general-policy", cascade.SNSConfigSection{}, cascade.SNSConfigSection{}),
 		localSNSConfig("sandbox", "general-policy", cascade.SNSConfigSection{}, cascade.SNSConfigSection{}),
 	)
 
 	got := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.KropathConfig{
-		ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: "events-prod"},
+		ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: "payments-prod"},
 	})
 
-	if len(got) != 1 {
-		t.Fatalf("requests len = %d, want 1 (%#v)", len(got), got)
+	// "general-policy" KPC in "payments-prod" is not the local KPC (name != "default"),
+	// and "payments-prod" is not the resolved global namespace for any item. Expect 0 requests.
+	if len(got) != 0 {
+		t.Fatalf("requests len = %d, want 0 — non-default KPC name in non-global namespace triggers nothing (%#v)", len(got), got)
 	}
-	if got[0].Namespace != "events-prod" || got[0].Name != "general-policy" {
-		t.Fatalf("unexpected request %#v", got[0])
+}
+
+func TestRequestsForKropathConfigChangeLocalDefaultEnqueuesNamespace(t *testing.T) {
+	// After Gap 2: KPC named "default" in namespace X triggers all configs in X.
+	rec, _ := testReconciler(t,
+		localSNSConfig("events-prod", "general-policy", cascade.SNSConfigSection{}, cascade.SNSConfigSection{}),
+		localSNSConfig("payments-prod", "general-policy", cascade.SNSConfigSection{}, cascade.SNSConfigSection{}),
+		localSNSConfig("payments-prod", "other-policy", cascade.SNSConfigSection{}, cascade.SNSConfigSection{}),
+		localSNSConfig("sandbox", "general-policy", cascade.SNSConfigSection{}, cascade.SNSConfigSection{}),
+	)
+
+	got := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.KropathConfig{
+		ObjectMeta: metav1.ObjectMeta{Name: "default", Namespace: "payments-prod"},
+	})
+
+	// "default" KPC in "payments-prod" → enqueue all configs in "payments-prod" (2 items).
+	if len(got) != 2 {
+		t.Fatalf("requests len = %d, want 2 — default KPC triggers all configs in its namespace (%#v)", len(got), got)
 	}
 }
 
@@ -387,7 +408,7 @@ func TestRequestsForSNSConfigChangeGlobal(t *testing.T) {
 	)
 
 	got := rec.requestsForSNSConfigChange(context.Background(), &v1alpha1.SNSConfig{
-		ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: kroSystemNamespace},
+		ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: "kro-system"},
 	})
 
 	if len(got) != 2 {
@@ -436,7 +457,7 @@ func globalKropathConfig(name string, tier v1alpha1.KropathConfigTier) *v1alpha1
 		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "KropathConfig"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: kroSystemNamespace,
+			Namespace: "kro-system",
 		},
 		Spec: v1alpha1.KropathConfigSpec{
 			Mandatory: tier,
@@ -449,7 +470,7 @@ func globalKropathConfigWithDefaults(name string, mandatory, defaults v1alpha1.K
 		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "KropathConfig"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: kroSystemNamespace,
+			Namespace: "kro-system",
 		},
 		Spec: v1alpha1.KropathConfigSpec{
 			Mandatory: mandatory,
@@ -469,7 +490,7 @@ func globalSNSConfig(name string, mandatory, defaults cascade.SNSConfigSection) 
 		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "SNSConfig"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: kroSystemNamespace,
+			Namespace: "kro-system",
 		},
 		Spec: v1alpha1.SNSConfigSpec{
 			Mandatory: mandatory,

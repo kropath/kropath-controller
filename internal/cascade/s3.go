@@ -16,9 +16,13 @@
 // ResourceConfig CRDs, following ADR-010 and ADR-015 §5.3.
 package cascade
 
-// S3Section holds the S3-specific governance fields shared by
-// KropathConfig.spec.mandatory.s3 / .defaults.s3 and
-// S3Config.spec.mandatory / .spec.defaults.
+// S3Section holds the S3-specific governance fields from
+// KropathConfig.spec.mandatory.s3 / .defaults.s3 (ADR-015 §3.5).
+//
+// Tags are the only map field present here; NamingTemplate, SyncedLabels, and
+// SyncedAnnotations are S3Config-only (S3ConfigSection). The reconciler populates
+// Tags from KropathConfig.spec.mandatory.tags / .defaults.tags so that tag union
+// merge flows through MergeS3Cascade alongside the S3-specific fields.
 //
 // Zero value of each field is the permissive sentinel (not enforced).
 type S3Section struct {
@@ -57,13 +61,90 @@ type S3Section struct {
 	// ObjectLockRetentionDays is the enforced retention period in days.
 	// 0 (zero value) = no enforcement.
 	ObjectLockRetentionDays int64 `json:"objectLockRetentionDays,omitempty"`
+
+	// Tags are tier-level cloud resource tags.
+	// The reconciler populates this from KropathConfig.spec.mandatory.tags / .defaults.tags
+	// so that tag union merge flows through MergeS3Cascade alongside the S3-specific fields.
+	// nil / empty map = no tags at this level.
+	Tags map[string]string `json:"tags,omitempty"`
+}
+
+// S3ConfigSection holds the S3 governance fields from S3Config.spec.mandatory
+// or S3Config.spec.defaults (per-type ResourceConfig, ADR-015 §3.5).
+//
+// Zero value of each field is the permissive sentinel (not enforced).
+type S3ConfigSection struct {
+	// EncryptionAlgorithm is the bucket encryption mode. Empty string = not enforced.
+	EncryptionAlgorithm string `json:"encryptionAlgorithm,omitempty"`
+
+	// KmsKeyArn is the KMS key ARN. Empty string = not enforced.
+	KmsKeyArn string `json:"kmsKeyArn,omitempty"`
+
+	// BlockPublicAccess forces S3 public access blocking when true. false = not enforced.
+	BlockPublicAccess bool `json:"blockPublicAccess,omitempty"`
+
+	// Versioning is the enforced bucket versioning state. Empty string = not enforced.
+	Versioning string `json:"versioning,omitempty"`
+
+	// LoggingEnabled enforces server access logging when true. false = not enforced.
+	LoggingEnabled bool `json:"loggingEnabled,omitempty"`
+
+	// LogDeliveryBucket is the target bucket for server access logs. Empty string = not enforced.
+	LogDeliveryBucket string `json:"logDeliveryBucket,omitempty"`
+
+	// EnforceHttpsOnly requires TLS for bucket access when true. false = not enforced.
+	EnforceHttpsOnly bool `json:"enforceHttpsOnly,omitempty"`
+
+	// ObjectLockMode is the enforced object lock mode. Empty string = not enforced.
+	ObjectLockMode string `json:"objectLockMode,omitempty"`
+
+	// ObjectLockRetentionDays is the enforced retention period in days. 0 = not enforced.
+	ObjectLockRetentionDays int64 `json:"objectLockRetentionDays,omitempty"`
+
+	// NamingTemplate is the bucket naming template (e.g. "{namespace}-{name}").
+	// Governed only at S3Config levels 3-4 (mandatory) and 6-7 (defaults).
+	// KropathConfig.s3 does NOT carry namingTemplate.
+	// Empty string = not enforced.
+	NamingTemplate string `json:"namingTemplate,omitempty"`
+
+	// SyncedLabels are Kubernetes labels to propagate to created bucket resources.
+	// Additive map merge across S3Config tiers only.
+	// nil / empty = no labels at this level.
+	SyncedLabels map[string]string `json:"syncedLabels,omitempty"`
+
+	// SyncedAnnotations are Kubernetes annotations to propagate to created bucket resources.
+	// Additive map merge across S3Config tiers only.
+	// nil / empty = no annotations at this level.
+	SyncedAnnotations map[string]string `json:"syncedAnnotations,omitempty"`
+
+	// Tags are cloud resource tags for this S3 config profile.
+	// nil / empty = no tags at this level.
+	Tags map[string]string `json:"tags,omitempty"`
+}
+
+// EffectiveS3Section is one tier (mandatory or defaults) of the merged S3 governance
+// result written into S3Config.status.effectiveConfig by the controller.
+type EffectiveS3Section struct {
+	EncryptionAlgorithm     string            `json:"encryptionAlgorithm,omitempty"`
+	KmsKeyArn               string            `json:"kmsKeyArn,omitempty"`
+	BlockPublicAccess        bool              `json:"blockPublicAccess,omitempty"`
+	Versioning              string            `json:"versioning,omitempty"`
+	LoggingEnabled          bool              `json:"loggingEnabled,omitempty"`
+	LogDeliveryBucket       string            `json:"logDeliveryBucket,omitempty"`
+	EnforceHttpsOnly        bool              `json:"enforceHttpsOnly,omitempty"`
+	ObjectLockMode          string            `json:"objectLockMode,omitempty"`
+	ObjectLockRetentionDays int64             `json:"objectLockRetentionDays,omitempty"`
+	NamingTemplate          string            `json:"namingTemplate,omitempty"`
+	SyncedLabels            map[string]string `json:"syncedLabels,omitempty"`
+	SyncedAnnotations       map[string]string `json:"syncedAnnotations,omitempty"`
+	Tags                    map[string]string `json:"tags,omitempty"`
 }
 
 // EffectiveS3Config is the merged S3 governance result written into
 // S3Config.status.effectiveConfig by the controller.
 type EffectiveS3Config struct {
-	Mandatory S3Section `json:"mandatory"`
-	Defaults  S3Section `json:"defaults"`
+	Mandatory EffectiveS3Section `json:"mandatory"`
+	Defaults  EffectiveS3Section `json:"defaults"`
 }
 
 // MergeS3Cascade merges S3 governance fields from all cascade sources and
@@ -71,32 +152,36 @@ type EffectiveS3Config struct {
 //
 // The ten-level priority chain (ADR-015 §5.3) for S3 fields:
 //
-//	Level 1 — globalKropathMandatory  (KropathConfig in kro-system)
+//	Level 1 — globalKropathMandatory  (KropathConfig in global namespace)
 //	Level 2 — localKropathMandatory   (KropathConfig in resource namespace)
-//	Level 3 — globalS3CfgMandatory    (S3Config in kro-system)
+//	Level 3 — globalS3CfgMandatory    (S3Config in global namespace)
 //	Level 4 — localS3CfgMandatory     (S3Config in resource namespace)
 //	(Level 5 = instance spec — resolved in RGD CEL, not here)
 //	Level 6 — localS3CfgDefaults      (S3Config in resource namespace)
-//	Level 7 — globalS3CfgDefaults     (S3Config in kro-system)
+//	Level 7 — globalS3CfgDefaults     (S3Config in global namespace)
 //	Level 8 — localKropathDefaults    (KropathConfig in resource namespace)
-//	Level 9 — globalKropathDefaults   (KropathConfig in kro-system)
+//	Level 9 — globalKropathDefaults   (KropathConfig in global namespace)
 //
 // For mandatory (levels 1–4): first non-zero value in priority order wins.
 // For defaults (levels 6–9): first non-zero value in priority order wins.
+// Tags: union merge across all four levels per tier (additive).
+// NamingTemplate, SyncedLabels, SyncedAnnotations: S3Config levels only.
 func MergeS3Cascade(
-	// Mandatory inputs (highest → lowest priority)
+	// KropathConfig mandatory inputs (levels 1-2)
 	globalKropathMandatory S3Section, // level 1
 	localKropathMandatory S3Section, // level 2
-	globalS3CfgMandatory S3Section, // level 3
-	localS3CfgMandatory S3Section, // level 4
-	// Defaults inputs (highest → lowest priority)
-	localS3CfgDefaults S3Section, // level 6
-	globalS3CfgDefaults S3Section, // level 7
+	// S3Config mandatory inputs (levels 3-4)
+	globalS3CfgMandatory S3ConfigSection, // level 3
+	localS3CfgMandatory S3ConfigSection, // level 4
+	// S3Config defaults inputs (levels 6-7)
+	localS3CfgDefaults S3ConfigSection, // level 6
+	globalS3CfgDefaults S3ConfigSection, // level 7
+	// KropathConfig defaults inputs (levels 8-9)
 	localKropathDefaults S3Section, // level 8
 	globalKropathDefaults S3Section, // level 9
 ) EffectiveS3Config {
 	return EffectiveS3Config{
-		Mandatory: S3Section{
+		Mandatory: EffectiveS3Section{
 			EncryptionAlgorithm: firstNonEmptyString(
 				globalKropathMandatory.EncryptionAlgorithm,
 				localKropathMandatory.EncryptionAlgorithm,
@@ -151,8 +236,30 @@ func MergeS3Cascade(
 				globalS3CfgMandatory.ObjectLockRetentionDays,
 				localS3CfgMandatory.ObjectLockRetentionDays,
 			),
+			// NamingTemplate: S3Config levels only (globalS3Cfg wins for mandatory tier)
+			NamingTemplate: firstNonEmptyString(
+				globalS3CfgMandatory.NamingTemplate,
+				localS3CfgMandatory.NamingTemplate,
+			),
+			// SyncedLabels: additive merge across S3Config mandatory levels
+			SyncedLabels: mergeMaps(
+				localS3CfgMandatory.SyncedLabels,
+				globalS3CfgMandatory.SyncedLabels,
+			),
+			// SyncedAnnotations: additive merge across S3Config mandatory levels
+			SyncedAnnotations: mergeMaps(
+				localS3CfgMandatory.SyncedAnnotations,
+				globalS3CfgMandatory.SyncedAnnotations,
+			),
+			// Tags: union merge across all four mandatory levels (additive)
+			Tags: mergeMaps(
+				localS3CfgMandatory.Tags,
+				globalS3CfgMandatory.Tags,
+				localKropathMandatory.Tags,
+				globalKropathMandatory.Tags,
+			),
 		},
-		Defaults: S3Section{
+		Defaults: EffectiveS3Section{
 			EncryptionAlgorithm: firstNonEmptyString(
 				localS3CfgDefaults.EncryptionAlgorithm,
 				globalS3CfgDefaults.EncryptionAlgorithm,
@@ -206,6 +313,28 @@ func MergeS3Cascade(
 				globalS3CfgDefaults.ObjectLockRetentionDays,
 				localKropathDefaults.ObjectLockRetentionDays,
 				globalKropathDefaults.ObjectLockRetentionDays,
+			),
+			// NamingTemplate: S3Config levels only (localS3Cfg wins for defaults tier)
+			NamingTemplate: firstNonEmptyString(
+				localS3CfgDefaults.NamingTemplate,
+				globalS3CfgDefaults.NamingTemplate,
+			),
+			// SyncedLabels: additive merge across S3Config defaults levels
+			SyncedLabels: mergeMaps(
+				globalS3CfgDefaults.SyncedLabels,
+				localS3CfgDefaults.SyncedLabels,
+			),
+			// SyncedAnnotations: additive merge across S3Config defaults levels
+			SyncedAnnotations: mergeMaps(
+				globalS3CfgDefaults.SyncedAnnotations,
+				localS3CfgDefaults.SyncedAnnotations,
+			),
+			// Tags: union merge across all four defaults levels (additive)
+			Tags: mergeMaps(
+				globalKropathDefaults.Tags,
+				localKropathDefaults.Tags,
+				globalS3CfgDefaults.Tags,
+				localS3CfgDefaults.Tags,
 			),
 		},
 	}

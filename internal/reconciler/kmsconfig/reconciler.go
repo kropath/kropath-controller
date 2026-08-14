@@ -22,6 +22,8 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/cascade"
+	"github.com/kropath/kropath-controller/internal/reconciler/util"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -30,7 +32,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 )
 
-const kroSystemNamespace = "kro-system"
 
 type Reconciler struct {
 	Client client.Client
@@ -69,19 +70,24 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 			&v1alpha1.KropathConfig{},
 			handler.EnqueueRequestsFromMapFunc(r.requestsForKropathConfigChange),
 		).
+		Watches(
+			&corev1.Namespace{},
+			handler.EnqueueRequestsFromMapFunc(r.requestsForNamespaceChange),
+		).
 		Complete(r)
 }
 
 func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.KMSConfig) (bool, ctrl.Result, error) {
-	globalKropath, err := r.loadKropathConfig(ctx, kroSystemNamespace, cfg.Name)
+	globalNS := util.ResolveGlobalNamespace(ctx, r.Client, cfg.Namespace)
+	globalKropath, err := r.loadKropathConfig(ctx, globalNS, cfg.Name)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
-	localKropath, err := r.loadKropathConfig(ctx, cfg.Namespace, cfg.Name)
+	localKropath, err := r.loadKropathConfig(ctx, cfg.Namespace, "default")
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
-	globalKMS, err := r.loadKMSConfig(ctx, kroSystemNamespace, cfg.Name)
+	globalKMS, err := r.loadKMSConfig(ctx, globalNS, cfg.Name)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
@@ -182,52 +188,81 @@ func (r *Reconciler) loadKMSConfig(ctx context.Context, namespace, name string) 
 }
 
 func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj client.Object) []ctrl.Request {
-	cfg, ok := obj.(*v1alpha1.KropathConfig)
+	kpc, ok := obj.(*v1alpha1.KropathConfig)
 	if !ok {
 		return nil
 	}
 
 	var list v1alpha1.KMSConfigList
-	if cfg.Namespace == kroSystemNamespace {
-		if err := r.Client.List(ctx, &list); err != nil {
-			r.Log.Error(err, "unable to list KMS configs for global KropathConfig change")
-			return nil
-		}
-	} else {
-		if err := r.Client.List(ctx, &list, client.InNamespace(cfg.Namespace)); err != nil {
-			r.Log.Error(err, "unable to list KMS configs for namespace KropathConfig change")
-			return nil
-		}
+	if err := r.Client.List(ctx, &list); err != nil {
+		r.Log.Error(err, "unable to list KMSConfig configs for KropathConfig change")
+		return nil
 	}
 
 	requests := make([]ctrl.Request, 0, len(list.Items))
 	for _, item := range list.Items {
-		if item.Namespace == kroSystemNamespace || item.Name != cfg.Name {
+		// Local KPC: named "default" in the resource's own namespace
+		if kpc.Name == "default" && kpc.Namespace == item.Namespace {
+			requests = append(requests, ctrl.Request{
+				NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name},
+			})
 			continue
 		}
-		requests = append(requests, ctrl.Request{NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name}})
+		// Global KPC: in the resolved global namespace for this item
+		globalNS := util.ResolveGlobalNamespace(ctx, r.Client, item.Namespace)
+		if kpc.Namespace == globalNS && kpc.Name == item.Name {
+			requests = append(requests, ctrl.Request{
+				NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name},
+			})
+		}
 	}
 	return requests
 }
 
 func (r *Reconciler) requestsForKMSConfigChange(ctx context.Context, obj client.Object) []ctrl.Request {
-	cfg, ok := obj.(*v1alpha1.KMSConfig)
-	if !ok || cfg.Namespace != kroSystemNamespace {
+	trigger, ok := obj.(*v1alpha1.KMSConfig)
+	if !ok {
 		return nil
 	}
 
 	var list v1alpha1.KMSConfigList
 	if err := r.Client.List(ctx, &list); err != nil {
-		r.Log.Error(err, "unable to list KMS configs for global KMSConfig change")
+		r.Log.Error(err, "unable to list KMSConfig configs for KMSConfig change")
 		return nil
 	}
 
 	requests := make([]ctrl.Request, 0, len(list.Items))
 	for _, item := range list.Items {
-		if item.Namespace == kroSystemNamespace || item.Name != cfg.Name {
+		if item.Namespace == trigger.Namespace {
 			continue
 		}
-		requests = append(requests, ctrl.Request{NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name}})
+		globalNS := util.ResolveGlobalNamespace(ctx, r.Client, item.Namespace)
+		if trigger.Namespace == globalNS && trigger.Name == item.Name {
+			requests = append(requests, ctrl.Request{
+				NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name},
+			})
+		}
+	}
+	return requests
+}
+
+func (r *Reconciler) requestsForNamespaceChange(ctx context.Context, obj client.Object) []ctrl.Request {
+	ns, ok := obj.(*corev1.Namespace)
+	if !ok {
+		return nil
+	}
+
+	var list v1alpha1.KMSConfigList
+	if err := r.Client.List(ctx, &list, client.InNamespace(ns.Name)); err != nil {
+		r.Log.Error(err, "unable to list KMSConfig configs for namespace change", "namespace", ns.Name)
+		return nil
+	}
+
+	requests := make([]ctrl.Request, 0, len(list.Items))
+	for _, item := range list.Items {
+		requests = append(requests, ctrl.Request{
+			NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name},
+		})
 	}
 	return requests
 }
