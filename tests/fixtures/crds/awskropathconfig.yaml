@@ -469,6 +469,16 @@ spec:
                         minimumTlsVersion:
                           type: string
                           default: ""
+                    apigateway:
+                      type: object
+                      default: {}
+                      properties:
+                        endpointType:
+                          type: string
+                          default: ""
+                        minimumTlsVersion:
+                          type: string
+                          default: ""
                     elasticache:
                       type: object
                       default: {}
@@ -826,6 +836,16 @@ spec:
                         disableExecuteApiEndpoint:
                           type: boolean
                           default: false
+                        minimumTlsVersion:
+                          type: string
+                          default: ""
+                    apigateway:
+                      type: object
+                      default: {}
+                      properties:
+                        endpointType:
+                          type: string
+                          default: ""
                         minimumTlsVersion:
                           type: string
                           default: ""
