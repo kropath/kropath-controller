@@ -57,6 +57,24 @@ spec:
                       type: integer
                       format: int64
                       default: 0
+                    namingTemplate:
+                      type: string
+                      default: ""
+                    tags:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedLabels:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
                 defaults:
                   type: object
                   default: {}
@@ -89,6 +107,24 @@ spec:
                       type: integer
                       format: int64
                       default: 0
+                    namingTemplate:
+                      type: string
+                      default: ""
+                    tags:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedLabels:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
             status:
               type: object
               properties:
@@ -122,6 +158,20 @@ spec:
                         objectLockRetentionDays:
                           type: integer
                           format: int64
+                        namingTemplate:
+                          type: string
+                        tags:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedAnnotations:
+                          type: object
+                          additionalProperties:
+                            type: string
                     defaults:
                       type: object
                       properties:
@@ -144,3 +194,24 @@ spec:
                         objectLockRetentionDays:
                           type: integer
                           format: int64
+                        namingTemplate:
+                          type: string
+                        tags:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedAnnotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                    aws:
+                      type: object
+                      properties:
+                        accountId:
+                          type: string
+                        region:
+                          type: string
