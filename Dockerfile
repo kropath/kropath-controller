@@ -43,6 +43,16 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build \
 
 FROM gcr.io/distroless/static:nonroot
 
+# Re-declare build-args so they are in scope for LABEL in this stage.
+ARG VERSION=dev
+ARG GIT_COMMIT=none
+ARG BUILD_DATE=unknown
+
+LABEL org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.revision="${GIT_COMMIT}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.source="https://github.com/kropath/kropath-controller"
+
 WORKDIR /
 
 COPY --from=builder /kropath-operator /kropath-operator
