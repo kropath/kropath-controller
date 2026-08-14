@@ -22,7 +22,7 @@ one `externalRef` lookup per RGD (see the CEL cascade pattern in `docs/STANDARDS
 
 ## Requirements
 
-- Go 1.26.5 (pinned in `go.mod`; keep in sync with `Makefile` / `.github/workflows/ci.yaml`)
+- Go 1.26.6 (pinned in `go.mod`; keep in sync with `Makefile` / `.github/workflows/ci.yaml`)
 - [kind](https://kind.sigs.k8s.io/) v0.25.0 — local integration-test cluster
 - [Chainsaw](https://kyverno.github.io/chainsaw/) v0.2.15 — integration test runner
 - [golangci-lint](https://golangci-lint.run/) v2.11.4
@@ -72,7 +72,7 @@ curl http://localhost:8080/features
   "version": "v0.1.0",
   "gitCommit": "a1b2c3d",
   "buildDate": "2026-08-13T00:00:00Z",
-  "goVersion": "go1.26.5",
+  "goVersion": "go1.26.6",
   "features": [
     {
       "name": "IAMConfig",
