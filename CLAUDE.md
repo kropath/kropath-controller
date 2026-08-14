@@ -54,6 +54,25 @@ counterpart *by name*, so a per-step name is a complete isolation boundary.
 
 Dated write-ups of specific incidents live in `docs/troubleshooting-logs/`.
 
+### Commit convention
+
+This repo uses [Conventional Commits](https://www.conventionalcommits.org/) enforced by
+`.github/workflows/pr-title.yaml`. The repo squash-merges, so **the PR title is the commit
+message** and is the only string that must be well-formed.
+
+Format: `<type>(<scope>): <subject>` where scope is the ticket ID, e.g.:
+
+```
+feat(KRO-641): add conventional commits support
+fix(KRO-123): correct cascade merge order
+```
+
+- `feat(...)` → minor bump · `fix(...)` → patch bump · `feat(...)!` → major bump
+- `docs`/`chore`/`test`/`ci`/`refactor`/`perf` → no release bump
+- Scope is optional but strongly recommended
+
+**Without `feat(...)` or `fix(...)` in the PR title, the merge will never propose a release.**
+
 ### Before Creating a PR
 
 Run these and confirm all pass before opening a pull request:

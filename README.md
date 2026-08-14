@@ -161,6 +161,18 @@ is why it is a separate workflow from `ci.yaml`.
 
 ## Releases
 
+Releases are fully automated via [release-please](https://github.com/googleapis/release-please):
+
+1. Merge a `feat(...)` or `fix(...)` PR to `main`.
+2. release-please opens a release PR accumulating unreleased changes and proposing the next
+   semver version.
+3. A human reviews and merges the release PR.
+4. Merging the release PR creates the git tag, the GitHub Release, and the `CHANGELOG.md` entry.
+5. The tag triggers `release.yaml`, which builds and pushes the versioned image.
+
+The seed tag `v0.0.1` establishes the baseline; the first automated release will be `v0.1.0`
+(for a `feat`) or `v0.0.2` (for a `fix`).
+
 PRs are squash-merged, so the **PR title becomes the commit subject on `main`** and is the only
 input release-please parses. Titles must be conventional commits with the ticket id as the scope:
 
@@ -188,6 +200,13 @@ accumulated release PR is merged; `build-release-image` then publishes the versi
 
 Keep the type list in `pr-title.yaml` in sync with `changelog-sections` in
 `release-please-config.json`.
+
+### Image tags
+
+| Trigger | Tags pushed |
+|---|---|
+| Push to `main` | `:latest`, `:sha-<short7>` |
+| Release tag `vX.Y.Z` | `:vX.Y.Z`, `:sha-<short7>`, `:latest` |
 
 ## Repository layout
 
