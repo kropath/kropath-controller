@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 # Chainsaw test suite: ctrl-label-op-01
-# Spec: kropath-core/docs/specs/controller-label-operator.md
+# Spec: controller-label-operator (maintained outside this repo).
 # Covers all 8 acceptance criteria.
 ---
 apiVersion: chainsaw.kyverno.io/v1alpha1

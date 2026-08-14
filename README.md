@@ -4,7 +4,7 @@ Go controller for [kropath](https://github.com/kropath) (kro + golden path), a m
 path platform. `kropath-controller` is a multi-reconciler `kropath-operator` binary built on a
 single `controller-runtime` Manager — one Reconciler struct per feature.
 
-See `docs/STANDARDS.md` and ADR-015 (`kropath-core`) for the full architecture reference.
+See `docs/STANDARDS.md` for the standards that bind this repo.
 
 ## Reconcilers
 
@@ -154,8 +154,40 @@ make security        # gosec (SAST) + govulncheck (dependency CVEs)
   not block merges.)
 
 On push to `main`, the image build publishes `ghcr.io/kropath/kropath-controller:latest` and
-`ghcr.io/kropath/kropath-controller:sha-<short>`. `release.yaml` keeps its unfiltered push
-trigger so release-please sees doc-only commits for its changelog.
+`ghcr.io/kropath/kropath-controller:sha-<short>`.
+
+`.github/workflows/pr-title.yaml` runs on every pull request — including Markdown-only ones, which
+is why it is a separate workflow from `ci.yaml`.
+
+## Releases
+
+PRs are squash-merged, so the **PR title becomes the commit subject on `main`** and is the only
+input release-please parses. Titles must be conventional commits with the ticket id as the scope:
+
+```
+feat(KRO-637): restore feature-registry metadata
+fix(KRO-641): guard nil effectiveConfig on first reconcile
+docs(KRO-650): document blocked_by metadata format
+```
+
+`pr-title.yaml` enforces this. The older `[KRO-637]: feat: …` form is rejected: the bracketed
+prefix breaks the conventional-commit header regex, so the commit parses with no type, never bumps
+the version, and never reaches `CHANGELOG.md`.
+
+Which types cut a release:
+
+| Type | Effect |
+|---|---|
+| `feat` | minor bump |
+| `fix`, `perf`, `deps` | patch bump |
+| `refactor`, `docs`, `test`, `build`, `ci`, `chore`, `revert` | **no release** |
+
+`release.yaml` keeps its unfiltered push trigger, but release-please is a no-op on a run of
+non-releasable commits — a batch of doc-only merges opens no release PR. A release is cut when the
+accumulated release PR is merged; `build-release-image` then publishes the versioned image.
+
+Keep the type list in `pr-title.yaml` in sync with `changelog-sections` in
+`release-please-config.json`.
 
 ## Repository layout
 

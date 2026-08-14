@@ -1,5 +1,7 @@
 name: ci
 
+# Documentation-only changes do not affect the binary, the image, or the
+# Chainsaw suites, so they skip CI entirely.
 on:
   pull_request:
     paths-ignore:
