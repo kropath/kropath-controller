@@ -1,0 +1,65 @@
+name: pr-title
+
+# Releases are gated on conventional-commit types, not on a human deciding to cut
+# one. PRs are squash-merged, so the PR title becomes the commit subject on `main`
+# and is the only thing release-please ever parses. A title it cannot parse is a
+# feature that silently never ships and never reaches CHANGELOG.md.
+#
+# This lives in its own workflow rather than in ci.yaml because ci.yaml carries
+# `paths-ignore: '**/*.md'` — a docs-only PR would skip the check there, and a
+# docs-only PR is exactly the case that must be typed correctly to stay out of a
+# release.
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+
+permissions:
+  pull-requests: read
+
+jobs:
+  lint-title:
+    name: Conventional commit title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Keep the releasable types in sync with the `changelog-sections`
+          # block in release-please-config.json.
+          #
+          #   feat            -> minor bump
+          #   fix, perf, deps -> patch bump
+          #   everything else -> no release
+          types: |
+            feat
+            fix
+            perf
+            deps
+            refactor
+            docs
+            test
+            build
+            ci
+            chore
+            revert
+
+          # The ticket id goes in the scope: `feat(KRO-637): …`. Left optional and
+          # unvalidated so dependency bumps and untracked chores do not need one.
+          requireScope: false
+
+          # Reject the historical `[KRO-637]: feat: …` shape, which parses as a
+          # subject rather than a type and is the reason ~20 features are missing
+          # from the changelog.
+          subjectPattern: ^(?![\[A-Z]).+$
+          subjectPatternError: |
+            The subject "{subject}" of PR title "{title}" is invalid.
+
+            Write the ticket id as a scope, not as a bracketed prefix:
+              good: feat(KRO-637): restore feature-registry metadata
+              bad:  [KRO-637]: feat: restore feature-registry metadata
+              bad:  feat: Restore feature-registry metadata

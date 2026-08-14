@@ -2,7 +2,7 @@
 
 ## This Repo
 
-**kropath-controller** — Multi-reconciler `kropath-operator` binary. One `controller-runtime` Manager, one Reconciler struct per feature. Every reconciler registered in `internal/features.All` runs unconditionally — there are no per-feature flags. See `kropath-core/docs/design/policy-document-crd.md` §11 (P-1) for the architecture decision.
+**kropath-controller** — Multi-reconciler `kropath-operator` binary. One `controller-runtime` Manager, one Reconciler struct per feature. Every reconciler registered in `internal/features.All` runs unconditionally — there are no per-feature flags (architecture decision P-1).
 
 ### Reconciler 1 — Config merge (ADR-010)
 
@@ -64,3 +64,12 @@ make test-cover
 make test-chainsaw
 make security
 ```
+
+**The PR title must be a conventional commit with the ticket id as the scope** —
+`feat(KRO-637): restore feature-registry metadata`. PRs are squash-merged, so the title becomes the
+commit subject on `main` and is the only thing release-please parses. The older
+`[KRO-637]: feat: …` form is rejected by `.github/workflows/pr-title.yaml`: the bracketed prefix
+breaks the conventional-commit regex, so the commit parses with no type and the change never
+reaches `CHANGELOG.md`. `feat` cuts a minor release, `fix`/`perf`/`deps` cut a patch, and
+`docs`/`chore`/`ci`/`test`/`refactor`/`build`/`revert` cut nothing. See the Releases section of
+`README.md`.
