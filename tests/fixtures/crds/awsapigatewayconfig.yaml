@@ -64,6 +64,13 @@ spec:
                   self.spec.defaults.namingTemplate != "")
               message: >-
                 namingTemplate cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.apiKeySource) &&
+                  self.spec.mandatory.apiKeySource != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.apiKeySource) &&
+                  self.spec.defaults.apiKeySource != "")
+              message: >-
+                apiKeySource cannot be set in both mandatory and defaults
           properties:
             apiVersion:
               type: string
@@ -84,31 +91,26 @@ spec:
                   properties:
                     endpointType:
                       type: string
-                      default: ""
                       description: >-
                         Enforce the REST API endpoint type. Empty = not enforced.
                         e.g. "REGIONAL" or "EDGE".
                     apiKeySource:
                       type: string
-                      default: ""
                       description: >-
                         Enforce the API key source for metered APIs. Empty = not enforced.
                         e.g. "HEADER" or "AUTHORIZER".
                     minimumTlsVersion:
                       type: string
-                      default: ""
                       description: >-
                         Minimum TLS version for custom domain names. Empty = not enforced.
                         e.g. "TLS_1_2".
                     disableExecuteApiEndpoint:
                       type: boolean
-                      default: false
                       description: >-
                         Enforce disabling the default execute-api endpoint.
                         true = all APIs must disable the endpoint. false = not enforced.
                     namingTemplate:
                       type: string
-                      default: ""
                       description: API Gateway resource naming template. Empty = not enforced.
                     tags:
                       type: object
@@ -134,23 +136,18 @@ spec:
                   properties:
                     endpointType:
                       type: string
-                      default: ""
                       description: Default endpoint type. Empty = no default.
                     apiKeySource:
                       type: string
-                      default: ""
                       description: Default API key source. Empty = no default.
                     minimumTlsVersion:
                       type: string
-                      default: ""
                       description: Default minimum TLS version. Empty = no default.
                     disableExecuteApiEndpoint:
                       type: boolean
-                      default: false
                       description: Default disableExecuteApiEndpoint setting. false = no default.
                     namingTemplate:
                       type: string
-                      default: ""
                       description: Default naming template. Empty = no default.
                     tags:
                       type: object

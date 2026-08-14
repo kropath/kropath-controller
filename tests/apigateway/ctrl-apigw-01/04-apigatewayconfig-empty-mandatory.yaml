@@ -1,0 +1,11 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: ApiGatewayConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults:
+    endpointType: REGIONAL
+    apiKeySource: HEADER
+    namingTemplate: "{namespace}-{name}"
