@@ -15,7 +15,7 @@
 # Pin the builder to the *build* platform and let Go cross-compile to the target.
 # Go cross-compiles natively, so this is far faster than emulating the target
 # platform under QEMU.
-FROM --platform=$BUILDPLATFORM golang:1.26.5 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.26.6 AS builder
 
 # Supplied automatically by BuildKit; defaults keep a plain `docker build` working.
 ARG TARGETOS=linux

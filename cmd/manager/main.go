@@ -10,26 +10,27 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	goruntime "runtime"
 	"time"
 
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/features"
 	"github.com/kropath/kropath-controller/internal/reconciler/apigatewayv2config"
 	"github.com/kropath/kropath-controller/internal/reconciler/autoscalingconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/ecsconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/efsconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/elasticacheconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/eksconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/cloudwatchlogsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/dynamodbconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/ec2config"
+	"github.com/kropath/kropath-controller/internal/reconciler/ecrconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/ecsconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/efsconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/eksconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/elasticacheconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/elbconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/eventbridgeconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/iamconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/kmsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/labeloperator"
 	"github.com/kropath/kropath-controller/internal/reconciler/policydocument"
-	"github.com/kropath/kropath-controller/internal/reconciler/ec2config"
-	"github.com/kropath/kropath-controller/internal/reconciler/ecrconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/rdsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/s3config"
 	"github.com/kropath/kropath-controller/internal/reconciler/secretsmanagerconfig"
@@ -60,43 +61,23 @@ func leaderElectionNamespace() string {
 	return "default"
 }
 
-// featuresHandler returns an http.Handler for GET /features.
-// The response is static (computed once at startup) because the feature list
-// and version are both baked into the binary.
-func featuresHandler() http.Handler {
-	type response struct {
-		Version     string              `json:"version"`
-		GitCommit   string              `json:"gitCommit"`
-		BuildDate   string              `json:"buildDate"`
-		Reconcilers []features.Reconciler `json:"reconcilers"`
-	}
-	body, err := json.Marshal(response{
-		Version:     version.Version,
-		GitCommit:   version.GitCommit,
-		BuildDate:   version.BuildDate,
-		Reconcilers: features.All,
-	})
-	if err != nil {
-		// This cannot happen: features.Reconciler holds only strings and string
-		// slices, all of which marshal unconditionally.
-		panic(fmt.Sprintf("featuresHandler: marshal: %v", err))
-	}
-	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write(body)
-	})
-}
-
 func main() {
-	// "features" subcommand: print build info and reconciler list, then exit.
+	// "features" subcommand: print the same JSON as GET /features, then exit.
+	// No manager, no kubeconfig, no cluster connection — safe for CI and laptops.
 	if len(os.Args) > 1 && os.Args[1] == "features" {
-		fmt.Printf("version:    %s\n", version.Version)
-		fmt.Printf("gitCommit:  %s\n", version.GitCommit)
-		fmt.Printf("buildDate:  %s\n", version.BuildDate)
-		fmt.Printf("reconcilers (%d):\n", len(features.All))
-		for _, r := range features.All {
-			fmt.Printf("  - %s (%s)\n", r.Name, r.Package)
+		resp := features.Response{
+			Version:   version.Version,
+			GitCommit: version.GitCommit,
+			BuildDate: version.BuildDate,
+			GoVersion: goruntime.Version(),
+			Features:  features.All,
 		}
+		out, err := json.MarshalIndent(resp, "", "  ")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println(string(out))
 		return
 	}
 
@@ -141,7 +122,9 @@ func main() {
 	}
 
 	// /features endpoint: returns version + live reconciler list as JSON.
-	if err := mgr.AddMetricsServerExtraHandler("/features", featuresHandler()); err != nil {
+	if err := mgr.AddMetricsServerExtraHandler("/features", features.Handler(
+		version.Version, version.GitCommit, version.BuildDate, goruntime.Version(), features.All,
+	)); err != nil {
 		ctrl.Log.Error(err, "unable to register /features handler")
 		os.Exit(1)
 	}

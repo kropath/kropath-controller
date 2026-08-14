@@ -54,10 +54,60 @@ make docker-build    # build the container image (tag = short git SHA + latest)
 | `--metrics-bind-address` | `:8080` | Prometheus `/metrics` endpoint |
 | `--health-probe-bind-address` | `:8081` | `/healthz` and `/readyz` endpoints |
 
-All reconcilers start automatically. To see which reconcilers are active, query `GET /features` on the running operator or check the generated `docs/features.yaml`.
+All reconcilers start automatically. To see which reconcilers are active, use the `/features` endpoint or the `features` subcommand (see below).
 
 The manager runs with leader election on by default (`LEADER_ELECTION_NAMESPACE` or
 `POD_NAMESPACE` env var selects the lease namespace; defaults to `default`).
+
+## `/features` endpoint
+
+`GET /features` on the metrics listener (`:8080`) returns version metadata and the live reconciler list as JSON:
+
+```bash
+curl http://localhost:8080/features
+```
+
+```json
+{
+  "version": "v0.1.0",
+  "gitCommit": "a1b2c3d",
+  "buildDate": "2026-08-13T00:00:00Z",
+  "goVersion": "go1.26.5",
+  "features": [
+    {
+      "name": "IAMConfig",
+      "package": "iamconfig",
+      "description": "Reconciles IAMConfig CRs and propagates effective config.",
+      "kinds": ["IAMConfig", "KropathConfig"],
+      "sinceVersion": "v0.0.1",
+      "stability": "stable"
+    }
+  ]
+}
+```
+
+Filter by package name with `?name=<package>`:
+
+```bash
+# Returns the single kmsconfig entry or HTTP 404 if unknown.
+curl 'http://localhost:8080/features?name=kmsconfig'
+```
+
+Only `GET` and `HEAD` are accepted; any other method returns `405`.
+
+## `kropath-operator features` subcommand
+
+Prints the same JSON as `GET /features` and exits — no kubeconfig or cluster connection needed. Useful for inspecting an image before deploying it:
+
+```bash
+docker run --rm ghcr.io/kropath/kropath-controller:v0.1.0 features
+```
+
+or locally:
+
+```bash
+./bin/kropath-operator features | jq '.features | length'
+```
 
 ## Testing
 
