@@ -153,8 +153,8 @@ make security        # gosec (SAST) + govulncheck (dependency CVEs)
   produces no workflow run. (Branch protection is not enabled on `main`, so skipped runs do
   not block merges.)
 
-On push to `main`, the image build publishes `ghcr.io/kropath/kropath-controller:latest` and
-`ghcr.io/kropath/kropath-controller:sha-<short>`.
+On push to `main`, the image build publishes to `ghcr.io/kropath/kropath-controller` — see
+[Image tags](#image-tags) for the full tag matrix.
 
 `.github/workflows/pr-title.yaml` runs on every pull request — including Markdown-only ones, which
 is why it is a separate workflow from `ci.yaml`.
@@ -195,8 +195,8 @@ Which types cut a release:
 | `refactor`, `docs`, `test`, `build`, `ci`, `chore`, `revert` | **no release** |
 
 `release.yaml` keeps its unfiltered push trigger, but release-please is a no-op on a run of
-non-releasable commits — a batch of doc-only merges opens no release PR. A release is cut when the
-accumulated release PR is merged; `build-release-image` then publishes the versioned image.
+non-releasable commits — a batch of doc-only merges opens no release PR, so step 2 above never
+fires and nothing is published.
 
 Keep the type list in `pr-title.yaml` in sync with `changelog-sections` in
 `release-please-config.json`.
