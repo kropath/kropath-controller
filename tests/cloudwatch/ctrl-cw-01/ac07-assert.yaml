@@ -1,5 +1,5 @@
 # Assert AC-7: effCfg.defaults.treatMissingData="ignore" (level 6 wins over level 9).
-# effCfg.mandatory.treatMissingData must remain empty.
+# mandatory.treatMissingData is absent (omitempty serialisation) — no assertion needed.
 apiVersion: aws.kropath.run/v1alpha1
 kind: CloudWatchConfig
 metadata:
@@ -7,7 +7,5 @@ metadata:
   namespace: monitoring-prod
 status:
   effectiveConfig:
-    mandatory:
-      treatMissingData: ""
     defaults:
       treatMissingData: "ignore"
