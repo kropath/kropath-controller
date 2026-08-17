@@ -134,11 +134,12 @@ Neither reads or writes `effectiveConfig`; both are separate features with their
 | PolicyDocument | `PolicyDocument` | `PolicyDocument`, `KropathConfig` | `status.resolvedDocumentJSON` | `policy/phase2-refs`, `policy/phase3-merge` | 18 | ⏳ Pending |
 | Label injection | `LabelOperator` | every kind under `aws.`/`gcp.`/`azure.kropath.run` | `metadata.labels[<provider>.kropath.run/resource-name]` | `label-operator/ctrl-label-op-01` | 8 | ⏳ Pending |
 
-Both are implemented and covered. The label-operator suite has a step per acceptance criterion
-in the [spec](https://github.com/kropath/kropath-core/blob/main/docs/specs/controller-label-operator.md)
-(AC-1 … AC-8: label added for AWS config, GCP config and non-config kinds; wrong value
-corrected; correct value is a no-op; resource still admitted while the operator is down;
-retroactive labelling on recovery; `kropath.run` group excluded). The PolicyDocument suites
+Both are implemented and covered. The label-operator suite has a step for AC-1 … AC-8 of the
+[spec](https://github.com/kropath/kropath-core/blob/main/docs/specs/controller-label-operator.md)
+(label added for AWS config, GCP config and non-config kinds; wrong value corrected; correct
+value is a no-op; resource still admitted while the operator is down; retroactive labelling on
+recovery; core `kropath.run` group excluded); AC-9 is not yet covered — see
+[Known gaps](#known-gaps). The PolicyDocument suites
 cover ref resolution (`phase2-refs`) and source merging with `Sid` conflict detection
 (`phase3-merge`). See [Known gaps](#known-gaps) for the deviations from spec that remain.
 
@@ -166,9 +167,9 @@ drifts from the code (the **Feature registry drift gate** job).
 
 ### Label injection — deviations from spec
 
-The feature is implemented and all 8 acceptance criteria have passing steps, but three details
-differ from
-[`controller-label-operator.md`](https://github.com/kropath/kropath-core/blob/main/docs/specs/controller-label-operator.md):
+The feature is implemented and AC-1 … AC-8 all have passing steps. Two details differ from
+[`controller-label-operator.md`](https://github.com/kropath/kropath-core/blob/main/docs/specs/controller-label-operator.md),
+and one acceptance criterion has no step yet:
 
 - **New CRDs are not picked up until restart.** The spec says "any new CRD registered under
   these API groups — the operator automatically covers it without code changes". `Setup()`
@@ -177,13 +178,13 @@ differ from
   restarts. RBAC already uses `resources: ["*"]`, so only the discovery is startup-bound.
 - **Only `v1alpha1` is watched.** `setupGroup` requests `<group>/v1alpha1` explicitly; a future
   `v1beta1`/`v1` under the same group would be ignored.
-- **AC-8's exclusion premise does not hold for this repo's `KropathConfig`.** The spec excludes
-  `KropathConfig` on the grounds that it lives in the `kropath.run` group. Here
-  `api/v1alpha1/register.go` registers `KropathConfig` under **`aws.kropath.run`**, so the
-  `KropathConfig` the cascade reconcilers actually watch *is* in scope and does get labelled.
-  The AC-8 step passes because it asserts against a separate `kropath.run` CRD fixture
-  (`tests/fixtures/crds/kropathconfig-core.yaml`) that nothing else in the repo uses. The extra
-  label appears harmless, but the spec and the code disagree about which resource is excluded.
+- **AC-9 has no Chainsaw step.** Scope is decided by API group alone, so the **provider-scoped**
+  `KropathConfig` that `api/v1alpha1/register.go` registers under `aws.kropath.run` is
+  deliberately in scope and does get labelled — the spec was amended to state this explicitly and
+  added AC-9 to cover it. Only the **core** `KropathConfig` in the `kropath.run` group is
+  excluded, which is what the existing AC-8 step asserts against
+  (`tests/fixtures/crds/kropathconfig-core.yaml`). The behaviour is correct; the coverage for
+  the in-scope half of the pair is missing.
 
 ### PolicyDocument — undocumented gap
 
