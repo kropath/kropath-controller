@@ -54,25 +54,6 @@ counterpart *by name*, so a per-step name is a complete isolation boundary.
 
 Dated write-ups of specific incidents live in `docs/troubleshooting-logs/`.
 
-### Commit convention
-
-This repo uses [Conventional Commits](https://www.conventionalcommits.org/) enforced by
-`.github/workflows/pr-title.yaml`. The repo squash-merges, so **the PR title is the commit
-message** and is the only string that must be well-formed.
-
-Format: `<type>(<scope>): <subject>` where scope is the ticket ID, e.g.:
-
-```
-feat(KRO-641): add conventional commits support
-fix(KRO-123): correct cascade merge order
-```
-
-- `feat(...)` → minor bump · `fix(...)` → patch bump · `feat(...)!` → major bump
-- `docs`/`chore`/`test`/`ci`/`refactor`/`perf` → no release bump
-- Scope is optional but strongly recommended
-
-**Without `feat(...)` or `fix(...)` in the PR title, the merge will never propose a release.**
-
 ### Before Creating a PR
 
 Run these and confirm all pass before opening a pull request:
@@ -89,6 +70,7 @@ make security
 commit subject on `main` and is the only thing release-please parses. The older
 `[KRO-637]: feat: …` form is rejected by `.github/workflows/pr-title.yaml`: the bracketed prefix
 breaks the conventional-commit regex, so the commit parses with no type and the change never
-reaches `CHANGELOG.md`. `feat` cuts a minor release, `fix`/`perf`/`deps` cut a patch, and
+reaches `CHANGELOG.md`. `feat` cuts a minor release, `fix`/`perf`/`deps` cut a patch, a trailing
+`!` (`feat(KRO-637)!: …`) cuts a major, and
 `docs`/`chore`/`ci`/`test`/`refactor`/`build`/`revert` cut nothing. See the Releases section of
 `README.md`.

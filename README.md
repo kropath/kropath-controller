@@ -149,15 +149,29 @@ make security        # gosec (SAST) + govulncheck (dependency CVEs)
 - **Chainsaw integration tests** run on pull requests only. A push to `main` runs lint, unit
   tests, feature-registry drift check, security scans, and the image build — it does not
   re-run Chainsaw against an identical tree that already passed on the PR head.
-- **Markdown-only changes** skip CI entirely. A commit or PR that touches only `*.md` files
-  produces no workflow run. (Branch protection is not enabled on `main`, so skipped runs do
-  not block merges.)
+- **Markdown-only changes** skip the expensive work but still report. Every job starts and
+  reports a `success`; a `changes` job diffs the PR against its merge base and, when nothing
+  outside `*.md` moved, each downstream job skips its own steps.
 
-On push to `main`, the image build publishes `ghcr.io/kropath/kropath-controller:latest` and
-`ghcr.io/kropath/kropath-controller:sha-<short>`.
+The second point is load-bearing and easy to get wrong. The `main` ruleset requires the `Unit
+tests` and `Chainsaw integration tests` contexts, and a required context is only satisfied by a
+run that reports. Filtering at the trigger — `on.pull_request.paths-ignore: '**/*.md'` — stops
+the workflow from starting at all, so those contexts are never reported and a docs-only PR sits
+on "Expected — Waiting for status to be reported" with no way to merge it. Hence the path check
+lives inside the jobs.
 
-`.github/workflows/pr-title.yaml` runs on every pull request — including Markdown-only ones, which
-is why it is a separate workflow from `ci.yaml`.
+Two consequences worth knowing:
+
+- Changing a job's `name:` renames its status context and silently un-satisfies the ruleset.
+  `Unit tests` and `Chainsaw integration tests` are load-bearing strings.
+- The path check fails open: a missing or all-zero base SHA (new branch, force push) runs the
+  full suite rather than assuming docs-only.
+
+On push to `main`, the image build publishes to `ghcr.io/kropath/kropath-controller` — see
+[Image tags](#image-tags) for the full tag matrix.
+
+`.github/workflows/pr-title.yaml` is a separate workflow so that it carries no path filter of its
+own — a docs-only PR is exactly the case that must be typed correctly to stay out of a release.
 
 ## Releases
 
@@ -195,8 +209,8 @@ Which types cut a release:
 | `refactor`, `docs`, `test`, `build`, `ci`, `chore`, `revert` | **no release** |
 
 `release.yaml` keeps its unfiltered push trigger, but release-please is a no-op on a run of
-non-releasable commits — a batch of doc-only merges opens no release PR. A release is cut when the
-accumulated release PR is merged; `build-release-image` then publishes the versioned image.
+non-releasable commits — a batch of doc-only merges opens no release PR, so step 2 above never
+fires and nothing is published.
 
 Keep the type list in `pr-title.yaml` in sync with `changelog-sections` in
 `release-please-config.json`.
