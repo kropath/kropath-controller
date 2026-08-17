@@ -1,0 +1,10 @@
+# Assert AC-11: defaults.namingTemplate from level-7 globalMemoryDBConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: MemoryDBConfig
+metadata:
+  name: ac11-mdb-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    defaults:
+      namingTemplate: "{namespace}-{name}"

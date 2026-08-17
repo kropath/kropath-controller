@@ -198,3 +198,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: MemoryDBConfig
+      package: memorydbconfig
+      description: Reconciles MemoryDBConfig CRs and propagates effective config.
+      kinds:
+        - MemoryDBConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

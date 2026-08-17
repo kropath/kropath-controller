@@ -1,0 +1,150 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-memorydb-01 Chainsaw integration tests — 12 acceptance criteria.
+# Requires:
+#   - kind cluster with kropath-operator deployed
+#   - KropathConfig CRD applied (tests/fixtures/crds/awskropathconfig.yaml)
+#   - MemoryDBConfig CRD applied (tests/fixtures/crds/awsmemorydbconfig.yaml)
+#
+# Test isolation: each step uses unique resource names (ac<N>-*). The controller
+# pairs a namespaced config with its kro-system counterpart by name, so per-step
+# names provide complete isolation without inter-step deletes.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-memorydb-01-cascade
+spec:
+  steps:
+    # AC-1: globalKropathConfig.mandatory.memorydb.tlsEnabled=true (level 1)
+    # propagates to effectiveConfig.mandatory.tlsEnabled=true.
+    - name: ac1-kpc-mandatory-tls-level1
+      try:
+        - apply:
+            file: ac01-setup.yaml
+        - assert:
+            file: ac01-assert.yaml
+            timeout: 30s
+
+    # AC-2: localMemoryDBConfig.mandatory.tlsEnabled=true (level 4)
+    # wins when levels 1-3 are absent.
+    - name: ac2-rc-mandatory-tls-level4
+      try:
+        - apply:
+            file: ac02-setup.yaml
+        - assert:
+            file: ac02-assert.yaml
+            timeout: 30s
+
+    # AC-3: All mandatory sources absent; localMemoryDBConfig.defaults.tlsEnabled=true
+    # (level 6) propagates to effectiveConfig.defaults.tlsEnabled=true; mandatory stays false.
+    - name: ac3-rc-defaults-tls-level6
+      try:
+        - apply:
+            file: ac03-setup.yaml
+        - assert:
+            file: ac03-assert.yaml
+            timeout: 30s
+
+    # AC-4: globalKropathConfig.mandatory.memorydb.allowedNodeTypes set (level 1)
+    # propagates to effectiveConfig.mandatory.allowedNodeTypes.
+    - name: ac4-kpc-mandatory-allowednodes-level1
+      try:
+        - apply:
+            file: ac04-setup.yaml
+        - assert:
+            file: ac04-assert.yaml
+            timeout: 30s
+
+    # AC-5: localMemoryDBConfig.mandatory.allowedNodeTypes set (level 4)
+    # wins when levels 1-3 are absent.
+    - name: ac5-rc-mandatory-allowednodes-level4
+      try:
+        - apply:
+            file: ac05-setup.yaml
+        - assert:
+            file: ac05-assert.yaml
+            timeout: 30s
+
+    # AC-6: globalKropathConfig.mandatory.memorydb.snapshotRetentionLimit=7 (level 1)
+    # propagates to effectiveConfig.mandatory.snapshotRetentionLimit=7.
+    - name: ac6-kpc-mandatory-retention-level1
+      try:
+        - apply:
+            file: ac06-setup.yaml
+        - assert:
+            file: ac06-assert.yaml
+            timeout: 30s
+
+    # AC-7: localMemoryDBConfig.mandatory.snapshotRetentionLimit=14 (level 4)
+    # wins when levels 1-3 are absent.
+    - name: ac7-rc-mandatory-retention-level4
+      try:
+        - apply:
+            file: ac07-setup.yaml
+        - assert:
+            file: ac07-assert.yaml
+            timeout: 30s
+
+    # AC-8: globalMemoryDBConfig.defaults.snapshotRetentionLimit=3 (level 7) wins over
+    # globalKropathConfig.defaults.memorydb.snapshotRetentionLimit=1 (level 9).
+    - name: ac8-rc-defaults-retention-level7-beats-kpc-level9
+      try:
+        - apply:
+            file: ac08-setup.yaml
+        - assert:
+            file: ac08-assert.yaml
+            timeout: 30s
+
+    # AC-9: Cross-field validation: mandatory.nodeType not in mandatory.allowedNodeTypes.
+    # Controller sets Valid=False with reason InvalidNodeTypeNotInAllowedList and does NOT
+    # write effectiveConfig.
+    - name: ac9-nodetype-not-in-allowednodes-validation-failure
+      try:
+        - apply:
+            file: ac09-setup.yaml
+        - assert:
+            file: ac09-assert.yaml
+            timeout: 30s
+
+    # AC-10: KropathConfig.mandatory.tags and MemoryDBConfig.mandatory.tags+syncedLabels
+    # are union-merged into effectiveConfig.mandatory.tags and effectiveConfig.mandatory.syncedLabels.
+    - name: ac10-tag-label-union-merge
+      try:
+        - apply:
+            file: ac10-setup.yaml
+        - assert:
+            file: ac10-assert.yaml
+            timeout: 30s
+
+    # AC-11: globalMemoryDBConfig.defaults.namingTemplate="{namespace}-{name}" (level 7;
+    # no KropathConfig.memorydb.namingTemplate field exists) propagates to
+    # effectiveConfig.defaults.namingTemplate.
+    - name: ac11-rc-defaults-naming-level7
+      try:
+        - apply:
+            file: ac11-setup.yaml
+        - assert:
+            file: ac11-assert.yaml
+            timeout: 30s
+
+    # AC-12: KropathConfig.spec.aws.region and .accountId propagate to
+    # effectiveConfig.aws.region and effectiveConfig.aws.accountId.
+    - name: ac12-provider-identity-propagates
+      try:
+        - apply:
+            file: ac12-setup.yaml
+        - assert:
+            file: ac12-assert.yaml
+            timeout: 30s

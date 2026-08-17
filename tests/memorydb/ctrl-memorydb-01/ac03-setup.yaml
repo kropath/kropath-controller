@@ -1,0 +1,10 @@
+# AC-3: All mandatory sources absent; defaults.tlsEnabled=true (level 6) propagates.
+apiVersion: aws.kropath.run/v1alpha1
+kind: MemoryDBConfig
+metadata:
+  name: ac3-mdb-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults:
+    tlsEnabled: true

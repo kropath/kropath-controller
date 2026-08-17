@@ -1,0 +1,19 @@
+# AC-12: KropathConfig.spec.aws.region and .accountId propagate to effectiveConfig.aws.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac12-mdb-policy
+  namespace: kro-system
+spec:
+  aws:
+    accountId: "999888777666"
+    region: "us-east-1"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: MemoryDBConfig
+metadata:
+  name: ac12-mdb-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

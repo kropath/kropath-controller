@@ -68,6 +68,7 @@ type KropathConfigTier struct {
 	ECR               cascade.ECRKropathSection               `json:"ecr,omitempty"`
 	StepFunctions     cascade.StepFunctionsKropathSection     `json:"stepfunctions,omitempty"`
 	MSK               cascade.MSKKropathSection               `json:"msk,omitempty"`
+	MemoryDB          cascade.MemoryDBKropathSection          `json:"memorydb,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
@@ -409,6 +410,26 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.StepFunctions.Tags = make(map[string]string, len(in.Spec.Defaults.StepFunctions.Tags))
 		for k, v := range in.Spec.Defaults.StepFunctions.Tags {
 			out.Spec.Defaults.StepFunctions.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.MemoryDB.AllowedNodeTypes != nil {
+		out.Spec.Mandatory.MemoryDB.AllowedNodeTypes = make([]string, len(in.Spec.Mandatory.MemoryDB.AllowedNodeTypes))
+		copy(out.Spec.Mandatory.MemoryDB.AllowedNodeTypes, in.Spec.Mandatory.MemoryDB.AllowedNodeTypes)
+	}
+	if in.Spec.Mandatory.MemoryDB.Tags != nil {
+		out.Spec.Mandatory.MemoryDB.Tags = make(map[string]string, len(in.Spec.Mandatory.MemoryDB.Tags))
+		for k, v := range in.Spec.Mandatory.MemoryDB.Tags {
+			out.Spec.Mandatory.MemoryDB.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.MemoryDB.AllowedNodeTypes != nil {
+		out.Spec.Defaults.MemoryDB.AllowedNodeTypes = make([]string, len(in.Spec.Defaults.MemoryDB.AllowedNodeTypes))
+		copy(out.Spec.Defaults.MemoryDB.AllowedNodeTypes, in.Spec.Defaults.MemoryDB.AllowedNodeTypes)
+	}
+	if in.Spec.Defaults.MemoryDB.Tags != nil {
+		out.Spec.Defaults.MemoryDB.Tags = make(map[string]string, len(in.Spec.Defaults.MemoryDB.Tags))
+		for k, v := range in.Spec.Defaults.MemoryDB.Tags {
+			out.Spec.Defaults.MemoryDB.Tags[k] = v
 		}
 	}
 	if in.Spec.Mandatory.SyncedLabels != nil {

@@ -1,0 +1,11 @@
+# AC-5: localMemoryDBConfig.mandatory.allowedNodeTypes set (level 4); no KPC allowedNodeTypes.
+apiVersion: aws.kropath.run/v1alpha1
+kind: MemoryDBConfig
+metadata:
+  name: ac5-mdb-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    allowedNodeTypes:
+      - "db.r7g.large"
+  defaults: {}

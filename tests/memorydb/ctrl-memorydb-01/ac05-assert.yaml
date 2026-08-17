@@ -1,0 +1,11 @@
+# Assert AC-5: mandatory.allowedNodeTypes from level-4 localMemoryDBConfig.mandatory.
+apiVersion: aws.kropath.run/v1alpha1
+kind: MemoryDBConfig
+metadata:
+  name: ac5-mdb-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      allowedNodeTypes:
+        - "db.r7g.large"

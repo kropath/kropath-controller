@@ -1,0 +1,34 @@
+# AC-8: globalMemoryDBConfig.defaults.snapshotRetentionLimit=3 (level 7) wins over
+# globalKropathConfig.defaults.memorydb.snapshotRetentionLimit=1 (level 9).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac8-mdb-policy
+  namespace: kro-system
+spec:
+  defaults:
+    memorydb:
+      snapshotRetentionLimit: 1
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+# globalMemoryDBConfig provides level-7 default — stronger than level-9 KPC default.
+apiVersion: aws.kropath.run/v1alpha1
+kind: MemoryDBConfig
+metadata:
+  name: ac8-mdb-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  defaults:
+    snapshotRetentionLimit: 3
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: MemoryDBConfig
+metadata:
+  name: ac8-mdb-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

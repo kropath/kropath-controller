@@ -1,0 +1,10 @@
+# Assert AC-6: mandatory.snapshotRetentionLimit=7 from level-1 globalKropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: MemoryDBConfig
+metadata:
+  name: ac6-mdb-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      snapshotRetentionLimit: 7

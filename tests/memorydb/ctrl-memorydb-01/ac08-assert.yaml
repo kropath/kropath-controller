@@ -1,0 +1,11 @@
+# Assert AC-8: defaults.snapshotRetentionLimit=3 from level-7 globalMemoryDBConfig,
+# not 1 from level-9 globalKropathConfig.defaults.
+apiVersion: aws.kropath.run/v1alpha1
+kind: MemoryDBConfig
+metadata:
+  name: ac8-mdb-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    defaults:
+      snapshotRetentionLimit: 3
