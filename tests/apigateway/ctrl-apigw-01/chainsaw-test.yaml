@@ -1,0 +1,113 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-apigw-01
+spec:
+  namespace: payments-prod
+  steps:
+
+  - name: purge-stale-leftovers
+    try:
+    - script:
+        content: |
+          kubectl delete apigatewayconfig general-policy -n payments-prod --ignore-not-found
+          kubectl delete apigatewayconfig general-policy -n kro-system --ignore-not-found
+          kubectl delete kropathconfig general-policy -n payments-prod --ignore-not-found
+          kubectl delete kropathconfig general-policy -n kro-system --ignore-not-found
+
+  # AC-7: globalKropathConfig.mandatory.apigateway.endpointType (L1) propagates to
+  # effectiveConfig.mandatory.endpointType on the namespaced APIGatewayConfig.
+  - name: ac7-l1-global-kpc-mandatory-endpoint-type
+    try:
+    - apply:
+        file: 01-global-kpc-endpoint-mandatory.yaml
+    - apply:
+        file: 02-apigatewayconfig.yaml
+    - assert:
+        file: 03-assert-ac7.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 02-apigatewayconfig.yaml
+    - delete:
+        file: 01-global-kpc-endpoint-mandatory.yaml
+
+  # AC-8: APIGatewayConfig with all mandatory fields at zero values propagates zero
+  # (not enforced) values in effectiveConfig.mandatory.
+  - name: ac8-empty-mandatory-not-enforced
+    try:
+    - script:
+        content: |
+          kubectl delete kropathconfig general-policy -n kro-system --ignore-not-found
+          kubectl delete apigatewayconfig general-policy -n kro-system --ignore-not-found
+          kubectl delete apigatewayconfig general-policy -n payments-prod --ignore-not-found
+    - apply:
+        file: 04-apigatewayconfig-empty-mandatory.yaml
+    - assert:
+        file: 05-assert-ac8.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 04-apigatewayconfig-empty-mandatory.yaml
+
+  # AC-9: APIGatewayConfig with mandatory.minimumTlsVersion and mandatory.disableExecuteApiEndpoint
+  # both set is accepted and both fields appear in effectiveConfig.mandatory.
+  - name: ac9-mandatory-tls-and-disable-endpoint
+    try:
+    - script:
+        content: |
+          kubectl delete kropathconfig general-policy -n kro-system --ignore-not-found
+          kubectl delete apigatewayconfig general-policy -n kro-system --ignore-not-found
+          kubectl delete apigatewayconfig general-policy -n payments-prod --ignore-not-found
+    - apply:
+        file: 06-apigatewayconfig-tls-and-endpoint.yaml
+    - assert:
+        file: 07-assert-ac9.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 06-apigatewayconfig-tls-and-endpoint.yaml
+
+  # AC-10: Tags from APIGatewayConfig.mandatory.tags and KropathConfig.mandatory.tags are
+  # merged additively into effectiveConfig.mandatory.tags; defaults.tags flows through separately.
+  - name: ac10-tag-merge-from-kpc-and-apigwcfg
+    try:
+    - script:
+        content: |
+          kubectl delete kropathconfig general-policy -n kro-system --ignore-not-found
+          kubectl delete apigatewayconfig general-policy -n kro-system --ignore-not-found
+          kubectl delete apigatewayconfig general-policy -n payments-prod --ignore-not-found
+    - apply:
+        file: 08-global-kpc-tags.yaml
+    - apply:
+        file: 09-global-apigwcfg-tags.yaml
+    - apply:
+        file: 02-apigatewayconfig.yaml
+    - assert:
+        file: 10-assert-ac10.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 02-apigatewayconfig.yaml
+    - delete:
+        file: 09-global-apigwcfg-tags.yaml
+    - delete:
+        file: 08-global-kpc-tags.yaml
+
+  # AC-11: mandatory.syncedLabels from APIGatewayConfig propagates to
+  # effectiveConfig.mandatory.syncedLabels.
+  - name: ac11-synced-labels-propagate
+    try:
+    - script:
+        content: |
+          kubectl delete kropathconfig general-policy -n kro-system --ignore-not-found
+          kubectl delete apigatewayconfig general-policy -n kro-system --ignore-not-found
+          kubectl delete apigatewayconfig general-policy -n payments-prod --ignore-not-found
+    - apply:
+        file: 11-apigatewayconfig-synced-labels.yaml
+    - assert:
+        file: 12-assert-ac11.yaml
+        timeout: 30s
+    cleanup:
+    - delete:
+        file: 11-apigatewayconfig-synced-labels.yaml

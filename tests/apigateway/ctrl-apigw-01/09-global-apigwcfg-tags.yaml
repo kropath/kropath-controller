@@ -1,0 +1,12 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: ApiGatewayConfig
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      api-type: rest
+  defaults:
+    tags:
+      team: platform

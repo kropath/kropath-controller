@@ -62,6 +62,7 @@ type KropathConfigTier struct {
 	EKS               cascade.EKSKropathSection            `json:"eks,omitempty"`
 	EC2               cascade.EC2KropathSection            `json:"ec2,omitempty"`
 	ApiGatewayV2      cascade.ApiGatewayV2KropathSection      `json:"apigatewayv2,omitempty"`
+	ApiGateway        cascade.ApiGatewayKropathSection        `json:"apigateway,omitempty"`
 	ElastiCache       cascade.ElastiCacheKropathSection       `json:"elasticache,omitempty"`
 	ECR               cascade.ECRKropathSection               `json:"ecr,omitempty"`
 	StepFunctions     cascade.StepFunctionsKropathSection     `json:"stepfunctions,omitempty"`
@@ -337,6 +338,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.ApiGatewayV2.Tags = make(map[string]string, len(in.Spec.Defaults.ApiGatewayV2.Tags))
 		for k, v := range in.Spec.Defaults.ApiGatewayV2.Tags {
 			out.Spec.Defaults.ApiGatewayV2.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.ApiGateway.Tags != nil {
+		out.Spec.Mandatory.ApiGateway.Tags = make(map[string]string, len(in.Spec.Mandatory.ApiGateway.Tags))
+		for k, v := range in.Spec.Mandatory.ApiGateway.Tags {
+			out.Spec.Mandatory.ApiGateway.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.ApiGateway.Tags != nil {
+		out.Spec.Defaults.ApiGateway.Tags = make(map[string]string, len(in.Spec.Defaults.ApiGateway.Tags))
+		for k, v := range in.Spec.Defaults.ApiGateway.Tags {
+			out.Spec.Defaults.ApiGateway.Tags[k] = v
 		}
 	}
 	if in.Spec.Mandatory.ElastiCache.Tags != nil {

@@ -1,0 +1,10 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: ApiGatewayConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      minimumTlsVersion: TLS_1_2
+      disableExecuteApiEndpoint: true

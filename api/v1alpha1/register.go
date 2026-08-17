@@ -64,6 +64,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&EC2ConfigList{},
 		&ApiGatewayV2Config{},
 		&ApiGatewayV2ConfigList{},
+		&ApiGatewayConfig{},
+		&ApiGatewayConfigList{},
 		&EFSConfig{},
 		&EFSConfigList{},
 		&ElastiCacheConfig{},

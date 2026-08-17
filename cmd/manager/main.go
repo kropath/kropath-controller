@@ -15,6 +15,7 @@ import (
 
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/features"
+	"github.com/kropath/kropath-controller/internal/reconciler/apigatewayconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/apigatewayv2config"
 	"github.com/kropath/kropath-controller/internal/reconciler/autoscalingconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/cloudwatchlogsconfig"
@@ -281,6 +282,15 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		ctrl.Log.Error(err, "unable to create ApiGatewayV2Config reconciler")
+		os.Exit(1)
+	}
+
+	if err := (&apigatewayconfig.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("ApiGatewayConfig"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create ApiGatewayConfig reconciler")
 		os.Exit(1)
 	}
 

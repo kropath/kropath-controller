@@ -1,0 +1,14 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: ApiGatewayConfig
+metadata:
+  name: general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      tags:
+        cost-centre: infra
+        api-type: rest
+    defaults:
+      tags:
+        team: platform
