@@ -1,0 +1,29 @@
+# AC-10: Tags union merge. Level 1 (globalKropathConfig.mandatory.tags) wins key conflict.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac10-cw-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      cost-centre: "platform"
+      env: "org-level"
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+# Local CloudWatchConfig with its own tags — union merge expected; KC wins on "env".
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchConfig
+metadata:
+  name: ac10-cw-policy
+  namespace: monitoring-prod
+  labels:
+    aws.kropath.run/resource-name: ac10-cw-policy
+spec:
+  mandatory:
+    tags:
+      team: "ops"
+      env: "config-level"
+  defaults: {}

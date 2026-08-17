@@ -1,0 +1,10 @@
+# Assert AC-8: effCfg.mandatory.namingTemplate="corp-{namespace}-{name}" from globalCWConfig (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchConfig
+metadata:
+  name: ac8-cw-policy
+  namespace: monitoring-prod
+status:
+  effectiveConfig:
+    mandatory:
+      namingTemplate: "corp-{namespace}-{name}"

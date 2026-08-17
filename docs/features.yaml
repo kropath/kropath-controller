@@ -86,6 +86,14 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: CloudWatchConfig
+      package: cloudwatchconfig
+      description: Reconciles CloudWatchConfig CRs and propagates effective config.
+      kinds:
+        - CloudWatchConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable
     - name: ELBConfig
       package: elbconfig
       description: Reconciles ELBConfig CRs and propagates effective config.

@@ -1,0 +1,10 @@
+# Assert AC-4: effCfg.mandatory.treatMissingData="notBreaching" from localCWConfig (level 4).
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchConfig
+metadata:
+  name: ac4-cw-policy
+  namespace: monitoring-prod
+status:
+  effectiveConfig:
+    mandatory:
+      treatMissingData: "notBreaching"

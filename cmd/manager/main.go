@@ -18,6 +18,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/apigatewayconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/apigatewayv2config"
 	"github.com/kropath/kropath-controller/internal/reconciler/autoscalingconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/cloudwatchconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/cloudwatchlogsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/dynamodbconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/ec2config"
@@ -219,6 +220,15 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		ctrl.Log.Error(err, "unable to create CloudWatchLogsConfig reconciler")
+		os.Exit(1)
+	}
+
+	if err := (&cloudwatchconfig.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("CloudWatchConfig"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create CloudWatchConfig reconciler")
 		os.Exit(1)
 	}
 

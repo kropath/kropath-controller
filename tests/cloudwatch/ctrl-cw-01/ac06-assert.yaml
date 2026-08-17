@@ -1,0 +1,10 @@
+# Assert AC-6: effCfg.mandatory.outputFormat="opentelemetry1.0" from localCWConfig (level 4).
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchConfig
+metadata:
+  name: ac6-cw-policy
+  namespace: monitoring-prod
+status:
+  effectiveConfig:
+    mandatory:
+      outputFormat: "opentelemetry1.0"

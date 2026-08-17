@@ -1,0 +1,27 @@
+# AC-7: defaults priority. localCWConfig.defaults (level 6) beats globalKropathConfig.defaults (level 9).
+# KC defaults has treatMissingData="missing" (level 9); localCWCfg defaults has "ignore" (level 6).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac7-cw-policy
+  namespace: kro-system
+spec:
+  defaults:
+    cloudwatch:
+      treatMissingData: "missing"
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+# Local CloudWatchConfig with defaults.treatMissingData (level 6) — should win.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchConfig
+metadata:
+  name: ac7-cw-policy
+  namespace: monitoring-prod
+  labels:
+    aws.kropath.run/resource-name: ac7-cw-policy
+spec:
+  mandatory: {}
+  defaults:
+    treatMissingData: "ignore"
