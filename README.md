@@ -30,37 +30,59 @@ that object through one `externalRef` lookup per RGD and project it onto ACK res
 
 ## How it works
 
+kropath-controller ships **three independent features**. They share a deployment, a `/metrics`
+endpoint, and a leader election lease — but not a code path. Each has its own reconcile loop,
+its own inputs, and its own output field.
+
 ```
-   ┌──────────────────────┐        ┌───────────────────────┐
-   │   KropathConfig      │        │  <Service>Config      │
-   │  (org / namespace)   │        │  (per resource type)  │
-   └──────────┬───────────┘        └───────────┬───────────┘
-              │      mandatory / defaults / aws│
-              └───────────────┬────────────────┘
-                              ▼
-                 ┌───────────────────────────┐
-                 │   kropath-controller      │   ← this repo
-                 │   <Service>Config          │
-                 │   reconciler (cascade)    │
-                 └─────────────┬─────────────┘
-                               │  status.effectiveConfig
-                               ▼
-                 ┌───────────────────────────┐
-                 │   kro RGD (kropath-aws)   │──▶ ACK CR ──▶ AWS
-                 └───────────────────────────┘
+ ┌── 1. CONFIG CASCADE ────────┐ ┌── 2. POLICY DOCUMENT ──┐ ┌── 3. LABEL INJECTION ─────┐
+ │                             │ │                        │ │                           │
+ │  KropathConfig              │ │  PolicyDocument        │ │  every CR under           │
+ │   (org / namespace)         │ │   (statements, refs,   │ │  <provider>.kropath.run   │
+ │  <Service>Config            │ │    sources)            │ │   (configs + instances)   │
+ │   (per resource type)       │ │                        │ │                           │
+ │            │                │ │           │            │ │            │              │
+ │            ▼                │ │           ▼            │ │            ▼              │
+ │  21 cascade reconcilers     │ │  PolicyDocument        │ │  LabelOperator            │
+ │  mandatory > spec >         │ │  reconciler — resolves │ │  reconciler — one         │
+ │  defaults, map-merged       │ │  refs to ARNs, merges  │ │  controller per           │
+ │  per tier (ADR-010)         │ │  sources, detects Sid  │ │  discovered GVK           │
+ │            │                │ │  conflicts             │ │            │              │
+ │            ▼                │ │           │            │ │            ▼              │
+ │  status.effectiveConfig     │ │           ▼            │ │  metadata.labels          │
+ │                             │ │  status.               │ │   <provider>.kropath.run/ │
+ │                             │ │   resolvedDocumentJSON │ │   resource-name = name    │
+ └──────────────┬──────────────┘ └───────────┬────────────┘ └─────────────┬─────────────┘
+                │                            │                            │
+   read via one │           referenced as a  │        makes both lookups  │
+   externalRef  │           policy body by   │        resolvable at all   │
+   lookup       │           IAM RGDs         │        (selector.matchLabels)
+                └────────────────────────────┼────────────────────────────┘
+                                             ▼
+                            ┌────────────────────────────────┐
+                            │  kro RGD (kropath-aws)         │──▶ ACK CR ──▶ AWS
+                            └────────────────────────────────┘
 ```
 
-Every config reconciler follows the same shape: watch `<Service>Config` plus `KropathConfig`,
-run the merge helper in `internal/cascade`, and write `status.effectiveConfig` (ADR-010). The
+**1. Config cascade (21 reconcilers).** Each watches its `<Service>Config` plus `KropathConfig`,
+runs the merge helper in `internal/cascade`, and writes `status.effectiveConfig` (ADR-010). The
 merge is map-based and last-writer-wins per tier, so `mandatory` always beats a user's `spec`.
+This is the only feature that produces `effectiveConfig`.
 
-Two reconcilers are not config cascades:
+**2. PolicyDocument.** A distinct reconciler with a distinct CRD and output. It resolves
+`spec.statements[].principals[].ref` / `.resources[].ref` to ARNs (preferring
+`status.predictedArn`, falling back to `status.arn`), concatenates statement arrays from
+`spec.sources` left-to-right, detects `Sid` collisions, and writes
+`status.resolvedDocumentJSON`. It sets `Ready`, `SidConflict`, and `SourceNotReady` conditions.
+A raw `spec.documentJSON` is validated and passed through unmerged.
 
-- **PolicyDocument** resolves principal/resource refs to ARNs, merges statement sources, and
-  writes `status.resolvedDocumentJSON`.
-- **LabelOperator** applies provider resource-name labels (`aws.kropath.run/resource-name`, …)
-  to CRs across all provider API groups, which is what makes the RGDs' `selector.matchLabels`
-  config lookup resolve.
+**3. Label injection** ([spec](https://github.com/kropath/kropath-core/blob/main/docs/specs/controller-label-operator.md),
+cycle `ctrl-label-op-01`). Orthogonal to config resolution: it makes provider resources
+*discoverable*. It discovers every kind under `aws.`/`gcp.`/`azure.kropath.run` and runs one
+controller per GVK, ensuring `<provider>.kropath.run/resource-name` always equals
+`metadata.name`. Without it, the RGDs' `selector.matchLabels` lookups silently fail to resolve —
+which is why features 1 and 2 both depend on it, and why it is an operator rather than a
+mutating webhook (it repairs resources created before deployment or during an outage).
 
 All reconcilers are always enabled. Feature availability is determined by which image version is
 deployed, not by runtime flags — query `/features` or the generated
@@ -74,6 +96,10 @@ covering **274 steps**, and **39 Go test files**.
 **Suite** is the Chainsaw suite under `tests/`; **Steps** counts its named steps.
 **AWS integration** tracks end-to-end validation against a live AWS account with real ACK
 controllers — that work is in progress outside CI, so every entry is currently `⏳ Pending`.
+
+### Feature 1 — config cascade (21 reconcilers)
+
+Each writes `status.effectiveConfig` on its `<Service>Config` CR.
 
 | Reconciler | CR(s) watched | Suite | Steps | AWS integration |
 |---|---|---|---|---|
@@ -92,14 +118,29 @@ controllers — that work is in progress outside CI, so every entry is currently
 | `EventBridgeConfig` | `EventBridgeConfig`, `KropathConfig` | `eventbridge/ctrl-eventbridge-01` | 10 | ⏳ Pending |
 | `IAMConfig` | `IAMConfig`, `KropathConfig` | `iam/ctrl-iam-01` | 7 | ⏳ Pending |
 | `KMSConfig` | `KMSConfig`, `KropathConfig` | `kms/ctrl-kms-01` | 15 | ⏳ Pending |
-| `LabelOperator` | all provider API groups | `label-operator/ctrl-label-op-01` | 8 | ⏳ Pending |
-| `PolicyDocument` | `PolicyDocument`, `KropathConfig` | `policy/phase2-refs`, `policy/phase3-merge` | 18 | ⏳ Pending |
 | `RDSConfig` | `RDSConfig`, `KropathConfig` | `rds/ctrl-rds-01` | 16 | ⏳ Pending |
 | `S3Config` | `S3Config`, `KropathConfig` | `s3/ctrl-s3-01` | 12 | ⏳ Pending |
 | `SecretsManagerConfig` | `SecretsManagerConfig`, `KropathConfig` | `secretsmanager/ctrl-secretsmanager-01` | 15 | ⏳ Pending |
 | `SNSConfig` | `SNSConfig`, `KropathConfig` | `sns/ctrl-sns-01` | 13 | ⏳ Pending |
 | `SQSConfig` | `SQSConfig`, `KropathConfig` | `sqs/ctrl-sqs-01` | 13 | ⏳ Pending |
 | `StepFunctionsConfig` | `StepFunctionsConfig`, `KropathConfig` | `stepfunctions/ctrl-sfn-01` | 11 | ⏳ Pending |
+
+### Features 2 and 3 — standalone reconcilers
+
+Neither reads or writes `effectiveConfig`; both are separate features with their own outputs.
+
+| Feature | Reconciler | CR(s) watched | Output | Suite | Steps | AWS integration |
+|---|---|---|---|---|---|---|
+| PolicyDocument | `PolicyDocument` | `PolicyDocument`, `KropathConfig` | `status.resolvedDocumentJSON` | `policy/phase2-refs`, `policy/phase3-merge` | 18 | ⏳ Pending |
+| Label injection | `LabelOperator` | every kind under `aws.`/`gcp.`/`azure.kropath.run` | `metadata.labels[<provider>.kropath.run/resource-name]` | `label-operator/ctrl-label-op-01` | 8 | ⏳ Pending |
+
+Both are implemented and covered. The label-operator suite has a step per acceptance criterion
+in the [spec](https://github.com/kropath/kropath-core/blob/main/docs/specs/controller-label-operator.md)
+(AC-1 … AC-8: label added for AWS config, GCP config and non-config kinds; wrong value
+corrected; correct value is a no-op; resource still admitted while the operator is down;
+retroactive labelling on recovery; `kropath.run` group excluded). The PolicyDocument suites
+cover ref resolution (`phase2-refs`) and source merging with `Sid` conflict detection
+(`phase3-merge`). See [Known gaps](#known-gaps) for the deviations from spec that remain.
 
 Two further suites cover the binary rather than a reconciler: `features/ctrl-features-01` (5
 steps) exercises the `/features` endpoint and `version/ctrl-version-01` (2 steps) the build-info
@@ -122,6 +163,35 @@ drifts from the code (the **Feature registry drift gate** job).
   runs under `make test-chainsaw` (which runs `chainsaw test tests/`) and via
   `tests/Makefile`, but there is no single-suite target at the repo root the way every other
   service has one.
+
+### Label injection — deviations from spec
+
+The feature is implemented and all 8 acceptance criteria have passing steps, but three details
+differ from
+[`controller-label-operator.md`](https://github.com/kropath/kropath-core/blob/main/docs/specs/controller-label-operator.md):
+
+- **New CRDs are not picked up until restart.** The spec says "any new CRD registered under
+  these API groups — the operator automatically covers it without code changes". `Setup()`
+  enumerates GVKs once via a discovery call at startup and registers one controller per kind, so
+  a CRD created later (notably a kro-generated resource CRD) is not watched until the pod
+  restarts. RBAC already uses `resources: ["*"]`, so only the discovery is startup-bound.
+- **Only `v1alpha1` is watched.** `setupGroup` requests `<group>/v1alpha1` explicitly; a future
+  `v1beta1`/`v1` under the same group would be ignored.
+- **AC-8's exclusion premise does not hold for this repo's `KropathConfig`.** The spec excludes
+  `KropathConfig` on the grounds that it lives in the `kropath.run` group. Here
+  `api/v1alpha1/register.go` registers `KropathConfig` under **`aws.kropath.run`**, so the
+  `KropathConfig` the cascade reconcilers actually watch *is* in scope and does get labelled.
+  The AC-8 step passes because it asserts against a separate `kropath.run` CRD fixture
+  (`tests/fixtures/crds/kropathconfig-core.yaml`) that nothing else in the repo uses. The extra
+  label appears harmless, but the spec and the code disagree about which resource is excluded.
+
+### PolicyDocument — undocumented gap
+
+`CLAUDE.md` states the reconciler "exposes Prometheus metrics: `kropath_poldoc_reconcile_total`,
+`kropath_poldoc_unresolved_refs`, etc." **No such metrics exist** — the only registered metrics
+are the build-info and feature-enabled gauges in `internal/version/metrics.go`. `CLAUDE.md` also
+describes `tests/policy/` as "three phases (CRD validation, ref resolution, source merge)";
+only `phase2-refs` and `phase3-merge` are present.
 
 ## Requirements
 
