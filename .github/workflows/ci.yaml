@@ -1,16 +1,22 @@
 name: ci
 
 # Documentation-only changes do not affect the binary, the image, or the
-# Chainsaw suites, so they skip CI entirely.
+# Chainsaw suites, so the expensive work is skipped for them.
+#
+# That skip is decided *inside* the jobs, deliberately not with a
+# `on.*.paths-ignore` filter. A trigger-level filter stops the workflow from
+# starting at all, so the contexts required by the `main` ruleset -- `Unit
+# tests` and `Chainsaw integration tests` -- are never reported, and a
+# docs-only PR sits on "Expected - Waiting for status to be reported"
+# forever with no way to merge it.
+#
+# So every job below runs on every PR and reports a real `success`. The
+# `changes` job decides whether the work inside them actually happens.
 on:
   pull_request:
-    paths-ignore:
-      - '**/*.md'
   push:
     branches:
       - main
-    paths-ignore:
-      - '**/*.md'
 
 # Keep these in sync with the version pins at the top of the Makefile.
 env:
@@ -19,100 +25,172 @@ env:
   GOLANGCI_VERSION: v2.11.4
 
 jobs:
-  lint:
-    name: Lint
+  changes:
+    name: Detect changed paths
     runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect non-Markdown changes
+        id: filter
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+
+          # Fail open. A missing or all-zero base (new branch, force push,
+          # first commit) leaves no range to diff, and guessing "docs only"
+          # there would silently wave code through the gate.
+          if [ -z "${BASE_SHA}" ] || [ "${BASE_SHA}" = "0000000000000000000000000000000000000000" ]; then
+            echo "No usable base ref -- running the full suite."
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null \
+            || ! git cat-file -e "${HEAD_SHA}^{commit}" 2>/dev/null; then
+            echo "Base or head commit not present locally -- running the full suite."
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Three-dot: compare against the merge base, matching what GitHub
+          # shows as the PR's own changes.
+          files="$(git diff --name-only "${BASE_SHA}...${HEAD_SHA}")"
+
+          echo "Changed files:"
+          echo "${files}"
+
+          if printf '%s\n' "${files}" | grep -qvE '(\.md$|^$)'; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            echo "Result: non-Markdown files changed -- running the full suite."
+          else
+            echo "code=false" >> "$GITHUB_OUTPUT"
+            echo "Result: Markdown-only change -- skipping build, test and scan steps."
+          fi
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    needs: changes
+    steps:
+      - name: Checkout
+        if: needs.changes.outputs.code == 'true'
+        uses: actions/checkout@v4
 
       - name: Setup Go
+        if: needs.changes.outputs.code == 'true'
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           cache: true
 
       - name: Install golangci-lint
+        if: needs.changes.outputs.code == 'true'
         run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${{ env.GOLANGCI_VERSION }}
 
       - name: Lint
+        if: needs.changes.outputs.code == 'true'
         run: make lint
 
   unit:
     name: Unit tests
     runs-on: ubuntu-latest
+    needs: changes
     steps:
       - name: Checkout
+        if: needs.changes.outputs.code == 'true'
         uses: actions/checkout@v4
 
       - name: Setup Go
+        if: needs.changes.outputs.code == 'true'
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           cache: true
 
       - name: Unit tests
+        if: needs.changes.outputs.code == 'true'
         run: make test
 
   features-verify:
     name: Feature registry drift gate
     runs-on: ubuntu-latest
+    needs: changes
     steps:
       - name: Checkout
+        if: needs.changes.outputs.code == 'true'
         uses: actions/checkout@v4
 
       - name: Setup Go
+        if: needs.changes.outputs.code == 'true'
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           cache: true
 
       - name: Check docs/features.yaml is up to date
+        if: needs.changes.outputs.code == 'true'
         run: make features-verify
 
   security:
     name: Security scan
     runs-on: ubuntu-latest
+    needs: changes
     steps:
       - name: Checkout
+        if: needs.changes.outputs.code == 'true'
         uses: actions/checkout@v4
 
       - name: Setup Go
+        if: needs.changes.outputs.code == 'true'
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           cache: true
 
       - name: Install gosec
+        if: needs.changes.outputs.code == 'true'
         run: go install github.com/securego/gosec/v2/cmd/gosec@latest
 
       - name: Install govulncheck
+        if: needs.changes.outputs.code == 'true'
         run: go install golang.org/x/vuln/cmd/govulncheck@latest
 
       - name: Run security scans
+        if: needs.changes.outputs.code == 'true'
         run: make security
 
   image:
     name: Build image
     runs-on: ubuntu-latest
-    needs: [lint, unit, features-verify, security]
+    needs: [changes, lint, unit, features-verify, security]
     permissions:
       contents: read
       packages: write
 
     steps:
       - name: Checkout
+        if: needs.changes.outputs.code == 'true'
         uses: actions/checkout@v4
 
       - name: Compute short SHA
         id: sha
+        if: needs.changes.outputs.code == 'true'
         run: echo "short=$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
+        if: needs.changes.outputs.code == 'true'
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to GHCR
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: needs.changes.outputs.code == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -120,6 +198,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
+        if: needs.changes.outputs.code == 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -135,33 +214,40 @@ jobs:
   e2e:
     name: Chainsaw integration tests
     runs-on: ubuntu-latest
-    needs: [lint, unit, features-verify, security]
+    needs: [changes, lint, unit, features-verify, security]
     # Chainsaw already ran on the PR head against an identical tree; re-running
     # on the post-merge push to main duplicates the slowest job for no signal.
+    # This job-level skip is safe where a path-based one would not be: the
+    # required contexts are only ever evaluated on a pull request.
     if: github.event_name == 'pull_request'
 
     steps:
       - name: Checkout
+        if: needs.changes.outputs.code == 'true'
         uses: actions/checkout@v4
 
       - name: Setup Go
+        if: needs.changes.outputs.code == 'true'
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           cache: true
 
       - name: Install kind
+        if: needs.changes.outputs.code == 'true'
         run: |
           curl -sSLo /tmp/kind https://kind.sigs.k8s.io/dl/${{ env.KIND_VERSION }}/kind-linux-amd64
           chmod +x /tmp/kind
           sudo mv /tmp/kind /usr/local/bin/kind
 
       - name: Install Chainsaw
+        if: needs.changes.outputs.code == 'true'
         uses: kyverno/action-install-chainsaw@v0.2.15
 
       - name: Run Chainsaw tests
+        if: needs.changes.outputs.code == 'true'
         run: make test-chainsaw
 
       - name: Stop controller
-        if: always()
+        if: always() && needs.changes.outputs.code == 'true'
         run: make chainsaw-stop

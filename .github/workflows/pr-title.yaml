@@ -5,10 +5,10 @@ name: pr-title
 # and is the only thing release-please ever parses. A title it cannot parse is a
 # feature that silently never ships and never reaches CHANGELOG.md.
 #
-# This lives in its own workflow rather than in ci.yaml because ci.yaml carries
-# `paths-ignore: '**/*.md'` — a docs-only PR would skip the check there, and a
-# docs-only PR is exactly the case that must be typed correctly to stay out of a
-# release.
+# This lives in its own workflow rather than in ci.yaml so that it keeps its own
+# trigger, free of any path filtering. A docs-only PR is exactly the case that
+# must be typed correctly to stay out of a release, and it needs this check on a
+# `types: [edited]` trigger that ci.yaml has no reason to carry.
 on:
   pull_request:
     types:
