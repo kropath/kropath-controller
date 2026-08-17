@@ -1,32 +1,208 @@
 # kropath-controller
 
+[![CI](https://github.com/kropath/kropath-controller/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/kropath/kropath-controller/actions/workflows/ci.yaml)
+[![Release](https://github.com/kropath/kropath-controller/actions/workflows/release.yaml/badge.svg)](https://github.com/kropath/kropath-controller/actions/workflows/release.yaml)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+
 Go controller for [kropath](https://github.com/kropath) (kro + golden path), a multi-cloud golden
 path platform. `kropath-controller` is a multi-reconciler `kropath-operator` binary built on a
 single `controller-runtime` Manager — one Reconciler struct per feature.
 
-See `docs/STANDARDS.md` for the standards that bind this repo.
+It is the **config-resolution half** of kropath: it watches the governance CRs a platform team
+writes (`KropathConfig` and per-service `<Service>Config`), merges the layers under a strict
+`mandatory > spec > defaults` precedence, and writes a single `status.effectiveConfig` object.
+The kro ResourceGraphDefinitions in [kropath-aws](https://github.com/kropath/kropath-aws) read
+that object through one `externalRef` lookup per RGD and project it onto ACK resources.
 
-## Reconcilers
+> ### ⚠️ EXPERIMENTAL
+>
+> **This project is under active development and is not production-ready.** CRD schemas,
+> `status.effectiveConfig` shapes, and reconciler behaviour may change without notice, and there
+> are no compatibility guarantees between releases.
+>
+> CI runs unit tests and Chainsaw integration tests against a local
+> [kind](https://kind.sigs.k8s.io/) cluster with the operator running out-of-cluster. No AWS
+> account or credentials are involved, and no ACK controllers are installed. **Integration
+> testing against a live AWS environment is currently in progress and runs outside CI**, so
+> cloud-side behaviour is not yet covered by the automated suite in this repository.
 
-All reconcilers are always enabled. Feature availability is determined by which image version is deployed, not by runtime flags. For the full list of reconcilers active in a given image, query the `/features` endpoint or see the generated `docs/features.yaml`.
+---
 
-| Reconciler | CR(s) watched | Purpose |
-|---|---|---|
-| IAM config merge | `KropathConfig`, `IAMConfig` | Merges org/namespace/instance config layers, writes `status.effectiveConfig` (ADR-010) |
-| S3 config merge | `KropathConfig`, `S3Config` | Same merge pattern, scoped to S3 resource config |
-| KMS config cascade | `KropathConfig`, `KMSConfig` | Cascades KMS key-spec and policy config to `status.effectiveConfig` |
-| PolicyDocument | `PolicyDocument`, `KropathConfig` | Resolves principal/resource refs to ARNs, merges statement sources, writes `status.resolvedDocumentJSON` |
+## How it works
 
-Config-merge reconcilers write the single `status.effectiveConfig` object that kro RGDs read via
-one `externalRef` lookup per RGD (see the CEL cascade pattern in `docs/STANDARDS.md`).
+kropath-controller ships **three independent features**. They share a deployment, a `/metrics`
+endpoint, and a leader election lease — but not a code path. Each has its own reconcile loop,
+its own inputs, and its own output field.
+
+```
+ ┌── 1. CONFIG CASCADE ────────┐ ┌── 2. POLICY DOCUMENT ──┐ ┌── 3. LABEL INJECTION ─────┐
+ │                             │ │                        │ │                           │
+ │  KropathConfig              │ │  PolicyDocument        │ │  every CR under           │
+ │   (org / namespace)         │ │   (statements, refs,   │ │  <provider>.kropath.run   │
+ │  <Service>Config            │ │    sources)            │ │   (configs + instances)   │
+ │   (per resource type)       │ │                        │ │                           │
+ │            │                │ │           │            │ │            │              │
+ │            ▼                │ │           ▼            │ │            ▼              │
+ │  21 cascade reconcilers     │ │  PolicyDocument        │ │  LabelOperator            │
+ │  mandatory > spec >         │ │  reconciler — resolves │ │  reconciler — one         │
+ │  defaults, map-merged       │ │  refs to ARNs, merges  │ │  controller per           │
+ │  per tier (ADR-010)         │ │  sources, detects Sid  │ │  discovered GVK           │
+ │            │                │ │  conflicts             │ │            │              │
+ │            ▼                │ │           │            │ │            ▼              │
+ │  status.effectiveConfig     │ │           ▼            │ │  metadata.labels          │
+ │                             │ │  status.               │ │   <provider>.kropath.run/ │
+ │                             │ │   resolvedDocumentJSON │ │   resource-name = name    │
+ └──────────────┬──────────────┘ └───────────┬────────────┘ └─────────────┬─────────────┘
+                │                            │                            │
+   read via one │           referenced as a  │        makes both lookups  │
+   externalRef  │           policy body by   │        resolvable at all   │
+   lookup       │           IAM RGDs         │        (selector.matchLabels)
+                └────────────────────────────┼────────────────────────────┘
+                                             ▼
+                            ┌────────────────────────────────┐
+                            │  kro RGD (kropath-aws)         │──▶ ACK CR ──▶ AWS
+                            └────────────────────────────────┘
+```
+
+**1. Config cascade (21 reconcilers).** Each watches its `<Service>Config` plus `KropathConfig`,
+runs the merge helper in `internal/cascade`, and writes `status.effectiveConfig` (ADR-010). The
+merge is map-based and last-writer-wins per tier, so `mandatory` always beats a user's `spec`.
+This is the only feature that produces `effectiveConfig`.
+
+**2. PolicyDocument.** A distinct reconciler with a distinct CRD and output. It resolves
+`spec.statements[].principals[].ref` / `.resources[].ref` to ARNs (preferring
+`status.predictedArn`, falling back to `status.arn`), concatenates statement arrays from
+`spec.sources` left-to-right, detects `Sid` collisions, and writes
+`status.resolvedDocumentJSON`. It sets `Ready`, `SidConflict`, and `SourceNotReady` conditions.
+A raw `spec.documentJSON` is validated and passed through unmerged.
+
+**3. Label injection** ([spec](https://github.com/kropath/kropath-core/blob/main/docs/specs/controller-label-operator.md),
+cycle `ctrl-label-op-01`). Orthogonal to config resolution: it makes provider resources
+*discoverable*. It discovers every kind under `aws.`/`gcp.`/`azure.kropath.run` and runs one
+controller per GVK, ensuring `<provider>.kropath.run/resource-name` always equals
+`metadata.name`. Without it, the RGDs' `selector.matchLabels` lookups silently fail to resolve —
+which is why features 1 and 2 both depend on it, and why it is an operator rather than a
+mutating webhook (it repairs resources created before deployment or during an outage).
+
+All reconcilers are always enabled. Feature availability is determined by which image version is
+deployed, not by runtime flags — query `/features` or the generated
+[`docs/features.yaml`](docs/features.yaml) to see what a given image contains.
+
+## Implementation status
+
+**23 reconcilers**, **23 CRD types** registered in `api/v1alpha1`, **25 Chainsaw suites**
+covering **274 steps**, and **39 Go test files**.
+
+**Suite** is the Chainsaw suite under `tests/`; **Steps** counts its named steps.
+**AWS integration** tracks end-to-end validation against a live AWS account with real ACK
+controllers — that work is in progress outside CI, so every entry is currently `⏳ Pending`.
+
+### Feature 1 — config cascade (21 reconcilers)
+
+Each writes `status.effectiveConfig` on its `<Service>Config` CR.
+
+| Reconciler | CR(s) watched | Suite | Steps | AWS integration |
+|---|---|---|---|---|
+| `ApiGatewayConfig` | `ApiGatewayConfig`, `KropathConfig` | `apigateway/ctrl-apigw-01` | 6 | ⏳ Pending |
+| `ApiGatewayV2Config` | `ApiGatewayV2Config`, `KropathConfig` | `apigatewayv2/ctrl-apigwv2-01` | 10 | ⏳ Pending |
+| `AutoScalingConfig` | `AutoScalingConfig`, `KropathConfig` | `autoscaling/ctrl-autoscaling-01` | 9 | ⏳ Pending |
+| `CloudWatchLogsConfig` | `CloudWatchLogsConfig`, `KropathConfig` | `cloudwatchlogs/ctrl-cwl-01` | 11 | ⏳ Pending |
+| `DynamoDBConfig` | `DynamoDBConfig`, `KropathConfig` | `dynamodb/ctrl-dynamodb-01` | 14 | ⏳ Pending |
+| `EC2Config` | `EC2Config`, `KropathConfig` | `ec2/ctrl-ec2-01` | 15 | ⏳ Pending |
+| `ECRConfig` | `ECRConfig`, `KropathConfig` | `ecr/ctrl-ecr-01` | 22 | ⏳ Pending |
+| `ECSConfig` | `ECSConfig`, `KropathConfig` | `ecs/ctrl-ecs-01` | 3 | ⏳ Pending |
+| `EFSConfig` | `EFSConfig`, `KropathConfig` | `efs/ctrl-efs-01` | 10 | ⏳ Pending |
+| `EKSConfig` | `EKSConfig`, `KropathConfig` | `eks/ctrl-eks-01` | 16 | ⏳ Pending |
+| `ElastiCacheConfig` | `ElastiCacheConfig`, `KropathConfig` | `elasticache/ctrl-elasticache-01` | 13 | ⏳ Pending |
+| `ELBConfig` | `ELBConfig`, `KropathConfig` | **none** — see [Known gaps](#known-gaps) | — | ⏳ Pending |
+| `EventBridgeConfig` | `EventBridgeConfig`, `KropathConfig` | `eventbridge/ctrl-eventbridge-01` | 10 | ⏳ Pending |
+| `IAMConfig` | `IAMConfig`, `KropathConfig` | `iam/ctrl-iam-01` | 7 | ⏳ Pending |
+| `KMSConfig` | `KMSConfig`, `KropathConfig` | `kms/ctrl-kms-01` | 15 | ⏳ Pending |
+| `RDSConfig` | `RDSConfig`, `KropathConfig` | `rds/ctrl-rds-01` | 16 | ⏳ Pending |
+| `S3Config` | `S3Config`, `KropathConfig` | `s3/ctrl-s3-01` | 12 | ⏳ Pending |
+| `SecretsManagerConfig` | `SecretsManagerConfig`, `KropathConfig` | `secretsmanager/ctrl-secretsmanager-01` | 15 | ⏳ Pending |
+| `SNSConfig` | `SNSConfig`, `KropathConfig` | `sns/ctrl-sns-01` | 13 | ⏳ Pending |
+| `SQSConfig` | `SQSConfig`, `KropathConfig` | `sqs/ctrl-sqs-01` | 13 | ⏳ Pending |
+| `StepFunctionsConfig` | `StepFunctionsConfig`, `KropathConfig` | `stepfunctions/ctrl-sfn-01` | 11 | ⏳ Pending |
+
+### Features 2 and 3 — standalone reconcilers
+
+Neither reads or writes `effectiveConfig`; both are separate features with their own outputs.
+
+| Feature | Reconciler | CR(s) watched | Output | Suite | Steps | AWS integration |
+|---|---|---|---|---|---|---|
+| PolicyDocument | `PolicyDocument` | `PolicyDocument`, `KropathConfig` | `status.resolvedDocumentJSON` | `policy/phase2-refs`, `policy/phase3-merge` | 18 | ⏳ Pending |
+| Label injection | `LabelOperator` | every kind under `aws.`/`gcp.`/`azure.kropath.run` | `metadata.labels[<provider>.kropath.run/resource-name]` | `label-operator/ctrl-label-op-01` | 8 | ⏳ Pending |
+
+Both are implemented and covered. The label-operator suite has a step for AC-1 … AC-8 of the
+[spec](https://github.com/kropath/kropath-core/blob/main/docs/specs/controller-label-operator.md)
+(label added for AWS config, GCP config and non-config kinds; wrong value corrected; correct
+value is a no-op; resource still admitted while the operator is down; retroactive labelling on
+recovery; core `kropath.run` group excluded); AC-9 is not yet covered — see
+[Known gaps](#known-gaps). The PolicyDocument suites
+cover ref resolution (`phase2-refs`) and source merging with `Sid` conflict detection
+(`phase3-merge`). See [Known gaps](#known-gaps) for the deviations from spec that remain.
+
+Two further suites cover the binary rather than a reconciler: `features/ctrl-features-01` (5
+steps) exercises the `/features` endpoint and `version/ctrl-version-01` (2 steps) the build-info
+metrics.
+
+`docs/features.yaml` is generated from the registry by `make features-gen` and CI fails if it
+drifts from the code (the **Feature registry drift gate** job).
+
+### Known gaps
+
+- **`ELBConfig` has no Chainsaw suite.** The reconciler, CRD type, cascade helper, and
+  `tests/fixtures/crds/awselbconfig.yaml` all exist, but there is no `tests/elb/` directory and
+  no `test-elb` Make target — it is the only reconciler with no integration coverage. (See
+  `docs/troubleshooting-logs/2026-08-13-elbconfig-missing-crd-manager-crash.md` for the incident
+  that followed from its CRD not being applied.)
+- **Cascade helpers without reconcilers.** `internal/cascade/cloudfront.go` and
+  `internal/cascade/lambda.go` are implemented and unit-tested, but no `CloudFrontConfig` or
+  `LambdaConfig` reconciler or CRD type exists yet, so nothing calls them at runtime.
+- **`make test-apigateway` is missing from the root `Makefile`.** `tests/apigateway/ctrl-apigw-01`
+  runs under `make test-chainsaw` (which runs `chainsaw test tests/`) and via
+  `tests/Makefile`, but there is no single-suite target at the repo root the way every other
+  service has one.
+
+### Label injection — deviations from spec
+
+The feature is implemented and AC-1 … AC-8 all have passing steps. Two details differ from
+[`controller-label-operator.md`](https://github.com/kropath/kropath-core/blob/main/docs/specs/controller-label-operator.md),
+and one acceptance criterion has no step yet:
+
+- **New CRDs are not picked up until restart.** The spec says "any new CRD registered under
+  these API groups — the operator automatically covers it without code changes". `Setup()`
+  enumerates GVKs once via a discovery call at startup and registers one controller per kind, so
+  a CRD created later (notably a kro-generated resource CRD) is not watched until the pod
+  restarts. RBAC already uses `resources: ["*"]`, so only the discovery is startup-bound.
+- **Only `v1alpha1` is watched.** `setupGroup` requests `<group>/v1alpha1` explicitly; a future
+  `v1beta1`/`v1` under the same group would be ignored.
+- **AC-9 has no Chainsaw step.** Scope is decided by API group alone, so the **provider-scoped**
+  `KropathConfig` that `api/v1alpha1/register.go` registers under `aws.kropath.run` is
+  deliberately in scope and does get labelled — the spec was amended to state this explicitly and
+  added AC-9 to cover it. Only the **core** `KropathConfig` in the `kropath.run` group is
+  excluded, which is what the existing AC-8 step asserts against
+  (`tests/fixtures/crds/kropathconfig-core.yaml`). The behaviour is correct; the coverage for
+  the in-scope half of the pair is missing.
+
+### PolicyDocument — undocumented gap
+
+`CLAUDE.md` states the reconciler "exposes Prometheus metrics: `kropath_poldoc_reconcile_total`,
+`kropath_poldoc_unresolved_refs`, etc." **No such metrics exist** — the only registered metrics
+are the build-info and feature-enabled gauges in `internal/version/metrics.go`. `CLAUDE.md` also
+describes `tests/policy/` as "three phases (CRD validation, ref resolution, source merge)";
+only `phase2-refs` and `phase3-merge` are present.
 
 ## Requirements
 
-- Go 1.26.6 (pinned in `go.mod`; keep in sync with `Makefile` / `.github/workflows/ci.yaml`)
-- [kind](https://kind.sigs.k8s.io/) v0.25.0 — local integration-test cluster
-- [Chainsaw](https://kyverno.github.io/chainsaw/) v0.2.15 — integration test runner
-- [golangci-lint](https://golangci-lint.run/) v2.11.4
-- Docker — for building the container image
+| Tool | Version | Notes |
+|---|---|---|
+| [Go](https://go.dev/dl/) | 1.26.6 | pinned in `go.mod`; keep in sync with `Makefile` and `.github/workflows/ci.yaml` |
+| [kind](https://kind.sigs.k8s.io/) | v0.25.0 | local integration-test cluster |
+| [Chainsaw](https://kyverno.github.io/chainsaw/) | v0.2.15 | integration test runner |
+| [golangci-lint](https://golangci-lint.run/) | v2.11.4 | |
+| Docker | — | container image build |
 
 Install the pinned tool versions with:
 
@@ -37,7 +213,7 @@ make install-tools
 ## Building
 
 ```bash
-make build          # compile bin/kropath-operator
+make build           # compile bin/kropath-operator
 make docker-build    # build the container image (tag = short git SHA + latest)
 ```
 
@@ -54,14 +230,14 @@ make docker-build    # build the container image (tag = short git SHA + latest)
 | `--metrics-bind-address` | `:8080` | Prometheus `/metrics` endpoint |
 | `--health-probe-bind-address` | `:8081` | `/healthz` and `/readyz` endpoints |
 
-All reconcilers start automatically. To see which reconcilers are active, use the `/features` endpoint or the `features` subcommand (see below).
-
-The manager runs with leader election on by default (`LEADER_ELECTION_NAMESPACE` or
-`POD_NAMESPACE` env var selects the lease namespace; defaults to `default`).
+All reconcilers start automatically. The manager runs with leader election on by default
+(`LEADER_ELECTION_NAMESPACE` or `POD_NAMESPACE` selects the lease namespace; defaults to
+`default`).
 
 ## `/features` endpoint
 
-`GET /features` on the metrics listener (`:8080`) returns version metadata and the live reconciler list as JSON:
+`GET /features` on the metrics listener (`:8080`) returns version metadata and the live
+reconciler list as JSON:
 
 ```bash
 curl http://localhost:8080/features
@@ -95,9 +271,10 @@ curl 'http://localhost:8080/features?name=kmsconfig'
 
 Only `GET` and `HEAD` are accepted; any other method returns `405`.
 
-## `kropath-operator features` subcommand
+### `kropath-operator features` subcommand
 
-Prints the same JSON as `GET /features` and exits — no kubeconfig or cluster connection needed. Useful for inspecting an image before deploying it:
+Prints the same JSON as `GET /features` and exits — no kubeconfig or cluster connection needed.
+Useful for inspecting an image before deploying it:
 
 ```bash
 docker run --rm ghcr.io/kropath/kropath-controller:v0.1.0 features
@@ -112,9 +289,10 @@ or locally:
 ## Testing
 
 ```bash
-make test           # unit tests, race detector
+make test            # unit tests, race detector
 make test-cover      # unit tests + HTML coverage report
 make lint            # go vet + golangci-lint (required before every commit)
+make features-verify # fail if docs/features.yaml has drifted from the registry
 ```
 
 ### Integration tests (Chainsaw + kind)
@@ -127,11 +305,16 @@ To iterate on a single suite without restarting the operator:
 
 ```bash
 make chainsaw-start chainsaw-wait
-make test-iam        # or test-s3, test-kms, test-policy
+make test-iam        # one target per service — see `make help` for the full list
 make chainsaw-stop
 ```
 
-On a failed run, clean up manually with `make chainsaw-stop kind-down`.
+The operator runs **out-of-cluster** against the kind cluster; CRDs come from
+`tests/fixtures/crds/`. On a failed run, clean up manually with `make chainsaw-stop kind-down`.
+
+Suites follow the canonical **unique-resource-name-per-step** pattern — see
+[`docs/frequent-chainsaw-errors.md`](docs/frequent-chainsaw-errors.md) before writing or fixing
+one.
 
 ## Security scans
 
@@ -184,9 +367,6 @@ Releases are fully automated via [release-please](https://github.com/googleapis/
 4. Merging the release PR creates the git tag, the GitHub Release, and the `CHANGELOG.md` entry.
 5. The tag triggers `release.yaml`, which builds and pushes the versioned image.
 
-The seed tag `v0.0.1` establishes the baseline; the first automated release will be `v0.1.0`
-(for a `feat`) or `v0.0.2` (for a `fix`).
-
 PRs are squash-merged, so the **PR title becomes the commit subject on `main`** and is the only
 input release-please parses. Titles must be conventional commits with the ticket id as the scope:
 
@@ -224,11 +404,42 @@ Keep the type list in `pr-title.yaml` in sync with `changelog-sections` in
 
 ## Repository layout
 
-```
-api/v1alpha1/          CRD Go types + scheme registration
-cmd/manager/           main.go — flag parsing, manager wiring
-internal/reconciler/   one package per reconciler (iamconfig, s3config, kmsconfig, policydocument)
-internal/cascade/      shared config-merge helpers
-tests/                 Chainsaw integration suites (iam, s3, kms, policy)
-docs/                  engineering standards and design docs
-```
+| Path | Contents |
+|---|---|
+| `api/v1alpha1/` | CRD Go types (23 kinds) + scheme registration — group `aws.kropath.run` |
+| `cmd/manager/` | `main.go` — flag parsing, manager wiring, `features` subcommand |
+| `cmd/gen-features/` | generates `docs/features.yaml` from the reconciler registry |
+| `internal/reconciler/` | one package per reconciler (23 packages + `util`) |
+| `internal/cascade/` | shared config-merge helpers, one file per service |
+| `internal/features/` | the feature registry and the `/features` HTTP handler |
+| `internal/version/` | build-info and feature-enabled Prometheus metrics |
+| `config/rbac/` | ClusterRole manifests for the manager, PolicyDocument, and LabelOperator |
+| `tests/` | Chainsaw integration suites + `tests/fixtures/crds/` |
+| `docs/` | engineering standards, the Chainsaw error catalog, and dated troubleshooting logs |
+
+## Documentation
+
+| Doc | Purpose |
+|---|---|
+| [`docs/STANDARDS.md`](docs/STANDARDS.md) | The engineering standards that bind this repo |
+| [`docs/frequent-chainsaw-errors.md`](docs/frequent-chainsaw-errors.md) | Catalog of Chainsaw/controller test traps already hit — read before fixing a suite |
+| [`docs/features.yaml`](docs/features.yaml) | Generated reconciler registry (do not edit by hand) |
+| [`docs/troubleshooting-logs/`](docs/troubleshooting-logs/) | Dated per-incident fix logs |
+| [`CLAUDE.md`](CLAUDE.md) | Repo conventions and working loop, for both humans and coding agents |
+
+## Related repositories
+
+| Repo | Role |
+|---|---|
+| [kropath-aws](https://github.com/kropath/kropath-aws) | kro RGDs and governance CRD manifests that consume `status.effectiveConfig` |
+
+## Contributing
+
+Bug fixes and small changes are welcome as pull requests. Feature requests and architectural
+changes should be raised as a GitHub Issue — accepted requests go onto the development roadmap and
+are implemented by the maintainers; feature PRs are not being accepted yet. See
+[CONTRIBUTION.md](CONTRIBUTION.md).
+
+## License
+
+Apache License 2.0 — see [LICENSE](LICENSE).
