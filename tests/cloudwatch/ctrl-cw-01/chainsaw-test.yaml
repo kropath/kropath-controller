@@ -1,0 +1,138 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-cw-01 Chainsaw integration tests — all 11 acceptance criteria.
+# Requires:
+#   - kind cluster with kropath-operator deployed
+#   - KropathConfig CRD applied (crds/kropathconfig.yaml from kropath-aws)
+#   - CloudWatchConfig CRD applied (crds/cloudwatchconfig.yaml from kropath-aws)
+#
+# Each AC step uses a unique resource name (acN-cw-policy) so that the controller
+# pairs a namespaced config with its kro-system counterpart *by name*.
+# A per-step name is a complete isolation boundary — no cleanup between steps needed.
+#
+# Unlike kropath-aws RGD tests, skipDelete is NOT set — CloudWatchConfig CRs have
+# no finalizers and no cloud calls, so end-of-test cleanup is cheap and keeps the
+# shared kind cluster lean.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-cw-01-cascade
+spec:
+  namespace: monitoring-prod
+  steps:
+    # AC-1: globalKropathConfig.mandatory.cloudwatch.actionsEnabled=true (level 1) propagates.
+    - name: ac1-global-kpc-actions-enabled-level1
+      try:
+        - apply:
+            file: ac01-setup.yaml
+        - assert:
+            file: ac01-assert.yaml
+            timeout: 30s
+
+    # AC-2: globalCWConfig.mandatory.actionsEnabled=false (level 3) wins when KC levels are nil.
+    # Verifies that boolean false is a valid enforced value (nil is the only skip sentinel).
+    - name: ac2-global-cwcfg-actions-disabled-level3
+      try:
+        - apply:
+            file: ac02-setup.yaml
+        - assert:
+            file: ac02-assert.yaml
+            timeout: 30s
+
+    # AC-3: globalKropathConfig.mandatory.cloudwatch.treatMissingData="breaching" (level 1) propagates.
+    - name: ac3-global-kpc-treat-missing-level1
+      try:
+        - apply:
+            file: ac03-setup.yaml
+        - assert:
+            file: ac03-assert.yaml
+            timeout: 30s
+
+    # AC-4: localCWConfig.mandatory.treatMissingData="notBreaching" (level 4) wins when KC is empty.
+    - name: ac4-local-cwcfg-treat-missing-level4
+      try:
+        - apply:
+            file: ac04-setup.yaml
+        - assert:
+            file: ac04-assert.yaml
+            timeout: 30s
+
+    # AC-5: globalKropathConfig.mandatory.cloudwatch.outputFormat="json" (level 1) propagates.
+    - name: ac5-global-kpc-output-format-level1
+      try:
+        - apply:
+            file: ac05-setup.yaml
+        - assert:
+            file: ac05-assert.yaml
+            timeout: 30s
+
+    # AC-6: localCWConfig.mandatory.outputFormat="opentelemetry1.0" (level 4) wins when KC is empty.
+    - name: ac6-local-cwcfg-output-format-level4
+      try:
+        - apply:
+            file: ac06-setup.yaml
+        - assert:
+            file: ac06-assert.yaml
+            timeout: 30s
+
+    # AC-7: localCWConfig.defaults.treatMissingData="ignore" (level 6) propagates; mandatory stays empty.
+    # KropathConfig.cloudwatch.defaults also set — level 6 wins.
+    - name: ac7-defaults-priority-order
+      try:
+        - apply:
+            file: ac07-setup.yaml
+        - assert:
+            file: ac07-assert.yaml
+            timeout: 30s
+
+    # AC-8: globalCWConfig.mandatory.namingTemplate="corp-{namespace}-{name}" (level 3)
+    # propagates to effCfg.mandatory.namingTemplate.
+    # KropathConfig.cloudwatch has no namingTemplate field — only CWConfig levels participate.
+    - name: ac8-global-cwcfg-mandatory-naming-level3
+      try:
+        - apply:
+            file: ac08-setup.yaml
+        - assert:
+            file: ac08-assert.yaml
+            timeout: 30s
+
+    # AC-9: localCWConfig.defaults.namingTemplate="{namespace}-{name}" (level 6) propagates.
+    - name: ac9-local-cwcfg-defaults-naming-level6
+      try:
+        - apply:
+            file: ac09-setup.yaml
+        - assert:
+            file: ac09-assert.yaml
+            timeout: 30s
+
+    # AC-10: KropathConfig.mandatory.tags and CWConfig.mandatory.tags are union-merged.
+    # Level 1 wins on key conflict.
+    - name: ac10-tag-union-merge
+      try:
+        - apply:
+            file: ac10-setup.yaml
+        - assert:
+            file: ac10-assert.yaml
+            timeout: 30s
+
+    # AC-11: globalKropathConfig.spec.aws.region and accountId propagate to
+    # effCfg.aws.region and effCfg.aws.accountId.
+    - name: ac11-provider-identity-propagates
+      try:
+        - apply:
+            file: ac11-setup.yaml
+        - assert:
+            file: ac11-assert.yaml
+            timeout: 30s

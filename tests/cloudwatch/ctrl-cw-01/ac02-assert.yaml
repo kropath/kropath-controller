@@ -1,0 +1,11 @@
+# Assert AC-2: effCfg.mandatory.actionsEnabled=false from globalCWConfig (level 3).
+# Level 1-2 KC had no actionsEnabled → level 3 wins.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchConfig
+metadata:
+  name: ac2-cw-policy
+  namespace: monitoring-prod
+status:
+  effectiveConfig:
+    mandatory:
+      actionsEnabled: false

@@ -1,0 +1,25 @@
+# AC-5: globalKropathConfig.mandatory.cloudwatch.outputFormat="json" (level 1) propagates.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac5-cw-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    cloudwatch:
+      outputFormat: "json"
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+# Local CloudWatchConfig — the reconcile target.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchConfig
+metadata:
+  name: ac5-cw-policy
+  namespace: monitoring-prod
+  labels:
+    aws.kropath.run/resource-name: ac5-cw-policy
+spec:
+  mandatory: {}
+  defaults: {}

@@ -1,0 +1,14 @@
+# Assert AC-10: effCfg.mandatory.tags is the union of KC (level 1) + CWCfg (level 4).
+# Level 1 wins on key conflict: env="org-level", not "config-level".
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchConfig
+metadata:
+  name: ac10-cw-policy
+  namespace: monitoring-prod
+status:
+  effectiveConfig:
+    mandatory:
+      tags:
+        cost-centre: "platform"
+        team: "ops"
+        env: "org-level"

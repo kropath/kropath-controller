@@ -55,6 +55,7 @@ type KropathConfigTier struct {
 	DynamoDB       cascade.DynamoDBKropathSection       `json:"dynamodb,omitempty"`
 	EventBridge    cascade.EventBridgeKropathSection    `json:"eventbridge,omitempty"`
 	CloudWatchLogs cascade.CloudWatchLogsKropathSection `json:"cloudwatchlogs,omitempty"`
+	CloudWatch     cascade.CloudWatchKropathSection     `json:"cloudwatch,omitempty"`
 	ELB            cascade.ELBKropathSection            `json:"elb,omitempty"`
 	RDS            cascade.RDSKropathSection            `json:"rds,omitempty"`
 	AutoScaling       cascade.AutoScalingKropathSection    `json:"autoscaling,omitempty"`
@@ -198,6 +199,27 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.CloudWatchLogs.Tags = make(map[string]string, len(in.Spec.Defaults.CloudWatchLogs.Tags))
 		for k, v := range in.Spec.Defaults.CloudWatchLogs.Tags {
 			out.Spec.Defaults.CloudWatchLogs.Tags[k] = v
+		}
+	}
+	// CloudWatch.ActionsEnabled is *bool — deep-copy the pointer.
+	if in.Spec.Mandatory.CloudWatch.ActionsEnabled != nil {
+		v := *in.Spec.Mandatory.CloudWatch.ActionsEnabled
+		out.Spec.Mandatory.CloudWatch.ActionsEnabled = &v
+	}
+	if in.Spec.Mandatory.CloudWatch.Tags != nil {
+		out.Spec.Mandatory.CloudWatch.Tags = make(map[string]string, len(in.Spec.Mandatory.CloudWatch.Tags))
+		for k, v := range in.Spec.Mandatory.CloudWatch.Tags {
+			out.Spec.Mandatory.CloudWatch.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.CloudWatch.ActionsEnabled != nil {
+		v := *in.Spec.Defaults.CloudWatch.ActionsEnabled
+		out.Spec.Defaults.CloudWatch.ActionsEnabled = &v
+	}
+	if in.Spec.Defaults.CloudWatch.Tags != nil {
+		out.Spec.Defaults.CloudWatch.Tags = make(map[string]string, len(in.Spec.Defaults.CloudWatch.Tags))
+		for k, v := range in.Spec.Defaults.CloudWatch.Tags {
+			out.Spec.Defaults.CloudWatch.Tags[k] = v
 		}
 	}
 	if in.Spec.Mandatory.ELB.Tags != nil {

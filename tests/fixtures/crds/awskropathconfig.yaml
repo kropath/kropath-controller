@@ -391,6 +391,19 @@ spec:
                           format: int64
                           default: 0
                           minimum: 0
+                    cloudwatch:
+                      type: object
+                      default: {}
+                      properties:
+                        actionsEnabled:
+                          type: boolean
+                          nullable: true
+                        treatMissingData:
+                          type: string
+                          default: ""
+                        outputFormat:
+                          type: string
+                          default: ""
                     lambda:
                       type: object
                       default: {}
@@ -762,6 +775,19 @@ spec:
                           format: int64
                           default: 0
                           minimum: 0
+                    cloudwatch:
+                      type: object
+                      default: {}
+                      properties:
+                        actionsEnabled:
+                          type: boolean
+                          nullable: true
+                        treatMissingData:
+                          type: string
+                          default: ""
+                        outputFormat:
+                          type: string
+                          default: ""
                     lambda:
                       type: object
                       default: {}

@@ -1,0 +1,11 @@
+# Assert AC-9: effCfg.defaults.namingTemplate="{namespace}-{name}" from localCWConfig (level 6).
+# effCfg.mandatory.namingTemplate must remain empty.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchConfig
+metadata:
+  name: ac9-cw-policy
+  namespace: monitoring-prod
+status:
+  effectiveConfig:
+    defaults:
+      namingTemplate: "{namespace}-{name}"

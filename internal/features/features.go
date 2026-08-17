@@ -79,6 +79,7 @@ var All = []Reconciler{
 	cascade("DynamoDBConfig", "dynamodbconfig"),
 	cascade("EventBridgeConfig", "eventbridgeconfig"),
 	cascade("CloudWatchLogsConfig", "cloudwatchlogsconfig"),
+	cascade("CloudWatchConfig", "cloudwatchconfig"),
 	cascade("ELBConfig", "elbconfig"),
 	cascade("RDSConfig", "rdsconfig"),
 	cascade("AutoScalingConfig", "autoscalingconfig"),

@@ -50,6 +50,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&EventBridgeConfigList{},
 		&CloudWatchLogsConfig{},
 		&CloudWatchLogsConfigList{},
+		&CloudWatchConfig{},
+		&CloudWatchConfigList{},
 		&ELBConfig{},
 		&ELBConfigList{},
 		&RDSConfig{},

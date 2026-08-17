@@ -1,0 +1,10 @@
+# Assert AC-3: effCfg.mandatory.treatMissingData="breaching" from globalKropathConfig (level 1).
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchConfig
+metadata:
+  name: ac3-cw-policy
+  namespace: monitoring-prod
+status:
+  effectiveConfig:
+    mandatory:
+      treatMissingData: "breaching"

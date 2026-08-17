@@ -1,0 +1,24 @@
+# AC-6: localCWConfig.mandatory.outputFormat="opentelemetry1.0" (level 4). KC is empty.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac6-cw-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    cloudwatch: {}
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudWatchConfig
+metadata:
+  name: ac6-cw-policy
+  namespace: monitoring-prod
+  labels:
+    aws.kropath.run/resource-name: ac6-cw-policy
+spec:
+  mandatory:
+    outputFormat: "opentelemetry1.0"
+  defaults: {}
