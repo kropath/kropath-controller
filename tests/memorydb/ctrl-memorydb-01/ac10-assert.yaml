@@ -1,0 +1,15 @@
+# Assert AC-10: mandatory.tags union-merged; mandatory.syncedLabels from MemoryDBConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: MemoryDBConfig
+metadata:
+  name: ac10-mdb-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      tags:
+        org: kropath
+        env: prod
+        team: payments
+      syncedLabels:
+        app.kubernetes.io/managed-by: kropath

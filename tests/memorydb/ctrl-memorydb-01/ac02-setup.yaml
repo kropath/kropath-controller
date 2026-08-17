@@ -1,0 +1,10 @@
+# AC-2: localMemoryDBConfig.mandatory.tlsEnabled=true (level 4); no KPC tlsEnabled.
+apiVersion: aws.kropath.run/v1alpha1
+kind: MemoryDBConfig
+metadata:
+  name: ac2-mdb-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    tlsEnabled: true
+  defaults: {}

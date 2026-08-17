@@ -1,0 +1,14 @@
+# AC-9: nodeType="db.r7g.2xlarge" not in allowedNodeTypes=["db.r7g.large","db.r7g.xlarge"].
+# Controller must set Valid=False and NOT write effectiveConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: MemoryDBConfig
+metadata:
+  name: ac9-mdb-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    nodeType: "db.r7g.2xlarge"
+    allowedNodeTypes:
+      - "db.r7g.large"
+      - "db.r7g.xlarge"
+  defaults: {}

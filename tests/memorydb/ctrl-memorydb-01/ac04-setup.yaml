@@ -1,0 +1,24 @@
+# AC-4: globalKropathConfig.mandatory.memorydb.allowedNodeTypes set (level 1).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac4-mdb-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    memorydb:
+      allowedNodeTypes:
+        - "db.r7g.large"
+        - "db.r7g.xlarge"
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: MemoryDBConfig
+metadata:
+  name: ac4-mdb-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

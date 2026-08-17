@@ -1,0 +1,27 @@
+# AC-10: Union merge of KropathConfig.mandatory.tags + MemoryDBConfig.mandatory.tags+syncedLabels.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac10-mdb-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      org: kropath
+      env: prod
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: MemoryDBConfig
+metadata:
+  name: ac10-mdb-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    tags:
+      team: payments
+    syncedLabels:
+      app.kubernetes.io/managed-by: kropath
+  defaults: {}

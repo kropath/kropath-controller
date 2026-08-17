@@ -1,0 +1,10 @@
+# Assert AC-7: mandatory.snapshotRetentionLimit=14 from level-4 localMemoryDBConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: MemoryDBConfig
+metadata:
+  name: ac7-mdb-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      snapshotRetentionLimit: 14

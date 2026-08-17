@@ -1,0 +1,22 @@
+# AC-6: globalKropathConfig.mandatory.memorydb.snapshotRetentionLimit=7 (level 1).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac6-mdb-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    memorydb:
+      snapshotRetentionLimit: 7
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: MemoryDBConfig
+metadata:
+  name: ac6-mdb-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

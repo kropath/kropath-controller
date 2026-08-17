@@ -575,6 +575,27 @@ spec:
                           default: {}
                           additionalProperties:
                             type: string
+                    memorydb:
+                      type: object
+                      default: {}
+                      properties:
+                        tlsEnabled:
+                          type: boolean
+                          default: false
+                        allowedNodeTypes:
+                          type: array
+                          default: []
+                          items:
+                            type: string
+                        snapshotRetentionLimit:
+                          type: integer
+                          format: int64
+                          default: 0
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
                     tags:
                       type: object
                       additionalProperties:
@@ -991,6 +1012,27 @@ spec:
                           default: ""
                           description: >-
                             Default KMS key ARN for EBS encryption org-wide. "" = no default.
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                    memorydb:
+                      type: object
+                      default: {}
+                      properties:
+                        tlsEnabled:
+                          type: boolean
+                          default: false
+                        allowedNodeTypes:
+                          type: array
+                          default: []
+                          items:
+                            type: string
+                        snapshotRetentionLimit:
+                          type: integer
+                          format: int64
+                          default: 0
                         tags:
                           type: object
                           default: {}

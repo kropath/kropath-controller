@@ -1,0 +1,15 @@
+# Assert AC-9: Valid=False with reason InvalidNodeTypeNotInAllowedList; effectiveConfig has no fields.
+# The controller sets both Reconciled=True (cascade ran) and Valid=False (cross-field constraint violated).
+apiVersion: aws.kropath.run/v1alpha1
+kind: MemoryDBConfig
+metadata:
+  name: ac9-mdb-policy
+  namespace: payments-prod
+status:
+  conditions:
+    - type: Reconciled
+      status: "True"
+      reason: CascadeMerged
+    - type: Valid
+      status: "False"
+      reason: InvalidNodeTypeNotInAllowedList

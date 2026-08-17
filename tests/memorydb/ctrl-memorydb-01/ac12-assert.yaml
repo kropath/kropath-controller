@@ -1,0 +1,11 @@
+# Assert AC-12: effectiveConfig.aws.accountId and .region from globalKropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: MemoryDBConfig
+metadata:
+  name: ac12-mdb-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    aws:
+      accountId: "999888777666"
+      region: "us-east-1"

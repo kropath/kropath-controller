@@ -1,0 +1,10 @@
+# Assert AC-3: defaults.tlsEnabled=true from level-6 local defaults; mandatory stays false.
+apiVersion: aws.kropath.run/v1alpha1
+kind: MemoryDBConfig
+metadata:
+  name: ac3-mdb-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    defaults:
+      tlsEnabled: true
