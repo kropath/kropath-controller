@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.0](https://github.com/kropath/kropath-controller/compare/v0.2.0...v0.3.0) (2026-08-17)
+
+
+### Features
+
+* **KRO-348:** CloudWatch effectiveConfig cascade in kropath-controller ([a2dbc91](https://github.com/kropath/kropath-controller/commit/a2dbc912dfcee01fe34520c60331fd0e6625c4b8))
+* **KRO-430:** implement MemoryDB effectiveConfig cascade ([#55](https://github.com/kropath/kropath-controller/issues/55)) ([e241328](https://github.com/kropath/kropath-controller/commit/e24132800d01a770fc399647f237468632d01bfa))
+* **KRO-571:** add MSK effectiveConfig cascade ([#54](https://github.com/kropath/kropath-controller/issues/54)) ([ae8e9a1](https://github.com/kropath/kropath-controller/commit/ae8e9a1111bc582c586e652d8cbb2ce1b6898f18))
+
 ## [0.2.0](https://github.com/kropath/kropath-controller/compare/v0.1.0...v0.2.0) (2026-08-17)
 
 
