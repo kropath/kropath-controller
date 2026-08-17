@@ -67,6 +67,7 @@ type KropathConfigTier struct {
 	ElastiCache       cascade.ElastiCacheKropathSection       `json:"elasticache,omitempty"`
 	ECR               cascade.ECRKropathSection               `json:"ecr,omitempty"`
 	StepFunctions     cascade.StepFunctionsKropathSection     `json:"stepfunctions,omitempty"`
+	MSK               cascade.MSKKropathSection               `json:"msk,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`

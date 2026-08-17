@@ -190,3 +190,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: MSKConfig
+      package: mskconfig
+      description: Reconciles MSKConfig CRs and propagates effective config.
+      kinds:
+        - MSKConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

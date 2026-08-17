@@ -1,0 +1,15 @@
+# Assert AC-12: effCfg.mandatory.tags is the union of KropathConfig.mandatory.tags
+# and MSKConfig.mandatory.tags; syncedLabels propagates from MSKConfig.mandatory.
+apiVersion: aws.kropath.run/v1alpha1
+kind: MSKConfig
+metadata:
+  name: ac12-msk-policy
+  namespace: streaming-prod
+status:
+  effectiveConfig:
+    mandatory:
+      tags:
+        cost-centre: infra
+        cluster-type: streaming
+      syncedLabels:
+        data-class: internal

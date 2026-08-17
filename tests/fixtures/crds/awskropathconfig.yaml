@@ -535,6 +535,46 @@ spec:
                           default: {}
                           additionalProperties:
                             type: string
+                    msk:
+                      type: object
+                      default: {}
+                      properties:
+                        kafkaVersion:
+                          type: string
+                          default: ""
+                          description: >-
+                            Enforce a minimum Kafka version org-wide (e.g. "3.7.0").
+                            "" = not enforced.
+                        enhancedMonitoring:
+                          type: string
+                          default: ""
+                          description: >-
+                            Enforce CloudWatch monitoring level org-wide.
+                            "" = not enforced. Valid values: "" | "DEFAULT" | "PER_BROKER" |
+                            "PER_TOPIC_PER_BROKER" | "PER_TOPIC_PER_PARTITION".
+                        encryptionInTransitClientBroker:
+                          type: string
+                          default: ""
+                          description: >-
+                            Enforce client-broker encryption mode org-wide.
+                            "" = not enforced. Valid values: "" | "TLS" | "TLS_PLAINTEXT" | "PLAINTEXT".
+                        encryptionInTransitInCluster:
+                          type: string
+                          default: ""
+                          description: >-
+                            Enforce inter-broker encryption org-wide (three-state string).
+                            "" = not enforced (different from "false"). Valid: "" | "true" | "false".
+                        encryptionAtRestKmsKeyId:
+                          type: string
+                          default: ""
+                          description: >-
+                            Enforce a KMS key ARN for EBS encryption at rest org-wide.
+                            "" = not enforced.
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
                     tags:
                       type: object
                       additionalProperties:
@@ -913,6 +953,44 @@ spec:
                           description: >-
                             Default execution logging level. "OFF" = no logging (AWS default).
                             Valid values: "" | "ALL" | "ERROR" | "FATAL" | "OFF".
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                    msk:
+                      type: object
+                      default: {}
+                      properties:
+                        kafkaVersion:
+                          type: string
+                          default: ""
+                          description: >-
+                            Default Kafka version org-wide. "" = no default.
+                        enhancedMonitoring:
+                          type: string
+                          default: ""
+                          description: >-
+                            Default CloudWatch monitoring level org-wide.
+                            "" = no default. Valid values: "" | "DEFAULT" | "PER_BROKER" |
+                            "PER_TOPIC_PER_BROKER" | "PER_TOPIC_PER_PARTITION".
+                        encryptionInTransitClientBroker:
+                          type: string
+                          default: ""
+                          description: >-
+                            Default client-broker encryption mode org-wide.
+                            "" = no default.
+                        encryptionInTransitInCluster:
+                          type: string
+                          default: ""
+                          description: >-
+                            Default inter-broker encryption org-wide (three-state string).
+                            "" = no default. Valid: "" | "true" | "false".
+                        encryptionAtRestKmsKeyId:
+                          type: string
+                          default: ""
+                          description: >-
+                            Default KMS key ARN for EBS encryption org-wide. "" = no default.
                         tags:
                           type: object
                           default: {}

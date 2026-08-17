@@ -1,0 +1,25 @@
+# AC-13 setup: MSKConfig.mandatory.syncedLabels propagates to effCfg.mandatory.syncedLabels.
+# This verifies the MSKConfig-level syncedLabels (no KropathConfig equivalent) flow through.
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: MSKConfig
+metadata:
+  name: ac13-msk-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    syncedLabels:
+      kropath.io/team: streaming
+      kropath.io/managed-by: kropath
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: streaming-prod
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: MSKConfig
+metadata:
+  name: ac13-msk-policy
+  namespace: streaming-prod
+spec: {}

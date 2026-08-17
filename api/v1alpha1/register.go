@@ -76,6 +76,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&ECRConfigList{},
 		&StepFunctionsConfig{},
 		&StepFunctionsConfigList{},
+		&MSKConfig{},
+		&MSKConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

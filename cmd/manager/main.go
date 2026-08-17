@@ -38,6 +38,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/secretsmanagerconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/snsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/sqsconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/mskconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/stepfunctionsconfig"
 	"github.com/kropath/kropath-controller/internal/version"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -337,6 +338,15 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		ctrl.Log.Error(err, "unable to create StepFunctionsConfig reconciler")
+		os.Exit(1)
+	}
+
+	if err := (&mskconfig.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("MSKConfig"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create MSKConfig reconciler")
 		os.Exit(1)
 	}
 
