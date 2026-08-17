@@ -92,4 +92,5 @@ var All = []Reconciler{
 	cascade("ElastiCacheConfig", "elasticacheconfig"),
 	cascade("ECRConfig", "ecrconfig"),
 	cascade("StepFunctionsConfig", "stepfunctionsconfig"),
+	cascade("MSKConfig", "mskconfig"),
 }

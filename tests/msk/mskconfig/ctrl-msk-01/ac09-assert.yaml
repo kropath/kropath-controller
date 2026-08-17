@@ -1,0 +1,11 @@
+# Assert AC-9: effCfg.mandatory.encryptionInTransitClientBroker is "TLS"
+# from KropathConfig.mandatory.msk (level 1), overriding MSKConfig.mandatory (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: MSKConfig
+metadata:
+  name: ac09-msk-policy
+  namespace: streaming-prod
+status:
+  effectiveConfig:
+    mandatory:
+      encryptionInTransitClientBroker: TLS

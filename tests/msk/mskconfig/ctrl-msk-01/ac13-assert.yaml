@@ -1,0 +1,13 @@
+# Assert AC-13: effCfg.mandatory.syncedLabels contains the labels from
+# MSKConfig.mandatory.syncedLabels (global kro-system level, L3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: MSKConfig
+metadata:
+  name: ac13-msk-policy
+  namespace: streaming-prod
+status:
+  effectiveConfig:
+    mandatory:
+      syncedLabels:
+        kropath.io/team: streaming
+        kropath.io/managed-by: kropath

@@ -1,0 +1,58 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-msk-01 Chainsaw integration tests — AC-9, AC-12, AC-13.
+# Requires:
+#   - kind cluster with kropath-operator deployed
+#   - KropathConfig CRD applied (crds/awskropathconfig.yaml)
+#   - MSKConfig CRD applied (crds/awsmskconfig.yaml)
+#
+# Test isolation: each step uses a distinct resource name (ac<N>-msk-policy).
+# The controller pairs namespaced MSKConfig with its kro-system counterpart by
+# *name*, so per-step names provide complete isolation without inter-step deletes.
+# skipDelete is not set — end-of-test cleanup is cheap for these plain config CRs.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-msk-01-cascade
+spec:
+  steps:
+    # AC-9: globalKropathConfig.mandatory.msk.encryptionInTransitClientBroker="TLS"
+    # propagates to effCfg.mandatory.encryptionInTransitClientBroker.
+    - name: ac9-global-kpc-mandatory-msk-encryption-client-broker
+      try:
+        - apply:
+            file: ac09-setup.yaml
+        - assert:
+            file: ac09-assert.yaml
+            timeout: 30s
+
+    # AC-12: KropathConfig.mandatory.tags and MSKConfig.mandatory.tags+syncedLabels
+    # are union-merged into effCfg.mandatory.tags and effCfg.mandatory.syncedLabels.
+    - name: ac12-tag-label-union-merge
+      try:
+        - apply:
+            file: ac12-setup.yaml
+        - assert:
+            file: ac12-assert.yaml
+            timeout: 30s
+
+    # AC-13: MSKConfig.mandatory.syncedLabels propagates to effCfg.mandatory.syncedLabels.
+    - name: ac13-synced-labels-from-mskconfig
+      try:
+        - apply:
+            file: ac13-setup.yaml
+        - assert:
+            file: ac13-assert.yaml
+            timeout: 30s
