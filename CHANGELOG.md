@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/kropath/kropath-controller/compare/v0.1.0...v0.2.0) (2026-08-17)
+
+
+### Features
+
+* **KRO-555:** add APIGatewayConfig effectiveConfig cascade ([#49](https://github.com/kropath/kropath-controller/issues/49)) ([3b33d16](https://github.com/kropath/kropath-controller/commit/3b33d166a3075290d07859f86e53803fee4ae027))
+
 ## [0.1.0](https://github.com/kropath/kropath-controller/compare/v0.0.1...v0.1.0) (2026-08-14)
 
 
