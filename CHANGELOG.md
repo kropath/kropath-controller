@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/kropath/kropath-controller/compare/v0.3.0...v0.3.1) (2026-08-19)
+
+
+### Bug Fixes
+
+* **KRO-675:** match APIGatewayConfig kind casing to the kropath-aws CRD ([#56](https://github.com/kropath/kropath-controller/issues/56)) ([37756b1](https://github.com/kropath/kropath-controller/commit/37756b1def7b83eb94a53cfad17815363d509de9))
+
 ## [0.3.0](https://github.com/kropath/kropath-controller/compare/v0.2.0...v0.3.0) (2026-08-17)
 
 
