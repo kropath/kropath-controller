@@ -20,40 +20,40 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-type ApiGatewayConfig struct {
+type APIGatewayConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ApiGatewayConfigSpec   `json:"spec,omitempty"`
-	Status ApiGatewayConfigStatus `json:"status,omitempty"`
+	Spec   APIGatewayConfigSpec   `json:"spec,omitempty"`
+	Status APIGatewayConfigStatus `json:"status,omitempty"`
 }
 
-type ApiGatewayConfigList struct {
+type APIGatewayConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []ApiGatewayConfig `json:"items"`
+	Items []APIGatewayConfig `json:"items"`
 }
 
-type ApiGatewayConfigSpec struct {
+type APIGatewayConfigSpec struct {
 	Mandatory cascade.ApiGatewayConfigSection `json:"mandatory,omitempty"`
 	Defaults  cascade.ApiGatewayConfigSection `json:"defaults,omitempty"`
 }
 
-type ApiGatewayConfigStatus struct {
-	EffectiveConfig    EffectiveApiGatewayConfig `json:"effectiveConfig,omitempty"`
+type APIGatewayConfigStatus struct {
+	EffectiveConfig    EffectiveAPIGatewayConfig `json:"effectiveConfig,omitempty"`
 	Conditions         []metav1.Condition        `json:"conditions,omitempty"`
 	ObservedGeneration int64                     `json:"observedGeneration,omitempty"`
 	SyncedTimestamp    string                    `json:"syncedTimestamp,omitempty"`
 }
 
-type EffectiveApiGatewayConfig struct {
+type EffectiveAPIGatewayConfig struct {
 	AWS       ProviderIdentity                    `json:"aws,omitempty"`
 	Mandatory cascade.EffectiveApiGatewaySection  `json:"mandatory,omitempty"`
 	Defaults  cascade.EffectiveApiGatewaySection  `json:"defaults,omitempty"`
 }
 
-func (in *ApiGatewayConfig) DeepCopyInto(out *ApiGatewayConfig) {
+func (in *APIGatewayConfig) DeepCopyInto(out *APIGatewayConfig) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
@@ -147,44 +147,44 @@ func (in *ApiGatewayConfig) DeepCopyInto(out *ApiGatewayConfig) {
 	}
 }
 
-func (in *ApiGatewayConfig) DeepCopy() *ApiGatewayConfig {
+func (in *APIGatewayConfig) DeepCopy() *APIGatewayConfig {
 	if in == nil {
 		return nil
 	}
-	out := new(ApiGatewayConfig)
+	out := new(APIGatewayConfig)
 	in.DeepCopyInto(out)
 	return out
 }
 
-func (in *ApiGatewayConfig) DeepCopyObject() runtime.Object {
+func (in *APIGatewayConfig) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}
 	return nil
 }
 
-func (in *ApiGatewayConfigList) DeepCopyInto(out *ApiGatewayConfigList) {
+func (in *APIGatewayConfigList) DeepCopyInto(out *APIGatewayConfigList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
-		out.Items = make([]ApiGatewayConfig, len(in.Items))
+		out.Items = make([]APIGatewayConfig, len(in.Items))
 		for i := range in.Items {
 			in.Items[i].DeepCopyInto(&out.Items[i])
 		}
 	}
 }
 
-func (in *ApiGatewayConfigList) DeepCopy() *ApiGatewayConfigList {
+func (in *APIGatewayConfigList) DeepCopy() *APIGatewayConfigList {
 	if in == nil {
 		return nil
 	}
-	out := new(ApiGatewayConfigList)
+	out := new(APIGatewayConfigList)
 	in.DeepCopyInto(out)
 	return out
 }
 
-func (in *ApiGatewayConfigList) DeepCopyObject() runtime.Object {
+func (in *APIGatewayConfigList) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}

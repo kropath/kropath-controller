@@ -47,10 +47,13 @@ TEST_NAMESPACES  := kro-system payments-prod events-prod network-prod registry-p
 CHAINSAW         ?= chainsaw
 GOLANGCI         ?= golangci-lint
 
+# Git ref of kropath-aws whose CRDs are the authority for crds-verify.
+KROPATH_AWS_REF  ?= main
+
 CHAINSAW_FLAGS   := --parallel 1 --report-format JUNIT-TEST --report-path $(REPORT_DIR)/
 
 .PHONY: all build test test-cover vet fmt lint \
-        features-gen features-verify \
+        features-gen features-verify crds-verify \
         docker-build docker-push \
         kind-up kind-down \
         chainsaw-setup chainsaw-start chainsaw-wait chainsaw-stop \
@@ -80,6 +83,38 @@ features-gen: ## Regenerate docs/features.yaml from internal/features.All.
 
 features-verify: ## CI gate: fail if docs/features.yaml is stale (run make features-gen to fix).
 	go run ./cmd/gen-features --check
+
+# ─── Cross-repo CRD gate ───────────────────────────────────────────────────────
+
+# kropath-aws owns the CRDs this controller watches (docs/STANDARDS.md), so it is
+# the authority on every Kind name. Nothing inside this repo can catch a Kind that
+# drifted from it: tests/fixtures/crds/ is hand-maintained, so the registry, the
+# scheme and the fixture can all agree with each other and still disagree with the
+# CRD a real cluster serves. That is how KRO-675 shipped — the controller watched
+# "ApiGatewayConfig" while the CRD served "APIGatewayConfig", the plural matched,
+# every in-repo check stayed green, and the manager crash-looped in the
+# integration cluster at the 2-minute cache-sync timeout.
+#
+# Set KROPATH_AWS_CRDS_DIR to check against a local checkout instead of fetching.
+crds-verify: ## CI gate: fail if a watched Kind is missing or mis-cased vs kropath-aws CRDs.
+	@set -eu; \
+	dir="$${KROPATH_AWS_CRDS_DIR:-}"; \
+	if [ -n "$$dir" ]; then \
+	  echo "Checking watched Kinds against $$dir"; \
+	else \
+	  dir=$$(mktemp -d); \
+	  trap 'rm -rf "$$dir"' EXIT; \
+	  echo "Fetching kropath-aws CRDs @ $(KROPATH_AWS_REF)"; \
+	  for path in crds crds/policy; do \
+	    gh api "repos/kropath/kropath-aws/contents/$$path?ref=$(KROPATH_AWS_REF)" \
+	      --jq '.[] | select(.type == "file") | select(.name | endswith(".yaml")) | .name' \
+	    | while read -r name; do \
+	        gh api "repos/kropath/kropath-aws/contents/$$path/$$name?ref=$(KROPATH_AWS_REF)" \
+	          --jq .content | base64 -d > "$$dir/$$name"; \
+	      done; \
+	  done; \
+	fi; \
+	KROPATH_AWS_CRDS_DIR="$$dir" go test ./internal/features/ -run TestWatchedKindsMatchUpstreamCRDs -v
 
 # ─── Container image ────────────────────────────────────────────────────────────
 

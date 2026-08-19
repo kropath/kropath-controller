@@ -61,6 +61,52 @@ kropath-aws exist purely to work around ACK finalizers and do not transfer here 
 
 ---
 
+## 1b. The Same Crash From a Mis-Cased Kind, With Every In-Repo Check Green
+
+* **What Fails:** the §1 symptom exactly — manager dead two minutes in, later suites
+  timing out — but `tests/fixtures/crds/` *does* contain a CRD for the kind, and
+  `TestEveryReconcilerHasCRDFixture` passes. The log names a kind that plainly has a
+  CRD:
+
+    ```
+    ERROR ... {"kind": "ApiGatewayConfig.aws.kropath.run",
+      "error": "no matches for kind \"ApiGatewayConfig\" in version \"aws.kropath.run/v1alpha1\""}
+    ```
+
+* **Why:** the CRD's *plural* and the CRD's *Kind* are independent. §1's guard keys off
+  the metadata name (`apigatewayconfigs.aws.kropath.run`), which is lowercase and
+  therefore identical whichever way the Kind is cased. The Kind is what the informer
+  matches on: controller-runtime derives it from the Go type name registered in
+  `api/v1alpha1/register.go`, and the API server serves whatever `spec.names.kind`
+  says. `ApiGatewayConfig` vs `APIGatewayConfig` differ by one letter's case, match
+  nothing, and produce a "CRD not installed" error for a CRD that is installed.
+
+  The fixtures are hand-maintained and deliberately **not** verbatim copies of
+  `kropath-aws/crds/`, so the registry, the scheme and the fixture can all agree with
+  each other and still disagree with the CRD a real cluster serves. Every check in
+  this repo stayed green while the operator crash-looped in the integration cluster.
+
+* **Diagnosis:** compare the two spellings directly — they will look identical at a
+  glance, so diff them rather than eyeballing:
+
+    ```bash
+    kubectl get crd apigatewayconfigs.aws.kropath.run -o jsonpath='{.spec.names.kind}'
+    grep -rn 'cascade("' internal/features/features.go | grep -i apigateway
+    ```
+
+* **What Works Instead:** `kropath-aws` owns the CRDs, so it is the authority on every
+  Kind name. `make crds-verify` fetches them and fails on any watched Kind that is
+  missing or mis-cased; CI runs it in the *Feature registry drift gate* job.
+  `TestReconcilerKindMatchesFixtureAndScheme` covers the in-repo half offline —
+  registry Kind, fixture `spec.names.kind`, and the Kind the scheme registers must
+  agree exactly.
+
+* **Rule:** "no matches for kind X" when a CRD for X exists means the *casing*
+  differs, not the CRD. Never rename a Kind to match the Go type — rename the Go type
+  to match `kropath-aws/crds/`. Reference: KRO-675.
+
+---
+
 ## 2. Reusing One Resource Name Across Steps Forces Reset Deletes
 
 * **What Fails:** a suite needs interleaved `delete` steps between acceptance criteria

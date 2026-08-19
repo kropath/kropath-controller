@@ -299,10 +299,10 @@ func main() {
 
 	if err := (&apigatewayconfig.Reconciler{
 		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("ApiGatewayConfig"),
+		Log:    ctrl.Log.WithName("controllers").WithName("APIGatewayConfig"),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create ApiGatewayConfig reconciler")
+		ctrl.Log.Error(err, "unable to create APIGatewayConfig reconciler")
 		os.Exit(1)
 	}
 

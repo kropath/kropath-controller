@@ -7,8 +7,12 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 
+	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/features"
 )
 
@@ -114,6 +118,174 @@ func TestEveryReconcilerHasCRDFixture(t *testing.T) {
 		if !present[crd] {
 			t.Errorf("missing CRD fixture %q under tests/fixtures/crds/ — every config reconciler watches KropathConfig", crd)
 		}
+	}
+}
+
+// crdKindRE matches the `    kind: <Kind>` line of a CRD's spec.names block.
+// Only spec.names.kind sits at this indent — group/names/scope/versions are its
+// only siblings, and schema properties are nested far deeper.
+var crdKindRE = regexp.MustCompile(`(?m)^    kind: ([A-Za-z0-9]+)$`)
+
+// TestReconcilerKindMatchesFixtureAndScheme asserts, for every reconciler, that
+// three names agree exactly: the Kind in features.All, the Kind its CRD fixture
+// serves, and the Kind the runtime scheme registers.
+//
+// TestEveryReconcilerHasCRDFixture only checks that a CRD with the right
+// *metadata name* (the plural, e.g. apigatewayconfigs.aws.kropath.run) exists.
+// That plural is case-insensitive by construction, so it stays green even when
+// the CRD serves a differently-cased Kind than the one the controller watches.
+//
+// The Kind is what actually matters. controller-runtime derives the GVK it
+// watches from the Go type name registered via scheme.AddKnownTypes, and the API
+// server serves the Kind spelled in spec.names.kind. If those differ by so much
+// as one letter's case, the informer matches nothing, never syncs, and takes the
+// *entire manager* down at the 2-minute cache-sync timeout — the failure mode
+// documented in docs/frequent-chainsaw-errors.md §1.
+//
+// KRO-675: the controller watched "ApiGatewayConfig" while the authoritative CRD
+// in kropath-aws serves "APIGatewayConfig". The plural matched, so every in-repo
+// check passed, and the mismatch only surfaced as the operator crash-looping in
+// the integration cluster.
+func TestReconcilerKindMatchesFixtureAndScheme(t *testing.T) {
+	fixtures, err := filepath.Glob("../../tests/fixtures/crds/*.yaml")
+	if err != nil {
+		t.Fatalf("globbing tests/fixtures/crds: %v", err)
+	}
+	if len(fixtures) == 0 {
+		t.Fatal("no CRD fixtures found under tests/fixtures/crds/")
+	}
+
+	// Map each CRD's metadata name (the plural) to the Kind it serves.
+	kindByCRD := map[string]string{}
+	for _, f := range fixtures {
+		data, err := os.ReadFile(f) //nolint:gosec // test-only read of a repo-relative fixture path
+		if err != nil {
+			t.Fatalf("reading %s: %v", f, err)
+		}
+		for _, doc := range strings.Split(string(data), "\n---") {
+			name := crdNameRE.FindStringSubmatch(doc)
+			kind := crdKindRE.FindStringSubmatch(doc)
+			if name != nil && kind != nil {
+				kindByCRD[name[1]] = kind[1]
+			}
+		}
+	}
+
+	scheme := runtime.NewScheme()
+	if err := v1alpha1.AddToScheme(scheme); err != nil {
+		t.Fatalf("adding api/v1alpha1 to scheme: %v", err)
+	}
+	schemeKinds := map[string]bool{}
+	for gvk := range scheme.AllKnownTypes() {
+		if gvk.Group == v1alpha1.GroupVersion.Group && gvk.Version == v1alpha1.GroupVersion.Version {
+			schemeKinds[gvk.Kind] = true
+		}
+	}
+
+	for _, r := range features.All {
+		if packagesWithoutOwnCRD[r.Package] {
+			continue
+		}
+		crd := r.Package + "s.aws.kropath.run"
+
+		if got, ok := kindByCRD[crd]; ok && got != r.Name {
+			t.Errorf("reconciler %q: features.All calls its Kind %q but CRD fixture %s serves Kind %q.\n"+
+				"The plural matches either way, so TestEveryReconcilerHasCRDFixture cannot see this. "+
+				"An informer for a Kind the API server does not serve never syncs and kills the whole manager "+
+				"at the 2-minute cache-sync timeout.\n"+
+				"Fix the casing so both match the authoritative CRD in kropath-aws/crds/.",
+				r.Name, r.Name, crd, got)
+		}
+
+		if !schemeKinds[r.Name] {
+			t.Errorf("reconciler %q: features.All calls its Kind %q, but api/v1alpha1 registers no such Kind in %s.\n"+
+				"controller-runtime derives the watched GVK from the registered Go type name, so the informer "+
+				"would watch a Kind nothing serves.\n"+
+				"Rename the Go type in api/v1alpha1 to match, or correct the Name in features.All.",
+				r.Name, r.Name, v1alpha1.GroupVersion.String())
+		}
+	}
+}
+
+// crdDocRE identifies a YAML document that is itself a CustomResourceDefinition,
+// as opposed to a CR instance or an example that merely mentions one.
+var crdDocRE = regexp.MustCompile(`(?m)^kind: CustomResourceDefinition$`)
+
+// TestWatchedKindsMatchUpstreamCRDs verifies every Kind this controller watches is
+// actually served by an authoritative CRD in kropath-aws.
+//
+// This is the cross-repo half of the guard. The fixtures under tests/fixtures/crds/
+// are hand-maintained and deliberately not verbatim copies of kropath-aws/crds/, so
+// TestReconcilerKindMatchesFixtureAndScheme can only prove this repo is
+// self-consistent — all three names can agree with each other and still disagree
+// with the CRD the real cluster serves. That is exactly how KRO-675 shipped.
+//
+// kropath-aws owns the CRDs (see docs/STANDARDS.md), so it is the authority. The
+// test is skipped unless KROPATH_AWS_CRDS_DIR points at a checkout of them; `make
+// crds-verify` fetches them and sets it, and CI runs that target.
+func TestWatchedKindsMatchUpstreamCRDs(t *testing.T) {
+	dir := os.Getenv("KROPATH_AWS_CRDS_DIR")
+	if dir == "" {
+		t.Skip("KROPATH_AWS_CRDS_DIR not set — run `make crds-verify` to check against kropath-aws")
+	}
+
+	upstream := map[string]bool{}
+	err := filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() || filepath.Ext(path) != ".yaml" {
+			return nil
+		}
+		data, err := os.ReadFile(path) //nolint:gosec // test-only read of an operator-supplied CRD directory
+		if err != nil {
+			return err
+		}
+		for _, doc := range strings.Split(string(data), "\n---") {
+			if crdDocRE.MatchString(doc) {
+				if kind := crdKindRE.FindStringSubmatch(doc); kind != nil {
+					upstream[kind[1]] = true
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("walking %s: %v", dir, err)
+	}
+	if len(upstream) == 0 {
+		t.Fatalf("no CustomResourceDefinitions found under %s — is KROPATH_AWS_CRDS_DIR correct?", dir)
+	}
+
+	// Compare case-insensitively too, so a casing mismatch is reported as such
+	// rather than as a wholly absent Kind.
+	lower := map[string]string{}
+	for k := range upstream {
+		lower[strings.ToLower(k)] = k
+	}
+
+	watched := map[string]bool{}
+	for _, r := range features.All {
+		for _, k := range r.Kinds {
+			watched[k] = true
+		}
+	}
+
+	for kind := range watched {
+		if upstream[kind] {
+			continue
+		}
+		if authoritative, ok := lower[strings.ToLower(kind)]; ok {
+			t.Errorf("this controller watches Kind %q but kropath-aws serves %q — a casing mismatch.\n"+
+				"The plural is identical, so every in-repo check passes while the informer matches nothing, "+
+				"never syncs, and kills the whole manager at the 2-minute cache-sync timeout.\n"+
+				"kropath-aws owns the CRDs, so rename the Go type in api/v1alpha1 and the entry in features.All to %[2]q.",
+				kind, authoritative)
+			continue
+		}
+		t.Errorf("this controller watches Kind %q, but no CRD in kropath-aws serves it.\n"+
+			"Either the CRD has not been authored upstream yet, or the reconciler is watching the wrong Kind. "+
+			"Until a cluster serves it, the manager exits at the 2-minute cache-sync timeout.", kind)
 	}
 }
 

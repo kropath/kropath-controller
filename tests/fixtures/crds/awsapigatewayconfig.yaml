@@ -19,8 +19,8 @@ metadata:
 spec:
   group: aws.kropath.run
   names:
-    kind: ApiGatewayConfig
-    listKind: ApiGatewayConfigList
+    kind: APIGatewayConfig
+    listKind: APIGatewayConfigList
     plural: apigatewayconfigs
     singular: apigatewayconfig
     shortNames:

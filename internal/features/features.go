@@ -87,7 +87,7 @@ var All = []Reconciler{
 	cascade("EKSConfig", "eksconfig"),
 	cascade("EC2Config", "ec2config"),
 	cascade("ApiGatewayV2Config", "apigatewayv2config"),
-	cascade("ApiGatewayConfig", "apigatewayconfig"),
+	cascade("APIGatewayConfig", "apigatewayconfig"),
 	cascade("EFSConfig", "efsconfig"),
 	cascade("ElastiCacheConfig", "elasticacheconfig"),
 	cascade("ECRConfig", "ecrconfig"),

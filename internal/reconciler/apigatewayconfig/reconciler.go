@@ -39,8 +39,8 @@ type Reconciler struct {
 }
 
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	cfg := &v1alpha1.ApiGatewayConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("ApiGatewayConfig"))
+	cfg := &v1alpha1.APIGatewayConfig{}
+	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("APIGatewayConfig"))
 	if err := r.Client.Get(ctx, req.NamespacedName, cfg); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -60,9 +60,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1alpha1.ApiGatewayConfig{}).
+		For(&v1alpha1.APIGatewayConfig{}).
 		Watches(
-			&v1alpha1.ApiGatewayConfig{},
+			&v1alpha1.APIGatewayConfig{},
 			handler.EnqueueRequestsFromMapFunc(r.requestsForApiGatewayConfigChange),
 		).
 		Watches(
@@ -72,7 +72,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.ApiGatewayConfig) (bool, ctrl.Result, error) {
+func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.APIGatewayConfig) (bool, ctrl.Result, error) {
 	globalKropath, err := r.loadKropathConfig(ctx, kroSystemNamespace, cfg.Name)
 	if err != nil {
 		return false, ctrl.Result{}, err
@@ -120,7 +120,7 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.ApiGatewayConf
 		ObservedGeneration: cfg.Generation,
 		LastTransitionTime: now,
 	}
-	newEffConfig := v1alpha1.EffectiveApiGatewayConfig{
+	newEffConfig := v1alpha1.EffectiveAPIGatewayConfig{
 		AWS:       mergeAWSIdentity(localKropath.Spec.AWS, globalKropath.Spec.AWS),
 		Mandatory: eff.Mandatory,
 		Defaults:  eff.Defaults,
@@ -150,12 +150,12 @@ func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name stri
 	return cfg, nil
 }
 
-func (r *Reconciler) loadApiGatewayConfig(ctx context.Context, namespace, name string) (*v1alpha1.ApiGatewayConfig, error) {
-	cfg := &v1alpha1.ApiGatewayConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("ApiGatewayConfig"))
+func (r *Reconciler) loadApiGatewayConfig(ctx context.Context, namespace, name string) (*v1alpha1.APIGatewayConfig, error) {
+	cfg := &v1alpha1.APIGatewayConfig{}
+	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("APIGatewayConfig"))
 	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
 		if client.IgnoreNotFound(err) == nil {
-			return &v1alpha1.ApiGatewayConfig{}, nil
+			return &v1alpha1.APIGatewayConfig{}, nil
 		}
 		return nil, err
 	}
@@ -168,7 +168,7 @@ func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj cli
 		return nil
 	}
 
-	var list v1alpha1.ApiGatewayConfigList
+	var list v1alpha1.APIGatewayConfigList
 	if cfg.Namespace == kroSystemNamespace {
 		if err := r.Client.List(ctx, &list); err != nil {
 			r.Log.Error(err, "unable to list ApiGateway configs for global KropathConfig change")
@@ -192,12 +192,12 @@ func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj cli
 }
 
 func (r *Reconciler) requestsForApiGatewayConfigChange(ctx context.Context, obj client.Object) []ctrl.Request {
-	cfg, ok := obj.(*v1alpha1.ApiGatewayConfig)
+	cfg, ok := obj.(*v1alpha1.APIGatewayConfig)
 	if !ok || cfg.Namespace != kroSystemNamespace {
 		return nil
 	}
 
-	var list v1alpha1.ApiGatewayConfigList
+	var list v1alpha1.APIGatewayConfigList
 	if err := r.Client.List(ctx, &list); err != nil {
 		r.Log.Error(err, "unable to list ApiGateway configs for global ApiGatewayConfig change")
 		return nil

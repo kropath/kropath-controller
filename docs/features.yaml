@@ -150,11 +150,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
-    - name: ApiGatewayConfig
+    - name: APIGatewayConfig
       package: apigatewayconfig
-      description: Reconciles ApiGatewayConfig CRs and propagates effective config.
+      description: Reconciles APIGatewayConfig CRs and propagates effective config.
       kinds:
-        - ApiGatewayConfig
+        - APIGatewayConfig
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable

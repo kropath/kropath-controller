@@ -175,7 +175,7 @@ func TestRequestsForApiGatewayConfigChangeNonGlobalIgnored(t *testing.T) {
 		localApiGatewayConfig("payments-prod", "general-policy", cascade.ApiGatewayConfigSection{}, cascade.ApiGatewayConfigSection{}),
 	)
 
-	got := rec.requestsForApiGatewayConfigChange(context.Background(), &v1alpha1.ApiGatewayConfig{
+	got := rec.requestsForApiGatewayConfigChange(context.Background(), &v1alpha1.APIGatewayConfig{
 		ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: "payments-prod"},
 	})
 
@@ -186,7 +186,7 @@ func TestRequestsForApiGatewayConfigChangeNonGlobalIgnored(t *testing.T) {
 
 // ─── Test fixtures ──────────────────────────────────────────────────────────
 
-func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, *v1alpha1.ApiGatewayConfig) {
+func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, *v1alpha1.APIGatewayConfig) {
 	t.Helper()
 	scheme := runtime.NewScheme()
 	if err := v1alpha1.AddToScheme(scheme); err != nil {
@@ -194,12 +194,12 @@ func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, *v1alpha
 	}
 	builder := fake.NewClientBuilder().
 		WithScheme(scheme).
-		WithStatusSubresource(&v1alpha1.ApiGatewayConfig{})
+		WithStatusSubresource(&v1alpha1.APIGatewayConfig{})
 	for _, obj := range objs {
 		builder = builder.WithRuntimeObjects(obj)
 	}
 	cl := builder.Build()
-	cfg := &v1alpha1.ApiGatewayConfig{}
+	cfg := &v1alpha1.APIGatewayConfig{}
 	if err := cl.Get(context.Background(), client.ObjectKey{Namespace: "payments-prod", Name: "general-policy"}, cfg); err != nil {
 		t.Fatalf("seed local ApiGatewayConfig: %v", err)
 	}
@@ -225,30 +225,30 @@ func globalKropathConfigWithAWS(name string, aws v1alpha1.ProviderIdentity) *v1a
 	return cfg
 }
 
-func globalApiGatewayConfig(name string, mandatory, defaults cascade.ApiGatewayConfigSection) *v1alpha1.ApiGatewayConfig {
-	return &v1alpha1.ApiGatewayConfig{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "ApiGatewayConfig"},
+func globalApiGatewayConfig(name string, mandatory, defaults cascade.ApiGatewayConfigSection) *v1alpha1.APIGatewayConfig {
+	return &v1alpha1.APIGatewayConfig{
+		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "APIGatewayConfig"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: kroSystemNamespace,
 		},
-		Spec: v1alpha1.ApiGatewayConfigSpec{
+		Spec: v1alpha1.APIGatewayConfigSpec{
 			Mandatory: mandatory,
 			Defaults:  defaults,
 		},
 	}
 }
 
-func localApiGatewayConfig(namespace, name string, mandatory, defaults cascade.ApiGatewayConfigSection) *v1alpha1.ApiGatewayConfig {
+func localApiGatewayConfig(namespace, name string, mandatory, defaults cascade.ApiGatewayConfigSection) *v1alpha1.APIGatewayConfig {
 	cfg := globalApiGatewayConfig(name, mandatory, defaults)
 	cfg.Namespace = namespace
 	return cfg
 }
 
-func getApiGatewayConfig(t *testing.T, c client.Client, namespace, name string) *v1alpha1.ApiGatewayConfig {
+func getApiGatewayConfig(t *testing.T, c client.Client, namespace, name string) *v1alpha1.APIGatewayConfig {
 	t.Helper()
-	cfg := &v1alpha1.ApiGatewayConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("ApiGatewayConfig"))
+	cfg := &v1alpha1.APIGatewayConfig{}
+	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("APIGatewayConfig"))
 	if err := c.Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, cfg); err != nil {
 		t.Fatalf("get ApiGatewayConfig %s/%s: %v", namespace, name, err)
 	}
