@@ -139,6 +139,15 @@ jobs:
         if: needs.changes.outputs.code == 'true'
         run: make features-verify
 
+      # kropath-aws owns the CRDs, so it is the authority on every Kind this
+      # controller watches. Nothing inside this repo can catch a Kind that drifted
+      # from it -- see the crds-verify comment in the Makefile (KRO-675).
+      - name: Check watched Kinds against kropath-aws CRDs
+        if: needs.changes.outputs.code == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: make crds-verify
+
   security:
     name: Security scan
     runs-on: ubuntu-latest
