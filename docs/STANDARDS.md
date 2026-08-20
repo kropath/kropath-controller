@@ -6,9 +6,9 @@ provider deletion policies, CRD directory rules, resource naming templates — a
 provider repos (`kropath-aws`, `kropath-gcp`, `kropath-azure`) and are deliberately not duplicated
 here. Issue-tracker conventions are not engineering standards and do not belong in this file.
 
-ADR-015 is the primary architecture reference; ADR-001, ADR-010, and ADR-011 are also active. The
-ADRs themselves are maintained outside this repo — the sections below restate the parts that bind
-this controller, so a reader without ADR access can still work here.
+The sections below document the standards and contracts that govern this controller. Each section
+is self-contained so that a contributor can understand the design without access to any external
+reference.
 
 ## Where this repo sits
 
@@ -20,7 +20,7 @@ The provider repos — `kropath-aws` (ACK), `kropath-gcp` (KCC), `kropath-azure`
 CRDs and RGDs that **consume** `status.effectiveConfig`. They are this controller's only
 downstream.
 
-## Governance config hierarchy (ADR-010)
+## Governance config hierarchy
 
 Three layers per provider. This controller merges all sources and writes the result to
 `status.effectiveConfig` on the namespaced ResourceConfig CR — the single object RGDs read.
@@ -57,7 +57,7 @@ The asymmetry is the whole point and follows Security First: for `mandatory`, th
 config wins, so a namespace cannot relax a guardrail. For `defaults`, the **most specific** config
 wins, so a team can override a suggestion.
 
-Provider identity (`aws.accountId`, `aws.region`) is copied into `effCfg.aws.*` (ADR-010 D-3).
+Provider identity (`aws.accountId`, `aws.region`) is copied into `effCfg.aws.*` during the config merge step.
 
 Merge logic requires unit tests. The full controller reconcile path requires Chainsaw integration
 tests.
@@ -106,9 +106,9 @@ PRs are squash-merged, so the PR title becomes the commit subject on `main` and 
 release-please parses. Titles must be conventional commits with the ticket id as the scope:
 
 ```
-feat(KRO-637): restore feature-registry metadata
-fix(KRO-641): guard nil effectiveConfig on first reconcile
-docs(KRO-650): document blocked_by metadata format
+feat(scope): add feature-registry metadata
+fix(scope): guard nil effectiveConfig on first reconcile
+docs(scope): document blocked_by metadata format
 ```
 
 `feat` cuts a minor release; `fix`, `perf`, and `deps` cut a patch; every other type cuts nothing.

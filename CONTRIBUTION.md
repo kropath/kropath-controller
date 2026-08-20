@@ -142,12 +142,12 @@ PRs are squash-merged, so **the PR title becomes the commit subject on `main`** 
 input release-please parses. It must be a conventional commit with the ticket id as the scope:
 
 ```
-feat(KRO-637): restore feature-registry metadata
-fix(KRO-641): guard nil effectiveConfig on first reconcile
-docs(KRO-650): document blocked_by metadata format
+feat(scope): add feature-registry metadata
+fix(scope): guard nil effectiveConfig on first reconcile
+docs(scope): document blocked_by metadata format
 ```
 
-`.github/workflows/pr-title.yaml` enforces this. The older `[KRO-637]: feat: …` form is
+`.github/workflows/pr-title.yaml` enforces this. The older `[TICKET-ID]: feat: …` form is
 **rejected** — the bracketed prefix breaks the conventional-commit header regex, so the commit
 parses with no type, never bumps the version, and never reaches `CHANGELOG.md`.
 
@@ -155,7 +155,7 @@ parses with no type, never bumps the version, and never reaches `CHANGELOG.md`.
 |---|---|
 | `feat` | minor bump |
 | `fix`, `perf`, `deps` | patch bump |
-| a trailing `!` (`feat(KRO-637)!: …`) | major bump |
+| a trailing `!` (`feat(scope)!: …`) | major bump |
 | `refactor`, `docs`, `test`, `build`, `ci`, `chore`, `revert` | **no release** |
 
 ## Code of Conduct
