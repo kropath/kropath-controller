@@ -49,6 +49,11 @@ GOLANGCI         ?= golangci-lint
 
 # Git ref of kropath-aws whose CRDs are the authority for crds-verify.
 KROPATH_AWS_REF  ?= main
+# Optional companion ref (e.g. a CRD PR branch not yet on main). When set,
+# crds-verify also fetches CRDs from this ref, so a controller PR and its
+# companion kropath-aws CRD PR can be reviewed together before either merges.
+# Silently skipped if the ref does not exist (e.g. after the branch is deleted).
+KROPATH_AWS_COMPANION_REF ?=
 
 CHAINSAW_FLAGS   := --parallel 1 --report-format JUNIT-TEST --report-path $(REPORT_DIR)/
 
@@ -113,6 +118,18 @@ crds-verify: ## CI gate: fail if a watched Kind is missing or mis-cased vs kropa
 	          --jq .content | base64 -d > "$$dir/$$name"; \
 	      done; \
 	  done; \
+	  if [ -n "$(KROPATH_AWS_COMPANION_REF)" ]; then \
+	    echo "Fetching companion kropath-aws CRDs @ $(KROPATH_AWS_COMPANION_REF)"; \
+	    for path in crds crds/policy; do \
+	      gh api "repos/kropath/kropath-aws/contents/$$path?ref=$(KROPATH_AWS_COMPANION_REF)" \
+	        --jq '.[] | select(.type == "file") | select(.name | endswith(".yaml")) | .name' \
+	      2>/dev/null \
+	      | while read -r name; do \
+	          gh api "repos/kropath/kropath-aws/contents/$$path/$$name?ref=$(KROPATH_AWS_COMPANION_REF)" \
+	            --jq .content 2>/dev/null | base64 -d > "$$dir/$$name" || true; \
+	        done; \
+	    done || true; \
+	  fi; \
 	fi; \
 	KROPATH_AWS_CRDS_DIR="$$dir" go test ./internal/features/ -run TestWatchedKindsMatchUpstreamCRDs -v
 

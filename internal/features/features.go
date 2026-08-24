@@ -94,4 +94,5 @@ var All = []Reconciler{
 	cascade("StepFunctionsConfig", "stepfunctionsconfig"),
 	cascade("MSKConfig", "mskconfig"),
 	cascade("MemoryDBConfig", "memorydbconfig"),
+	cascade("ACMConfig", "acmconfig"),
 }
