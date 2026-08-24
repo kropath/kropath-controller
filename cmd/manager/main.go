@@ -19,6 +19,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/version"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/discovery"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -87,7 +88,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	restCfg := ctrl.GetConfigOrDie()
+
+	mgr, err := ctrl.NewManager(restCfg, ctrl.Options{
 		Scheme:                  sch,
 		Metrics:                 server.Options{BindAddress: metricsAddr},
 		HealthProbeBindAddress:  probeAddr,
@@ -108,9 +111,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Build the reconciler registry and register every entry unconditionally.
-	// Commit 2 (KRO-848) replaces RunUnconditional with RunGate once the
-	// CRD availability startup gate is in place.
+	// Build the reconciler registry and gate each entry on CRD availability.
+	// Entries whose Required GVKs are all served become active immediately.
+	// Entries with missing Required GVKs stay pending (KRO-849 adds a watcher
+	// to promote them when the CRD later appears).
+	dc, err := discovery.NewDiscoveryClientForConfig(restCfg)
+	if err != nil {
+		ctrl.Log.Error(err, "unable to create discovery client")
+		os.Exit(1)
+	}
+	servedGVKs, err := registry.GatherServedGVKs(dc)
+	if err != nil {
+		ctrl.Log.Error(err, "unable to discover served GVKs")
+		os.Exit(1)
+	}
+
 	coord := &registry.Coordinator{}
 	for _, e := range registry.All() {
 		coord.Add(e)
@@ -119,8 +134,8 @@ func main() {
 		Manager: mgr,
 		Log:     ctrl.Log,
 	}
-	if err := coord.RunUnconditional(bctx); err != nil {
-		ctrl.Log.Error(err, "unable to register reconcilers")
+	if err := coord.RunGate(bctx, servedGVKs); err != nil {
+		ctrl.Log.Error(err, "startup gate failed")
 		os.Exit(1)
 	}
 

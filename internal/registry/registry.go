@@ -90,6 +90,9 @@ func (c *Coordinator) RunUnconditional(bctx BuildCtx) error {
 	defer c.mu.Unlock()
 	for i := range c.entries {
 		es := &c.entries[i]
+		if es.active {
+			continue
+		}
 		handle, err := es.entry.Build(bctx)
 		if err != nil {
 			return fmt.Errorf("registry: building %s: %w", es.entry.Package, err)
