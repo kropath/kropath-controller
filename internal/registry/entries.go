@@ -24,6 +24,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/elbconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/emrconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/eventbridgeconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/glueconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/iamconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/kmsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/labeloperator"
@@ -312,6 +313,13 @@ func All() []Entry {
 			return (&emrconfig.Reconciler{
 				Client: bctx.Manager.GetClient(),
 				Log:    bctx.Log.WithName("controllers").WithName("EMRConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("glueconfig", "GlueConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&glueconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("GlueConfig"),
 				Scheme: bctx.Manager.GetScheme(),
 			}).BuildWithManager(bctx.Manager)
 		}),
