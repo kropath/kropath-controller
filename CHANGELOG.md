@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.5.0](https://github.com/kropath/kropath-controller/compare/v0.4.0...v0.5.0) (2026-08-24)
+
+
+### Features
+
+* **KRO-782:** add DocumentDB effectiveConfig cascade ([#64](https://github.com/kropath/kropath-controller/issues/64)) ([d39d78d](https://github.com/kropath/kropath-controller/commit/d39d78dc0924bd01f4b9a66620dd65d89587e3a5))
+* **KRO-842:** add GlueConfig effectiveConfig cascade ([#68](https://github.com/kropath/kropath-controller/issues/68)) ([7c2293e](https://github.com/kropath/kropath-controller/commit/7c2293eaff30d43061c54266565162e61cd80716))
+* **KRO-849:** add CRD watcher, features active-pending contract, RBAC, and Chainsaw ctrl-dyn-02 and ctrl-dyn-03 ([#66](https://github.com/kropath/kropath-controller/issues/66)) ([70769c9](https://github.com/kropath/kropath-controller/commit/70769c9205f5f11381bb062ca7e1a4d2669ad3e1))
+* **KRO-850:** labeloperator convergence + policydocument optional kinds + metrics + Chainsaw ctrl-dyn-04/05 ([#67](https://github.com/kropath/kropath-controller/issues/67)) ([157093e](https://github.com/kropath/kropath-controller/commit/157093ef67583b61734513fadf468dd7f28f44c0))
+
 ## [0.4.0](https://github.com/kropath/kropath-controller/compare/v0.3.1...v0.4.0) (2026-08-24)
 
 
