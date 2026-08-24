@@ -1,0 +1,79 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-glue-01 Chainsaw integration tests — 6 acceptance criteria.
+#
+# Requires a kind cluster with kropath-operator running and the fixture CRDs
+# applied (`make setup`, or just `make test-glue` against an already-running
+# controller).
+#
+# Test isolation — unique-name-per-step, no inter-step deletes:
+#   Each AC owns a distinct resource name (acN-glue-policy). The controller
+#   resolves a config's global counterpart by *name* — a local GlueConfig
+#   data-platform/acN-glue-policy merges only kro-system/acN-glue-policy — so a
+#   per-AC name isolates each AC completely.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-glue-01
+spec:
+  description: "Glue effectiveConfig cascade — 6 acceptance criteria (ctrl-glue-01)"
+  steps:
+    # AC-1: globalKropathConfig.mandatory.glue.glueVersion (level 1) → effCfg.mandatory.glueVersion
+    - name: ac1-global-kpc-mandatory-glue-version
+      try:
+        - apply:
+            file: ac01-setup.yaml
+        - assert:
+            file: ac01-assert.yaml
+
+    # AC-2: localGlueConfig.mandatory.numberOfWorkers (level 4 integer) propagates when no higher level is set
+    - name: ac2-local-gluecfg-mandatory-number-of-workers
+      try:
+        - apply:
+            file: ac02-setup.yaml
+        - assert:
+            file: ac02-assert.yaml
+
+    # AC-3: globalGlueConfig.mandatory.glueVersion (level 3) — string cascade when L1,L2 empty
+    - name: ac3-global-gluecfg-mandatory-glue-version
+      try:
+        - apply:
+            file: ac03-setup.yaml
+        - assert:
+            file: ac03-assert.yaml
+
+    # AC-4: localGlueConfig.defaults.workerType (level 6) → effCfg.defaults.workerType
+    - name: ac4-local-gluecfg-defaults-worker-type
+      try:
+        - apply:
+            file: ac04-setup.yaml
+        - assert:
+            file: ac04-assert.yaml
+
+    # AC-5: globalKropathConfig.defaults.glue.glueVersion (level 9 fallback) → effCfg.defaults.glueVersion
+    - name: ac5-global-kpc-defaults-glue-version-fallback
+      try:
+        - apply:
+            file: ac05-setup.yaml
+        - assert:
+            file: ac05-assert.yaml
+
+    # AC-6: additive tag merge — L1 KropathConfig tag + L4 GlueConfig tag both appear in effCfg.mandatory.tags
+    - name: ac6-additive-tag-merge
+      try:
+        - apply:
+            file: ac06-setup.yaml
+        - assert:
+            file: ac06-assert.yaml

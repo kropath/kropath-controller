@@ -104,4 +104,5 @@ var All = []Reconciler{
 	cascade("ACMConfig", "acmconfig"),
 	cascade("EMRConfig", "emrconfig"),
 	cascade("DocumentDBConfig", "documentdbconfig"),
+	cascade("GlueConfig", "glueconfig"),
 }
