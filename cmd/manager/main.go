@@ -29,6 +29,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/elasticacheconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/elbconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/acmconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/emrconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/memorydbconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/eventbridgeconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/iamconfig"
@@ -367,6 +368,15 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		ctrl.Log.Error(err, "unable to create ACMConfig reconciler")
+		os.Exit(1)
+	}
+
+	if err := (&emrconfig.Reconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("EMRConfig"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		ctrl.Log.Error(err, "unable to create EMRConfig reconciler")
 		os.Exit(1)
 	}
 

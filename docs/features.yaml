@@ -214,3 +214,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: EMRConfig
+      package: emrconfig
+      description: Reconciles EMRConfig CRs and propagates effective config.
+      kinds:
+        - EMRConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable
