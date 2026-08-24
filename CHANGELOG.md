@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.0](https://github.com/kropath/kropath-controller/compare/v0.3.1...v0.4.0) (2026-08-24)
+
+
+### Features
+
+* **KRO-716:** add Certificate Manager effectiveConfig cascade ([#59](https://github.com/kropath/kropath-controller/issues/59)) ([76b5552](https://github.com/kropath/kropath-controller/commit/76b5552dfaa87ad350bbeca27f5a0f5efda9b1ea))
+* **KRO-830:** implement effectiveConfig cascade handler for EMR fields ([#61](https://github.com/kropath/kropath-controller/issues/61)) ([6d25eb3](https://github.com/kropath/kropath-controller/commit/6d25eb3e8a8efe51e867b9e74e8339937c72805f))
+* **KRO-848:** internal/registry + startup discovery gate ([#63](https://github.com/kropath/kropath-controller/issues/63)) ([d018bbb](https://github.com/kropath/kropath-controller/commit/d018bbb6f8d9f09ddfcdfefd738cf2b59fe1637e))
+* **KRO-860:** add two-directory CRD fixture support (crds-optional/) ([#62](https://github.com/kropath/kropath-controller/issues/62)) ([bcbade2](https://github.com/kropath/kropath-controller/commit/bcbade22cc9ed6aef09b1bd26d6fa9119e577e33))
+
 ## [0.3.1](https://github.com/kropath/kropath-controller/compare/v0.3.0...v0.3.1) (2026-08-19)
 
 
