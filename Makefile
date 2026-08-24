@@ -43,7 +43,7 @@ LDFLAGS    := -s -w \
 # ─── Test config ───────────────────────────────────────────────────────────────
 KIND_CLUSTER     := kropath-controller-test
 HEALTH_PORT      := 18081
-TEST_NAMESPACES  := kro-system payments-prod events-prod network-prod registry-prod
+TEST_NAMESPACES  := kro-system payments-prod events-prod network-prod registry-prod data-platform
 CHAINSAW         ?= chainsaw
 GOLANGCI         ?= golangci-lint
 
