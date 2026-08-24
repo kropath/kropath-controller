@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/kropath/kropath-controller/internal/reconciler/acmconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/documentdbconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/apigatewayconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/apigatewayv2config"
 	"github.com/kropath/kropath-controller/internal/reconciler/autoscalingconfig"
@@ -262,6 +263,13 @@ func All() []Entry {
 			return (&emrconfig.Reconciler{
 				Client: bctx.Manager.GetClient(),
 				Log:    bctx.Log.WithName("controllers").WithName("EMRConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("documentdbconfig", "DocumentDBConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&documentdbconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("DocumentDBConfig"),
 				Scheme: bctx.Manager.GetScheme(),
 			}).BuildWithManager(bctx.Manager)
 		}),

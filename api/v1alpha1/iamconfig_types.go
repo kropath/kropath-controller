@@ -71,6 +71,7 @@ type KropathConfigTier struct {
 	MemoryDB          cascade.MemoryDBKropathSection          `json:"memorydb,omitempty"`
 	CertificateManager cascade.ACMKropathSection             `json:"certificateManager,omitempty"`
 	EMR               cascade.EMRKropathSection               `json:"emr,omitempty"`
+	DocumentDB        cascade.DocumentDBKropathSection        `json:"documentdb,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
@@ -444,6 +445,26 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.CertificateManager.Tags = make(map[string]string, len(in.Spec.Defaults.CertificateManager.Tags))
 		for k, v := range in.Spec.Defaults.CertificateManager.Tags {
 			out.Spec.Defaults.CertificateManager.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.DocumentDB.AllowedInstanceClasses != nil {
+		out.Spec.Mandatory.DocumentDB.AllowedInstanceClasses = make([]string, len(in.Spec.Mandatory.DocumentDB.AllowedInstanceClasses))
+		copy(out.Spec.Mandatory.DocumentDB.AllowedInstanceClasses, in.Spec.Mandatory.DocumentDB.AllowedInstanceClasses)
+	}
+	if in.Spec.Mandatory.DocumentDB.Tags != nil {
+		out.Spec.Mandatory.DocumentDB.Tags = make(map[string]string, len(in.Spec.Mandatory.DocumentDB.Tags))
+		for k, v := range in.Spec.Mandatory.DocumentDB.Tags {
+			out.Spec.Mandatory.DocumentDB.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.DocumentDB.AllowedInstanceClasses != nil {
+		out.Spec.Defaults.DocumentDB.AllowedInstanceClasses = make([]string, len(in.Spec.Defaults.DocumentDB.AllowedInstanceClasses))
+		copy(out.Spec.Defaults.DocumentDB.AllowedInstanceClasses, in.Spec.Defaults.DocumentDB.AllowedInstanceClasses)
+	}
+	if in.Spec.Defaults.DocumentDB.Tags != nil {
+		out.Spec.Defaults.DocumentDB.Tags = make(map[string]string, len(in.Spec.Defaults.DocumentDB.Tags))
+		for k, v := range in.Spec.Defaults.DocumentDB.Tags {
+			out.Spec.Defaults.DocumentDB.Tags[k] = v
 		}
 	}
 	if in.Spec.Mandatory.SyncedLabels != nil {

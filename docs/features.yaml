@@ -222,3 +222,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: DocumentDBConfig
+      package: documentdbconfig
+      description: Reconciles DocumentDBConfig CRs and propagates effective config.
+      kinds:
+        - DocumentDBConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable
