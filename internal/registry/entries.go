@@ -138,7 +138,7 @@ func All() []Entry {
 			Optional: nil, // wildcard: handled by registry.OnGVKServable
 			Build: func(bctx BuildCtx, _ []schema.GroupVersionKind) (controller.Controller, error) {
 				log := bctx.Log.WithName("controllers").WithName("LabelOperator")
-				handles, err := labeloperator.SetupAll(bctx.Manager, log)
+				handles, err := labeloperator.Setup(bctx.Manager, log)
 				if err != nil {
 					return nil, fmt.Errorf("label-operator setup: %w", err)
 				}

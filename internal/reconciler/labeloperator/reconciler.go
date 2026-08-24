@@ -104,62 +104,6 @@ func buildLabelPatch(labelKey, value string) []byte {
 	return []byte(fmt.Sprintf(`{"metadata":{"labels":{%s:%s}}}`, kJSON, vJSON))
 }
 
-// Setup discovers all resource types under the three provider API groups and
-// registers one controller per GVK. Call once from main() after creating the
-// manager.
-func Setup(mgr ctrl.Manager, log logr.Logger) error {
-	disc, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
-	if err != nil {
-		return fmt.Errorf("label-operator: creating discovery client: %w", err)
-	}
-
-	for group, labelKey := range providerGroups {
-		if err := setupGroup(mgr, log, disc, group, labelKey); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func setupGroup(mgr ctrl.Manager, log logr.Logger, disc discovery.DiscoveryInterface, group, labelKey string) error {
-	gv := group + "/v1alpha1"
-	resources, err := disc.ServerResourcesForGroupVersion(gv)
-	if err != nil {
-		// Group may not have any registered CRDs yet; skip rather than fail.
-		log.Info("label-operator: no resources found for group, skipping", "gv", gv)
-		return nil
-	}
-
-	for _, res := range resources.APIResources {
-		if strings.Contains(res.Name, "/") {
-			continue // skip subresources (/status, /scale, etc.)
-		}
-		gvk := schema.GroupVersionKind{Group: group, Version: "v1alpha1", Kind: res.Kind}
-		r := &Reconciler{
-			Client:   mgr.GetClient(),
-			Log:      log.WithValues("kind", res.Kind),
-			GVK:      gvk,
-			LabelKey: labelKey,
-		}
-		proto := &unstructured.Unstructured{}
-		proto.SetGroupVersionKind(gvk)
-
-		// Unique controller name per GVK to avoid collisions inside the manager.
-		ctrlName := fmt.Sprintf("label-operator-%s-%s",
-			strings.ReplaceAll(group, ".", "-"),
-			strings.ToLower(res.Kind))
-
-		if err := ctrl.NewControllerManagedBy(mgr).
-			Named(ctrlName).
-			For(proto).
-			WithEventFilter(unchangedLabelPredicate(labelKey)).
-			Complete(r); err != nil {
-			return fmt.Errorf("label-operator: registering controller for %s/%s: %w", group, res.Kind, err)
-		}
-	}
-	return nil
-}
-
 // unchangedLabelPredicate skips Update events where the tracked label key has
 // not changed, preventing unnecessary reconciliation from spec/status writes.
 func unchangedLabelPredicate(labelKey string) predicate.Predicate {
@@ -215,24 +159,24 @@ func RegisterController(mgr ctrl.Manager, ctrlName string, gvk schema.GroupVersi
 	return c, nil
 }
 
-// SetupAll discovers all resource types under the three provider API groups and registers
+// Setup discovers all resource types under the three provider API groups and registers
 // one controller per GVK, returning a map of handles keyed by gvk.String().
-// Use this instead of Setup when handles need to be retained for later AddKindWatch calls.
-func SetupAll(mgr ctrl.Manager, log logr.Logger) (map[string]controller.Controller, error) {
+// Handles are retained for later AddKindWatch calls (runtime controller registration).
+func Setup(mgr ctrl.Manager, log logr.Logger) (map[string]controller.Controller, error) {
 	disc, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
 	if err != nil {
 		return nil, fmt.Errorf("label-operator: creating discovery client: %w", err)
 	}
 	handles := make(map[string]controller.Controller)
 	for group := range providerGroups {
-		if err := setupGroupAll(mgr, log, disc, group, handles); err != nil {
+		if err := setupGroup(mgr, log, disc, group, handles); err != nil {
 			return nil, err
 		}
 	}
 	return handles, nil
 }
 
-func setupGroupAll(mgr ctrl.Manager, log logr.Logger, disc discovery.DiscoveryInterface, group string, handles map[string]controller.Controller) error {
+func setupGroup(mgr ctrl.Manager, log logr.Logger, disc discovery.DiscoveryInterface, group string, handles map[string]controller.Controller) error {
 	gv := group + "/v1alpha1"
 	resources, err := disc.ServerResourcesForGroupVersion(gv)
 	if err != nil {
