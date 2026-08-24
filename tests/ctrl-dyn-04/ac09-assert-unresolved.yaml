@@ -1,0 +1,9 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: PolicyDocument
+metadata:
+  name: ac09-lambda-policy
+  namespace: default
+status:
+  conditions:
+    - type: SourceNotReady
+      status: "True"

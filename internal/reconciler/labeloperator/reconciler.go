@@ -31,6 +31,7 @@ import (
 	"k8s.io/client-go/discovery"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
@@ -172,4 +173,82 @@ func unchangedLabelPredicate(labelKey string) predicate.Predicate {
 			return oldVal != newVal
 		},
 	}
+}
+
+// LabelKeyForGroup returns the resource-name label key for the given API group.
+// Returns "" if the group is not a known provider group.
+func LabelKeyForGroup(group string) string {
+	return providerGroups[group]
+}
+
+// ControllerName returns the unique controller name for the given provider GVK.
+func ControllerName(gvk schema.GroupVersionKind) string {
+	return fmt.Sprintf("label-operator-%s-%s",
+		strings.ReplaceAll(gvk.Group, ".", "-"),
+		strings.ToLower(gvk.Kind))
+}
+
+// NewReconciler constructs a Reconciler for the given GVK, deriving LabelKey from the API group.
+func NewReconciler(gvk schema.GroupVersionKind, c client.Client, log logr.Logger) *Reconciler {
+	return &Reconciler{
+		Client:   c,
+		Log:      log.WithValues("kind", gvk.Kind),
+		GVK:      gvk,
+		LabelKey: providerGroups[gvk.Group],
+	}
+}
+
+// RegisterController creates and registers a label-operator controller for the given GVK,
+// returning its handle. Uses Build (not Complete) so the handle can be retained for future use.
+func RegisterController(mgr ctrl.Manager, ctrlName string, gvk schema.GroupVersionKind, log logr.Logger) (controller.Controller, error) {
+	r := NewReconciler(gvk, mgr.GetClient(), log)
+	proto := &unstructured.Unstructured{}
+	proto.SetGroupVersionKind(gvk)
+	c, err := ctrl.NewControllerManagedBy(mgr).
+		Named(ctrlName).
+		For(proto).
+		WithEventFilter(unchangedLabelPredicate(r.LabelKey)).
+		Build(r)
+	if err != nil {
+		return nil, fmt.Errorf("label-operator: registering controller for %s/%s: %w", gvk.Group, gvk.Kind, err)
+	}
+	return c, nil
+}
+
+// SetupAll discovers all resource types under the three provider API groups and registers
+// one controller per GVK, returning a map of handles keyed by gvk.String().
+// Use this instead of Setup when handles need to be retained for later AddKindWatch calls.
+func SetupAll(mgr ctrl.Manager, log logr.Logger) (map[string]controller.Controller, error) {
+	disc, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
+	if err != nil {
+		return nil, fmt.Errorf("label-operator: creating discovery client: %w", err)
+	}
+	handles := make(map[string]controller.Controller)
+	for group := range providerGroups {
+		if err := setupGroupAll(mgr, log, disc, group, handles); err != nil {
+			return nil, err
+		}
+	}
+	return handles, nil
+}
+
+func setupGroupAll(mgr ctrl.Manager, log logr.Logger, disc discovery.DiscoveryInterface, group string, handles map[string]controller.Controller) error {
+	gv := group + "/v1alpha1"
+	resources, err := disc.ServerResourcesForGroupVersion(gv)
+	if err != nil {
+		log.Info("label-operator: no resources found for group, skipping", "gv", gv)
+		return nil
+	}
+	for _, res := range resources.APIResources {
+		if strings.Contains(res.Name, "/") {
+			continue
+		}
+		gvk := schema.GroupVersionKind{Group: group, Version: "v1alpha1", Kind: res.Kind}
+		c, err := RegisterController(mgr, ControllerName(gvk), gvk, log)
+		if err != nil {
+			return err
+		}
+		handles[gvk.String()] = c
+	}
+	return nil
 }

@@ -1,0 +1,19 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: PolicyDocument
+metadata:
+  name: ac09-lambda-policy
+  namespace: default
+spec:
+  statements:
+    - sid: AllowLambdaInvoke
+      effect: Allow
+      principals:
+        - type: Service
+          identifiers:
+            - apigateway.amazonaws.com
+      actions:
+        - lambda:InvokeFunction
+      resources:
+        - ref:
+            kind: AWSLambdaFunction
+            name: ac09-lambda-fn

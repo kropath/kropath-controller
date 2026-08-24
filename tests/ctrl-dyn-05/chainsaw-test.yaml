@@ -1,0 +1,54 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-dyn-05 Chainsaw integration tests — labeloperator late kind (AC-10).
+#
+# Requires the controller to be running with the standard CRD set applied via
+# `make chainsaw-start chainsaw-wait`. The gcpcloudspannerinstanceconfig.yaml CRD
+# MUST NOT be applied before this suite starts — it lives in crds-optional/.
+#
+# AC-10: When a GCP CRD is installed after operator startup, labeloperator registers
+#   a controller for it at runtime (via AddKindWatch). A CR of that kind then receives
+#   the gcp.kropath.run/resource-name label automatically.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-dyn-05
+spec:
+  description: "labeloperator late kind — register controller at runtime for a GCP CRD installed after startup (ctrl-dyn-05)"
+  steps:
+    # AC-10 (install): Install the CloudSpannerInstanceConfig CRD. The CRD watcher fires
+    # OnGVKServable which calls labeloperator's AddKindWatch, registering a new controller.
+    - name: ac10-install-gcp-crd-and-wait
+      try:
+        - script:
+            timeout: 60s
+            content: |
+              set -e
+              kubectl apply -f ../fixtures/crds-optional/gcpcloudspannerinstanceconfig.yaml
+              kubectl wait crd/cloudspannerinstanceconfigs.gcp.kropath.run \
+                --for=condition=Established --timeout=30s
+              echo "CloudSpannerInstanceConfig CRD Established"
+              # Allow the CRD watcher to fire and labeloperator to register the controller.
+              sleep 5
+
+    # AC-10 (reconcile): Create a CR of the new kind. The runtime-registered labeloperator
+    # controller must apply the gcp.kropath.run/resource-name label.
+    - name: ac10-cr-gets-resource-name-label
+      try:
+        - apply:
+            file: ac10-cr.yaml
+        - assert:
+            file: ac10-assert.yaml
+            timeout: 60s

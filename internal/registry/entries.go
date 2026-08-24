@@ -6,6 +6,7 @@ package registry
 import (
 	"fmt"
 
+	"github.com/go-logr/logr"
 	"github.com/kropath/kropath-controller/internal/reconciler/acmconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/documentdbconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/apigatewayconfig"
@@ -36,6 +37,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/sqsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/stepfunctionsconfig"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 )
 
@@ -64,6 +66,14 @@ func All() []Entry {
 	// call; AddKindWatch reads it thereafter. The coordinator mutex guarantees
 	// that Build completes before any AddKindWatch call is dispatched.
 	var pdr *policydocument.Reconciler
+
+	// labelop* vars are captured by both the labeloperator Build and AddKindWatch
+	// closures. Build populates all three; AddKindWatch reads them.
+	var (
+		labelopHandles map[string]controller.Controller
+		labelopMgr     ctrl.Manager
+		labelopLog     logr.Logger
+	)
 
 	return []Entry{
 		cascadeEntry("iamconfig", "IAMConfig", func(bctx BuildCtx) (controller.Controller, error) {
@@ -119,17 +129,43 @@ func All() []Entry {
 				return pdr.AddKindWatch(c, gvk)
 			},
 		},
-		// LabelOperator creates multiple controllers internally; Build returns (nil, nil) on success.
+		// LabelOperator creates one controller per provider GVK at startup, and registers
+		// new controllers at runtime via AddKindWatch when new provider CRDs appear.
+		// Optional == nil signals wildcard: any provider GVK triggers AddKindWatch.
 		{
-			Package:      "labeloperator",
-			Required:     nil,
-			Optional:     nil,
-			AddKindWatch: nil,
+			Package:  "labeloperator",
+			Required: nil,
+			Optional: nil, // wildcard: handled by registry.OnGVKServable
 			Build: func(bctx BuildCtx, _ []schema.GroupVersionKind) (controller.Controller, error) {
-				if err := labeloperator.Setup(bctx.Manager, bctx.Log.WithName("controllers").WithName("LabelOperator")); err != nil {
+				log := bctx.Log.WithName("controllers").WithName("LabelOperator")
+				handles, err := labeloperator.SetupAll(bctx.Manager, log)
+				if err != nil {
 					return nil, fmt.Errorf("label-operator setup: %w", err)
 				}
+				labelopHandles = handles
+				labelopMgr = bctx.Manager
+				labelopLog = log
 				return nil, nil
+			},
+			AddKindWatch: func(_ controller.Controller, gvk schema.GroupVersionKind) error {
+				if labelopHandles == nil {
+					return fmt.Errorf("labeloperator: AddKindWatch called before Build")
+				}
+				if labeloperator.LabelKeyForGroup(gvk.Group) == "" {
+					return nil // not a watched provider group
+				}
+				key := gvk.String()
+				if labelopHandles[key] != nil {
+					return nil // controller already registered at startup
+				}
+				handle, err := labeloperator.RegisterController(
+					labelopMgr, labeloperator.ControllerName(gvk), gvk, labelopLog,
+				)
+				if err != nil {
+					return fmt.Errorf("label-operator: register runtime controller for %v: %w", gvk, err)
+				}
+				labelopHandles[key] = handle
+				return nil
 			},
 		},
 		cascadeEntry("snsconfig", "SNSConfig", func(bctx BuildCtx) (controller.Controller, error) {

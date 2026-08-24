@@ -130,7 +130,9 @@ func (c *Coordinator) OnGVKServable(bctx BuildCtx, gvk schema.GroupVersionKind) 
 			if es.entry.AddKindWatch == nil {
 				continue
 			}
-			isOptional := false
+			// Optional == nil means wildcard: any GVK may trigger AddKindWatch.
+			// This is used by labeloperator which registers a controller per provider GVK.
+			isOptional := es.entry.Optional == nil
 			for _, opt := range es.entry.Optional {
 				if opt == gvk {
 					isOptional = true

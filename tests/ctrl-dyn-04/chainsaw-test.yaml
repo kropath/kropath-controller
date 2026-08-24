@@ -1,0 +1,111 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-dyn-04 Chainsaw integration tests — policydocument optional kinds (AC-8, AC-9).
+#
+# Requires the controller to be running with the standard CRD set applied via
+# `make chainsaw-start chainsaw-wait`. The awslambdafunction.yaml CRD MUST NOT be
+# applied before this suite starts — it lives in tests/fixtures/crds-optional/.
+#
+# AC-8: policydocument reconciler activates even when AWSLambdaFunction CRD is absent
+#   at startup. Verified by /features returning state=active for policydocument.
+#
+# AC-9: When AWSLambdaFunction CRD becomes available at runtime, policydocument
+#   calls AddKindWatch and can subsequently resolve AWSLambdaFunction refs.
+#   Verified by: a PolicyDocument with a lambda resource ref transitions from
+#   SourceNotReady=True to Ready=True when the lambda CR's status.arn is set
+#   (proving the watch is live and triggers reconciliation).
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-dyn-04
+spec:
+  description: "policydocument optional kinds — partial optional at startup + AddKindWatch at runtime (ctrl-dyn-04)"
+  steps:
+    # AC-8: policydocument is active in /features even though AWSLambdaFunction CRD is absent.
+    - name: ac8-policydocument-active-with-partial-optional
+      try:
+        - script:
+            timeout: 30s
+            content: |
+              set -e
+              resp=$(curl -fsS http://127.0.0.1:8080/features)
+              echo "GET /features: $resp"
+              state=$(echo "$resp" | python3 -c "
+              import sys, json
+              data = json.load(sys.stdin)
+              for r in data.get('features', []):
+                if r.get('package') == 'policydocument':
+                  print(r.get('state', ''))
+              ")
+              if [ "$state" != "active" ]; then
+                echo "FAIL: expected policydocument state=active, got '$state'"
+                exit 1
+              fi
+              echo "PASS: policydocument is active with partial optional CRDs"
+
+    # AC-8 (reconcile): A PolicyDocument with no lambda ref reconciles successfully.
+    - name: ac8-policydocument-reconciles-without-lambda
+      try:
+        - apply:
+            file: ac08-policy.yaml
+        - assert:
+            file: ac08-assert.yaml
+            timeout: 60s
+
+    # AC-9 (setup): Create a PolicyDocument that references an AWSLambdaFunction
+    # before the CRD is installed. It should be SourceNotReady.
+    - name: ac9-policydocument-lambda-ref-unresolved-before-crd
+      try:
+        - apply:
+            file: ac09-lambda-ref-policy.yaml
+        - assert:
+            file: ac09-assert-unresolved.yaml
+            timeout: 30s
+
+    # AC-9 (install): Install AWSLambdaFunction CRD. The watcher fires and
+    # policydocument calls AddKindWatch to attach a watch for lambda CRs.
+    - name: ac9-install-lambda-crd
+      try:
+        - script:
+            timeout: 60s
+            content: |
+              set -e
+              kubectl apply -f ../fixtures/crds-optional/awslambdafunction.yaml
+              kubectl wait crd/awslambdafunctions.aws.kropath.run \
+                --for=condition=Established --timeout=30s
+              echo "AWSLambdaFunction CRD Established"
+              # Give the CRD watcher time to fire OnGVKServable and call AddKindWatch.
+              sleep 3
+
+    # AC-9 (resolve): Create an AWSLambdaFunction CR with status.arn.
+    # The AddKindWatch-installed watch triggers PolicyDocument reconciliation
+    # which resolves the ref to Ready=True.
+    - name: ac9-lambda-cr-status-triggers-policy-reconcile
+      try:
+        - apply:
+            file: ac09-lambda-cr.yaml
+        - script:
+            timeout: 10s
+            content: |
+              set -e
+              kubectl patch awslambdafunction/ac09-lambda-fn \
+                --subresource=status \
+                --type=merge \
+                --patch='{"status":{"arn":"arn:aws:lambda:us-east-1:123456789012:function:ac09-lambda-fn"}}' \
+                -n default
+              echo "Patched lambda CR status.arn"
+        - assert:
+            file: ac09-assert-resolved.yaml
+            timeout: 90s
