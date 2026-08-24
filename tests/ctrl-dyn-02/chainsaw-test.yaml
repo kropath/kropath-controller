@@ -1,0 +1,146 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-dyn-02 Chainsaw integration tests — dynamic CRD activation (AC-3, AC-4, AC-7).
+#
+# Requires the controller to be running with the standard CRD set applied via
+# `make chainsaw-start chainsaw-wait`. The awselbconfig.yaml CRD MUST NOT be
+# applied before this suite starts — it lives in tests/fixtures/crds-optional/.
+#
+# Execution order matters: ctrl-dyn-01 must pass first (ctrl-dyn-02 expects the
+# controller is already running with elbconfig pending), then ctrl-dyn-02 installs
+# the CRD and verifies activation.
+#
+# AC-7: /features returns state=pending + missingKinds=[ELBConfig] before CRD install.
+# AC-3: After CRD install, the CRD watcher activates elbconfig reconciler.
+# AC-4: kropath_reconciler_active{package="elbconfig"} transitions from 0 to 1.
+# AC-7 (post): /features returns state=active after CRD install.
+# AC-3 (reconcile): An ELBConfig CR gets status.effectiveConfig populated.
+#
+# Health and metrics ports:
+#   /healthz, /readyz → 127.0.0.1:18081  (HEALTH_PORT in Makefile)
+#   /metrics          → 127.0.0.1:8080
+#   /features         → 127.0.0.1:8080
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-dyn-02
+spec:
+  description: "Dynamic CRD activation — CRD watcher activates elbconfig reconciler at runtime (ctrl-dyn-02)"
+  steps:
+    # AC-7 (pre-install): /features shows elbconfig as pending with ELBConfig in missingKinds.
+    - name: ac7-features-elbconfig-pending-before-crd-install
+      try:
+        - script:
+            timeout: 30s
+            content: |
+              set -e
+              resp=$(curl -fsS http://127.0.0.1:8080/features)
+              echo "GET /features response: $resp"
+
+              state=$(echo "$resp" | python3 -c "
+              import sys, json
+              data = json.load(sys.stdin)
+              for r in data.get('features', []):
+                if r.get('package') == 'elbconfig':
+                  print(r.get('state', ''))
+              ")
+              if [ "$state" != "pending" ]; then
+                echo "FAIL: expected state=pending, got '$state'"
+                exit 1
+              fi
+              echo "PASS: elbconfig state=pending before CRD install"
+
+              missing=$(echo "$resp" | python3 -c "
+              import sys, json
+              data = json.load(sys.stdin)
+              for r in data.get('features', []):
+                if r.get('package') == 'elbconfig':
+                  print(json.dumps(r.get('missingKinds', [])))
+              ")
+              if ! echo "$missing" | grep -q 'ELBConfig'; then
+                echo "FAIL: expected ELBConfig in missingKinds, got: $missing"
+                exit 1
+              fi
+              echo "PASS: ELBConfig in missingKinds before CRD install"
+
+    # AC-3/AC-4: Install the ELBConfig CRD; CRD watcher must activate the reconciler.
+    - name: ac3-ac4-install-elbconfig-crd-reconciler-activates
+      try:
+        - script:
+            timeout: 120s
+            content: |
+              set -e
+
+              # Apply the ELBConfig CRD from crds-optional/.
+              kubectl apply -f ../fixtures/crds-optional/awselbconfig.yaml
+
+              # Wait until the CRD is Established.
+              kubectl wait crd/elbconfigs.aws.kropath.run \
+                --for=condition=Established --timeout=60s
+              echo "CRD Established"
+
+              # Poll /metrics until kropath_reconciler_active{package="elbconfig"} = 1.
+              for i in $(seq 1 30); do
+                metrics=$(curl -fsS http://127.0.0.1:8080/metrics)
+                if echo "$metrics" | grep -q 'kropath_reconciler_active{package="elbconfig"} 1'; then
+                  echo "PASS: elbconfig reconciler activated (active=1) on iteration $i"
+                  break
+                fi
+                if [ "$i" -eq 30 ]; then
+                  echo "FAIL: elbconfig reconciler did not activate within 30s after CRD install"
+                  echo "$metrics" | grep elbconfig || echo "(no elbconfig lines)"
+                  exit 1
+                fi
+                sleep 1
+              done
+
+              # AC-4: kropath_reconciler_activations_total{package="elbconfig"} must be >= 1.
+              metrics=$(curl -fsS http://127.0.0.1:8080/metrics)
+              if ! echo "$metrics" | grep -q 'kropath_reconciler_activations_total{package="elbconfig"}'; then
+                echo "FAIL: kropath_reconciler_activations_total not found for elbconfig"
+                exit 1
+              fi
+              echo "PASS: kropath_reconciler_activations_total present for elbconfig"
+
+    # AC-7 (post-install): /features must now show elbconfig as active.
+    - name: ac7-features-elbconfig-active-after-crd-install
+      try:
+        - script:
+            timeout: 30s
+            content: |
+              set -e
+              resp=$(curl -fsS http://127.0.0.1:8080/features)
+              state=$(echo "$resp" | python3 -c "
+              import sys, json
+              data = json.load(sys.stdin)
+              for r in data.get('features', []):
+                if r.get('package') == 'elbconfig':
+                  print(r.get('state', ''))
+              ")
+              if [ "$state" != "active" ]; then
+                echo "FAIL: expected state=active after CRD install, got '$state'"
+                echo "GET /features: $resp"
+                exit 1
+              fi
+              echo "PASS: elbconfig state=active after CRD install"
+
+    # AC-3 (reconcile): An ELBConfig CR in payments-prod receives effectiveConfig.
+    - name: ac3-elbconfig-cr-gets-effective-config
+      try:
+        - apply:
+            file: ac03-setup.yaml
+        - assert:
+            file: ac03-assert.yaml
+            timeout: 60s

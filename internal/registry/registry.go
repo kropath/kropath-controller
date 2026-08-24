@@ -48,7 +48,9 @@ type Entry struct {
 	// so that the returned controller.Controller handle can be retained for later
 	// AddKindWatch calls. Build may return (nil, nil) for reconcilers that create
 	// multiple controllers internally (e.g. labeloperator).
-	Build func(bctx BuildCtx) (controller.Controller, error)
+	// servedOptional lists the Optional GVKs that are currently served; the reconciler
+	// may pre-register watches for them at build time.
+	Build func(bctx BuildCtx, servedOptional []schema.GroupVersionKind) (controller.Controller, error)
 
 	// AddKindWatch attaches an optional GVK to an already-running controller. Called
 	// by the CRD watcher (KRO-849) when a previously-absent optional kind becomes
@@ -58,9 +60,11 @@ type Entry struct {
 
 // entryState holds the runtime state for a single entry.
 type entryState struct {
-	entry  Entry
-	handle controller.Controller // non-nil once active (may be nil for multi-controller entries)
-	active bool
+	entry           Entry
+	handle          controller.Controller // non-nil once active (may be nil for multi-controller entries)
+	active          bool
+	missingKindNames []string                       // kind names of Required GVKs not yet served
+	attachedOptional map[schema.GroupVersionKind]bool // optional kinds already watched
 }
 
 // Coordinator owns all registry state: per-entry active/pending status, per-optional-kind
@@ -70,8 +74,9 @@ type entryState struct {
 // Access is mutex-guarded: the startup gate runs on the main goroutine and the KRO-849
 // watcher will run as a manager runnable; both mutate the same table.
 type Coordinator struct {
-	mu      sync.Mutex
-	entries []entryState
+	mu         sync.Mutex
+	entries    []entryState
+	servedGVKs map[schema.GroupVersionKind]bool // grows as CRDs are discovered at runtime
 }
 
 // Add appends an entry to the coordinator. Must be called before any Run method.
@@ -93,7 +98,7 @@ func (c *Coordinator) RunUnconditional(bctx BuildCtx) error {
 		if es.active {
 			continue
 		}
-		handle, err := es.entry.Build(bctx)
+		handle, err := es.entry.Build(bctx, nil)
 		if err != nil {
 			return fmt.Errorf("registry: building %s: %w", es.entry.Package, err)
 		}
@@ -101,6 +106,117 @@ func (c *Coordinator) RunUnconditional(bctx BuildCtx) error {
 		es.active = true
 	}
 	return nil
+}
+
+// OnGVKServable is called by the CRD watcher when a CRD becomes established. It:
+//   - Marks the GVK as served in the coordinator's set.
+//   - For pending entries whose Required GVKs are now all served, builds the reconciler.
+//   - For active entries that declare the GVK as Optional and haven't attached it yet,
+//     calls AddKindWatch to attach the watch to the running controller.
+func (c *Coordinator) OnGVKServable(bctx BuildCtx, gvk schema.GroupVersionKind) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.servedGVKs == nil {
+		c.servedGVKs = make(map[schema.GroupVersionKind]bool)
+	}
+	c.servedGVKs[gvk] = true
+
+	for i := range c.entries {
+		es := &c.entries[i]
+
+		if es.active {
+			// Already active — check if this GVK is an unattached Optional.
+			if es.entry.AddKindWatch == nil {
+				continue
+			}
+			isOptional := false
+			for _, opt := range es.entry.Optional {
+				if opt == gvk {
+					isOptional = true
+					break
+				}
+			}
+			if !isOptional {
+				continue
+			}
+			if es.attachedOptional != nil && es.attachedOptional[gvk] {
+				continue
+			}
+			if err := es.entry.AddKindWatch(es.handle, gvk); err != nil {
+				crdWatchErrorsTotal.WithLabelValues(errReasonWatchFailed).Inc()
+				return fmt.Errorf("registry: AddKindWatch for %v on %s: %w", gvk, es.entry.Package, err)
+			}
+			if es.attachedOptional == nil {
+				es.attachedOptional = make(map[schema.GroupVersionKind]bool)
+			}
+			es.attachedOptional[gvk] = true
+			continue
+		}
+
+		// Not yet active — check if all Required GVKs are now served.
+		allServed := true
+		for _, req := range es.entry.Required {
+			if !c.servedGVKs[req] {
+				allServed = false
+				break
+			}
+		}
+		if !allServed {
+			continue
+		}
+
+		// All Required served — compute which Optional are also served.
+		var servedOptional []schema.GroupVersionKind
+		for _, opt := range es.entry.Optional {
+			if c.servedGVKs[opt] {
+				servedOptional = append(servedOptional, opt)
+			}
+		}
+
+		handle, err := es.entry.Build(bctx, servedOptional)
+		if err != nil {
+			crdWatchErrorsTotal.WithLabelValues(errReasonBuildFailed).Inc()
+			return fmt.Errorf("registry: building %s on CRD event: %w", es.entry.Package, err)
+		}
+		es.handle = handle
+		es.active = true
+		es.missingKindNames = nil
+
+		if len(servedOptional) > 0 {
+			es.attachedOptional = make(map[schema.GroupVersionKind]bool, len(servedOptional))
+			for _, opt := range servedOptional {
+				es.attachedOptional[opt] = true
+			}
+		}
+
+		reconcilerActivationsTotal.WithLabelValues(es.entry.Package).Inc()
+		reconcilerActive.WithLabelValues(es.entry.Package).Set(1)
+		reconcilerMissingKinds.WithLabelValues(es.entry.Package).Set(0)
+
+		bctx.Log.Info("reconciler activated by CRD watcher",
+			"package", es.entry.Package,
+			"trigger", gvk.Kind)
+	}
+
+	return nil
+}
+
+// ReconcilerState returns the runtime state for the given package name.
+// Implements features.StateReader.
+func (c *Coordinator) ReconcilerState(pkg string) (state string, missingKinds []string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for _, es := range c.entries {
+		if es.entry.Package != pkg {
+			continue
+		}
+		if es.active {
+			return "active", nil
+		}
+		return "pending", append([]string(nil), es.missingKindNames...)
+	}
+	return "", nil
 }
 
 // Entries returns a snapshot of all entries (for testing and the /features handler).

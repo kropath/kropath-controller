@@ -18,8 +18,23 @@ var (
 		Name: "kropath_reconciler_missing_kinds",
 		Help: "Number of required GVKs not yet served for this reconciler.",
 	}, []string{"package"})
+
+	reconcilerActivationsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "kropath_reconciler_activations_total",
+		Help: "Total number of times a reconciler was activated by the CRD watcher.",
+	}, []string{"package"})
+
+	crdWatchErrorsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "kropath_crd_watch_errors_total",
+		Help: "Total number of runtime CRD watch errors by reason.",
+	}, []string{"reason"})
 )
 
 func init() {
-	ctrlmetrics.Registry.MustRegister(reconcilerActive, reconcilerMissingKinds)
+	ctrlmetrics.Registry.MustRegister(
+		reconcilerActive,
+		reconcilerMissingKinds,
+		reconcilerActivationsTotal,
+		crdWatchErrorsTotal,
+	)
 }

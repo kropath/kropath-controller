@@ -59,6 +59,12 @@ var policyDocumentRefGVKs = []schema.GroupVersionKind{
 
 // All returns the complete registry in the same order as features.All.
 func All() []Entry {
+	// pdr is declared here so both the Build and AddKindWatch closures for
+	// policydocument capture the same pointer variable. Build sets it on first
+	// call; AddKindWatch reads it thereafter. The coordinator mutex guarantees
+	// that Build completes before any AddKindWatch call is dispatched.
+	var pdr *policydocument.Reconciler
+
 	return []Entry{
 		cascadeEntry("iamconfig", "IAMConfig", func(bctx BuildCtx) (controller.Controller, error) {
 			return (&iamconfig.Reconciler{
@@ -96,14 +102,21 @@ func All() []Entry {
 			}).BuildWithManager(bctx.Manager)
 		}),
 		// PolicyDocument watches its own kind plus six optional ref GVKs.
-		// AddKindWatch is wired in commit 2 (gate).
+		// The closure captures pdr declared above so AddKindWatch can find the
+		// already-built reconciler without a separate lookup.
 		{
-			Package:      "policydocument",
-			Required:     []schema.GroupVersionKind{awsGVK("PolicyDocument"), awsGVK("KropathConfig")},
-			Optional:     policyDocumentRefGVKs,
-			AddKindWatch: nil,
-			Build: func(bctx BuildCtx) (controller.Controller, error) {
-				return (&policydocument.Reconciler{}).BuildWithManager(bctx.Manager, policyDocumentRefGVKs)
+			Package:  "policydocument",
+			Required: []schema.GroupVersionKind{awsGVK("PolicyDocument"), awsGVK("KropathConfig")},
+			Optional: policyDocumentRefGVKs,
+			Build: func(bctx BuildCtx, servedOptional []schema.GroupVersionKind) (controller.Controller, error) {
+				pdr = &policydocument.Reconciler{}
+				return pdr.BuildWithManager(bctx.Manager, servedOptional)
+			},
+			AddKindWatch: func(c controller.Controller, gvk schema.GroupVersionKind) error {
+				if pdr == nil {
+					return fmt.Errorf("policydocument: AddKindWatch called before Build")
+				}
+				return pdr.AddKindWatch(c, gvk)
 			},
 		},
 		// LabelOperator creates multiple controllers internally; Build returns (nil, nil) on success.
@@ -112,7 +125,7 @@ func All() []Entry {
 			Required:     nil,
 			Optional:     nil,
 			AddKindWatch: nil,
-			Build: func(bctx BuildCtx) (controller.Controller, error) {
+			Build: func(bctx BuildCtx, _ []schema.GroupVersionKind) (controller.Controller, error) {
 				if err := labeloperator.Setup(bctx.Manager, bctx.Log.WithName("controllers").WithName("LabelOperator")); err != nil {
 					return nil, fmt.Errorf("label-operator setup: %w", err)
 				}
@@ -277,13 +290,16 @@ func All() []Entry {
 }
 
 // cascadeEntry builds a standard cascade reconciler entry. Every cascade reconciler
-// watches its own <Family>Config plus KropathConfig.
+// watches its own <Family>Config plus KropathConfig. The inner build function does
+// not receive servedOptional because cascade reconcilers have no Optional GVKs.
 func cascadeEntry(pkg, kind string, build func(BuildCtx) (controller.Controller, error)) Entry {
 	return Entry{
-		Package:      pkg,
-		Required:     []schema.GroupVersionKind{awsGVK(kind), awsGVK("KropathConfig")},
-		Optional:     nil,
-		Build:        build,
+		Package:  pkg,
+		Required: []schema.GroupVersionKind{awsGVK(kind), awsGVK("KropathConfig")},
+		Optional: nil,
+		Build: func(bctx BuildCtx, _ []schema.GroupVersionKind) (controller.Controller, error) {
+			return build(bctx)
+		},
 		AddKindWatch: nil,
 	}
 }

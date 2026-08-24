@@ -18,9 +18,11 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 const defaultRequeueAfter = 10 * time.Second
@@ -39,6 +41,7 @@ type Reconciler struct {
 	client.Client
 	RequeueAfter time.Duration
 	ResolveRefFn func(context.Context, client.Client, string, *v1alpha1.PolicyRef) (string, bool, error)
+	watchCache   cache.Cache
 }
 
 // SetupWithManager registers the reconciler using the GVKs that were hardcoded before
@@ -54,6 +57,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 // watcher (KRO-849) can attach optional kinds at runtime via AddKindWatch.
 func (r *Reconciler) BuildWithManager(mgr ctrl.Manager, refGVKs []schema.GroupVersionKind) (controller.Controller, error) {
 	r.Client = mgr.GetClient()
+	r.watchCache = mgr.GetCache()
 	builder := ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.PolicyDocument{}).
 		Watches(&v1alpha1.PolicyDocument{}, handler.EnqueueRequestsFromMapFunc(r.mapSourceDocumentUpdates))
@@ -65,6 +69,19 @@ func (r *Reconciler) BuildWithManager(mgr ctrl.Manager, refGVKs []schema.GroupVe
 	}
 
 	return builder.Build(r)
+}
+
+// AddKindWatch attaches a new optional GVK watch to the already-running controller.
+// Called by the CRD watcher (KRO-849) when a previously-absent ref kind becomes served.
+func (r *Reconciler) AddKindWatch(c controller.Controller, gvk schema.GroupVersionKind) error {
+	if r.watchCache == nil {
+		return fmt.Errorf("policydocument: AddKindWatch called before BuildWithManager")
+	}
+	prototype := &unstructured.Unstructured{}
+	prototype.SetGroupVersionKind(gvk)
+	src := source.Kind[client.Object](r.watchCache, prototype,
+		handler.EnqueueRequestsFromMapFunc(r.mapReferencedResourceUpdates))
+	return c.Watch(src)
 }
 
 // defaultRefGVKs returns the six reference GVKs that policydocument watches.

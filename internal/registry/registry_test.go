@@ -19,9 +19,11 @@ import (
 
 // ---- helpers ---------------------------------------------------------------
 
-func noopBuild(_ registry.BuildCtx) (controller.Controller, error) { return nil, nil }
+func noopBuild(_ registry.BuildCtx, _ []schema.GroupVersionKind) (controller.Controller, error) {
+	return nil, nil
+}
 
-func failBuild(_ registry.BuildCtx) (controller.Controller, error) {
+func failBuild(_ registry.BuildCtx, _ []schema.GroupVersionKind) (controller.Controller, error) {
 	return nil, fmt.Errorf("build intentionally failed")
 }
 
@@ -117,7 +119,7 @@ func TestRunGate_KropathConfigAbsent_NoControllersBuilt(t *testing.T) {
 	coord.Add(registry.Entry{
 		Package:  "s3config",
 		Required: []schema.GroupVersionKind{awsGVK("S3Config"), awsGVK("KropathConfig")},
-		Build: func(_ registry.BuildCtx) (controller.Controller, error) {
+		Build: func(_ registry.BuildCtx, _ []schema.GroupVersionKind) (controller.Controller, error) {
 			built = true
 			return nil, nil
 		},
@@ -232,7 +234,7 @@ func TestRunUnconditional_SkipsAlreadyActive(t *testing.T) {
 	coord := &registry.Coordinator{}
 	coord.Add(registry.Entry{
 		Package: "x",
-		Build: func(_ registry.BuildCtx) (controller.Controller, error) {
+		Build: func(_ registry.BuildCtx, _ []schema.GroupVersionKind) (controller.Controller, error) {
 			buildCount++
 			return nil, nil
 		},
@@ -271,6 +273,168 @@ func TestCoordinator_ConcurrentRunGate(t *testing.T) {
 		}()
 	}
 	wg.Wait()
+}
+
+// ---- OnGVKServable tests ---------------------------------------------------
+
+func TestOnGVKServable_ActivatesPendingEntry(t *testing.T) {
+	coord := &registry.Coordinator{}
+	coord.Add(registry.Entry{
+		Package:  "elbconfig",
+		Required: []schema.GroupVersionKind{awsGVK("ELBConfig"), awsGVK("KropathConfig")},
+		Build:    noopBuild,
+	})
+	// Startup: KropathConfig present but ELBConfig absent → elbconfig pending.
+	served := map[schema.GroupVersionKind]bool{awsGVK("KropathConfig"): true}
+	if err := coord.RunGate(testBuildCtx(), served); err != nil {
+		t.Fatalf("RunGate error: %v", err)
+	}
+	if coord.ActivePackages()["elbconfig"] {
+		t.Fatal("elbconfig should be pending after startup")
+	}
+
+	// CRD watcher signals ELBConfig is now served.
+	if err := coord.OnGVKServable(testBuildCtx(), awsGVK("ELBConfig")); err != nil {
+		t.Fatalf("OnGVKServable error: %v", err)
+	}
+	if !coord.ActivePackages()["elbconfig"] {
+		t.Error("elbconfig should be active after ELBConfig CRD arrives")
+	}
+}
+
+func TestOnGVKServable_DoubleRegistration_IsNoop(t *testing.T) {
+	buildCount := 0
+	coord := &registry.Coordinator{}
+	coord.Add(registry.Entry{
+		Package:  "elbconfig",
+		Required: []schema.GroupVersionKind{awsGVK("ELBConfig"), awsGVK("KropathConfig")},
+		Build: func(_ registry.BuildCtx, _ []schema.GroupVersionKind) (controller.Controller, error) {
+			buildCount++
+			return nil, nil
+		},
+	})
+	served := map[schema.GroupVersionKind]bool{awsGVK("KropathConfig"): true}
+	if err := coord.RunGate(testBuildCtx(), served); err != nil {
+		t.Fatalf("RunGate error: %v", err)
+	}
+
+	// Signal ELBConfig twice — Build must only run once.
+	if err := coord.OnGVKServable(testBuildCtx(), awsGVK("ELBConfig")); err != nil {
+		t.Fatalf("first OnGVKServable error: %v", err)
+	}
+	if err := coord.OnGVKServable(testBuildCtx(), awsGVK("ELBConfig")); err != nil {
+		t.Fatalf("second OnGVKServable error: %v", err)
+	}
+	if buildCount != 1 {
+		t.Errorf("Build should be called exactly once, got %d", buildCount)
+	}
+}
+
+func TestOnGVKServable_AttachesOptionalToActiveEntry(t *testing.T) {
+	watchCalls := 0
+	coord := &registry.Coordinator{}
+	coord.Add(registry.Entry{
+		Package:  "policydocument",
+		Required: []schema.GroupVersionKind{awsGVK("PolicyDocument"), awsGVK("KropathConfig")},
+		Optional: []schema.GroupVersionKind{awsGVK("AWSLambdaFunction")},
+		Build:    noopBuild,
+		AddKindWatch: func(_ controller.Controller, _ schema.GroupVersionKind) error {
+			watchCalls++
+			return nil
+		},
+	})
+	// Both Required served at startup → policydocument active.
+	served := map[schema.GroupVersionKind]bool{
+		awsGVK("PolicyDocument"): true,
+		awsGVK("KropathConfig"):  true,
+	}
+	if err := coord.RunGate(testBuildCtx(), served); err != nil {
+		t.Fatalf("RunGate error: %v", err)
+	}
+	if !coord.ActivePackages()["policydocument"] {
+		t.Fatal("policydocument should be active")
+	}
+
+	// Optional kind arrives later.
+	if err := coord.OnGVKServable(testBuildCtx(), awsGVK("AWSLambdaFunction")); err != nil {
+		t.Fatalf("OnGVKServable error: %v", err)
+	}
+	if watchCalls != 1 {
+		t.Errorf("AddKindWatch should be called once, got %d", watchCalls)
+	}
+
+	// Calling again should be a no-op.
+	if err := coord.OnGVKServable(testBuildCtx(), awsGVK("AWSLambdaFunction")); err != nil {
+		t.Fatalf("second OnGVKServable error: %v", err)
+	}
+	if watchCalls != 1 {
+		t.Errorf("AddKindWatch should not be called again, got %d total", watchCalls)
+	}
+}
+
+// ---- ReconcilerState tests -------------------------------------------------
+
+func TestReconcilerState_ActiveEntry(t *testing.T) {
+	coord := &registry.Coordinator{}
+	coord.Add(registry.Entry{
+		Package:  "s3config",
+		Required: []schema.GroupVersionKind{awsGVK("S3Config"), awsGVK("KropathConfig")},
+		Build:    noopBuild,
+	})
+	served := map[schema.GroupVersionKind]bool{
+		awsGVK("KropathConfig"): true,
+		awsGVK("S3Config"):      true,
+	}
+	if err := coord.RunGate(testBuildCtx(), served); err != nil {
+		t.Fatalf("RunGate error: %v", err)
+	}
+	state, missing := coord.ReconcilerState("s3config")
+	if state != "active" {
+		t.Errorf("state: got %q, want active", state)
+	}
+	if len(missing) != 0 {
+		t.Errorf("missingKinds: got %v, want empty", missing)
+	}
+}
+
+func TestReconcilerState_PendingEntry(t *testing.T) {
+	coord := &registry.Coordinator{}
+	coord.Add(registry.Entry{
+		Package:  "elbconfig",
+		Required: []schema.GroupVersionKind{awsGVK("ELBConfig"), awsGVK("KropathConfig")},
+		Build:    noopBuild,
+	})
+	served := map[schema.GroupVersionKind]bool{awsGVK("KropathConfig"): true}
+	if err := coord.RunGate(testBuildCtx(), served); err != nil {
+		t.Fatalf("RunGate error: %v", err)
+	}
+	state, missing := coord.ReconcilerState("elbconfig")
+	if state != "pending" {
+		t.Errorf("state: got %q, want pending", state)
+	}
+	if len(missing) == 0 {
+		t.Error("missingKinds should not be empty for pending entry")
+	}
+	found := false
+	for _, k := range missing {
+		if k == "ELBConfig" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("missingKinds should contain ELBConfig, got %v", missing)
+	}
+}
+
+func TestReconcilerState_UnknownPackage(t *testing.T) {
+	coord := &registry.Coordinator{}
+	state, missing := coord.ReconcilerState("doesnotexist")
+	if state != "" {
+		t.Errorf("state: got %q, want empty string", state)
+	}
+	if len(missing) != 0 {
+		t.Errorf("missingKinds: got %v, want nil", missing)
+	}
 }
 
 // ---- Registry completeness: every entry declares Required/Optional ---------

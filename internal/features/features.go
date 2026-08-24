@@ -29,6 +29,13 @@ type Reconciler struct {
 	SinceVersion string `json:"sinceVersion" yaml:"sinceVersion"`
 	// Stability is one of "alpha", "beta", or "stable".
 	Stability string `json:"stability" yaml:"stability"`
+	// State is "active" when the reconciler is running or "pending" when one or more
+	// required CRDs are not yet installed. Omitted when the coordinator is unavailable
+	// (e.g. the offline `features` subcommand).
+	State string `json:"state,omitempty" yaml:"state,omitempty"`
+	// MissingKinds lists the required CRD kinds not yet served, populated only when
+	// State is "pending". Omitted when empty or when the coordinator is unavailable.
+	MissingKinds []string `json:"missingKinds,omitempty" yaml:"missingKinds,omitempty"`
 }
 
 // cascade builds the entry for a standard <Family>Config cascade reconciler.
