@@ -36,7 +36,10 @@
 - Health probes: `/healthz` port 8081 (manager alive), `/readyz` port 8081 (leader lease + watches established)
 - `/features` endpoint on `:8080` — returns version, git commit, and the live reconciler list as JSON
 - **No per-feature flags.** Every reconciler in `internal/features.All` runs unconditionally. To add a reconciler: create its package under `internal/reconciler/<pkg>/`, add an entry to `features.All`, and run `make features-gen`. Missing registrations fail `TestRegistryCoversAllPackages`.
-- **Every watched kind must have a CRD in `tests/fixtures/crds/`.** With the flags retired, a reconciler whose CRD is missing from the test cluster takes down the **whole manager** two minutes after startup, which surfaces as unrelated Chainsaw suites timing out. `TestEveryReconcilerHasCRDFixture` catches it at unit-test time; `make chainsaw-setup` derives its `kubectl wait` list from the fixture directory. See `docs/frequent-chainsaw-errors.md` §1.
+- **Every watched kind must have a CRD in `tests/fixtures/crds/` or `tests/fixtures/crds-optional/`.** A reconciler whose CRD is missing from the test cluster takes down the **whole manager** two minutes after startup, surfacing as unrelated Chainsaw suites timing out. `TestEveryReconcilerHasCRDFixture` catches this at unit-test time by scanning both directories. See `docs/frequent-chainsaw-errors.md` §1.
+  - **`tests/fixtures/crds/`** — the default. `make chainsaw-setup` applies everything here and derives its `kubectl wait` list from this directory only.
+  - **`tests/fixtures/crds-optional/`** — for CRDs that dynamic-detection suites need **absent at operator startup**. `chainsaw-setup` does NOT apply these. A suite installs one on demand via `make chainsaw-install-optional-crd CRD_FILE=<path>`.
+  - When in doubt, put the fixture in `crds/`. Only use `crds-optional/` when a suite explicitly requires the CRD to be missing when the manager starts.
 
 ### Chainsaw tests
 
