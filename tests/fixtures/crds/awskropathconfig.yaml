@@ -181,6 +181,24 @@ spec:
               message: "emr.releaseLabel cannot be set in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.emr) && self.spec.mandatory.emr.architecture != "" && has(self.spec.defaults.emr) && self.spec.defaults.emr.architecture != "")'
               message: "emr.architecture cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.glue) && self.spec.mandatory.glue.glueVersion != "" && has(self.spec.defaults.glue) && self.spec.defaults.glue.glueVersion != "")'
+              message: "glue.glueVersion cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.glue) && self.spec.mandatory.glue.workerType != "" && has(self.spec.defaults.glue) && self.spec.defaults.glue.workerType != "")'
+              message: "glue.workerType cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.glue) && self.spec.mandatory.glue.executionClass != "" && has(self.spec.defaults.glue) && self.spec.defaults.glue.executionClass != "")'
+              message: "glue.executionClass cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.glue) && self.spec.mandatory.glue.securityConfiguration != "" && has(self.spec.defaults.glue) && self.spec.defaults.glue.securityConfiguration != "")'
+              message: "glue.securityConfiguration cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.glue) && self.spec.mandatory.glue.numberOfWorkers > 0 && has(self.spec.defaults.glue) && self.spec.defaults.glue.numberOfWorkers > 0)'
+              message: "glue.numberOfWorkers cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.glue) && self.spec.mandatory.glue.timeout > 0 && has(self.spec.defaults.glue) && self.spec.defaults.glue.timeout > 0)'
+              message: "glue.timeout cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.glue) && self.spec.mandatory.glue.maxRetries > 0 && has(self.spec.defaults.glue) && self.spec.defaults.glue.maxRetries > 0)'
+              message: "glue.maxRetries cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.glue) && self.spec.mandatory.glue.maxConcurrentRuns > 0 && has(self.spec.defaults.glue) && self.spec.defaults.glue.maxConcurrentRuns > 0)'
+              message: "glue.maxConcurrentRuns cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.glue) && self.spec.mandatory.glue.notifyDelayAfter > 0 && has(self.spec.defaults.glue) && self.spec.defaults.glue.notifyDelayAfter > 0)'
+              message: "glue.notifyDelayAfter cannot be set in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.elb) && self.spec.mandatory.elb.deletionProtection == true && has(self.spec.defaults.elb) && self.spec.defaults.elb.deletionProtection == true)'
               message: "elb.deletionProtection cannot be set to true in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.elb) && self.spec.mandatory.elb.accessLogsEnabled == true && has(self.spec.defaults.elb) && self.spec.defaults.elb.accessLogsEnabled == true)'
@@ -657,6 +675,42 @@ spec:
                           items:
                             type: string
                         backupRetentionPeriod:
+                          type: integer
+                          format: int64
+                          default: 0
+                    glue:
+                      type: object
+                      default: {}
+                      properties:
+                        glueVersion:
+                          type: string
+                          default: ""
+                        workerType:
+                          type: string
+                          default: ""
+                        numberOfWorkers:
+                          type: integer
+                          format: int64
+                          default: 0
+                        executionClass:
+                          type: string
+                          default: ""
+                        timeout:
+                          type: integer
+                          format: int64
+                          default: 0
+                        maxRetries:
+                          type: integer
+                          format: int64
+                          default: 0
+                        maxConcurrentRuns:
+                          type: integer
+                          format: int64
+                          default: 0
+                        securityConfiguration:
+                          type: string
+                          default: ""
+                        notifyDelayAfter:
                           type: integer
                           format: int64
                           default: 0
@@ -1148,6 +1202,42 @@ spec:
                           items:
                             type: string
                         backupRetentionPeriod:
+                          type: integer
+                          format: int64
+                          default: 0
+                    glue:
+                      type: object
+                      default: {}
+                      properties:
+                        glueVersion:
+                          type: string
+                          default: ""
+                        workerType:
+                          type: string
+                          default: ""
+                        numberOfWorkers:
+                          type: integer
+                          format: int64
+                          default: 0
+                        executionClass:
+                          type: string
+                          default: ""
+                        timeout:
+                          type: integer
+                          format: int64
+                          default: 0
+                        maxRetries:
+                          type: integer
+                          format: int64
+                          default: 0
+                        maxConcurrentRuns:
+                          type: integer
+                          format: int64
+                          default: 0
+                        securityConfiguration:
+                          type: string
+                          default: ""
+                        notifyDelayAfter:
                           type: integer
                           format: int64
                           default: 0

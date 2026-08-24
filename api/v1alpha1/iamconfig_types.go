@@ -72,6 +72,7 @@ type KropathConfigTier struct {
 	CertificateManager cascade.ACMKropathSection             `json:"certificateManager,omitempty"`
 	EMR               cascade.EMRKropathSection               `json:"emr,omitempty"`
 	DocumentDB        cascade.DocumentDBKropathSection        `json:"documentdb,omitempty"`
+	Glue              cascade.GlueKropathSection              `json:"glue,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
@@ -465,6 +466,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.DocumentDB.Tags = make(map[string]string, len(in.Spec.Defaults.DocumentDB.Tags))
 		for k, v := range in.Spec.Defaults.DocumentDB.Tags {
 			out.Spec.Defaults.DocumentDB.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.Glue.Tags != nil {
+		out.Spec.Mandatory.Glue.Tags = make(map[string]string, len(in.Spec.Mandatory.Glue.Tags))
+		for k, v := range in.Spec.Mandatory.Glue.Tags {
+			out.Spec.Mandatory.Glue.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.Glue.Tags != nil {
+		out.Spec.Defaults.Glue.Tags = make(map[string]string, len(in.Spec.Defaults.Glue.Tags))
+		for k, v := range in.Spec.Defaults.Glue.Tags {
+			out.Spec.Defaults.Glue.Tags[k] = v
 		}
 	}
 	if in.Spec.Mandatory.SyncedLabels != nil {

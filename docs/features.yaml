@@ -230,3 +230,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: GlueConfig
+      package: glueconfig
+      description: Reconciles GlueConfig CRs and propagates effective config.
+      kinds:
+        - GlueConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable
