@@ -67,6 +67,7 @@ CHAINSAW_FLAGS   := --parallel 1 --report-format JUNIT-TEST --report-path $(REPO
         test-ecr test-ecs test-efs test-eks test-elasticache test-eventbridge \
         test-rds test-secretsmanager test-sns test-sqs test-stepfunctions \
         test-version test-features \
+        test-dyn-01 test-dyn-02 test-dyn-03 test-dyn \
         test-chainsaw \
         install-tools gosec vulncheck security \
         help default
@@ -352,12 +353,43 @@ test-features: ## Run /features endpoint Chainsaw suite (ctrl-features-01).
 	@mkdir -p $(REPORT_DIR)
 	$(CHAINSAW) test tests/features/ctrl-features-01/ $(CHAINSAW_FLAGS)
 
+test-dyn-01: ## Run dynamic CRD detection suite 01 — operator starts with ELBConfig CRD absent.
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/ctrl-dyn-01/ $(CHAINSAW_FLAGS)
+
+test-dyn-02: ## Run dynamic CRD detection suite 02 — install ELBConfig CRD, reconciler activates.
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/ctrl-dyn-02/ $(CHAINSAW_FLAGS)
+
+test-dyn-03: ## Run dynamic CRD detection suite 03 — delete and reinstall ELBConfig CRD.
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/ctrl-dyn-03/ $(CHAINSAW_FLAGS)
+
+test-dyn: ## Run dynamic CRD detection suites 01 → 02 → 03 in the required order.
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/ctrl-dyn-01/ $(CHAINSAW_FLAGS)
+	$(CHAINSAW) test tests/ctrl-dyn-02/ $(CHAINSAW_FLAGS)
+	$(CHAINSAW) test tests/ctrl-dyn-03/ $(CHAINSAW_FLAGS)
+
 test-chainsaw: chainsaw-stop chainsaw-start chainsaw-wait ## Stop any stale controller, start fresh, run ALL Chainsaw suites, then stop it.
 	@mkdir -p $(REPORT_DIR)
-	$(CHAINSAW) test tests/     $(CHAINSAW_FLAGS)
-# 	$(CHAINSAW) test tests/s3/ctrl-s3-01/       $(CHAINSAW_FLAGS)
-# 	$(CHAINSAW) test tests/kms/ctrl-kms-01/     $(CHAINSAW_FLAGS)
-# 	$(CHAINSAW) test tests/policy/phase2-refs/ tests/policy/phase3-merge/ $(CHAINSAW_FLAGS)
+	# ctrl-dyn suites have strict ordering: 01 → 02 → 03.
+	# ctrl-dyn-01 requires ELBConfig CRD absent (pending state).
+	# ctrl-dyn-02 installs the CRD; ctrl-dyn-03 requires it already present.
+	# Run each as a separate chainsaw invocation to guarantee FIFO execution.
+	$(CHAINSAW) test tests/ctrl-dyn-01/ $(CHAINSAW_FLAGS)
+	$(CHAINSAW) test tests/ctrl-dyn-02/ $(CHAINSAW_FLAGS)
+	$(CHAINSAW) test tests/ctrl-dyn-03/ $(CHAINSAW_FLAGS)
+	# All remaining suites are order-independent.
+	$(CHAINSAW) test \
+		tests/acm/ tests/apigateway/ tests/apigatewayv2/ tests/autoscaling/ \
+		tests/cloudwatch/ tests/cloudwatchlogs/ tests/dynamodb/ tests/ec2/ \
+		tests/ecr/ tests/ecs/ tests/efs/ tests/eks/ tests/elasticache/ \
+		tests/emr/ tests/eventbridge/ tests/features/ tests/iam/ tests/kms/ \
+		tests/label-operator/ tests/memorydb/ tests/msk/ tests/policy/ \
+		tests/rds/ tests/s3/ tests/secretsmanager/ tests/sns/ tests/sqs/ \
+		tests/stepfunctions/ tests/version/ \
+		$(CHAINSAW_FLAGS)
 	$(MAKE) chainsaw-stop
 
 # ─── Tool installation ─────────────────────────────────────────────────────────

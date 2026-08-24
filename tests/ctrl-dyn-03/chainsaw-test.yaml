@@ -1,0 +1,99 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-dyn-03 Chainsaw integration tests — CRD removal resilience (AC-5, AC-6).
+#
+# Requires ctrl-dyn-02 to have completed successfully, meaning the ELBConfig CRD
+# is installed and the elbconfig reconciler is active.
+#
+# AC-5: Deleting the ELBConfig CRD does NOT crash the operator — /healthz and
+#   /readyz continue returning 200.
+# AC-6: Reinstalling the ELBConfig CRD causes the elbconfig reconciler to resume
+#   reconciliation — an ELBConfig CR gets effectiveConfig populated.
+#
+# Health and metrics ports:
+#   /healthz, /readyz → 127.0.0.1:18081  (HEALTH_PORT in Makefile)
+#   /metrics          → 127.0.0.1:8080
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-dyn-03
+spec:
+  description: "CRD removal resilience — delete and reinstall ELBConfig CRD (ctrl-dyn-03)"
+  steps:
+    # AC-5: Delete the ELBConfig CRD; operator must remain healthy.
+    - name: ac5-delete-elbconfig-crd-operator-survives
+      try:
+        - script:
+            timeout: 60s
+            content: |
+              set -e
+
+              # Delete the ELBConfig CRD (and all ELBConfig CRs with it).
+              kubectl delete crd elbconfigs.aws.kropath.run --wait=true --timeout=30s
+              echo "ELBConfig CRD deleted"
+
+              # Allow a brief moment for the informer to react.
+              sleep 2
+
+              # /healthz must still return 200 after CRD deletion.
+              healthz=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18081/healthz)
+              if [ "$healthz" != "200" ]; then
+                echo "FAIL: /healthz returned HTTP $healthz after CRD deletion"
+                exit 1
+              fi
+              echo "PASS: /healthz → $healthz after CRD deletion"
+
+              # /readyz must still return 200 after CRD deletion.
+              readyz=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18081/readyz)
+              if [ "$readyz" != "200" ]; then
+                echo "FAIL: /readyz returned HTTP $readyz after CRD deletion"
+                exit 1
+              fi
+              echo "PASS: /readyz → $readyz after CRD deletion"
+
+    # AC-6: Reinstall ELBConfig CRD and verify reconciliation resumes.
+    - name: ac6-reinstall-elbconfig-crd-reconciliation-resumes
+      try:
+        - script:
+            timeout: 120s
+            content: |
+              set -e
+
+              # Reinstall the ELBConfig CRD.
+              kubectl apply -f ../fixtures/crds-optional/awselbconfig.yaml
+              kubectl wait crd/elbconfigs.aws.kropath.run \
+                --for=condition=Established --timeout=60s
+              echo "ELBConfig CRD reinstalled and Established"
+
+              # Poll /metrics until elbconfig reconciler is active again.
+              for i in $(seq 1 30); do
+                metrics=$(curl -fsS http://127.0.0.1:8080/metrics)
+                if echo "$metrics" | grep -q 'kropath_reconciler_active{package="elbconfig"} 1'; then
+                  echo "PASS: elbconfig reconciler reactivated on iteration $i"
+                  break
+                fi
+                if [ "$i" -eq 30 ]; then
+                  echo "FAIL: elbconfig reconciler did not reactivate within 30s after reinstall"
+                  echo "$metrics" | grep elbconfig || echo "(no elbconfig lines)"
+                  exit 1
+                fi
+                sleep 1
+              done
+
+        - apply:
+            file: ac06-setup.yaml
+        - assert:
+            file: ac06-assert.yaml
+            timeout: 60s

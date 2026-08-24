@@ -103,18 +103,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	// /features endpoint: returns version + live reconciler list as JSON.
-	if err := mgr.AddMetricsServerExtraHandler("/features", features.Handler(
-		version.Version, version.GitCommit, version.BuildDate, goruntime.Version(), features.All,
-	)); err != nil {
-		ctrl.Log.Error(err, "unable to register /features handler")
-		os.Exit(1)
-	}
-
 	// Build the reconciler registry and gate each entry on CRD availability.
 	// Entries whose Required GVKs are all served become active immediately.
-	// Entries with missing Required GVKs stay pending (KRO-849 adds a watcher
-	// to promote them when the CRD later appears).
+	// Entries with missing Required GVKs stay pending; the CRD watcher (KRO-849)
+	// promotes them when their CRD later appears.
 	dc, err := discovery.NewDiscoveryClientForConfig(restCfg)
 	if err != nil {
 		ctrl.Log.Error(err, "unable to create discovery client")
@@ -136,6 +128,20 @@ func main() {
 	}
 	if err := coord.RunGate(bctx, servedGVKs); err != nil {
 		ctrl.Log.Error(err, "startup gate failed")
+		os.Exit(1)
+	}
+
+	// /features endpoint: returns version + live reconciler list with per-reconciler state.
+	if err := mgr.AddMetricsServerExtraHandler("/features", features.Handler(
+		version.Version, version.GitCommit, version.BuildDate, goruntime.Version(), features.All, coord,
+	)); err != nil {
+		ctrl.Log.Error(err, "unable to register /features handler")
+		os.Exit(1)
+	}
+
+	// CRD watcher: activates pending reconcilers when their CRDs arrive at runtime.
+	if err := mgr.Add(registry.NewWatcher(coord, bctx)); err != nil {
+		ctrl.Log.Error(err, "unable to add CRD watcher")
 		os.Exit(1)
 	}
 

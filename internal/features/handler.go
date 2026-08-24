@@ -9,6 +9,12 @@ import (
 	"net/http"
 )
 
+// StateReader provides per-reconciler runtime state from the coordinator.
+// Implemented by *registry.Coordinator; defined here to avoid an import cycle.
+type StateReader interface {
+	ReconcilerState(pkg string) (state string, missingKinds []string)
+}
+
 // Response is the JSON body served by GET /features and printed by "kropath-operator features".
 // The Features field uses the package name as the query key for ?name= filtering.
 type Response struct {
@@ -21,33 +27,62 @@ type Response struct {
 
 // Handler returns an http.Handler for the /features endpoint.
 //
-// The full response body is computed once at call time from the supplied version
-// info and reconciler list. Only GET and HEAD are accepted; any other method
-// returns 405 with a JSON error body and an Allow header. A ?name=<pkg> query
-// parameter filters the response to the single reconciler whose Package matches
-// exactly; an unknown package returns 404 with a JSON error body.
-func Handler(ver, gitCommit, buildDate, goVersion string, all []Reconciler) http.Handler {
+// When sr is non-nil, State and MissingKinds are populated per-request from the
+// live coordinator. When sr is nil (e.g. the offline "features" subcommand), the
+// fields are omitted. Only GET and HEAD are accepted; any other method returns 405
+// with a JSON error body and an Allow header. A ?name=<pkg> query parameter filters
+// the response to the single reconciler whose Package matches exactly; an unknown
+// package returns 404 with a JSON error body.
+func Handler(ver, gitCommit, buildDate, goVersion string, all []Reconciler, sr StateReader) http.Handler {
 	// Normalise nil so marshaling produces [] rather than null.
 	if all == nil {
 		all = []Reconciler{}
-	}
-
-	full, err := json.Marshal(Response{
-		Version:   ver,
-		GitCommit: gitCommit,
-		BuildDate: buildDate,
-		GoVersion: goVersion,
-		Features:  all,
-	})
-	if err != nil {
-		// All fields are strings and string slices — marshaling cannot fail.
-		panic(fmt.Sprintf("features.Handler: marshal: %v", err))
 	}
 
 	// Pre-index by Package for O(1) lookup on ?name= queries.
 	byPkg := make(map[string]Reconciler, len(all))
 	for _, r := range all {
 		byPkg[r.Package] = r
+	}
+
+	// buildFeatures returns a fresh slice with state populated when sr != nil.
+	buildFeatures := func(base []Reconciler) []Reconciler {
+		if sr == nil {
+			return base
+		}
+		out := make([]Reconciler, len(base))
+		copy(out, base)
+		for i := range out {
+			out[i].State, out[i].MissingKinds = sr.ReconcilerState(out[i].Package)
+		}
+		return out
+	}
+
+	// When there is no coordinator, pre-marshal the static response once.
+	var staticFull []byte
+	if sr == nil {
+		var err error
+		staticFull, err = json.Marshal(Response{
+			Version:   ver,
+			GitCommit: gitCommit,
+			BuildDate: buildDate,
+			GoVersion: goVersion,
+			Features:  all,
+		})
+		if err != nil {
+			panic(fmt.Sprintf("features.Handler: marshal: %v", err))
+		}
+	}
+
+	marshalResponse := func(feats []Reconciler) []byte {
+		b, _ := json.Marshal(Response{
+			Version:   ver,
+			GitCommit: gitCommit,
+			BuildDate: buildDate,
+			GoVersion: goVersion,
+			Features:  feats,
+		})
+		return b
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -66,23 +101,24 @@ func Handler(ver, gitCommit, buildDate, goVersion string, all []Reconciler) http
 			if !ok {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusNotFound)
-					notFound, _ := json.Marshal(map[string]string{"error": "feature " + name + " not found"})
-			_, _ = w.Write(notFound)
+				notFound, _ := json.Marshal(map[string]string{"error": "feature " + name + " not found"})
+				_, _ = w.Write(notFound)
 				return
 			}
-			body, _ := json.Marshal(Response{
-				Version:   ver,
-				GitCommit: gitCommit,
-				BuildDate: buildDate,
-				GoVersion: goVersion,
-				Features:  []Reconciler{rec},
-			})
+			if sr != nil {
+				rec.State, rec.MissingKinds = sr.ReconcilerState(rec.Package)
+			}
+			body := marshalResponse([]Reconciler{rec})
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write(body)
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write(full)
+		if sr == nil {
+			_, _ = w.Write(staticFull)
+			return
+		}
+		_, _ = w.Write(marshalResponse(buildFeatures(all)))
 	})
 }

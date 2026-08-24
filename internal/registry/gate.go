@@ -60,35 +60,63 @@ func (c *Coordinator) RunGate(bctx BuildCtx, servedGVKs map[schema.GroupVersionK
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	// Seed the coordinator's runtime GVK set from the startup discovery snapshot.
+	if c.servedGVKs == nil {
+		c.servedGVKs = make(map[schema.GroupVersionKind]bool, len(servedGVKs))
+	}
+	for gvk, ok := range servedGVKs {
+		if ok {
+			c.servedGVKs[gvk] = true
+		}
+	}
+
 	for i := range c.entries {
 		es := &c.entries[i]
 		if es.active {
 			continue
 		}
 
-		missing := 0
+		var missingKindNames []string
 		for _, gvk := range es.entry.Required {
 			if !servedGVKs[gvk] {
-				missing++
+				missingKindNames = append(missingKindNames, gvk.Kind)
 			}
 		}
+		es.missingKindNames = missingKindNames
 
-		reconcilerMissingKinds.WithLabelValues(es.entry.Package).Set(float64(missing))
+		reconcilerMissingKinds.WithLabelValues(es.entry.Package).Set(float64(len(missingKindNames)))
 
-		if missing > 0 {
+		if len(missingKindNames) > 0 {
 			reconcilerActive.WithLabelValues(es.entry.Package).Set(0)
 			bctx.Log.Info("reconciler pending: required CRDs not yet served",
 				"package", es.entry.Package,
-				"missingCount", missing)
+				"missingCount", len(missingKindNames),
+				"missing", missingKindNames)
 			continue
 		}
 
-		handle, err := es.entry.Build(bctx)
+		// All Required served — compute which Optional are also served.
+		var servedOptional []schema.GroupVersionKind
+		for _, opt := range es.entry.Optional {
+			if servedGVKs[opt] {
+				servedOptional = append(servedOptional, opt)
+			}
+		}
+
+		handle, err := es.entry.Build(bctx, servedOptional)
 		if err != nil {
 			return fmt.Errorf("registry: building %s: %w", es.entry.Package, err)
 		}
 		es.handle = handle
 		es.active = true
+
+		if len(servedOptional) > 0 {
+			es.attachedOptional = make(map[schema.GroupVersionKind]bool, len(servedOptional))
+			for _, opt := range servedOptional {
+				es.attachedOptional[opt] = true
+			}
+		}
+
 		reconcilerActive.WithLabelValues(es.entry.Package).Set(1)
 	}
 	return nil
