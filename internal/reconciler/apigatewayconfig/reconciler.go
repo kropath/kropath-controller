@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 )
@@ -59,6 +60,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
+	_, err := r.BuildWithManager(mgr)
+	return err
+}
+
+func (r *Reconciler) BuildWithManager(mgr ctrl.Manager) (controller.Controller, error) {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.APIGatewayConfig{}).
 		Watches(
@@ -69,7 +75,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 			&v1alpha1.KropathConfig{},
 			handler.EnqueueRequestsFromMapFunc(r.requestsForKropathConfigChange),
 		).
-		Complete(r)
+		Build(r)
 }
 
 func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.APIGatewayConfig) (bool, ctrl.Result, error) {

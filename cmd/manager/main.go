@@ -15,37 +15,11 @@ import (
 
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/features"
-	"github.com/kropath/kropath-controller/internal/reconciler/apigatewayconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/apigatewayv2config"
-	"github.com/kropath/kropath-controller/internal/reconciler/autoscalingconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/cloudwatchconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/cloudwatchlogsconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/dynamodbconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/ec2config"
-	"github.com/kropath/kropath-controller/internal/reconciler/ecrconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/ecsconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/efsconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/eksconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/elasticacheconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/elbconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/acmconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/emrconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/memorydbconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/eventbridgeconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/iamconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/kmsconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/labeloperator"
-	"github.com/kropath/kropath-controller/internal/reconciler/policydocument"
-	"github.com/kropath/kropath-controller/internal/reconciler/rdsconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/s3config"
-	"github.com/kropath/kropath-controller/internal/reconciler/secretsmanagerconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/snsconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/sqsconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/mskconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/stepfunctionsconfig"
+	"github.com/kropath/kropath-controller/internal/registry"
 	"github.com/kropath/kropath-controller/internal/version"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/discovery"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -114,7 +88,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	restCfg := ctrl.GetConfigOrDie()
+
+	mgr, err := ctrl.NewManager(restCfg, ctrl.Options{
 		Scheme:                  sch,
 		Metrics:                 server.Options{BindAddress: metricsAddr},
 		HealthProbeBindAddress:  probeAddr,
@@ -135,248 +111,31 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Every reconciler runs unconditionally — no per-feature flags.
-	if err := (&iamconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("IAMConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create IAM config controller")
+	// Build the reconciler registry and gate each entry on CRD availability.
+	// Entries whose Required GVKs are all served become active immediately.
+	// Entries with missing Required GVKs stay pending (KRO-849 adds a watcher
+	// to promote them when the CRD later appears).
+	dc, err := discovery.NewDiscoveryClientForConfig(restCfg)
+	if err != nil {
+		ctrl.Log.Error(err, "unable to create discovery client")
+		os.Exit(1)
+	}
+	servedGVKs, err := registry.GatherServedGVKs(dc)
+	if err != nil {
+		ctrl.Log.Error(err, "unable to discover served GVKs")
 		os.Exit(1)
 	}
 
-	if err := (&s3config.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("S3Config"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create S3 config controller")
-		os.Exit(1)
+	coord := &registry.Coordinator{}
+	for _, e := range registry.All() {
+		coord.Add(e)
 	}
-
-	if err := (&policydocument.Reconciler{Client: mgr.GetClient()}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create PolicyDocument reconciler")
-		os.Exit(1)
+	bctx := registry.BuildCtx{
+		Manager: mgr,
+		Log:     ctrl.Log,
 	}
-
-	if err := (&kmsconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("KMSConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create KMSConfig reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&sqsconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("SQSConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create SQSConfig reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&secretsmanagerconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("SecretsManagerConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create SecretsManagerConfig reconciler")
-		os.Exit(1)
-	}
-
-	if err := labeloperator.Setup(mgr, ctrl.Log.WithName("controllers").WithName("LabelOperator")); err != nil {
-		ctrl.Log.Error(err, "unable to setup label-operator")
-		os.Exit(1)
-	}
-
-	if err := (&snsconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("SNSConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create SNSConfig reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&dynamodbconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("DynamoDBConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create DynamoDBConfig reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&eventbridgeconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("EventBridgeConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create EventBridgeConfig reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&cloudwatchlogsconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("CloudWatchLogsConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create CloudWatchLogsConfig reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&cloudwatchconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("CloudWatchConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create CloudWatchConfig reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&elbconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("AWSELBConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create AWSELBConfig reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&rdsconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("RDSConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create RDSConfig reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&autoscalingconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("AutoScalingConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create AutoScalingConfig reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&ecsconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("ECSConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create ECSConfig reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&eksconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("EKSConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create EKSConfig reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&ec2config.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("EC2Config"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create EC2Config reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&apigatewayv2config.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("ApiGatewayV2Config"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create ApiGatewayV2Config reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&apigatewayconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("APIGatewayConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create APIGatewayConfig reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&efsconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("EFSConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create EFSConfig reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&elasticacheconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("ElastiCacheConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create ElastiCacheConfig reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&ecrconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("ECRConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create ECRConfig reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&stepfunctionsconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("StepFunctionsConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create StepFunctionsConfig reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&mskconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("MSKConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create MSKConfig reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&memorydbconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("MemoryDBConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create MemoryDBConfig reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&acmconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("ACMConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create ACMConfig reconciler")
-		os.Exit(1)
-	}
-
-	if err := (&emrconfig.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("EMRConfig"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		ctrl.Log.Error(err, "unable to create EMRConfig reconciler")
+	if err := coord.RunGate(bctx, servedGVKs); err != nil {
+		ctrl.Log.Error(err, "startup gate failed")
 		os.Exit(1)
 	}
 

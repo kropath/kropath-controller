@@ -14,7 +14,7 @@
 
 CHAINSAW ?= chainsaw
 
-.PHONY: setup test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigateway test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-msk test-memorydb test-acm test-emr test-version test-features test-all
+.PHONY: setup test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigateway test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-msk test-memorydb test-acm test-emr test-version test-features test-dyn test-all
 
 ## setup: Apply all CRDs to the cluster. Run before any test target.
 setup:
@@ -133,5 +133,11 @@ test-version:
 test-features:
 	$(CHAINSAW) test features/ctrl-features-01/
 
+## test-dyn: Run dynamic CRD detection integration tests (ctrl-dyn-01).
+## Requires the ELBConfig CRD to be ABSENT — do not run make chainsaw-install-optional-crd
+## before this target. The controller must already be running via chainsaw-start chainsaw-wait.
+test-dyn:
+	$(CHAINSAW) test ctrl-dyn-01/
+
 ## test-all: Run all integration test suites.
-test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigateway test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-msk test-memorydb test-acm test-emr test-version test-features
+test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigateway test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-msk test-memorydb test-acm test-emr test-version test-features test-dyn

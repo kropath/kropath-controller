@@ -1,0 +1,281 @@
+// Copyright 2026 kropath Authors.
+// SPDX-License-Identifier: Apache-2.0
+
+package registry
+
+import (
+	"fmt"
+
+	"github.com/kropath/kropath-controller/internal/reconciler/acmconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/apigatewayconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/apigatewayv2config"
+	"github.com/kropath/kropath-controller/internal/reconciler/autoscalingconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/cloudwatchconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/cloudwatchlogsconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/dynamodbconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/ec2config"
+	"github.com/kropath/kropath-controller/internal/reconciler/ecrconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/ecsconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/efsconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/eksconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/elasticacheconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/elbconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/emrconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/eventbridgeconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/iamconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/kmsconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/labeloperator"
+	"github.com/kropath/kropath-controller/internal/reconciler/memorydbconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/mskconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/policydocument"
+	"github.com/kropath/kropath-controller/internal/reconciler/rdsconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/s3config"
+	"github.com/kropath/kropath-controller/internal/reconciler/secretsmanagerconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/snsconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/sqsconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/stepfunctionsconfig"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
+)
+
+const awsGroup = "aws.kropath.run"
+const awsVersion = "v1alpha1"
+
+func awsGVK(kind string) schema.GroupVersionKind {
+	return schema.GroupVersionKind{Group: awsGroup, Version: awsVersion, Kind: kind}
+}
+
+// policyDocumentRefGVKs are the six optional GVKs that policydocument watches for
+// ref resolution. Commit 2 (gate) will gate some of these on CRD availability.
+var policyDocumentRefGVKs = []schema.GroupVersionKind{
+	awsGVK("AWSIAMRole"),
+	awsGVK("AWSS3Bucket"),
+	awsGVK("AWSLambdaFunction"),
+	awsGVK("AWSSQSQueue"),
+	awsGVK("AWSKMSKey"),
+	awsGVK("AWSSecretsManagerSecret"),
+}
+
+// All returns the complete registry in the same order as features.All.
+func All() []Entry {
+	return []Entry{
+		cascadeEntry("iamconfig", "IAMConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&iamconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("IAMConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("s3config", "S3Config", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&s3config.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("S3Config"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("kmsconfig", "KMSConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&kmsconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("KMSConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("sqsconfig", "SQSConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&sqsconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("SQSConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("secretsmanagerconfig", "SecretsManagerConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&secretsmanagerconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("SecretsManagerConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		// PolicyDocument watches its own kind plus six optional ref GVKs.
+		// AddKindWatch is wired in commit 2 (gate).
+		{
+			Package:      "policydocument",
+			Required:     []schema.GroupVersionKind{awsGVK("PolicyDocument"), awsGVK("KropathConfig")},
+			Optional:     policyDocumentRefGVKs,
+			AddKindWatch: nil,
+			Build: func(bctx BuildCtx) (controller.Controller, error) {
+				return (&policydocument.Reconciler{}).BuildWithManager(bctx.Manager, policyDocumentRefGVKs)
+			},
+		},
+		// LabelOperator creates multiple controllers internally; Build returns (nil, nil) on success.
+		{
+			Package:      "labeloperator",
+			Required:     nil,
+			Optional:     nil,
+			AddKindWatch: nil,
+			Build: func(bctx BuildCtx) (controller.Controller, error) {
+				if err := labeloperator.Setup(bctx.Manager, bctx.Log.WithName("controllers").WithName("LabelOperator")); err != nil {
+					return nil, fmt.Errorf("label-operator setup: %w", err)
+				}
+				return nil, nil
+			},
+		},
+		cascadeEntry("snsconfig", "SNSConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&snsconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("SNSConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("dynamodbconfig", "DynamoDBConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&dynamodbconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("DynamoDBConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("eventbridgeconfig", "EventBridgeConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&eventbridgeconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("EventBridgeConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("cloudwatchlogsconfig", "CloudWatchLogsConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&cloudwatchlogsconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("CloudWatchLogsConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("cloudwatchconfig", "CloudWatchConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&cloudwatchconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("CloudWatchConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("elbconfig", "ELBConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&elbconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("AWSELBConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("rdsconfig", "RDSConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&rdsconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("RDSConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("autoscalingconfig", "AutoScalingConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&autoscalingconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("AutoScalingConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("ecsconfig", "ECSConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&ecsconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("ECSConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("eksconfig", "EKSConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&eksconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("EKSConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("ec2config", "EC2Config", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&ec2config.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("EC2Config"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("apigatewayv2config", "ApiGatewayV2Config", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&apigatewayv2config.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("ApiGatewayV2Config"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("apigatewayconfig", "APIGatewayConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&apigatewayconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("APIGatewayConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("efsconfig", "EFSConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&efsconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("EFSConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("elasticacheconfig", "ElastiCacheConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&elasticacheconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("ElastiCacheConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("ecrconfig", "ECRConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&ecrconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("ECRConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("stepfunctionsconfig", "StepFunctionsConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&stepfunctionsconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("StepFunctionsConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("mskconfig", "MSKConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&mskconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("MSKConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("memorydbconfig", "MemoryDBConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&memorydbconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("MemoryDBConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("acmconfig", "ACMConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&acmconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("ACMConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("emrconfig", "EMRConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&emrconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("EMRConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+	}
+}
+
+// cascadeEntry builds a standard cascade reconciler entry. Every cascade reconciler
+// watches its own <Family>Config plus KropathConfig.
+func cascadeEntry(pkg, kind string, build func(BuildCtx) (controller.Controller, error)) Entry {
+	return Entry{
+		Package:      pkg,
+		Required:     []schema.GroupVersionKind{awsGVK(kind), awsGVK("KropathConfig")},
+		Optional:     nil,
+		Build:        build,
+		AddKindWatch: nil,
+	}
+}

@@ -1,0 +1,82 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-dyn-01 Chainsaw integration tests — startup gate (2 acceptance criteria).
+#
+# Requires the controller to be running with the standard CRD set applied via
+# `make chainsaw-start chainsaw-wait`. The awselbconfig.yaml CRD MUST NOT be
+# applied before this suite runs — it lives in tests/fixtures/crds-optional/
+# and is deliberately excluded from `make chainsaw-setup`.
+#
+# AC-1: Operator starts without ELBConfig CRD — /healthz and /readyz return
+#   HTTP 200, confirming the operator is healthy despite one reconciler being
+#   pending. The kropath_reconciler_active metric for elbconfig is verified to
+#   be 0 (pending), not 1 (active).
+#
+# AC-2: S3Config CR reconciles despite ELBConfig CRD absent — a new S3Config
+#   CR in payments-prod receives status.effectiveConfig from the kro-system
+#   KropathConfig, confirming that a missing CRD for one reconciler does not
+#   block reconcilers whose own Required CRDs are all served.
+#
+# Health and metrics ports:
+#   /healthz, /readyz → 127.0.0.1:18081  (HEALTH_PORT in Makefile)
+#   /metrics          → 127.0.0.1:8080   (default metrics-bind-address)
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-dyn-01
+spec:
+  description: "Startup gate — operator healthy without ELBConfig CRD, S3Config reconciles (ctrl-dyn-01)"
+  steps:
+    # AC-1: /healthz and /readyz return 200 OK; elbconfig reconciler stays pending.
+    - name: ac1-health-probes-green-elbconfig-pending
+      try:
+        - script:
+            timeout: 30s
+            content: |
+              set -e
+
+              # /healthz — manager liveness probe must return 200 OK.
+              healthz=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18081/healthz)
+              if [ "$healthz" != "200" ]; then
+                echo "FAIL: /healthz returned HTTP $healthz, expected 200"
+                exit 1
+              fi
+              echo "PASS: /healthz → $healthz"
+
+              # /readyz — manager readiness probe must return 200 OK.
+              readyz=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18081/readyz)
+              if [ "$readyz" != "200" ]; then
+                echo "FAIL: /readyz returned HTTP $readyz, expected 200"
+                exit 1
+              fi
+              echo "PASS: /readyz → $readyz"
+
+              # kropath_reconciler_active{package="elbconfig"} must be 0 (CRD absent → pending).
+              metrics=$(curl -fsS http://127.0.0.1:8080/metrics)
+              if ! echo "$metrics" | grep -q 'kropath_reconciler_active{package="elbconfig"} 0'; then
+                echo "FAIL: expected kropath_reconciler_active{package=\"elbconfig\"} 0"
+                echo "$metrics" | grep 'elbconfig' || echo "(no elbconfig lines in /metrics)"
+                exit 1
+              fi
+              echo "PASS: elbconfig reconciler is pending (active=0)"
+
+    # AC-2: S3Config CR gets effectiveConfig even though ELBConfig CRD is absent.
+    - name: ac2-s3config-reconciles-elbconfig-crd-absent
+      try:
+        - apply:
+            file: ac02-setup.yaml
+        - assert:
+            file: ac02-assert.yaml
+            timeout: 30s

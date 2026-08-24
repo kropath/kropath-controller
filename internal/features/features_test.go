@@ -499,35 +499,50 @@ func TestEveryReconcilerHasCompleteMetadata(t *testing.T) {
 	}
 }
 
-// wiredRE matches the two shapes main.go uses to start a reconciler:
-// `&<pkg>.Reconciler{` for the struct-based ones and `<pkg>.Setup(` for
-// labeloperator, which KRO-637 explicitly said not to refactor for uniformity.
+// wiredRE matches the two shapes used to wire a reconciler — either in
+// cmd/manager/main.go (old direct style) or internal/registry/entries.go
+// (new data-driven style):
+//   - `&<pkg>.Reconciler{`  — struct-based reconcilers
+//   - `<pkg>.Setup(`        — labeloperator (and any future multi-controller entries)
 func wiredRE(pkg string) *regexp.Regexp {
 	return regexp.MustCompile(`\b` + regexp.QuoteMeta(pkg) + `\.(Reconciler\{|Setup\()`)
 }
 
+// wiringSources are the files that constitute the "wiring" of a reconciler.
+// KRO-848 moved wiring from inline calls in main.go to the data-driven
+// internal/registry/entries.go; both files are scanned so that the check
+// works before and after the migration.
+var wiringSources = []string{
+	"../../cmd/manager/main.go",
+	"../../internal/registry/entries.go",
+}
+
 // TestEveryRegisteredReconcilerIsWired asserts that every entry in features.All
-// is actually started by cmd/manager/main.go.
+// is actually started by the operator binary.
 //
-// This closes the one functional gap left by swapping KRO-637's design for the
-// static slice. In KRO-637 the registry *was* the wiring: All held a Setup
-// closure and main.go called SetupAll, so /features could not disagree with
-// what the binary ran. In the shipped design the slice is reporting-only and
-// main.go wires each reconciler by hand, so an entry that is listed and has a
-// package directory — passing TestRegistryCoversAllPackages — can still never
-// be started. The endpoint would then advertise a reconciler that does not run.
+// Wiring may live in cmd/manager/main.go (direct SetupWithManager calls, pre-KRO-848)
+// or in internal/registry/entries.go (data-driven Build closures, KRO-848+). Either
+// location is sufficient — a package reference in either file means the reconciler runs.
 func TestEveryRegisteredReconcilerIsWired(t *testing.T) {
-	src, err := os.ReadFile("../../cmd/manager/main.go")
-	if err != nil {
-		t.Fatalf("reading cmd/manager/main.go: %v", err)
+	combined := strings.Builder{}
+	for _, path := range wiringSources {
+		src, err := os.ReadFile(path)
+		if err != nil {
+			// Non-fatal: entries.go may not exist on pre-KRO-848 branches.
+			continue
+		}
+		combined.Write(src)
 	}
-	main := string(src)
+	wiring := combined.String()
+	if wiring == "" {
+		t.Fatal("could not read any wiring source file")
+	}
 
 	for _, r := range features.All {
-		if !wiredRE(r.Package).MatchString(main) {
-			t.Errorf("reconciler %q (package %q) is listed in features.All but never started in cmd/manager/main.go.\n"+
-				"/features and docs/features.yaml would advertise a reconciler the binary does not run.\n"+
-				"Add its setup call to main.go, or remove the entry from features.All.",
+		if !wiredRE(r.Package).MatchString(wiring) {
+			t.Errorf("reconciler %q (package %q) is listed in features.All but never started.\n"+
+				"Add its wiring to internal/registry/entries.go (or cmd/manager/main.go for the old style).\n"+
+				"/features and docs/features.yaml would otherwise advertise a reconciler the binary does not run.",
 				r.Name, r.Package)
 		}
 	}
