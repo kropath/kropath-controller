@@ -181,6 +181,12 @@ spec:
               message: "emr.releaseLabel cannot be set in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.emr) && self.spec.mandatory.emr.architecture != "" && has(self.spec.defaults.emr) && self.spec.defaults.emr.architecture != "")'
               message: "emr.architecture cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.elb) && self.spec.mandatory.elb.deletionProtection == true && has(self.spec.defaults.elb) && self.spec.defaults.elb.deletionProtection == true)'
+              message: "elb.deletionProtection cannot be set to true in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.elb) && self.spec.mandatory.elb.accessLogsEnabled == true && has(self.spec.defaults.elb) && self.spec.defaults.elb.accessLogsEnabled == true)'
+              message: "elb.accessLogsEnabled cannot be set to true in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.elb) && self.spec.mandatory.elb.internalOnly == true && has(self.spec.defaults.elb) && self.spec.defaults.elb.internalOnly == true)'
+              message: "elb.internalOnly cannot be set to true in both mandatory and defaults"
           properties:
             spec:
               type: object
@@ -654,6 +660,19 @@ spec:
                           type: integer
                           format: int64
                           default: 0
+                    elb:
+                      type: object
+                      default: {}
+                      properties:
+                        deletionProtection:
+                          type: boolean
+                          default: false
+                        accessLogsEnabled:
+                          type: boolean
+                          default: false
+                        internalOnly:
+                          type: boolean
+                          default: false
                     tags:
                       type: object
                       additionalProperties:
@@ -1132,6 +1151,19 @@ spec:
                           type: integer
                           format: int64
                           default: 0
+                    elb:
+                      type: object
+                      default: {}
+                      properties:
+                        deletionProtection:
+                          type: boolean
+                          default: false
+                        accessLogsEnabled:
+                          type: boolean
+                          default: false
+                        internalOnly:
+                          type: boolean
+                          default: false
                     tags:
                       type: object
                       additionalProperties:
