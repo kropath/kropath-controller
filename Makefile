@@ -205,6 +205,10 @@ kind-down: ## Delete the kind cluster.
 # timeout. That surfaces as every Chainsaw suite after the ~2-minute mark timing out,
 # which is confusing to diagnose and has nothing to do with those suites. Deriving the
 # list keeps it from drifting out of sync with the fixtures again (KRO-635).
+#
+# tests/fixtures/crds-optional/ is intentionally excluded: those CRDs must be absent
+# at operator startup for dynamic-detection suites. Suites install them on demand via
+# chainsaw-install-optional-crd.
 CRD_WAIT_TARGETS := $(shell awk '/^  name: [a-z0-9.]+$$/ {print "crd/" $$2}' tests/fixtures/crds/*.yaml | sort -u)
 
 chainsaw-setup: build kind-up ## Create kind cluster, apply CRDs, create test namespaces.
@@ -213,6 +217,14 @@ chainsaw-setup: build kind-up ## Create kind cluster, apply CRDs, create test na
 	@for ns in $(TEST_NAMESPACES); do \
 		kubectl create namespace "$$ns" --dry-run=client -o yaml | kubectl apply -f -; \
 	done
+
+# Install one optional CRD (from tests/fixtures/crds-optional/) and wait for Established.
+# Usage: make chainsaw-install-optional-crd CRD_FILE=tests/fixtures/crds-optional/<name>.yaml
+chainsaw-install-optional-crd: ## Install a single optional CRD and wait for Established (used by dynamic-detection suites).
+	@if [ -z "$(CRD_FILE)" ]; then echo "Usage: make chainsaw-install-optional-crd CRD_FILE=<path>"; exit 1; fi
+	kubectl apply -f $(CRD_FILE)
+	kubectl wait --for=condition=Established --timeout=60s \
+		$$(awk '/^  name: [a-z0-9.]+$$/ {print "crd/" $$2}' $(CRD_FILE) | sort -u)
 
 chainsaw-start: chainsaw-setup ## Build, set up CRDs, and start the operator in the background.
 	@mkdir -p /tmp/kropath-controller

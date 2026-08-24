@@ -66,9 +66,43 @@ var packagesWithoutOwnCRD = map[string]bool{
 // crdNameRE matches the `  name: <crd>` line of a CRD's metadata block.
 var crdNameRE = regexp.MustCompile(`(?m)^  name: ([a-z0-9.]+)$`)
 
+// crdFixtureDirs lists the directories that may contain CRD fixtures.
+// tests/fixtures/crds/ holds CRDs applied at setup time.
+// tests/fixtures/crds-optional/ holds CRDs that dynamic-detection suites need absent
+// at operator startup and install themselves on demand.
+// Both directories count as "present" for the purposes of the tests below.
+var crdFixtureDirs = []string{
+	"../../tests/fixtures/crds",
+	"../../tests/fixtures/crds-optional",
+}
+
+// gatherFixturesFromDirs globs all YAML files from the given directories and
+// returns a flat slice of file paths. Exported as a package-level helper so
+// that unit tests can exercise it with temporary directories.
+func gatherFixturesFromDirs(t *testing.T, dirs []string) []string {
+	t.Helper()
+	var all []string
+	for _, dir := range dirs {
+		matches, err := filepath.Glob(dir + "/*.yaml")
+		if err != nil {
+			t.Fatalf("globbing %s: %v", dir, err)
+		}
+		all = append(all, matches...)
+	}
+	return all
+}
+
+// gatherCRDFixtures globs all YAML files from both fixture directories and
+// returns a flat slice of file paths.
+func gatherCRDFixtures(t *testing.T) []string {
+	t.Helper()
+	return gatherFixturesFromDirs(t, crdFixtureDirs)
+}
+
 // TestEveryReconcilerHasCRDFixture ensures every reconciler in features.All has its
-// CRD in tests/fixtures/crds/, which is what `make chainsaw-setup` applies to the
-// kind cluster.
+// CRD in tests/fixtures/crds/ or tests/fixtures/crds-optional/. The former is applied
+// by `make chainsaw-setup`; the latter is for CRDs that dynamic-detection suites need
+// absent at operator startup.
 //
 // This guards a failure mode that is expensive to diagnose from its symptom. Since
 // per-feature flags were retired (KRO-635), every reconciler starts unconditionally.
@@ -81,12 +115,9 @@ var crdNameRE = regexp.MustCompile(`(?m)^  name: ([a-z0-9.]+)$`)
 // test ordering, not on the resource families involved, which makes the failure look
 // unrelated to its actual cause.
 func TestEveryReconcilerHasCRDFixture(t *testing.T) {
-	fixtures, err := filepath.Glob("../../tests/fixtures/crds/*.yaml")
-	if err != nil {
-		t.Fatalf("globbing tests/fixtures/crds: %v", err)
-	}
+	fixtures := gatherCRDFixtures(t)
 	if len(fixtures) == 0 {
-		t.Fatal("no CRD fixtures found under tests/fixtures/crds/")
+		t.Fatal("no CRD fixtures found under tests/fixtures/crds/ or tests/fixtures/crds-optional/")
 	}
 
 	present := map[string]bool{}
@@ -106,9 +137,10 @@ func TestEveryReconcilerHasCRDFixture(t *testing.T) {
 		}
 		crd := r.Package + "s.aws.kropath.run"
 		if !present[crd] {
-			t.Errorf("reconciler %q (package %q) watches a kind with no CRD fixture: expected %q under tests/fixtures/crds/.\n"+
+			t.Errorf("reconciler %q (package %q) watches a kind with no CRD fixture: expected %q under tests/fixtures/crds/ or tests/fixtures/crds-optional/.\n"+
 				"Without it the manager exits after the 2-minute cache-sync timeout and later Chainsaw suites fail on assert timeouts.\n"+
-				"Copy the CRD from kropath-aws/crds/ into tests/fixtures/crds/, or add %q to packagesWithoutOwnCRD if it genuinely owns no CRD.",
+				"Copy the CRD from kropath-aws/crds/ into tests/fixtures/crds/ (or crds-optional/ if the suite needs it absent at startup), "+
+				"or add %q to packagesWithoutOwnCRD if it genuinely owns no CRD.",
 				r.Name, r.Package, crd, r.Package)
 		}
 	}
@@ -116,7 +148,7 @@ func TestEveryReconcilerHasCRDFixture(t *testing.T) {
 	// Every config reconciler also reads KropathConfig, so that CRD must be present too.
 	for _, crd := range []string{"kropathconfigs.aws.kropath.run", "kropathconfigs.kropath.run"} {
 		if !present[crd] {
-			t.Errorf("missing CRD fixture %q under tests/fixtures/crds/ — every config reconciler watches KropathConfig", crd)
+			t.Errorf("missing CRD fixture %q under tests/fixtures/crds/ or tests/fixtures/crds-optional/ — every config reconciler watches KropathConfig", crd)
 		}
 	}
 }
@@ -147,12 +179,9 @@ var crdKindRE = regexp.MustCompile(`(?m)^    kind: ([A-Za-z0-9]+)$`)
 // check passed, and the mismatch only surfaced as the operator crash-looping in
 // the integration cluster.
 func TestReconcilerKindMatchesFixtureAndScheme(t *testing.T) {
-	fixtures, err := filepath.Glob("../../tests/fixtures/crds/*.yaml")
-	if err != nil {
-		t.Fatalf("globbing tests/fixtures/crds: %v", err)
-	}
+	fixtures := gatherCRDFixtures(t)
 	if len(fixtures) == 0 {
-		t.Fatal("no CRD fixtures found under tests/fixtures/crds/")
+		t.Fatal("no CRD fixtures found under tests/fixtures/crds/ or tests/fixtures/crds-optional/")
 	}
 
 	// Map each CRD's metadata name (the plural) to the Kind it serves.
@@ -204,6 +233,112 @@ func TestReconcilerKindMatchesFixtureAndScheme(t *testing.T) {
 				"Rename the Go type in api/v1alpha1 to match, or correct the Name in features.All.",
 				r.Name, r.Name, v1alpha1.GroupVersion.String())
 		}
+	}
+}
+
+// ── Two-directory fixture tests (KRO-860) ────────────────────────────────────
+
+// TestCRDFixtureDirsCoversOptionalDir verifies that crdFixtureDirs includes both
+// the standard crds/ directory and the crds-optional/ directory introduced in KRO-860.
+func TestCRDFixtureDirsCoversOptionalDir(t *testing.T) {
+	hasCrds, hasOptional := false, false
+	for _, d := range crdFixtureDirs {
+		if strings.HasSuffix(d, "/crds") {
+			hasCrds = true
+		}
+		if strings.HasSuffix(d, "/crds-optional") {
+			hasOptional = true
+		}
+	}
+	if !hasCrds {
+		t.Error("crdFixtureDirs is missing tests/fixtures/crds")
+	}
+	if !hasOptional {
+		t.Error("crdFixtureDirs is missing tests/fixtures/crds-optional — add it so dynamic-detection suites can use it")
+	}
+}
+
+// TestFixtureInOptionalDirSatisfiesPresenceCheck verifies that a CRD fixture placed
+// in crds-optional/ is treated as present by the same logic
+// TestEveryReconcilerHasCRDFixture uses. This is the unit test for AC-U1: a fixture
+// in neither directory still fails the check (AC-U2 is covered by the existing
+// negative branch of TestEveryReconcilerHasCRDFixture).
+func TestFixtureInOptionalDirSatisfiesPresenceCheck(t *testing.T) {
+	dir := t.TempDir()
+	const fakeCRD = `apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: fakeresources.test.kropath.run
+spec:
+  names:
+    kind: FakeResource
+    plural: fakeresources
+`
+	if err := os.WriteFile(filepath.Join(dir, "fake.yaml"), []byte(fakeCRD), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	// Simulate placing the fixture in crds-optional/ by passing dir as the optional dir.
+	// The crds/ dir is real (has known CRDs); the optional dir is the temp dir with our fake.
+	fixtures := gatherFixturesFromDirs(t, []string{"../../tests/fixtures/crds", dir})
+	if len(fixtures) == 0 {
+		t.Fatal("gatherFixturesFromDirs returned no fixtures")
+	}
+
+	present := map[string]bool{}
+	for _, f := range fixtures {
+		data, err := os.ReadFile(f) //nolint:gosec // test-only read of a repo-relative or temp fixture path
+		if err != nil {
+			t.Fatalf("reading %s: %v", f, err)
+		}
+		for _, m := range crdNameRE.FindAllStringSubmatch(string(data), -1) {
+			present[m[1]] = true
+		}
+	}
+
+	// The fake CRD placed in the "optional" dir must appear in the presence map.
+	if !present["fakeresources.test.kropath.run"] {
+		t.Error("CRD placed in crds-optional/ was not found in the presence map — TestEveryReconcilerHasCRDFixture would incorrectly fail for a reconciler backed by an optional-dir fixture")
+	}
+}
+
+// TestGatherFixturesFromDirsExcludesNonYAML verifies that gatherFixturesFromDirs
+// returns only .yaml files (e.g. README.md in crds-optional/ must be ignored).
+func TestGatherFixturesFromDirsExcludesNonYAML(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "README.md"), []byte("# readme"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "crd.yaml"), []byte("apiVersion: v1\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	fixtures := gatherFixturesFromDirs(t, []string{dir})
+	if len(fixtures) != 1 {
+		t.Errorf("expected exactly 1 YAML file; README.md must be excluded — got %d file(s): %v", len(fixtures), fixtures)
+	}
+}
+
+// TestKindCasingTestReadsBothDirs verifies that TestReconcilerKindMatchesFixtureAndScheme
+// (the Kind-casing test added for KRO-675) also reads fixtures from crds-optional/.
+// We confirm this indirectly: gatherCRDFixtures (which both tests call) must return
+// at least the fixtures from crds/, confirming the same code path is shared.
+func TestKindCasingTestReadsBothDirs(t *testing.T) {
+	fixtures := gatherCRDFixtures(t)
+	hasCrdsFile := false
+	for _, f := range fixtures {
+		// Any file under crds/ (not crds-optional/) counts as "from crds/".
+		if strings.Contains(f, "/crds/") && !strings.Contains(f, "/crds-optional/") {
+			hasCrdsFile = true
+			break
+		}
+	}
+	if !hasCrdsFile {
+		t.Error("gatherCRDFixtures returned no files from tests/fixtures/crds/ — the Kind-casing test would have no fixtures to check")
+	}
+	// Verify the optional dir path is also in the scan (even if currently empty of .yaml files).
+	if len(crdFixtureDirs) < 2 {
+		t.Errorf("expected at least 2 fixture dirs; got %v", crdFixtureDirs)
 	}
 }
 
