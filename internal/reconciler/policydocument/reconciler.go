@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 )
 
@@ -40,19 +41,48 @@ type Reconciler struct {
 	ResolveRefFn func(context.Context, client.Client, string, *v1alpha1.PolicyRef) (string, bool, error)
 }
 
+// SetupWithManager registers the reconciler using the GVKs that were hardcoded before
+// KRO-848. Kept for use by tests that bypass the registry.
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
+	_, err := r.BuildWithManager(mgr, defaultRefGVKs())
+	return err
+}
+
+// BuildWithManager constructs and registers the PolicyDocument controller, watching
+// the supplied refGVKs as optional sources. The registry entry passes the full GVK
+// list; tests may pass a subset. Returns the retained controller handle so the CRD
+// watcher (KRO-849) can attach optional kinds at runtime via AddKindWatch.
+func (r *Reconciler) BuildWithManager(mgr ctrl.Manager, refGVKs []schema.GroupVersionKind) (controller.Controller, error) {
 	r.Client = mgr.GetClient()
 	builder := ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.PolicyDocument{}).
 		Watches(&v1alpha1.PolicyDocument{}, handler.EnqueueRequestsFromMapFunc(r.mapSourceDocumentUpdates))
 
-	for _, kind := range policyRefWatchKinds() {
+	for _, gvk := range refGVKs {
 		prototype := &unstructured.Unstructured{}
-		prototype.SetGroupVersionKind(schema.GroupVersionKind{Group: "aws.kropath.run", Version: "v1alpha1", Kind: kind})
+		prototype.SetGroupVersionKind(gvk)
 		builder = builder.Watches(prototype, handler.EnqueueRequestsFromMapFunc(r.mapReferencedResourceUpdates))
 	}
 
-	return builder.Complete(r)
+	return builder.Build(r)
+}
+
+// defaultRefGVKs returns the six reference GVKs that policydocument watches.
+// This is the single source of truth; policyRefWatchKinds() is deleted.
+func defaultRefGVKs() []schema.GroupVersionKind {
+	kinds := []string{
+		"AWSIAMRole",
+		"AWSS3Bucket",
+		"AWSLambdaFunction",
+		"AWSSQSQueue",
+		"AWSKMSKey",
+		"AWSSecretsManagerSecret",
+	}
+	gvks := make([]schema.GroupVersionKind, len(kinds))
+	for i, k := range kinds {
+		gvks[i] = schema.GroupVersionKind{Group: "aws.kropath.run", Version: "v1alpha1", Kind: k}
+	}
+	return gvks
 }
 
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -369,16 +399,6 @@ func refMatches(ref *v1alpha1.PolicyRef, kind, name string) bool {
 	return ref.Kind == kind && ref.Name == name
 }
 
-func policyRefWatchKinds() []string {
-	return []string{
-		"AWSIAMRole",
-		"AWSS3Bucket",
-		"AWSLambdaFunction",
-		"AWSSQSQueue",
-		"AWSKMSKey",
-		"AWSSecretsManagerSecret",
-	}
-}
 
 type policyDocumentJSON struct {
 	Version   string                `json:"Version"`
