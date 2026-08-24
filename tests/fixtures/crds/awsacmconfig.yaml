@@ -1,0 +1,246 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: acmconfigs.aws.kropath.run
+spec:
+  group: aws.kropath.run
+  names:
+    kind: ACMConfig
+    listKind: ACMConfigList
+    plural: acmconfigs
+    singular: acmconfig
+    shortNames:
+      - awsacmcfg
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      schema:
+        openAPIV3Schema:
+          type: object
+          x-kubernetes-validations:
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.keyAlgorithm) &&
+                  self.spec.mandatory.keyAlgorithm != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.keyAlgorithm) &&
+                  self.spec.defaults.keyAlgorithm != "")
+              message: >-
+                keyAlgorithm cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.certificateTransparencyLogging) &&
+                  self.spec.mandatory.certificateTransparencyLogging != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.certificateTransparencyLogging) &&
+                  self.spec.defaults.certificateTransparencyLogging != "")
+              message: >-
+                certificateTransparencyLogging cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.usageMode) &&
+                  self.spec.mandatory.usageMode != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.usageMode) &&
+                  self.spec.defaults.usageMode != "")
+              message: >-
+                usageMode cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.keyStorageSecurityStandard) &&
+                  self.spec.mandatory.keyStorageSecurityStandard != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.keyStorageSecurityStandard) &&
+                  self.spec.defaults.keyStorageSecurityStandard != "")
+              message: >-
+                keyStorageSecurityStandard cannot be set in both mandatory and defaults
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              default: {}
+              properties:
+                mandatory:
+                  type: object
+                  default: {}
+                  description: >-
+                    Mandatory Certificate Manager governance fields. Zero-value / nil means the
+                    field is not enforced at this tier.
+                  properties:
+                    keyAlgorithm:
+                      type: string
+                      default: ""
+                      description: >-
+                        Enforces the RSA or ECDSA key algorithm for certificates and CAs.
+                        e.g. "RSA_2048", "EC_prime256v1".
+                    certificateTransparencyLogging:
+                      type: string
+                      default: ""
+                      description: >-
+                        Enforces certificate transparency logging preference.
+                        e.g. "ENABLED", "DISABLED".
+                    usageMode:
+                      type: string
+                      default: ""
+                      description: >-
+                        Enforces the private CA usage mode.
+                        e.g. "GENERAL_PURPOSE", "SHORT_LIVED_CERTIFICATE".
+                    keyStorageSecurityStandard:
+                      type: string
+                      default: ""
+                      description: >-
+                        Enforces the FIPS level for private CAs.
+                        e.g. "FIPS_140_2_LEVEL_2_OR_HIGHER".
+                    tags:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedLabels:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                defaults:
+                  type: object
+                  default: {}
+                  description: >-
+                    Default Certificate Manager governance fields. Zero-value / nil means the
+                    field is not enforced at this tier.
+                  properties:
+                    keyAlgorithm:
+                      type: string
+                      default: ""
+                    certificateTransparencyLogging:
+                      type: string
+                      default: ""
+                    usageMode:
+                      type: string
+                      default: ""
+                    keyStorageSecurityStandard:
+                      type: string
+                      default: ""
+                    tags:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedLabels:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+            status:
+              type: object
+              properties:
+                effectiveConfig:
+                  type: object
+                  properties:
+                    aws:
+                      type: object
+                      properties:
+                        accountId:
+                          type: string
+                        region:
+                          type: string
+                    mandatory:
+                      type: object
+                      properties:
+                        keyAlgorithm:
+                          type: string
+                        certificateTransparencyLogging:
+                          type: string
+                        usageMode:
+                          type: string
+                        keyStorageSecurityStandard:
+                          type: string
+                        tags:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedAnnotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                    defaults:
+                      type: object
+                      properties:
+                        keyAlgorithm:
+                          type: string
+                        certificateTransparencyLogging:
+                          type: string
+                        usageMode:
+                          type: string
+                        keyStorageSecurityStandard:
+                          type: string
+                        tags:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedAnnotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - lastTransitionTime
+                      - message
+                      - reason
+                      - status
+                      - type
+                    properties:
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      message:
+                        type: string
+                      observedGeneration:
+                        type: integer
+                        format: int64
+                      reason:
+                        type: string
+                      status:
+                        type: string
+                      type:
+                        type: string
+                observedGeneration:
+                  type: integer
+                  format: int64
+                syncedTimestamp:
+                  type: string

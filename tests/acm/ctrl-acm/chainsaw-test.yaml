@@ -1,0 +1,54 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-acm Chainsaw integration tests — AC-8, AC-9, AC-10.
+#
+# Test isolation — unique-name-per-step, no inter-step deletes:
+#   Each AC owns a distinct resource name (acN-acm-policy). The controller
+#   resolves a config's global counterpart by *name* — a local ACMConfig
+#   payments-prod/acN-acm-policy merges only kro-system/acN-acm-policy — so a
+#   per-AC name isolates each AC completely.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-acm
+spec:
+  description: "ACM effectiveConfig cascade — AC-8, AC-9, AC-10 (ctrl-acm)"
+  steps:
+    # AC-8: KropathConfig.mandatory.certificateManager.keyAlgorithm (level 1) → effCfg.mandatory.keyAlgorithm
+    - name: ac8-global-kpc-mandatory-key-algorithm
+      try:
+        - apply:
+            file: ac08-setup.yaml
+        - assert:
+            file: ac08-assert.yaml
+            timeout: 30s
+
+    # AC-9: ACMConfig.mandatory.tags + KropathConfig.mandatory.tags → effCfg.mandatory.tags (union)
+    - name: ac9-tag-union-mandatory
+      try:
+        - apply:
+            file: ac09-setup.yaml
+        - assert:
+            file: ac09-assert.yaml
+            timeout: 30s
+
+    # AC-10: ACMConfig.mandatory.syncedLabels → effCfg.mandatory.syncedLabels
+    - name: ac10-synced-labels-mandatory
+      try:
+        - apply:
+            file: ac10-setup.yaml
+        - assert:
+            file: ac10-assert.yaml
+            timeout: 30s

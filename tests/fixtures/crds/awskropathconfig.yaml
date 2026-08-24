@@ -596,6 +596,16 @@ spec:
                           default: {}
                           additionalProperties:
                             type: string
+                    certificateManager:
+                      type: object
+                      default: {}
+                      properties:
+                        keyAlgorithm:
+                          type: string
+                          default: ""
+                        certificateTransparencyLogging:
+                          type: string
+                          default: ""
                     tags:
                       type: object
                       additionalProperties:
@@ -1038,6 +1048,16 @@ spec:
                           default: {}
                           additionalProperties:
                             type: string
+                    certificateManager:
+                      type: object
+                      default: {}
+                      properties:
+                        keyAlgorithm:
+                          type: string
+                          default: ""
+                        certificateTransparencyLogging:
+                          type: string
+                          default: ""
                     tags:
                       type: object
                       additionalProperties:

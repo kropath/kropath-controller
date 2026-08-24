@@ -80,6 +80,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&MSKConfigList{},
 		&MemoryDBConfig{},
 		&MemoryDBConfigList{},
+		&ACMConfig{},
+		&ACMConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

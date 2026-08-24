@@ -69,6 +69,7 @@ type KropathConfigTier struct {
 	StepFunctions     cascade.StepFunctionsKropathSection     `json:"stepfunctions,omitempty"`
 	MSK               cascade.MSKKropathSection               `json:"msk,omitempty"`
 	MemoryDB          cascade.MemoryDBKropathSection          `json:"memorydb,omitempty"`
+	CertificateManager cascade.ACMKropathSection             `json:"certificateManager,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
@@ -430,6 +431,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.MemoryDB.Tags = make(map[string]string, len(in.Spec.Defaults.MemoryDB.Tags))
 		for k, v := range in.Spec.Defaults.MemoryDB.Tags {
 			out.Spec.Defaults.MemoryDB.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.CertificateManager.Tags != nil {
+		out.Spec.Mandatory.CertificateManager.Tags = make(map[string]string, len(in.Spec.Mandatory.CertificateManager.Tags))
+		for k, v := range in.Spec.Mandatory.CertificateManager.Tags {
+			out.Spec.Mandatory.CertificateManager.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.CertificateManager.Tags != nil {
+		out.Spec.Defaults.CertificateManager.Tags = make(map[string]string, len(in.Spec.Defaults.CertificateManager.Tags))
+		for k, v := range in.Spec.Defaults.CertificateManager.Tags {
+			out.Spec.Defaults.CertificateManager.Tags[k] = v
 		}
 	}
 	if in.Spec.Mandatory.SyncedLabels != nil {
