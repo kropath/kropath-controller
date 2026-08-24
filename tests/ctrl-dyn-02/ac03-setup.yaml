@@ -35,4 +35,3 @@ metadata:
 spec:
   mandatory: {}
   defaults: {}
-  configRef: ac03-dyn-elb

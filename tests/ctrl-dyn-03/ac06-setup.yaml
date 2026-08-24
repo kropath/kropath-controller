@@ -34,4 +34,3 @@ metadata:
 spec:
   mandatory: {}
   defaults: {}
-  configRef: ac06-dyn-elb-reinstall
