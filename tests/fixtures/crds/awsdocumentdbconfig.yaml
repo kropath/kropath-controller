@@ -58,6 +58,13 @@ spec:
               message: >-
                 kmsKeyArn cannot be set in both mandatory and defaults
             - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.performanceInsightsEnabled) &&
+                  self.spec.mandatory.performanceInsightsEnabled == true &&
+                  has(self.spec.defaults) && has(self.spec.defaults.performanceInsightsEnabled) &&
+                  self.spec.defaults.performanceInsightsEnabled == true)
+              message: >-
+                performanceInsightsEnabled cannot be set to true in both mandatory and defaults
+            - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.dbInstanceClass) &&
                   self.spec.mandatory.dbInstanceClass != "" &&
                   has(self.spec.defaults) && has(self.spec.defaults.dbInstanceClass) &&
@@ -92,6 +99,13 @@ spec:
                   self.spec.defaults.backupRetentionPeriod > 0)
               message: >-
                 backupRetentionPeriod cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.enableCloudwatchLogsExports) &&
+                  size(self.spec.mandatory.enableCloudwatchLogsExports) > 0 &&
+                  has(self.spec.defaults) && has(self.spec.defaults.enableCloudwatchLogsExports) &&
+                  size(self.spec.defaults.enableCloudwatchLogsExports) > 0)
+              message: >-
+                enableCloudwatchLogsExports cannot be set in both mandatory and defaults
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.namingTemplate) &&
                   self.spec.mandatory.namingTemplate != "" &&
