@@ -14,7 +14,7 @@
 
 CHAINSAW ?= chainsaw
 
-.PHONY: setup test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigateway test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-msk test-memorydb test-acm test-version test-features test-all
+.PHONY: setup test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigateway test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-msk test-memorydb test-acm test-emr test-version test-features test-all
 
 ## setup: Apply all CRDs to the cluster. Run before any test target.
 setup:
@@ -121,6 +121,10 @@ test-memorydb:
 test-acm:
 	$(CHAINSAW) test acm/ctrl-acm/
 
+## test-emr: Run EMR cascade integration tests (ctrl-emr-01).
+test-emr:
+	$(CHAINSAW) test emr/ctrl-emr-01/
+
 ## test-version: Run build-info and feature-enabled metrics integration tests (ctrl-version-01).
 test-version:
 	$(CHAINSAW) test version/ctrl-version-01/
@@ -130,4 +134,4 @@ test-features:
 	$(CHAINSAW) test features/ctrl-features-01/
 
 ## test-all: Run all integration test suites.
-test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigateway test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-msk test-memorydb test-acm test-version test-features
+test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigateway test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-msk test-memorydb test-acm test-emr test-version test-features

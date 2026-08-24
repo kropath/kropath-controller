@@ -70,6 +70,7 @@ type KropathConfigTier struct {
 	MSK               cascade.MSKKropathSection               `json:"msk,omitempty"`
 	MemoryDB          cascade.MemoryDBKropathSection          `json:"memorydb,omitempty"`
 	CertificateManager cascade.ACMKropathSection             `json:"certificateManager,omitempty"`
+	EMR               cascade.EMRKropathSection               `json:"emr,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`

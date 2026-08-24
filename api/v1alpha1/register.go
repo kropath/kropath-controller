@@ -82,6 +82,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&MemoryDBConfigList{},
 		&ACMConfig{},
 		&ACMConfigList{},
+		&EMRConfig{},
+		&EMRConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

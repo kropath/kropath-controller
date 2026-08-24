@@ -177,6 +177,10 @@ spec:
                 spec.mandatory.certificateManager.certificateTransparencyLogging and
                 spec.defaults.certificateManager.certificateTransparencyLogging cannot both be set.
                 Set the field in exactly one tier.
+            - rule: '!(has(self.spec.mandatory.emr) && self.spec.mandatory.emr.releaseLabel != "" && has(self.spec.defaults.emr) && self.spec.defaults.emr.releaseLabel != "")'
+              message: "emr.releaseLabel cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.emr) && self.spec.mandatory.emr.architecture != "" && has(self.spec.defaults.emr) && self.spec.defaults.emr.architecture != "")'
+              message: "emr.architecture cannot be set in both mandatory and defaults"
           properties:
             spec:
               type: object
@@ -622,6 +626,16 @@ spec:
                           type: string
                           default: ""
                         certificateTransparencyLogging:
+                          type: string
+                          default: ""
+                    emr:
+                      type: object
+                      default: {}
+                      properties:
+                        releaseLabel:
+                          type: string
+                          default: ""
+                        architecture:
                           type: string
                           default: ""
                     tags:
@@ -1074,6 +1088,16 @@ spec:
                           type: string
                           default: ""
                         certificateTransparencyLogging:
+                          type: string
+                          default: ""
+                    emr:
+                      type: object
+                      default: {}
+                      properties:
+                        releaseLabel:
+                          type: string
+                          default: ""
+                        architecture:
                           type: string
                           default: ""
                     tags:

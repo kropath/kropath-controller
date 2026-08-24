@@ -1,0 +1,71 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-emr-01 Chainsaw integration tests — 5 acceptance criteria.
+#
+# Requires a kind cluster with kropath-operator running and the fixture CRDs
+# applied (`make setup`, or just `make test-emr` against an already-running
+# controller).
+#
+# Test isolation — unique-name-per-step, no inter-step deletes:
+#   Each AC owns a distinct resource name (acN-emr-policy). The controller
+#   resolves a config's global counterpart by *name* — a local EMRConfig
+#   data-platform/acN-emr-policy merges only kro-system/acN-emr-policy — so a
+#   per-AC name isolates each AC completely.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-emr-01
+spec:
+  description: "EMR effectiveConfig cascade — 5 acceptance criteria (ctrl-emr-01)"
+  steps:
+    # AC-1: globalKropathConfig.mandatory.emr.releaseLabel (level 1) → effCfg.mandatory.releaseLabel
+    - name: ac1-global-kpc-mandatory-release-label
+      try:
+        - apply:
+            file: ac01-setup.yaml
+        - assert:
+            file: ac01-assert.yaml
+
+    # AC-2: localEMRConfig.mandatory.releaseLabel (level 4) propagates when no higher level is set
+    - name: ac2-local-emrcfg-mandatory-release-label
+      try:
+        - apply:
+            file: ac02-setup.yaml
+        - assert:
+            file: ac02-assert.yaml
+
+    # AC-3: globalEMRConfig.mandatory.autoStopIdleTimeoutMinutes (level 3) — integer cascade
+    - name: ac3-global-emrcfg-mandatory-auto-stop
+      try:
+        - apply:
+            file: ac03-setup.yaml
+        - assert:
+            file: ac03-assert.yaml
+
+    # AC-4: localEMRConfig.defaults.releaseLabel (level 6) → effCfg.defaults.releaseLabel
+    - name: ac4-local-emrcfg-defaults-release-label
+      try:
+        - apply:
+            file: ac04-setup.yaml
+        - assert:
+            file: ac04-assert.yaml
+
+    # AC-5: globalKropathConfig.defaults.emr.releaseLabel (level 9 fallback) → effCfg.defaults.releaseLabel
+    - name: ac5-global-kpc-defaults-release-label-fallback
+      try:
+        - apply:
+            file: ac05-setup.yaml
+        - assert:
+            file: ac05-assert.yaml
