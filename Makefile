@@ -385,7 +385,7 @@ test-chainsaw: chainsaw-stop chainsaw-start chainsaw-wait ## Stop any stale cont
 		tests/acm/ tests/apigateway/ tests/apigatewayv2/ tests/autoscaling/ \
 		tests/cloudwatch/ tests/cloudwatchlogs/ tests/dynamodb/ tests/ec2/ \
 		tests/ecr/ tests/ecs/ tests/efs/ tests/eks/ tests/elasticache/ \
-		tests/emr/ tests/eventbridge/ tests/features/ tests/iam/ tests/kms/ \
+		tests/emr/ tests/eventbridge/ tests/features/ tests/glue/ tests/iam/ tests/kms/ \
 		tests/label-operator/ tests/memorydb/ tests/msk/ tests/policy/ \
 		tests/rds/ tests/s3/ tests/secretsmanager/ tests/sns/ tests/sqs/ \
 		tests/stepfunctions/ tests/version/ \
