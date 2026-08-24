@@ -1,0 +1,6 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: AWSLambdaFunction
+metadata:
+  name: ac09-lambda-fn
+  namespace: default
+spec: {}

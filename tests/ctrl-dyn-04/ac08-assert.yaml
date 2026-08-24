@@ -1,0 +1,14 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: PolicyDocument
+metadata:
+  name: ac08-passthrough-policy
+  namespace: default
+status:
+  resolvedDocumentJSON: '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}'
+  conditions:
+    - type: Ready
+      status: "True"
+    - type: SourceNotReady
+      status: "False"
+    - type: SidConflict
+      status: "False"

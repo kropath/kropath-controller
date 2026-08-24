@@ -1,0 +1,7 @@
+apiVersion: gcp.kropath.run/v1alpha1
+kind: CloudSpannerInstanceConfig
+metadata:
+  name: ac10-spanner-cfg
+  namespace: kro-system
+  labels:
+    gcp.kropath.run/resource-name: ac10-spanner-cfg

@@ -14,7 +14,7 @@
 
 CHAINSAW ?= chainsaw
 
-.PHONY: setup test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigateway test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-msk test-memorydb test-acm test-emr test-version test-features test-dyn test-dyn-01 test-dyn-02 test-dyn-03 test-all
+.PHONY: setup test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigateway test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-msk test-memorydb test-acm test-emr test-version test-features test-dyn test-dyn-01 test-dyn-02 test-dyn-03 test-dyn-04 test-dyn-05 test-all
 
 ## setup: Apply all CRDs to the cluster. Run before any test target.
 setup:
@@ -147,10 +147,20 @@ test-dyn-02:
 test-dyn-03:
 	$(CHAINSAW) test ctrl-dyn-03/
 
-## test-dyn: Run all dynamic CRD detection integration tests in order (dyn-01 → dyn-02 → dyn-03).
-## Requires the ELBConfig CRD to be ABSENT before this target runs.
+## test-dyn-04: Run policydocument partial optional kinds tests (ctrl-dyn-04).
+## AWSLambdaFunction CRD must be ABSENT before this target runs (lives in crds-optional/).
+test-dyn-04:
+	$(CHAINSAW) test ctrl-dyn-04/
+
+## test-dyn-05: Run labeloperator late kind tests (ctrl-dyn-05).
+## CloudSpannerInstanceConfig CRD must be ABSENT before this target runs (lives in crds-optional/).
+test-dyn-05:
+	$(CHAINSAW) test ctrl-dyn-05/
+
+## test-dyn: Run all dynamic CRD detection integration tests in order (dyn-01 → dyn-02 → dyn-03 → dyn-04 → dyn-05).
+## Requires ELBConfig, AWSLambdaFunction, and CloudSpannerInstanceConfig CRDs to be ABSENT before this target runs.
 ## The controller must already be running via chainsaw-start chainsaw-wait.
-test-dyn: test-dyn-01 test-dyn-02 test-dyn-03
+test-dyn: test-dyn-01 test-dyn-02 test-dyn-03 test-dyn-04 test-dyn-05
 
 ## test-all: Run all integration test suites.
 test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigateway test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-msk test-memorydb test-acm test-emr test-version test-features test-dyn
