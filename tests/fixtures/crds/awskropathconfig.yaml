@@ -638,6 +638,22 @@ spec:
                         architecture:
                           type: string
                           default: ""
+                    documentdb:
+                      type: object
+                      default: {}
+                      properties:
+                        storageEncrypted:
+                          type: boolean
+                        deletionProtection:
+                          type: boolean
+                        allowedInstanceClasses:
+                          type: array
+                          items:
+                            type: string
+                        backupRetentionPeriod:
+                          type: integer
+                          format: int64
+                          default: 0
                     tags:
                       type: object
                       additionalProperties:
@@ -1100,6 +1116,22 @@ spec:
                         architecture:
                           type: string
                           default: ""
+                    documentdb:
+                      type: object
+                      default: {}
+                      properties:
+                        storageEncrypted:
+                          type: boolean
+                        deletionProtection:
+                          type: boolean
+                        allowedInstanceClasses:
+                          type: array
+                          items:
+                            type: string
+                        backupRetentionPeriod:
+                          type: integer
+                          format: int64
+                          default: 0
                     tags:
                       type: object
                       additionalProperties:
