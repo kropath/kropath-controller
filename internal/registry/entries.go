@@ -24,6 +24,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/elbconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/emrconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/eventbridgeconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/athenaconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/glueconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/iamconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/kmsconfig"
@@ -327,6 +328,13 @@ func All() []Entry {
 			return (&documentdbconfig.Reconciler{
 				Client: bctx.Manager.GetClient(),
 				Log:    bctx.Log.WithName("controllers").WithName("DocumentDBConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("athenaconfig", "AthenaConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&athenaconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("AthenaConfig"),
 				Scheme: bctx.Manager.GetScheme(),
 			}).BuildWithManager(bctx.Manager)
 		}),
