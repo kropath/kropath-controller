@@ -88,6 +88,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&DocumentDBConfigList{},
 		&GlueConfig{},
 		&GlueConfigList{},
+		&AthenaConfig{},
+		&AthenaConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

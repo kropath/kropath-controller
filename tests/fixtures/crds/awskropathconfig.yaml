@@ -205,6 +205,12 @@ spec:
               message: "elb.accessLogsEnabled cannot be set to true in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.elb) && self.spec.mandatory.elb.internalOnly == true && has(self.spec.defaults.elb) && self.spec.defaults.elb.internalOnly == true)'
               message: "elb.internalOnly cannot be set to true in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.athena) && self.spec.mandatory.athena.enforceWorkGroupConfiguration == true && has(self.spec.defaults.athena) && self.spec.defaults.athena.enforceWorkGroupConfiguration == true)'
+              message: "athena.enforceWorkGroupConfiguration cannot be set to true in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.athena) && self.spec.mandatory.athena.enableMinimumEncryptionConfiguration == true && has(self.spec.defaults.athena) && self.spec.defaults.athena.enableMinimumEncryptionConfiguration == true)'
+              message: "athena.enableMinimumEncryptionConfiguration cannot be set to true in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.athena) && self.spec.mandatory.athena.publishCloudWatchMetricsEnabled == true && has(self.spec.defaults.athena) && self.spec.defaults.athena.publishCloudWatchMetricsEnabled == true)'
+              message: "athena.publishCloudWatchMetricsEnabled cannot be set to true in both mandatory and defaults"
           properties:
             spec:
               type: object
@@ -727,6 +733,25 @@ spec:
                         internalOnly:
                           type: boolean
                           default: false
+                    athena:
+                      type: object
+                      default: {}
+                      description: >-
+                        Mandatory Athena governance fields promoted from KropathConfig.
+                        Only the three WorkGroup-specific booleans are here.
+                      properties:
+                        enforceWorkGroupConfiguration:
+                          type: boolean
+                          default: false
+                          description: Force workgroup-level settings to override client-level. false = not enforced.
+                        enableMinimumEncryptionConfiguration:
+                          type: boolean
+                          default: false
+                          description: Require minimum encryption configuration. false = not enforced.
+                        publishCloudWatchMetricsEnabled:
+                          type: boolean
+                          default: false
+                          description: Require CloudWatch metrics publication. false = not enforced.
                     tags:
                       type: object
                       additionalProperties:
@@ -1254,6 +1279,25 @@ spec:
                         internalOnly:
                           type: boolean
                           default: false
+                    athena:
+                      type: object
+                      default: {}
+                      description: >-
+                        Default Athena governance fields promoted from KropathConfig.
+                        Only the three WorkGroup-specific booleans are here.
+                      properties:
+                        enforceWorkGroupConfiguration:
+                          type: boolean
+                          default: false
+                          description: Default workgroup-enforcement setting. false = no default.
+                        enableMinimumEncryptionConfiguration:
+                          type: boolean
+                          default: false
+                          description: Default minimum-encryption setting. false = no default.
+                        publishCloudWatchMetricsEnabled:
+                          type: boolean
+                          default: false
+                          description: Default CloudWatch metrics setting. false = no default.
                     tags:
                       type: object
                       additionalProperties:

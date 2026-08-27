@@ -238,3 +238,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: AthenaConfig
+      package: athenaconfig
+      description: Reconciles AthenaConfig CRs and propagates effective config.
+      kinds:
+        - AthenaConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

@@ -73,6 +73,7 @@ type KropathConfigTier struct {
 	EMR               cascade.EMRKropathSection               `json:"emr,omitempty"`
 	DocumentDB        cascade.DocumentDBKropathSection        `json:"documentdb,omitempty"`
 	Glue              cascade.GlueKropathSection              `json:"glue,omitempty"`
+	Athena            cascade.AthenaKropathSection            `json:"athena,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
@@ -478,6 +479,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.Glue.Tags = make(map[string]string, len(in.Spec.Defaults.Glue.Tags))
 		for k, v := range in.Spec.Defaults.Glue.Tags {
 			out.Spec.Defaults.Glue.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.Athena.Tags != nil {
+		out.Spec.Mandatory.Athena.Tags = make(map[string]string, len(in.Spec.Mandatory.Athena.Tags))
+		for k, v := range in.Spec.Mandatory.Athena.Tags {
+			out.Spec.Mandatory.Athena.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.Athena.Tags != nil {
+		out.Spec.Defaults.Athena.Tags = make(map[string]string, len(in.Spec.Defaults.Athena.Tags))
+		for k, v := range in.Spec.Defaults.Athena.Tags {
+			out.Spec.Defaults.Athena.Tags[k] = v
 		}
 	}
 	if in.Spec.Mandatory.SyncedLabels != nil {

@@ -105,4 +105,5 @@ var All = []Reconciler{
 	cascade("EMRConfig", "emrconfig"),
 	cascade("DocumentDBConfig", "documentdbconfig"),
 	cascade("GlueConfig", "glueconfig"),
+	cascade("AthenaConfig", "athenaconfig"),
 }

@@ -143,15 +143,15 @@ jobs:
       # controller watches. Nothing inside this repo can catch a Kind that drifted
       # from it -- see the crds-verify comment in the Makefile (KRO-675).
       #
-      # KROPATH_AWS_COMPANION_REF: agent/implementer/e14f06bb adds the EMRConfig
-      # CRD to kropath-aws; until KRO-829 merges to main, we fetch CRDs from that
-      # branch so this gate passes during parallel review. Clear this once KRO-829
-      # merges. (KRO-715/ACMConfig is already on main — that companion ref removed.)
+      # KROPATH_AWS_COMPANION_REFS lists CRD PR branches not yet on main so that
+      # parallel controller+CRD PR pairs can be reviewed together.
+      #   agent/implementer/e14f06bb — EMRConfig CRD (KRO-829; clear once merged)
+      #   agent/implementer/3f0e8f62 — AthenaConfig CRD (KRO-856; clear once merged)
       - name: Check watched Kinds against kropath-aws CRDs
         if: needs.changes.outputs.code == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          KROPATH_AWS_COMPANION_REF: agent/implementer/e14f06bb
+          KROPATH_AWS_COMPANION_REFS: "agent/implementer/e14f06bb agent/implementer/3f0e8f62"
         run: make crds-verify
 
   security:

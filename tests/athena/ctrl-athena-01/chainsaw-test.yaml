@@ -1,0 +1,112 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-athena-01 Chainsaw integration tests — 9 acceptance criteria.
+#
+# Requires a kind cluster with kropath-operator running and the fixture CRDs
+# applied (`make setup`, or just `make test-athena` against an already-running
+# controller).
+#
+# Test isolation — unique-name-per-step, no inter-step deletes:
+#   Each AC owns a distinct resource name (acN-athena-policy). The controller
+#   resolves a config's global counterpart by *name* — a local AthenaConfig
+#   analytics-prod/acN-athena-policy merges only kro-system/acN-athena-policy —
+#   so a per-AC name isolates each AC completely.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-athena-01
+spec:
+  description: "Athena effectiveConfig cascade — 9 acceptance criteria (ctrl-athena-01)"
+  steps:
+    # AC-1: globalKropathConfig.mandatory.athena.enforceWorkGroupConfiguration (level 1) → effCfg.mandatory
+    - name: ac1-global-kpc-mandatory-enforce-wg
+      try:
+        - apply:
+            file: ac01-setup.yaml
+        - assert:
+            file: ac01-assert.yaml
+            timeout: 30s
+
+    # AC-2: all three KropathConfig.mandatory.athena booleans (level 1) → effCfg.mandatory
+    - name: ac2-global-kpc-mandatory-all-three-booleans
+      try:
+        - apply:
+            file: ac02-setup.yaml
+        - assert:
+            file: ac02-assert.yaml
+            timeout: 30s
+
+    # AC-3: AthenaConfig.mandatory.bytesScannedCutoffPerQuery (level 4, integer) → effCfg.mandatory
+    - name: ac3-local-athenacfg-mandatory-bytes-cutoff
+      try:
+        - apply:
+            file: ac03-setup.yaml
+        - assert:
+            file: ac03-assert.yaml
+            timeout: 30s
+
+    # AC-4: AthenaConfig.mandatory string fields (resultEncryptionOption, engineVersion) → effCfg.mandatory
+    - name: ac4-local-athenacfg-mandatory-string-fields
+      try:
+        - apply:
+            file: ac04-setup.yaml
+        - assert:
+            file: ac04-assert.yaml
+            timeout: 30s
+
+    # AC-5: AthenaConfig.defaults priority: level 6 (local) wins over level 9 (globalKPC)
+    - name: ac5-defaults-level6-wins-over-level9
+      try:
+        - apply:
+            file: ac05-setup.yaml
+        - assert:
+            file: ac05-assert.yaml
+            timeout: 30s
+
+    # AC-6: Tags union merge: KropathConfig.mandatory.tags + AthenaConfig.mandatory.tags
+    - name: ac6-mandatory-tag-union-merge
+      try:
+        - apply:
+            file: ac06-setup.yaml
+        - assert:
+            file: ac06-assert.yaml
+            timeout: 30s
+
+    # AC-7: NamingTemplate only from AthenaConfig levels (not KropathConfig)
+    - name: ac7-naming-template-athenacfg-only
+      try:
+        - apply:
+            file: ac07-setup.yaml
+        - assert:
+            file: ac07-assert.yaml
+            timeout: 30s
+
+    # AC-8: SyncedLabels additive union from AthenaConfig levels only (level 3 wins over level 4)
+    - name: ac8-mandatory-synced-labels-union
+      try:
+        - apply:
+            file: ac08-setup.yaml
+        - assert:
+            file: ac08-assert.yaml
+            timeout: 30s
+
+    # AC-9: All absent → all zero/empty (permissive config, no governance enforced)
+    - name: ac9-all-absent-returns-zero
+      try:
+        - apply:
+            file: ac09-setup.yaml
+        - assert:
+            file: ac09-assert.yaml
+            timeout: 30s

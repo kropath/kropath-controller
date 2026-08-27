@@ -117,6 +117,20 @@ func (c *Coordinator) RunGate(bctx BuildCtx, servedGVKs map[schema.GroupVersionK
 			}
 		}
 
+		// Pre-seed wildcard-Optional entries: discovery-lag can cause a GVK miss in
+		// labeloperator.Setup; registering missed controllers here (before mgr.Start)
+		// keeps them in the initial cache sync rather than adding informers post-startup,
+		// which would flip /readyz to 500 until the new informer catches up (KRO-857).
+		if es.entry.Optional == nil && es.entry.AddKindWatch != nil {
+			es.attachedOptional = make(map[schema.GroupVersionKind]bool, len(c.servedGVKs))
+			for gvk := range c.servedGVKs {
+				if err := es.entry.AddKindWatch(es.handle, gvk); err != nil {
+					return fmt.Errorf("registry: pre-seeding AddKindWatch for %v on %s: %w", gvk, es.entry.Package, err)
+				}
+				es.attachedOptional[gvk] = true
+			}
+		}
+
 		reconcilerActive.WithLabelValues(es.entry.Package).Set(1)
 	}
 	return nil
