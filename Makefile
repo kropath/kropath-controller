@@ -382,7 +382,7 @@ test-chainsaw: chainsaw-stop chainsaw-start chainsaw-wait ## Stop any stale cont
 	$(CHAINSAW) test tests/ctrl-dyn-03/ $(CHAINSAW_FLAGS)
 	# All remaining suites are order-independent.
 	$(CHAINSAW) test \
-		tests/acm/ tests/apigateway/ tests/apigatewayv2/ tests/autoscaling/ \
+		tests/acm/ tests/apigateway/ tests/apigatewayv2/ tests/athena/ tests/autoscaling/ \
 		tests/cloudwatch/ tests/cloudwatchlogs/ tests/dynamodb/ tests/ec2/ \
 		tests/ecr/ tests/ecs/ tests/efs/ tests/eks/ tests/elasticache/ \
 		tests/emr/ tests/eventbridge/ tests/features/ tests/glue/ tests/iam/ tests/kms/ \
