@@ -49,9 +49,9 @@ func mergeDSQLAll(
 // DSQLConfig level 3 false → mandatory.deletionProtectionEnabled: true (level 1 wins).
 func TestDSQLCascade_MandatoryWinsOverDSQLConfig(t *testing.T) {
 	got := mergeDSQLAll(
-		cascade.DSQLKropathSection{DeleteionProtectionEnabled: true},  // level 1
+		cascade.DSQLKropathSection{DeletionProtectionEnabled: true},  // level 1
 		zeroDSQLKropath,
-		cascade.DSQLConfigSection{DeleteionProtectionEnabled: false}, // level 3 (zero = not enforced)
+		cascade.DSQLConfigSection{DeletionProtectionEnabled: false}, // level 3 (zero = not enforced)
 		zeroDSQLCfg,
 		zeroDSQLCfg,
 		zeroDSQLCfg,
@@ -59,7 +59,7 @@ func TestDSQLCascade_MandatoryWinsOverDSQLConfig(t *testing.T) {
 		zeroDSQLKropath,
 	)
 
-	if !got.Mandatory.DeleteionProtectionEnabled {
+	if !got.Mandatory.DeletionProtectionEnabled {
 		t.Error("C-2: level-1 KropathConfig must win; mandatory.deletionProtectionEnabled should be true")
 	}
 }
@@ -73,15 +73,15 @@ func TestDSQLCascade_DefaultsOnlyNoMandatory(t *testing.T) {
 		zeroDSQLCfg,
 		zeroDSQLCfg,
 		zeroDSQLCfg,
-		cascade.DSQLConfigSection{DeleteionProtectionEnabled: true}, // level 7 global defaults
+		cascade.DSQLConfigSection{DeletionProtectionEnabled: true}, // level 7 global defaults
 		zeroDSQLKropath,
 		zeroDSQLKropath,
 	)
 
-	if got.Mandatory.DeleteionProtectionEnabled {
+	if got.Mandatory.DeletionProtectionEnabled {
 		t.Error("C-3: mandatory.deletionProtectionEnabled should be false when only defaults set")
 	}
-	if !got.Defaults.DeleteionProtectionEnabled {
+	if !got.Defaults.DeletionProtectionEnabled {
 		t.Error("C-3: defaults.deletionProtectionEnabled should be true")
 	}
 }
@@ -91,7 +91,7 @@ func TestDSQLCascade_DefaultsOnlyNoMandatory(t *testing.T) {
 func TestDSQLCascade_LocalKropathConfigMandatory(t *testing.T) {
 	got := mergeDSQLAll(
 		zeroDSQLKropath,
-		cascade.DSQLKropathSection{DeleteionProtectionEnabled: true}, // level 2
+		cascade.DSQLKropathSection{DeletionProtectionEnabled: true}, // level 2
 		zeroDSQLCfg,
 		zeroDSQLCfg,
 		zeroDSQLCfg,
@@ -100,7 +100,7 @@ func TestDSQLCascade_LocalKropathConfigMandatory(t *testing.T) {
 		zeroDSQLKropath,
 	)
 
-	if !got.Mandatory.DeleteionProtectionEnabled {
+	if !got.Mandatory.DeletionProtectionEnabled {
 		t.Error("C-4: mandatory.deletionProtectionEnabled should be true when set at level 2")
 	}
 }
@@ -162,7 +162,7 @@ func TestDSQLCascade_AWSIdentityPropagates(t *testing.T) {
 	// The cascade result itself must not carry provider identity — the reconciler
 	// appends it from KropathConfig.spec.aws.* as a separate EffectiveDSQLConfig.AWS field.
 	// Verify the section fields that are DSQL-specific are all zero when all inputs are zero.
-	if got.Mandatory.DeleteionProtectionEnabled {
+	if got.Mandatory.DeletionProtectionEnabled {
 		t.Error("C-10: mandatory.deletionProtectionEnabled should be false when all inputs zero")
 	}
 	if got.Mandatory.KmsEncryptionKey != "" {
@@ -180,13 +180,13 @@ func TestDSQLCascade_AllAbsent(t *testing.T) {
 		zeroDSQLKropath, zeroDSQLKropath,
 	)
 
-	if got.Mandatory.DeleteionProtectionEnabled {
+	if got.Mandatory.DeletionProtectionEnabled {
 		t.Error("all-absent: mandatory.deletionProtectionEnabled should be false")
 	}
 	if got.Mandatory.KmsEncryptionKey != "" {
 		t.Errorf("all-absent: mandatory.kmsEncryptionKey = %q, want empty", got.Mandatory.KmsEncryptionKey)
 	}
-	if got.Defaults.DeleteionProtectionEnabled {
+	if got.Defaults.DeletionProtectionEnabled {
 		t.Error("all-absent: defaults.deletionProtectionEnabled should be false")
 	}
 	if got.Defaults.KmsEncryptionKey != "" {
@@ -198,7 +198,7 @@ func TestDSQLCascade_AllAbsent(t *testing.T) {
 // bleed into defaults and vice versa.
 func TestDSQLCascade_MandatoryIsolatedFromDefaults(t *testing.T) {
 	got := mergeDSQLAll(
-		cascade.DSQLKropathSection{DeleteionProtectionEnabled: true},                               // level 1
+		cascade.DSQLKropathSection{DeletionProtectionEnabled: true},                               // level 1
 		zeroDSQLKropath,
 		cascade.DSQLConfigSection{KmsEncryptionKey: "arn:aws:kms:us-east-1:111:key/mandatory"},     // level 3
 		zeroDSQLCfg,
@@ -208,13 +208,13 @@ func TestDSQLCascade_MandatoryIsolatedFromDefaults(t *testing.T) {
 		zeroDSQLKropath,
 	)
 
-	if !got.Mandatory.DeleteionProtectionEnabled {
+	if !got.Mandatory.DeletionProtectionEnabled {
 		t.Error("mandatory.deletionProtectionEnabled should be true")
 	}
 	if got.Mandatory.KmsEncryptionKey != "arn:aws:kms:us-east-1:111:key/mandatory" {
 		t.Errorf("mandatory.kmsEncryptionKey = %q, want mandatory key", got.Mandatory.KmsEncryptionKey)
 	}
-	if got.Defaults.DeleteionProtectionEnabled {
+	if got.Defaults.DeletionProtectionEnabled {
 		t.Error("defaults.deletionProtectionEnabled must not bleed from mandatory")
 	}
 	if got.Defaults.KmsEncryptionKey != "arn:aws:kms:us-east-1:111:key/defaults" {
@@ -235,7 +235,7 @@ func TestDSQLCascade_MandatoryCascadeOrder(t *testing.T) {
 	}{
 		{
 			name:                   "level1-wins",
-			globalKropathMandatory: cascade.DSQLKropathSection{DeleteionProtectionEnabled: true},
+			globalKropathMandatory: cascade.DSQLKropathSection{DeletionProtectionEnabled: true},
 			localKropathMandatory:  zeroDSQLKropath,
 			globalDSQLCfgMandatory: zeroDSQLCfg,
 			localDSQLCfgMandatory:  zeroDSQLCfg,
@@ -244,7 +244,7 @@ func TestDSQLCascade_MandatoryCascadeOrder(t *testing.T) {
 		{
 			name:                   "level2-wins-when-1-absent",
 			globalKropathMandatory: zeroDSQLKropath,
-			localKropathMandatory:  cascade.DSQLKropathSection{DeleteionProtectionEnabled: true},
+			localKropathMandatory:  cascade.DSQLKropathSection{DeletionProtectionEnabled: true},
 			globalDSQLCfgMandatory: zeroDSQLCfg,
 			localDSQLCfgMandatory:  zeroDSQLCfg,
 			wantEnabled:            true,
@@ -253,7 +253,7 @@ func TestDSQLCascade_MandatoryCascadeOrder(t *testing.T) {
 			name:                   "level3-wins-when-1-2-absent",
 			globalKropathMandatory: zeroDSQLKropath,
 			localKropathMandatory:  zeroDSQLKropath,
-			globalDSQLCfgMandatory: cascade.DSQLConfigSection{DeleteionProtectionEnabled: true},
+			globalDSQLCfgMandatory: cascade.DSQLConfigSection{DeletionProtectionEnabled: true},
 			localDSQLCfgMandatory:  zeroDSQLCfg,
 			wantEnabled:            true,
 		},
@@ -262,7 +262,7 @@ func TestDSQLCascade_MandatoryCascadeOrder(t *testing.T) {
 			globalKropathMandatory: zeroDSQLKropath,
 			localKropathMandatory:  zeroDSQLKropath,
 			globalDSQLCfgMandatory: zeroDSQLCfg,
-			localDSQLCfgMandatory:  cascade.DSQLConfigSection{DeleteionProtectionEnabled: true},
+			localDSQLCfgMandatory:  cascade.DSQLConfigSection{DeletionProtectionEnabled: true},
 			wantEnabled:            true,
 		},
 	}
@@ -277,8 +277,8 @@ func TestDSQLCascade_MandatoryCascadeOrder(t *testing.T) {
 				zeroDSQLCfg, zeroDSQLCfg,
 				zeroDSQLKropath, zeroDSQLKropath,
 			)
-			if got.Mandatory.DeleteionProtectionEnabled != tc.wantEnabled {
-				t.Errorf("deletionProtectionEnabled = %v, want %v", got.Mandatory.DeleteionProtectionEnabled, tc.wantEnabled)
+			if got.Mandatory.DeletionProtectionEnabled != tc.wantEnabled {
+				t.Errorf("deletionProtectionEnabled = %v, want %v", got.Mandatory.DeletionProtectionEnabled, tc.wantEnabled)
 			}
 		})
 	}
@@ -296,22 +296,22 @@ func TestDSQLCascade_DefaultsCascadeOrder(t *testing.T) {
 	}{
 		{
 			name:                 "level6-wins",
-			localDSQLCfgDefaults: cascade.DSQLConfigSection{DeleteionProtectionEnabled: true},
+			localDSQLCfgDefaults: cascade.DSQLConfigSection{DeletionProtectionEnabled: true},
 			wantEnabled:          true,
 		},
 		{
 			name:                  "level7-wins-when-6-absent",
-			globalDSQLCfgDefaults: cascade.DSQLConfigSection{DeleteionProtectionEnabled: true},
+			globalDSQLCfgDefaults: cascade.DSQLConfigSection{DeletionProtectionEnabled: true},
 			wantEnabled:           true,
 		},
 		{
 			name:                 "level8-wins-when-6-7-absent",
-			localKropathDefaults: cascade.DSQLKropathSection{DeleteionProtectionEnabled: true},
+			localKropathDefaults: cascade.DSQLKropathSection{DeletionProtectionEnabled: true},
 			wantEnabled:          true,
 		},
 		{
 			name:                  "level9-fallback",
-			globalKropathDefaults: cascade.DSQLKropathSection{DeleteionProtectionEnabled: true},
+			globalKropathDefaults: cascade.DSQLKropathSection{DeletionProtectionEnabled: true},
 			wantEnabled:           true,
 		},
 	}
@@ -326,8 +326,8 @@ func TestDSQLCascade_DefaultsCascadeOrder(t *testing.T) {
 				tc.localKropathDefaults,
 				tc.globalKropathDefaults,
 			)
-			if got.Defaults.DeleteionProtectionEnabled != tc.wantEnabled {
-				t.Errorf("defaults.deletionProtectionEnabled = %v, want %v", got.Defaults.DeleteionProtectionEnabled, tc.wantEnabled)
+			if got.Defaults.DeletionProtectionEnabled != tc.wantEnabled {
+				t.Errorf("defaults.deletionProtectionEnabled = %v, want %v", got.Defaults.DeletionProtectionEnabled, tc.wantEnabled)
 			}
 		})
 	}

@@ -24,9 +24,9 @@ package cascade
 //
 // Zero value of each field is the permissive sentinel (not enforced).
 type DSQLKropathSection struct {
-	// DeleteionProtectionEnabled enforces deletion protection org-wide when true.
+	// DeletionProtectionEnabled enforces deletion protection org-wide when true.
 	// false (zero value) = not enforced.
-	DeleteionProtectionEnabled bool `json:"deletionProtectionEnabled,omitempty"`
+	DeletionProtectionEnabled bool `json:"deletionProtectionEnabled,omitempty"`
 
 	// Tags are tier-level cloud resource tags from KropathConfig.spec.mandatory.tags.
 	// Populated by the reconciler from the tier-level field, not from spec.mandatory.dsql.
@@ -39,8 +39,8 @@ type DSQLKropathSection struct {
 //
 // Zero value of each field is the permissive sentinel (not enforced).
 type DSQLConfigSection struct {
-	// DeleteionProtectionEnabled enforces deletion protection when true. false = not enforced.
-	DeleteionProtectionEnabled bool `json:"deletionProtectionEnabled,omitempty"`
+	// DeletionProtectionEnabled enforces deletion protection when true. false = not enforced.
+	DeletionProtectionEnabled bool `json:"deletionProtectionEnabled,omitempty"`
 
 	// KmsEncryptionKey is the ARN of the customer-managed KMS key to enforce.
 	// Empty string = not enforced; AWS-owned key is used unless the instance or
@@ -61,7 +61,7 @@ type DSQLConfigSection struct {
 // EffectiveDSQLSection is one tier (mandatory or defaults) of the merged DSQL governance
 // result written into DSQLConfig.status.effectiveConfig by the controller.
 type EffectiveDSQLSection struct {
-	DeleteionProtectionEnabled bool              `json:"deletionProtectionEnabled,omitempty"`
+	DeletionProtectionEnabled bool              `json:"deletionProtectionEnabled,omitempty"`
 	KmsEncryptionKey           string            `json:"kmsEncryptionKey,omitempty"`
 	Tags                       map[string]string `json:"tags,omitempty"`
 }
@@ -112,11 +112,11 @@ func MergeDSQLCascade(
 ) EffectiveDSQLConfig {
 	return EffectiveDSQLConfig{
 		Mandatory: EffectiveDSQLSection{
-			DeleteionProtectionEnabled: firstTrue(
-				globalKropathMandatory.DeleteionProtectionEnabled, // level 1
-				localKropathMandatory.DeleteionProtectionEnabled,  // level 2
-				globalDSQLCfgMandatory.DeleteionProtectionEnabled, // level 3
-				localDSQLCfgMandatory.DeleteionProtectionEnabled,  // level 4
+			DeletionProtectionEnabled: firstTrue(
+				globalKropathMandatory.DeletionProtectionEnabled, // level 1
+				localKropathMandatory.DeletionProtectionEnabled,  // level 2
+				globalDSQLCfgMandatory.DeletionProtectionEnabled, // level 3
+				localDSQLCfgMandatory.DeletionProtectionEnabled,  // level 4
 			),
 			// kmsEncryptionKey not in KropathConfig: levels 3 and 4 only.
 			KmsEncryptionKey: firstNonEmptyString(
@@ -132,11 +132,11 @@ func MergeDSQLCascade(
 			),
 		},
 		Defaults: EffectiveDSQLSection{
-			DeleteionProtectionEnabled: firstTrue(
-				localDSQLCfgDefaults.DeleteionProtectionEnabled,  // level 6
-				globalDSQLCfgDefaults.DeleteionProtectionEnabled, // level 7
-				localKropathDefaults.DeleteionProtectionEnabled,   // level 8
-				globalKropathDefaults.DeleteionProtectionEnabled,  // level 9
+			DeletionProtectionEnabled: firstTrue(
+				localDSQLCfgDefaults.DeletionProtectionEnabled,  // level 6
+				globalDSQLCfgDefaults.DeletionProtectionEnabled, // level 7
+				localKropathDefaults.DeletionProtectionEnabled,   // level 8
+				globalKropathDefaults.DeletionProtectionEnabled,  // level 9
 			),
 			// kmsEncryptionKey not in KropathConfig: levels 6 and 7 only.
 			KmsEncryptionKey: firstNonEmptyString(

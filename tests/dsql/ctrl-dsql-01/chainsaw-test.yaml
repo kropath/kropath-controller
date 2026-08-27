@@ -55,7 +55,8 @@ spec:
             file: ac08-assert.yaml
             timeout: 30s
 
-    # C-9: DSQLConfig with deletionProtectionEnabled=true in both mandatory and defaults is rejected at admission.
+    # C-9: KropathConfig with deletionProtectionEnabled=true in both mandatory.dsql and defaults.dsql
+    # is rejected at admission by the KropathConfig CRD's CEL mutual-exclusion rule.
     - name: ac9-mutual-exclusivity-deletion-protection
       try:
         - apply:
@@ -63,6 +64,6 @@ spec:
             expect:
             - match:
                 apiVersion: aws.kropath.run/v1alpha1
-                kind: DSQLConfig
+                kind: KropathConfig
               check:
                 ($error != null): true

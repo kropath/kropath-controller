@@ -31,7 +31,7 @@ import (
 func TestReconcileC1GlobalMandatoryDeleteProtectionPropagates(t *testing.T) {
 	rec, cfg := testReconciler(t,
 		globalKropathConfig("general-policy", v1alpha1.KropathConfigTier{
-			DSQL: cascade.DSQLKropathSection{DeleteionProtectionEnabled: true},
+			DSQL: cascade.DSQLKropathSection{DeletionProtectionEnabled: true},
 		}),
 		localDSQLConfig("payments-prod", "general-policy", cascade.DSQLConfigSection{}, cascade.DSQLConfigSection{}),
 	)
@@ -41,7 +41,7 @@ func TestReconcileC1GlobalMandatoryDeleteProtectionPropagates(t *testing.T) {
 	}
 
 	updated := getDSQLConfig(t, rec.Client, "payments-prod", "general-policy")
-	if !updated.Status.EffectiveConfig.Mandatory.DeleteionProtectionEnabled {
+	if !updated.Status.EffectiveConfig.Mandatory.DeletionProtectionEnabled {
 		t.Fatal("mandatory.deletionProtectionEnabled = false, want true")
 	}
 	if updated.Status.ObservedGeneration != cfg.Generation {
@@ -52,10 +52,10 @@ func TestReconcileC1GlobalMandatoryDeleteProtectionPropagates(t *testing.T) {
 func TestReconcileC1Level1MandatoryWinsOverLevel4(t *testing.T) {
 	rec, _ := testReconciler(t,
 		globalKropathConfig("general-policy", v1alpha1.KropathConfigTier{
-			DSQL: cascade.DSQLKropathSection{DeleteionProtectionEnabled: true},
+			DSQL: cascade.DSQLKropathSection{DeletionProtectionEnabled: true},
 		}),
 		localDSQLConfig("payments-prod", "general-policy",
-			cascade.DSQLConfigSection{DeleteionProtectionEnabled: false},
+			cascade.DSQLConfigSection{DeletionProtectionEnabled: false},
 			cascade.DSQLConfigSection{},
 		),
 	)
@@ -65,7 +65,7 @@ func TestReconcileC1Level1MandatoryWinsOverLevel4(t *testing.T) {
 	}
 
 	updated := getDSQLConfig(t, rec.Client, "payments-prod", "general-policy")
-	if !updated.Status.EffectiveConfig.Mandatory.DeleteionProtectionEnabled {
+	if !updated.Status.EffectiveConfig.Mandatory.DeletionProtectionEnabled {
 		t.Fatal("mandatory.deletionProtectionEnabled = false, want true (level-1 wins)")
 	}
 }

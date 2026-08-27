@@ -12,14 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# C-9: Should be rejected — deletionProtectionEnabled set to true in both mandatory and defaults.
+# C-9: KropathConfig with deletionProtectionEnabled=true in BOTH mandatory.dsql and defaults.dsql
+# should be rejected by the KropathConfig CRD's CEL mutual-exclusion rule.
 apiVersion: aws.kropath.run/v1alpha1
-kind: DSQLConfig
+kind: KropathConfig
 metadata:
   name: ac9-invalid-both-deletion-protection
-  namespace: payments-prod
+  namespace: kro-system
 spec:
   mandatory:
-    deletionProtectionEnabled: true
+    dsql:
+      deletionProtectionEnabled: true
   defaults:
-    deletionProtectionEnabled: true
+    dsql:
+      deletionProtectionEnabled: true
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
