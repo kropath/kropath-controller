@@ -74,6 +74,7 @@ type KropathConfigTier struct {
 	DocumentDB        cascade.DocumentDBKropathSection        `json:"documentdb,omitempty"`
 	Glue              cascade.GlueKropathSection              `json:"glue,omitempty"`
 	Athena            cascade.AthenaKropathSection            `json:"athena,omitempty"`
+	DSQL              cascade.DSQLKropathSection              `json:"dsql,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
@@ -491,6 +492,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.Athena.Tags = make(map[string]string, len(in.Spec.Defaults.Athena.Tags))
 		for k, v := range in.Spec.Defaults.Athena.Tags {
 			out.Spec.Defaults.Athena.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.DSQL.Tags != nil {
+		out.Spec.Mandatory.DSQL.Tags = make(map[string]string, len(in.Spec.Mandatory.DSQL.Tags))
+		for k, v := range in.Spec.Mandatory.DSQL.Tags {
+			out.Spec.Mandatory.DSQL.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.DSQL.Tags != nil {
+		out.Spec.Defaults.DSQL.Tags = make(map[string]string, len(in.Spec.Defaults.DSQL.Tags))
+		for k, v := range in.Spec.Defaults.DSQL.Tags {
+			out.Spec.Defaults.DSQL.Tags[k] = v
 		}
 	}
 	if in.Spec.Mandatory.SyncedLabels != nil {

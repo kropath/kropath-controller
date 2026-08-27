@@ -41,7 +41,7 @@ spec:
               echo "PASS: kropath_build_info found"
               echo "$output" | grep 'kropath_build_info{'
 
-    # AC-2: kropath_feature_enabled must appear once per registered feature (31 series).
+    # AC-2: kropath_feature_enabled must appear once per registered feature (32 series).
     - name: ac2-feature-enabled-series-count
       try:
         - script:
@@ -55,10 +55,10 @@ spec:
               fi
               count=$(echo "$output" | grep -c 'kropath_feature_enabled{' || true)
               echo "kropath_feature_enabled series count: $count"
-              if [ "$count" -ne 31 ]; then
-                echo "FAIL: expected 31 series, got $count"
+              if [ "$count" -ne 32 ]; then
+                echo "FAIL: expected 32 series, got $count"
                 echo "Actual lines:"
                 echo "$output" | grep 'kropath_feature_enabled{' || true
                 exit 1
               fi
-              echo "PASS: 31 kropath_feature_enabled series found"
+              echo "PASS: 32 kropath_feature_enabled series found"
