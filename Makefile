@@ -240,11 +240,14 @@ chainsaw-start: chainsaw-setup ## Build, set up CRDs, and start the operator in 
 		echo "Controller started (PID $$(cat $(CONTROLLER_PID)))."; \
 	fi
 
-chainsaw-wait: ## Block until the controller /readyz endpoint responds (up to 60 s).
+chainsaw-wait: ## Block until the controller /readyz endpoint responds stably (up to 60 s).
 	@echo "Waiting for /readyz on :$(HEALTH_PORT)..."
 	@for i in $$(seq 1 30); do \
 		if curl -fsS http://127.0.0.1:$(HEALTH_PORT)/readyz >/dev/null 2>&1; then \
-			echo "Controller is ready."; exit 0; \
+			sleep 2; \
+			if curl -fsS http://127.0.0.1:$(HEALTH_PORT)/readyz >/dev/null 2>&1; then \
+				echo "Controller is ready."; exit 0; \
+			fi; \
 		fi; \
 		sleep 2; \
 	done; \
