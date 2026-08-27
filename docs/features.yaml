@@ -246,3 +246,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: DSQLConfig
+      package: dsqlconfig
+      description: Reconciles DSQLConfig CRs and propagates effective config.
+      kinds:
+        - DSQLConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

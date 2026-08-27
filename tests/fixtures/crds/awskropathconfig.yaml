@@ -211,6 +211,8 @@ spec:
               message: "athena.enableMinimumEncryptionConfiguration cannot be set to true in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.athena) && self.spec.mandatory.athena.publishCloudWatchMetricsEnabled == true && has(self.spec.defaults.athena) && self.spec.defaults.athena.publishCloudWatchMetricsEnabled == true)'
               message: "athena.publishCloudWatchMetricsEnabled cannot be set to true in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.dsql) && self.spec.mandatory.dsql.deletionProtectionEnabled == true && has(self.spec.defaults.dsql) && self.spec.defaults.dsql.deletionProtectionEnabled == true)'
+              message: "dsql.deletionProtectionEnabled cannot be set to true in both mandatory and defaults"
           properties:
             spec:
               type: object
@@ -752,6 +754,16 @@ spec:
                           type: boolean
                           default: false
                           description: Require CloudWatch metrics publication. false = not enforced.
+                    dsql:
+                      type: object
+                      default: {}
+                      description: >-
+                        Mandatory Aurora DSQL governance fields promoted from KropathConfig.
+                      properties:
+                        deletionProtectionEnabled:
+                          type: boolean
+                          default: false
+                          description: Enforce deletion protection on all DSQL clusters. false = not enforced.
                     tags:
                       type: object
                       additionalProperties:
@@ -1298,6 +1310,16 @@ spec:
                           type: boolean
                           default: false
                           description: Default CloudWatch metrics setting. false = no default.
+                    dsql:
+                      type: object
+                      default: {}
+                      description: >-
+                        Default Aurora DSQL governance fields promoted from KropathConfig.
+                      properties:
+                        deletionProtectionEnabled:
+                          type: boolean
+                          default: false
+                          description: Default deletion-protection setting for DSQL clusters. false = no default.
                     tags:
                       type: object
                       additionalProperties:
