@@ -33,7 +33,7 @@ spec:
             timeout: 30s
             content: |
               set -e
-              output=$(curl -fsS http://127.0.0.1:8080/metrics)
+              output=$(curl -fsS http://127.0.0.1:18080/metrics)
               if ! echo "$output" | grep -q 'kropath_build_info{'; then
                 echo "FAIL: kropath_build_info not found in /metrics"
                 exit 1
@@ -48,7 +48,7 @@ spec:
             timeout: 30s
             content: |
               set -e
-              output=$(curl -fsS http://127.0.0.1:8080/metrics)
+              output=$(curl -fsS http://127.0.0.1:18080/metrics)
               if ! echo "$output" | grep -q 'kropath_feature_enabled{'; then
                 echo "FAIL: kropath_feature_enabled not found in /metrics"
                 exit 1

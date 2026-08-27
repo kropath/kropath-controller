@@ -33,7 +33,7 @@ spec:
             timeout: 30s
             content: |
               set -e
-              response=$(curl -fsS -D - http://127.0.0.1:8080/features)
+              response=$(curl -fsS -D - http://127.0.0.1:18080/features)
               # Verify 200 OK in headers
               if ! echo "$response" | grep -q 'HTTP/1.1 200'; then
                 echo "FAIL: expected HTTP 200"
@@ -72,7 +72,7 @@ spec:
             content: |
               set -e
               extract_pkgs() {
-                curl -fsS http://127.0.0.1:8080/features | \
+                curl -fsS http://127.0.0.1:18080/features | \
                   python3 -c "import json,sys; [print(r['package']) for r in json.load(sys.stdin)['features']]"
               }
               first=$(extract_pkgs)
@@ -94,7 +94,7 @@ spec:
             timeout: 30s
             content: |
               set -e
-              body=$(curl -fsS 'http://127.0.0.1:8080/features?name=kmsconfig')
+              body=$(curl -fsS 'http://127.0.0.1:18080/features?name=kmsconfig')
               count=$(echo "$body" | python3 -c "import json,sys; print(len(json.load(sys.stdin)['features']))")
               pkg=$(echo "$body" | python3 -c "import json,sys; print(json.load(sys.stdin)['features'][0]['package'])")
               if [ "$count" -ne 1 ]; then
@@ -116,7 +116,7 @@ spec:
               set -e
               # curl -f exits non-zero on HTTP errors; use -s -o to capture body and check status
               status=$(curl -s -o /tmp/features-404-body.json -w '%{http_code}' \
-                'http://127.0.0.1:8080/features?name=doesnotexist')
+                'http://127.0.0.1:18080/features?name=doesnotexist')
               if [ "$status" -ne 404 ]; then
                 echo "FAIL: expected HTTP 404, got $status"
                 cat /tmp/features-404-body.json || true
@@ -139,7 +139,7 @@ spec:
             content: |
               set -e
               status=$(curl -s -o /tmp/features-405-body.json -w '%{http_code}' \
-                -X POST http://127.0.0.1:8080/features)
+                -X POST http://127.0.0.1:18080/features)
               if [ "$status" -ne 405 ]; then
                 echo "FAIL: expected HTTP 405, got $status"
                 cat /tmp/features-405-body.json || true
