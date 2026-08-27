@@ -30,8 +30,8 @@
 #
 # Health and metrics ports:
 #   /healthz, /readyz → 127.0.0.1:18081  (HEALTH_PORT in Makefile)
-#   /metrics          → 127.0.0.1:8080
-#   /features         → 127.0.0.1:8080
+#   /metrics          → 127.0.0.1:18080
+#   /features         → 127.0.0.1:18080
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
@@ -46,7 +46,7 @@ spec:
             timeout: 30s
             content: |
               set -e
-              resp=$(curl -fsS http://127.0.0.1:8080/features)
+              resp=$(curl -fsS http://127.0.0.1:18080/features)
               echo "GET /features response: $resp"
 
               state=$(echo "$resp" | python3 -c "
@@ -93,7 +93,7 @@ spec:
 
               # Poll /metrics until kropath_reconciler_active{package="elbconfig"} = 1.
               for i in $(seq 1 30); do
-                metrics=$(curl -fsS http://127.0.0.1:8080/metrics)
+                metrics=$(curl -fsS http://127.0.0.1:18080/metrics)
                 if echo "$metrics" | grep -q 'kropath_reconciler_active{package="elbconfig"} 1'; then
                   echo "PASS: elbconfig reconciler activated (active=1) on iteration $i"
                   break
@@ -107,7 +107,7 @@ spec:
               done
 
               # AC-4: kropath_reconciler_activations_total{package="elbconfig"} must be >= 1.
-              metrics=$(curl -fsS http://127.0.0.1:8080/metrics)
+              metrics=$(curl -fsS http://127.0.0.1:18080/metrics)
               if ! echo "$metrics" | grep -q 'kropath_reconciler_activations_total{package="elbconfig"}'; then
                 echo "FAIL: kropath_reconciler_activations_total not found for elbconfig"
                 exit 1
@@ -121,7 +121,7 @@ spec:
             timeout: 30s
             content: |
               set -e
-              resp=$(curl -fsS http://127.0.0.1:8080/features)
+              resp=$(curl -fsS http://127.0.0.1:18080/features)
               state=$(echo "$resp" | python3 -c "
               import sys, json
               data = json.load(sys.stdin)
