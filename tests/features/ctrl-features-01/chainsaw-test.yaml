@@ -14,7 +14,7 @@
 #
 # ctrl-features-01 — /features endpoint: listing, query filtering, and method enforcement.
 #
-# Requires the controller to be running on :8080 (the default metrics address).
+# Requires the controller to be running on :18080 (METRICS_PORT in Makefile).
 # Launched by `make chainsaw-start chainsaw-wait` before running this suite.
 #
 # No Kubernetes resources are created or deleted; the test is purely read-only
