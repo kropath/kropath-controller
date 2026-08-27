@@ -26,8 +26,8 @@ metadata:
 spec:
   description: "/features endpoint — listing, query filtering, method enforcement (ctrl-features-01)"
   steps:
-    # AC-2: GET /features returns HTTP 200, Content-Type: application/json, and lists 30 reconcilers.
-    - name: ac2-get-returns-200-and-30-reconcilers
+    # AC-2: GET /features returns HTTP 200, Content-Type: application/json, and lists 31 reconcilers.
+    - name: ac2-get-returns-200-and-31-reconcilers
       try:
         - script:
             timeout: 30s
@@ -51,8 +51,8 @@ spec:
               # Verify it is valid JSON with a features array
               count=$(echo "$body" | python3 -c "import json,sys; d=json.load(sys.stdin); print(len(d['features']))")
               echo "reconciler count: $count"
-              if [ "$count" -ne 30 ]; then
-                echo "FAIL: expected 30 reconcilers, got $count"
+              if [ "$count" -ne 31 ]; then
+                echo "FAIL: expected 31 reconcilers, got $count"
                 echo "$body" | python3 -m json.tool || true
                 exit 1
               fi
@@ -62,7 +62,7 @@ spec:
                 echo "FAIL: version field is empty"
                 exit 1
               fi
-              echo "PASS: GET /features → 200, application/json, 30 reconcilers, version=$ver"
+              echo "PASS: GET /features → 200, application/json, 31 reconcilers, version=$ver"
 
     # AC-2 (ordering): Repeated calls must return features in the same order (determinism).
     - name: ac2-ordering-is-deterministic
