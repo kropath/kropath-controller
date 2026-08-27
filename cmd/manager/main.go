@@ -150,7 +150,7 @@ func main() {
 		os.Exit(1)
 	}
 	if err := mgr.AddReadyzCheck("readyz", func(req *http.Request) error {
-		ctx, cancel := context.WithTimeout(req.Context(), 100*time.Millisecond)
+		ctx, cancel := context.WithTimeout(req.Context(), 5*time.Second)
 		defer cancel()
 		if !mgr.GetCache().WaitForCacheSync(ctx) {
 			return fmt.Errorf("informer cache not synced")
