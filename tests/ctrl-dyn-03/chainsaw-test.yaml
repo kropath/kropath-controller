@@ -24,7 +24,7 @@
 #
 # Health and metrics ports:
 #   /healthz, /readyz → 127.0.0.1:18081  (HEALTH_PORT in Makefile)
-#   /metrics          → 127.0.0.1:8080
+#   /metrics          → 127.0.0.1:18080
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
@@ -79,7 +79,7 @@ spec:
 
               # Poll /metrics until elbconfig reconciler is active again.
               for i in $(seq 1 30); do
-                metrics=$(curl -fsS http://127.0.0.1:8080/metrics)
+                metrics=$(curl -fsS http://127.0.0.1:18080/metrics)
                 if echo "$metrics" | grep -q 'kropath_reconciler_active{package="elbconfig"} 1'; then
                   echo "PASS: elbconfig reconciler reactivated on iteration $i"
                   break

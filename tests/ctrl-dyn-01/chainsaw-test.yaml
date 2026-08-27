@@ -31,7 +31,7 @@
 #
 # Health and metrics ports:
 #   /healthz, /readyz → 127.0.0.1:18081  (HEALTH_PORT in Makefile)
-#   /metrics          → 127.0.0.1:8080   (default metrics-bind-address)
+#   /metrics          → 127.0.0.1:18080  (METRICS_PORT in Makefile)
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
@@ -64,7 +64,7 @@ spec:
               echo "PASS: /readyz → $readyz"
 
               # kropath_reconciler_active{package="elbconfig"} must be 0 (CRD absent → pending).
-              metrics=$(curl -fsS http://127.0.0.1:8080/metrics)
+              metrics=$(curl -fsS http://127.0.0.1:18080/metrics)
               if ! echo "$metrics" | grep -q 'kropath_reconciler_active{package="elbconfig"} 0'; then
                 echo "FAIL: expected kropath_reconciler_active{package=\"elbconfig\"} 0"
                 echo "$metrics" | grep 'elbconfig' || echo "(no elbconfig lines in /metrics)"

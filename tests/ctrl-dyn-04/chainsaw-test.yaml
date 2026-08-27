@@ -40,7 +40,7 @@ spec:
             timeout: 30s
             content: |
               set -e
-              resp=$(curl -fsS http://127.0.0.1:8080/features)
+              resp=$(curl -fsS http://127.0.0.1:18080/features)
               echo "GET /features: $resp"
               state=$(echo "$resp" | python3 -c "
               import sys, json
