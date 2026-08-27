@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.0](https://github.com/kropath/kropath-controller/compare/v0.5.0...v0.6.0) (2026-08-27)
+
+
+### Features
+
+* **KRO-798:** add DSQLConfig effectiveConfig cascade handler ([#72](https://github.com/kropath/kropath-controller/issues/72)) ([57b057e](https://github.com/kropath/kropath-controller/commit/57b057eba91204b5258c74c55ee67ca9e9aac6cf))
+* **KRO-857:** effectiveConfig cascade for Athena fields ([ae7ea6c](https://github.com/kropath/kropath-controller/commit/ae7ea6cbb3b07f2f2865e0d2af49e3752c55f974))
+
+
+### Bug Fixes
+
+* **KRO-894:** pass --metrics-bind-address to chainsaw-start, bind both ports to loopback ([#70](https://github.com/kropath/kropath-controller/issues/70)) ([87b09ed](https://github.com/kropath/kropath-controller/commit/87b09ed6d90e8762b8ba6435d48fef3f359792ef))
+
 ## [0.5.0](https://github.com/kropath/kropath-controller/compare/v0.4.0...v0.5.0) (2026-08-24)
 
 
