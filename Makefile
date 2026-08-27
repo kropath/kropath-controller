@@ -42,7 +42,8 @@ LDFLAGS    := -s -w \
 
 # ─── Test config ───────────────────────────────────────────────────────────────
 KIND_CLUSTER     := kropath-controller-test
-HEALTH_PORT      := 18081
+HEALTH_PORT      ?= 18081
+METRICS_PORT     ?= 18080
 TEST_NAMESPACES  := kro-system payments-prod events-prod network-prod registry-prod data-platform
 CHAINSAW         ?= chainsaw
 GOLANGCI         ?= golangci-lint
@@ -233,7 +234,8 @@ chainsaw-start: chainsaw-setup ## Build, set up CRDs, and start the operator in 
 		echo "Controller already running (PID $$(cat $(CONTROLLER_PID)))."; \
 	else \
 		KUBECONFIG="$${HOME}/.kube/config" $(BINARY) \
-			--health-probe-bind-address=:$(HEALTH_PORT) \
+			--health-probe-bind-address=127.0.0.1:$(HEALTH_PORT) \
+			--metrics-bind-address=127.0.0.1:$(METRICS_PORT) \
 			> $(CONTROLLER_LOG) 2>&1 & echo $$! > $(CONTROLLER_PID); \
 		echo "Controller started (PID $$(cat $(CONTROLLER_PID)))."; \
 	fi
