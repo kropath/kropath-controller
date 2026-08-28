@@ -528,6 +528,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.SSM.AllowedDocumentTypes = make([]string, len(in.Spec.Defaults.SSM.AllowedDocumentTypes))
 		copy(out.Spec.Defaults.SSM.AllowedDocumentTypes, in.Spec.Defaults.SSM.AllowedDocumentTypes)
 	}
+	if in.Spec.Mandatory.SSM.Tags != nil {
+		out.Spec.Mandatory.SSM.Tags = make(map[string]string, len(in.Spec.Mandatory.SSM.Tags))
+		for k, v := range in.Spec.Mandatory.SSM.Tags {
+			out.Spec.Mandatory.SSM.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.SSM.Tags != nil {
+		out.Spec.Defaults.SSM.Tags = make(map[string]string, len(in.Spec.Defaults.SSM.Tags))
+		for k, v := range in.Spec.Defaults.SSM.Tags {
+			out.Spec.Defaults.SSM.Tags[k] = v
+		}
+	}
 	if in.Spec.Mandatory.SyncedLabels != nil {
 		out.Spec.Mandatory.SyncedLabels = make(map[string]string, len(in.Spec.Mandatory.SyncedLabels))
 		for k, v := range in.Spec.Mandatory.SyncedLabels {

@@ -29,9 +29,9 @@ spec:
   description: "SSM effectiveConfig cascade — acceptance criteria AC-11 through AC-13 (ctrl-ssm-cascade)"
   namespace: ssm-prod
   steps:
-    # AC-11: localSSMConfig.mandatory.type=SecureString (level 4)
-    # → effCfg.mandatory.type=SecureString (wins when levels 1-3 absent)
-    - name: ac11-local-ssmcfg-mandatory-type
+    # AC-11: KropathConfig.mandatory.ssm.parameterType=SecureString (level 1)
+    # → effCfg.mandatory.type=SecureString (SSMConfig spec is empty — value comes from L1)
+    - name: ac11-kropathcfg-mandatory-type-l1
       try:
         - apply:
             file: ac11-setup.yaml
