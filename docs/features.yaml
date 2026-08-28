@@ -262,3 +262,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: SSMConfig
+      package: ssmconfig
+      description: Reconciles SSMConfig CRs and propagates effective config.
+      kinds:
+        - SSMConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

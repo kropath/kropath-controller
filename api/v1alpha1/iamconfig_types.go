@@ -76,6 +76,7 @@ type KropathConfigTier struct {
 	Athena            cascade.AthenaKropathSection            `json:"athena,omitempty"`
 	DSQL              cascade.DSQLKropathSection              `json:"dsql,omitempty"`
 	Route53           cascade.Route53KropathSection           `json:"route53,omitempty"`
+	SSM               cascade.SSMKropathSection               `json:"ssm,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
@@ -517,6 +518,26 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.Route53.Tags = make(map[string]string, len(in.Spec.Defaults.Route53.Tags))
 		for k, v := range in.Spec.Defaults.Route53.Tags {
 			out.Spec.Defaults.Route53.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.SSM.AllowedDocumentTypes != nil {
+		out.Spec.Mandatory.SSM.AllowedDocumentTypes = make([]string, len(in.Spec.Mandatory.SSM.AllowedDocumentTypes))
+		copy(out.Spec.Mandatory.SSM.AllowedDocumentTypes, in.Spec.Mandatory.SSM.AllowedDocumentTypes)
+	}
+	if in.Spec.Defaults.SSM.AllowedDocumentTypes != nil {
+		out.Spec.Defaults.SSM.AllowedDocumentTypes = make([]string, len(in.Spec.Defaults.SSM.AllowedDocumentTypes))
+		copy(out.Spec.Defaults.SSM.AllowedDocumentTypes, in.Spec.Defaults.SSM.AllowedDocumentTypes)
+	}
+	if in.Spec.Mandatory.SSM.Tags != nil {
+		out.Spec.Mandatory.SSM.Tags = make(map[string]string, len(in.Spec.Mandatory.SSM.Tags))
+		for k, v := range in.Spec.Mandatory.SSM.Tags {
+			out.Spec.Mandatory.SSM.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.SSM.Tags != nil {
+		out.Spec.Defaults.SSM.Tags = make(map[string]string, len(in.Spec.Defaults.SSM.Tags))
+		for k, v := range in.Spec.Defaults.SSM.Tags {
+			out.Spec.Defaults.SSM.Tags[k] = v
 		}
 	}
 	if in.Spec.Mandatory.SyncedLabels != nil {
