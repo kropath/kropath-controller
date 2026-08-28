@@ -92,6 +92,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&AthenaConfigList{},
 		&DSQLConfig{},
 		&DSQLConfigList{},
+		&Route53Config{},
+		&Route53ConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil
