@@ -254,3 +254,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: Route53Config
+      package: route53config
+      description: Reconciles Route53Config CRs and propagates effective config.
+      kinds:
+        - Route53Config
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

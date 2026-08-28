@@ -213,6 +213,38 @@ spec:
               message: "athena.publishCloudWatchMetricsEnabled cannot be set to true in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.dsql) && self.spec.mandatory.dsql.deletionProtectionEnabled == true && has(self.spec.defaults.dsql) && self.spec.defaults.dsql.deletionProtectionEnabled == true)'
               message: "dsql.deletionProtectionEnabled cannot be set to true in both mandatory and defaults"
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.route53) &&
+                  has(self.spec.mandatory.route53.defaultTTL) &&
+                  self.spec.mandatory.route53.defaultTTL > 0 &&
+                  has(self.spec.defaults) && has(self.spec.defaults.route53) &&
+                  has(self.spec.defaults.route53.defaultTTL) &&
+                  self.spec.defaults.route53.defaultTTL > 0)
+              message: "route53.defaultTTL cannot be set in both mandatory and defaults"
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.route53) &&
+                  has(self.spec.mandatory.route53.healthCheckRequestInterval) &&
+                  self.spec.mandatory.route53.healthCheckRequestInterval > 0 &&
+                  has(self.spec.defaults) && has(self.spec.defaults.route53) &&
+                  has(self.spec.defaults.route53.healthCheckRequestInterval) &&
+                  self.spec.defaults.route53.healthCheckRequestInterval > 0)
+              message: "route53.healthCheckRequestInterval cannot be set in both mandatory and defaults"
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.route53) &&
+                  has(self.spec.mandatory.route53.healthCheckFailureThreshold) &&
+                  self.spec.mandatory.route53.healthCheckFailureThreshold > 0 &&
+                  has(self.spec.defaults) && has(self.spec.defaults.route53) &&
+                  has(self.spec.defaults.route53.healthCheckFailureThreshold) &&
+                  self.spec.defaults.route53.healthCheckFailureThreshold > 0)
+              message: "route53.healthCheckFailureThreshold cannot be set in both mandatory and defaults"
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.route53) &&
+                  has(self.spec.mandatory.route53.resolverEndpointType) &&
+                  self.spec.mandatory.route53.resolverEndpointType != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.route53) &&
+                  has(self.spec.defaults.route53.resolverEndpointType) &&
+                  self.spec.defaults.route53.resolverEndpointType != "")
+              message: "route53.resolverEndpointType cannot be set in both mandatory and defaults"
           properties:
             spec:
               type: object
@@ -764,6 +796,34 @@ spec:
                           type: boolean
                           default: false
                           description: Enforce deletion protection on all DSQL clusters. false = not enforced.
+                    route53:
+                      type: object
+                      default: {}
+                      description: >-
+                        Mandatory Route53 governance fields promoted from KropathConfig.
+                      properties:
+                        defaultTTL:
+                          type: integer
+                          format: int64
+                          default: 0
+                          minimum: 0
+                          description: Default TTL in seconds for DNS records. 0 = not enforced.
+                        healthCheckRequestInterval:
+                          type: integer
+                          format: int64
+                          default: 0
+                          description: "Health check polling interval. 0 = not enforced. Valid non-zero values: 10 or 30."
+                        healthCheckFailureThreshold:
+                          type: integer
+                          format: int64
+                          default: 0
+                          minimum: 0
+                          maximum: 10
+                          description: "Consecutive failures for unhealthy status. 0 = not enforced. Valid range: 1–10."
+                        resolverEndpointType:
+                          type: string
+                          default: ""
+                          description: "IP address family for Resolver endpoints. Empty = not enforced. Valid values: IPV4, IPV6, DUALSTACK."
                     tags:
                       type: object
                       additionalProperties:
@@ -1320,6 +1380,34 @@ spec:
                           type: boolean
                           default: false
                           description: Default deletion-protection setting for DSQL clusters. false = no default.
+                    route53:
+                      type: object
+                      default: {}
+                      description: >-
+                        Default Route53 governance fields promoted from KropathConfig.
+                      properties:
+                        defaultTTL:
+                          type: integer
+                          format: int64
+                          default: 0
+                          minimum: 0
+                          description: Default TTL in seconds for DNS records. 0 = no default.
+                        healthCheckRequestInterval:
+                          type: integer
+                          format: int64
+                          default: 0
+                          description: "Default health check polling interval. 0 = no default. Valid non-zero values: 10 or 30."
+                        healthCheckFailureThreshold:
+                          type: integer
+                          format: int64
+                          default: 0
+                          minimum: 0
+                          maximum: 10
+                          description: "Default consecutive-failure threshold. 0 = no default. Valid range: 1–10."
+                        resolverEndpointType:
+                          type: string
+                          default: ""
+                          description: "Default IP address family for Resolver endpoints. Empty = no default. Valid values: IPV4, IPV6, DUALSTACK."
                     tags:
                       type: object
                       additionalProperties:
