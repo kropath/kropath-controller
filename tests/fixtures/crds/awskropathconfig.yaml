@@ -245,6 +245,38 @@ spec:
                   has(self.spec.defaults.route53.resolverEndpointType) &&
                   self.spec.defaults.route53.resolverEndpointType != "")
               message: "route53.resolverEndpointType cannot be set in both mandatory and defaults"
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.ssm) &&
+                  has(self.spec.mandatory.ssm.parameterType) &&
+                  self.spec.mandatory.ssm.parameterType != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.ssm) &&
+                  has(self.spec.defaults.ssm.parameterType) &&
+                  self.spec.defaults.ssm.parameterType != "")
+              message: "ssm.parameterType cannot be set in both mandatory and defaults"
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.ssm) &&
+                  has(self.spec.mandatory.ssm.parameterTier) &&
+                  self.spec.mandatory.ssm.parameterTier != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.ssm) &&
+                  has(self.spec.defaults.ssm.parameterTier) &&
+                  self.spec.defaults.ssm.parameterTier != "")
+              message: "ssm.parameterTier cannot be set in both mandatory and defaults"
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.ssm) &&
+                  has(self.spec.mandatory.ssm.keyID) &&
+                  self.spec.mandatory.ssm.keyID != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.ssm) &&
+                  has(self.spec.defaults.ssm.keyID) &&
+                  self.spec.defaults.ssm.keyID != "")
+              message: "ssm.keyID cannot be set in both mandatory and defaults"
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.ssm) &&
+                  has(self.spec.mandatory.ssm.allowedDocumentTypes) &&
+                  size(self.spec.mandatory.ssm.allowedDocumentTypes) > 0 &&
+                  has(self.spec.defaults) && has(self.spec.defaults.ssm) &&
+                  has(self.spec.defaults.ssm.allowedDocumentTypes) &&
+                  size(self.spec.defaults.ssm.allowedDocumentTypes) > 0)
+              message: "ssm.allowedDocumentTypes cannot be set in both mandatory and defaults"
           properties:
             spec:
               type: object
@@ -824,6 +856,29 @@ spec:
                           type: string
                           default: ""
                           description: "IP address family for Resolver endpoints. Empty = not enforced. Valid values: IPV4, IPV6, DUALSTACK."
+                    ssm:
+                      type: object
+                      default: {}
+                      description: >-
+                        Mandatory SSM governance fields promoted from KropathConfig.
+                      properties:
+                        parameterType:
+                          type: string
+                          default: ""
+                          description: Force parameter type (String, StringList, SecureString). Empty = not enforced.
+                        parameterTier:
+                          type: string
+                          default: ""
+                          description: Force parameter tier (Standard, Advanced, Intelligent-Tiering). Empty = not enforced.
+                        keyID:
+                          type: string
+                          default: ""
+                          description: KMS key ID or ARN for SecureString encryption. Empty = not enforced.
+                        allowedDocumentTypes:
+                          type: array
+                          description: Allowlist of SSM document types. Empty = no restriction.
+                          items:
+                            type: string
                     tags:
                       type: object
                       additionalProperties:
@@ -1408,6 +1463,29 @@ spec:
                           type: string
                           default: ""
                           description: "Default IP address family for Resolver endpoints. Empty = no default. Valid values: IPV4, IPV6, DUALSTACK."
+                    ssm:
+                      type: object
+                      default: {}
+                      description: >-
+                        Default SSM governance fields promoted from KropathConfig.
+                      properties:
+                        parameterType:
+                          type: string
+                          default: ""
+                          description: Default parameter type (String, StringList, SecureString). Empty = no default.
+                        parameterTier:
+                          type: string
+                          default: ""
+                          description: Default parameter tier (Standard, Advanced, Intelligent-Tiering). Empty = no default.
+                        keyID:
+                          type: string
+                          default: ""
+                          description: Default KMS key ID or ARN for SecureString encryption. Empty = no default.
+                        allowedDocumentTypes:
+                          type: array
+                          description: Default document type allowlist. Empty = no default.
+                          items:
+                            type: string
                     tags:
                       type: object
                       additionalProperties:

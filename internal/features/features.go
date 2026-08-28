@@ -108,4 +108,5 @@ var All = []Reconciler{
 	cascade("AthenaConfig", "athenaconfig"),
 	cascade("DSQLConfig", "dsqlconfig"),
 	cascade("Route53Config", "route53config"),
+	cascade("SSMConfig", "ssmconfig"),
 }

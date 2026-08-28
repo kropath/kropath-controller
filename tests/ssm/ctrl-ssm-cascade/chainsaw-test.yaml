@@ -1,0 +1,60 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-ssm-cascade Chainsaw integration tests — SSM effectiveConfig cascade.
+#
+# Covers acceptance criteria: AC-11 through AC-13.
+#
+# Test isolation — unique-name-per-step, no inter-step deletes:
+#   Each AC owns a distinct resource name (acNN-ssm-policy). The controller
+#   resolves a config's global counterpart by *name* — a local SSMConfig
+#   ssm-prod/acNN-ssm-policy merges only kro-system/acNN-ssm-policy — so a
+#   per-AC name isolates each AC completely.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-ssm-cascade
+spec:
+  description: "SSM effectiveConfig cascade — acceptance criteria AC-11 through AC-13 (ctrl-ssm-cascade)"
+  namespace: ssm-prod
+  steps:
+    # AC-11: localSSMConfig.mandatory.type=SecureString (level 4)
+    # → effCfg.mandatory.type=SecureString (wins when levels 1-3 absent)
+    - name: ac11-local-ssmcfg-mandatory-type
+      try:
+        - apply:
+            file: ac11-setup.yaml
+        - assert:
+            file: ac11-assert.yaml
+            timeout: 30s
+
+    # AC-12: SSMConfig.mandatory.documentType not in mandatory.allowedDocumentTypes
+    # → Valid=False; effectiveConfig NOT written.
+    - name: ac12-invalid-document-type-not-in-allowed-list
+      try:
+        - apply:
+            file: ac12-setup.yaml
+        - assert:
+            file: ac12-assert.yaml
+            timeout: 30s
+
+    # AC-13: globalKropathConfig.mandatory.tags (level 1) + globalSSMConfig.mandatory.tags (level 3)
+    # are union-merged into effCfg.mandatory.tags (closer-to-instance wins on key conflict).
+    - name: ac13-tag-union-merge
+      try:
+        - apply:
+            file: ac13-setup.yaml
+        - assert:
+            file: ac13-assert.yaml
+            timeout: 30s
