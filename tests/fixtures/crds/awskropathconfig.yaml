@@ -812,18 +812,18 @@ spec:
                           type: integer
                           format: int64
                           default: 0
-                          description: Health check polling interval. 0 = not enforced. Valid non-zero values: 10 or 30.
+                          description: "Health check polling interval. 0 = not enforced. Valid non-zero values: 10 or 30."
                         healthCheckFailureThreshold:
                           type: integer
                           format: int64
                           default: 0
                           minimum: 0
                           maximum: 10
-                          description: Consecutive failures for unhealthy status. 0 = not enforced. Valid range: 1–10.
+                          description: "Consecutive failures for unhealthy status. 0 = not enforced. Valid range: 1–10."
                         resolverEndpointType:
                           type: string
                           default: ""
-                          description: IP address family for Resolver endpoints. Empty = not enforced. Valid values: IPV4, IPV6, DUALSTACK.
+                          description: "IP address family for Resolver endpoints. Empty = not enforced. Valid values: IPV4, IPV6, DUALSTACK."
                     tags:
                       type: object
                       additionalProperties:
@@ -1396,18 +1396,18 @@ spec:
                           type: integer
                           format: int64
                           default: 0
-                          description: Default health check polling interval. 0 = no default. Valid non-zero values: 10 or 30.
+                          description: "Default health check polling interval. 0 = no default. Valid non-zero values: 10 or 30."
                         healthCheckFailureThreshold:
                           type: integer
                           format: int64
                           default: 0
                           minimum: 0
                           maximum: 10
-                          description: Default consecutive-failure threshold. 0 = no default. Valid range: 1–10.
+                          description: "Default consecutive-failure threshold. 0 = no default. Valid range: 1–10."
                         resolverEndpointType:
                           type: string
                           default: ""
-                          description: Default IP address family for Resolver endpoints. Empty = no default. Valid values: IPV4, IPV6, DUALSTACK.
+                          description: "Default IP address family for Resolver endpoints. Empty = no default. Valid values: IPV4, IPV6, DUALSTACK."
                     tags:
                       type: object
                       additionalProperties:
