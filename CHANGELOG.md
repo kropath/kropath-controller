@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.0](https://github.com/kropath/kropath-controller/compare/v0.6.0...v0.7.0) (2026-08-28)
+
+
+### Features
+
+* **KRO-728:** add Route53Config effectiveConfig cascade ([#73](https://github.com/kropath/kropath-controller/issues/73)) ([b7c4e1f](https://github.com/kropath/kropath-controller/commit/b7c4e1f6bbac6d907e5dbb8c947eed41df091d8b))
+* **KRO-754:** add SSMConfig effectiveConfig cascade ([#75](https://github.com/kropath/kropath-controller/issues/75)) ([7044d86](https://github.com/kropath/kropath-controller/commit/7044d86644c7c5e5829df7dbfcd1cfea9e019b08))
+
 ## [0.6.0](https://github.com/kropath/kropath-controller/compare/v0.5.0...v0.6.0) (2026-08-27)
 
 
