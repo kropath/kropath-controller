@@ -14,6 +14,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/autoscalingconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/cloudwatchconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/cloudwatchlogsconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/cognitoconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/dynamodbconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/ec2config"
 	"github.com/kropath/kropath-controller/internal/reconciler/ecrconfig"
@@ -198,6 +199,13 @@ func All() []Entry {
 			return (&cloudwatchlogsconfig.Reconciler{
 				Client: bctx.Manager.GetClient(),
 				Log:    bctx.Log.WithName("controllers").WithName("CloudWatchLogsConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("cognitoconfig", "CognitoConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&cognitoconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("CognitoConfig"),
 				Scheme: bctx.Manager.GetScheme(),
 			}).BuildWithManager(bctx.Manager)
 		}),

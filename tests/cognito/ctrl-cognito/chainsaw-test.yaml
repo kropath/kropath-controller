@@ -1,0 +1,76 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-cognito Chainsaw integration tests — acceptance criteria AC-7 through AC-11.
+#
+# Requires a kind cluster with kropath-operator running and the fixture CRDs
+# applied (`make setup`, or `make test-cognito` against an already-running controller).
+#
+# Test isolation — unique-name-per-step:
+#   Each AC owns a distinct resource name (acN-cognito-policy). The controller
+#   resolves a config's global counterpart by *name* — a local CognitoConfig
+#   <namespace>/acN-cognito-policy merges only kro-system/acN-cognito-policy — so a
+#   per-AC name isolates each AC completely.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-cognito
+spec:
+  description: "Cognito effectiveConfig cascade — acceptance criteria AC-7 through AC-11 (ctrl-cognito)"
+  steps:
+    # AC-7: KropathConfig.mandatory.cognito.mfaConfiguration (level 1) → effCfg.mandatory.mfaConfiguration
+    - name: ac7-global-kpc-mandatory-mfa
+      try:
+        - apply:
+            file: ac07-setup.yaml
+        - assert:
+            file: ac07-assert.yaml
+            timeout: 30s
+
+    # AC-8: KropathConfig.mandatory.cognito.passwordPolicy.minimumLength (level 1) wins over
+    # CognitoConfig.mandatory.passwordPolicy.minimumLength (level 4)
+    - name: ac8-kpc-password-policy-wins
+      try:
+        - apply:
+            file: ac08-setup.yaml
+        - assert:
+            file: ac08-assert.yaml
+            timeout: 30s
+
+    # AC-9: CognitoConfig.defaults.namingTemplate (level 6) → effCfg.defaults.namingTemplate
+    - name: ac9-defaults-naming-template
+      try:
+        - apply:
+            file: ac09-setup.yaml
+        - assert:
+            file: ac09-assert.yaml
+            timeout: 30s
+
+    # AC-10: KropathConfig.mandatory.tags and CognitoConfig.mandatory.tags union-merge
+    - name: ac10-mandatory-tag-union-merge
+      try:
+        - apply:
+            file: ac10-setup.yaml
+        - assert:
+            file: ac10-assert.yaml
+            timeout: 30s
+
+    # AC-11: CognitoConfig.mandatory.syncedLabels (level 4) → effCfg.mandatory.syncedLabels
+    - name: ac11-mandatory-synced-labels
+      try:
+        - apply:
+            file: ac11-setup.yaml
+        - assert:
+            file: ac11-assert.yaml
+            timeout: 30s
