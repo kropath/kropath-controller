@@ -147,11 +147,12 @@ jobs:
       # parallel controller+CRD PR pairs can be reviewed together.
       #   agent/implementer/e14f06bb — EMRConfig CRD (KRO-829; clear once merged)
       #   agent/implementer/3f0e8f62 — AthenaConfig CRD (KRO-856; clear once merged)
+      #   kro-736-cognitoconfig-crd — CognitoConfig CRD (KRO-736; clear once merged)
       - name: Check watched Kinds against kropath-aws CRDs
         if: needs.changes.outputs.code == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          KROPATH_AWS_COMPANION_REFS: "agent/implementer/e14f06bb agent/implementer/3f0e8f62"
+          KROPATH_AWS_COMPANION_REFS: "agent/implementer/e14f06bb agent/implementer/3f0e8f62 kro-736-cognitoconfig-crd"
         run: make crds-verify
 
   security:

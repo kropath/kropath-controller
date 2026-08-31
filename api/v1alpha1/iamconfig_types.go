@@ -77,6 +77,7 @@ type KropathConfigTier struct {
 	DSQL              cascade.DSQLKropathSection              `json:"dsql,omitempty"`
 	Route53           cascade.Route53KropathSection           `json:"route53,omitempty"`
 	SSM               cascade.SSMKropathSection               `json:"ssm,omitempty"`
+	Cognito           cascade.CognitoKropathSection           `json:"cognito,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
@@ -538,6 +539,51 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.SSM.Tags = make(map[string]string, len(in.Spec.Defaults.SSM.Tags))
 		for k, v := range in.Spec.Defaults.SSM.Tags {
 			out.Spec.Defaults.SSM.Tags[k] = v
+		}
+	}
+	// Cognito.PasswordPolicy *bool fields — deep-copy each pointer.
+	if in.Spec.Mandatory.Cognito.PasswordPolicy.RequireLowercase != nil {
+		v := *in.Spec.Mandatory.Cognito.PasswordPolicy.RequireLowercase
+		out.Spec.Mandatory.Cognito.PasswordPolicy.RequireLowercase = &v
+	}
+	if in.Spec.Mandatory.Cognito.PasswordPolicy.RequireNumbers != nil {
+		v := *in.Spec.Mandatory.Cognito.PasswordPolicy.RequireNumbers
+		out.Spec.Mandatory.Cognito.PasswordPolicy.RequireNumbers = &v
+	}
+	if in.Spec.Mandatory.Cognito.PasswordPolicy.RequireSymbols != nil {
+		v := *in.Spec.Mandatory.Cognito.PasswordPolicy.RequireSymbols
+		out.Spec.Mandatory.Cognito.PasswordPolicy.RequireSymbols = &v
+	}
+	if in.Spec.Mandatory.Cognito.PasswordPolicy.RequireUppercase != nil {
+		v := *in.Spec.Mandatory.Cognito.PasswordPolicy.RequireUppercase
+		out.Spec.Mandatory.Cognito.PasswordPolicy.RequireUppercase = &v
+	}
+	if in.Spec.Mandatory.Cognito.Tags != nil {
+		out.Spec.Mandatory.Cognito.Tags = make(map[string]string, len(in.Spec.Mandatory.Cognito.Tags))
+		for k, v := range in.Spec.Mandatory.Cognito.Tags {
+			out.Spec.Mandatory.Cognito.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.Cognito.PasswordPolicy.RequireLowercase != nil {
+		v := *in.Spec.Defaults.Cognito.PasswordPolicy.RequireLowercase
+		out.Spec.Defaults.Cognito.PasswordPolicy.RequireLowercase = &v
+	}
+	if in.Spec.Defaults.Cognito.PasswordPolicy.RequireNumbers != nil {
+		v := *in.Spec.Defaults.Cognito.PasswordPolicy.RequireNumbers
+		out.Spec.Defaults.Cognito.PasswordPolicy.RequireNumbers = &v
+	}
+	if in.Spec.Defaults.Cognito.PasswordPolicy.RequireSymbols != nil {
+		v := *in.Spec.Defaults.Cognito.PasswordPolicy.RequireSymbols
+		out.Spec.Defaults.Cognito.PasswordPolicy.RequireSymbols = &v
+	}
+	if in.Spec.Defaults.Cognito.PasswordPolicy.RequireUppercase != nil {
+		v := *in.Spec.Defaults.Cognito.PasswordPolicy.RequireUppercase
+		out.Spec.Defaults.Cognito.PasswordPolicy.RequireUppercase = &v
+	}
+	if in.Spec.Defaults.Cognito.Tags != nil {
+		out.Spec.Defaults.Cognito.Tags = make(map[string]string, len(in.Spec.Defaults.Cognito.Tags))
+		for k, v := range in.Spec.Defaults.Cognito.Tags {
+			out.Spec.Defaults.Cognito.Tags[k] = v
 		}
 	}
 	if in.Spec.Mandatory.SyncedLabels != nil {

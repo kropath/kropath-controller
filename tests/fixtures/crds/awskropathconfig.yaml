@@ -879,6 +879,57 @@ spec:
                           description: Allowlist of SSM document types. Empty = no restriction.
                           items:
                             type: string
+                    cognito:
+                      type: object
+                      default: {}
+                      description: >-
+                        Mandatory Cognito governance fields promoted from KropathConfig.
+                      properties:
+                        mfaConfiguration:
+                          type: string
+                          default: ""
+                          description: MFA level enforcement ("OFF", "OPTIONAL", "ON"). Empty = not enforced.
+                        deletionProtection:
+                          type: string
+                          default: ""
+                          description: Deletion protection state ("ACTIVE", "INACTIVE"). Empty = not enforced.
+                        advancedSecurityMode:
+                          type: string
+                          default: ""
+                          description: Advanced security mode ("OFF", "AUDIT", "ENFORCED"). Empty = not enforced.
+                        passwordPolicy:
+                          type: object
+                          default: {}
+                          description: Cognito password policy sub-fields.
+                          properties:
+                            minimumLength:
+                              type: integer
+                              format: int64
+                              default: 0
+                              description: Minimum password length. 0 = not enforced.
+                            requireLowercase:
+                              type: boolean
+                              description: Require at least one lowercase letter. Omit = not enforced.
+                            requireNumbers:
+                              type: boolean
+                              description: Require at least one digit. Omit = not enforced.
+                            requireSymbols:
+                              type: boolean
+                              description: Require at least one symbol. Omit = not enforced.
+                            requireUppercase:
+                              type: boolean
+                              description: Require at least one uppercase letter. Omit = not enforced.
+                            temporaryPasswordValidityDays:
+                              type: integer
+                              format: int64
+                              default: 0
+                              description: Temporary password expiry in days. 0 = not enforced.
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                          description: Cognito-specific mandatory tags.
                     tags:
                       type: object
                       additionalProperties:
@@ -1486,6 +1537,57 @@ spec:
                           description: Default document type allowlist. Empty = no default.
                           items:
                             type: string
+                    cognito:
+                      type: object
+                      default: {}
+                      description: >-
+                        Default Cognito governance fields promoted from KropathConfig.
+                      properties:
+                        mfaConfiguration:
+                          type: string
+                          default: ""
+                          description: MFA level suggestion ("OFF", "OPTIONAL", "ON"). Empty = no suggestion.
+                        deletionProtection:
+                          type: string
+                          default: ""
+                          description: Deletion protection suggestion ("ACTIVE", "INACTIVE"). Empty = no suggestion.
+                        advancedSecurityMode:
+                          type: string
+                          default: ""
+                          description: Advanced security mode suggestion ("OFF", "AUDIT", "ENFORCED"). Empty = no suggestion.
+                        passwordPolicy:
+                          type: object
+                          default: {}
+                          description: Cognito password policy defaults sub-fields.
+                          properties:
+                            minimumLength:
+                              type: integer
+                              format: int64
+                              default: 0
+                              description: Minimum password length suggestion. 0 = no suggestion.
+                            requireLowercase:
+                              type: boolean
+                              description: Require lowercase suggestion. Omit = no suggestion.
+                            requireNumbers:
+                              type: boolean
+                              description: Require digits suggestion. Omit = no suggestion.
+                            requireSymbols:
+                              type: boolean
+                              description: Require symbols suggestion. Omit = no suggestion.
+                            requireUppercase:
+                              type: boolean
+                              description: Require uppercase suggestion. Omit = no suggestion.
+                            temporaryPasswordValidityDays:
+                              type: integer
+                              format: int64
+                              default: 0
+                              description: Temporary password expiry suggestion in days. 0 = no suggestion.
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                          description: Cognito-specific default tags.
                     tags:
                       type: object
                       additionalProperties:

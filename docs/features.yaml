@@ -270,3 +270,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: CognitoConfig
+      package: cognitoconfig
+      description: Reconciles CognitoConfig CRs and propagates effective config.
+      kinds:
+        - CognitoConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

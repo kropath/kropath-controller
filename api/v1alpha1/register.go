@@ -96,6 +96,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&Route53ConfigList{},
 		&SSMConfig{},
 		&SSMConfigList{},
+		&CognitoConfig{},
+		&CognitoConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

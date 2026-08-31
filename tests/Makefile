@@ -14,7 +14,7 @@
 
 CHAINSAW ?= chainsaw
 
-.PHONY: setup test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigateway test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-msk test-memorydb test-acm test-emr test-athena test-dsql test-route53 test-ssm test-version test-features test-dyn test-dyn-01 test-dyn-02 test-dyn-03 test-dyn-04 test-dyn-05 test-all
+.PHONY: setup test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigateway test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-msk test-memorydb test-acm test-emr test-athena test-dsql test-route53 test-ssm test-cognito test-version test-features test-dyn test-dyn-01 test-dyn-02 test-dyn-03 test-dyn-04 test-dyn-05 test-all
 
 ## setup: Apply all CRDs to the cluster. Run before any test target.
 setup:
@@ -141,6 +141,10 @@ test-route53:
 test-ssm:
 	$(CHAINSAW) test ssm/ctrl-ssm-cascade/
 
+## test-cognito: Run Cognito cascade integration tests (ctrl-cognito).
+test-cognito:
+	$(CHAINSAW) test cognito/ctrl-cognito/
+
 ## test-version: Run build-info and feature-enabled metrics integration tests (ctrl-version-01).
 test-version:
 	$(CHAINSAW) test version/ctrl-version-01/
@@ -179,4 +183,4 @@ test-dyn-05:
 test-dyn: test-dyn-01 test-dyn-02 test-dyn-03 test-dyn-04 test-dyn-05
 
 ## test-all: Run all integration test suites.
-test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigateway test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-msk test-memorydb test-acm test-emr test-athena test-dsql test-route53 test-ssm test-version test-features test-dyn
+test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigateway test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-msk test-memorydb test-acm test-emr test-athena test-dsql test-route53 test-ssm test-cognito test-version test-features test-dyn
