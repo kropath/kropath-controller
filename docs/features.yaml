@@ -294,3 +294,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: AppScalingConfig
+      package: appscalingconfig
+      description: Reconciles AppScalingConfig CRs and propagates effective config.
+      kinds:
+        - AppScalingConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

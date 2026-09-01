@@ -112,4 +112,5 @@ var All = []Reconciler{
 	cascade("CognitoConfig", "cognitoconfig"),
 	cascade("KinesisConfig", "kinesisconfig"),
 	cascade("CloudTrailConfig", "cloudtrailconfig"),
+	cascade("AppScalingConfig", "appscalingconfig"),
 }

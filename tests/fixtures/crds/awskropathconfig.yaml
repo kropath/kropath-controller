@@ -489,6 +489,34 @@ spec:
                           default: {}
                           additionalProperties:
                             type: string
+                    appScaling:
+                      type: object
+                      default: {}
+                      properties:
+                        minCapacity:
+                          type: integer
+                          format: int64
+                          default: 0
+                        maxCapacity:
+                          type: integer
+                          format: int64
+                          default: 0
+                        disableScaleIn:
+                          type: boolean
+                          default: false
+                        scaleInCooldown:
+                          type: integer
+                          format: int64
+                          default: 0
+                        scaleOutCooldown:
+                          type: integer
+                          format: int64
+                          default: 0
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
                     eventbridge:
                       type: object
                       default: {}
@@ -1185,6 +1213,34 @@ spec:
                         capacityRebalance:
                           type: boolean
                           default: false
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                    appScaling:
+                      type: object
+                      default: {}
+                      properties:
+                        minCapacity:
+                          type: integer
+                          format: int64
+                          default: 0
+                        maxCapacity:
+                          type: integer
+                          format: int64
+                          default: 0
+                        disableScaleIn:
+                          type: boolean
+                          default: false
+                        scaleInCooldown:
+                          type: integer
+                          format: int64
+                          default: 0
+                        scaleOutCooldown:
+                          type: integer
+                          format: int64
+                          default: 0
                         tags:
                           type: object
                           default: {}

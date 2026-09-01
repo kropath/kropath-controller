@@ -102,6 +102,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&KinesisConfigList{},
 		&CloudTrailConfig{},
 		&CloudTrailConfigList{},
+		&AppScalingConfig{},
+		&AppScalingConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

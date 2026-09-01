@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/kropath/kropath-controller/internal/reconciler/acmconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/appscalingconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/documentdbconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/apigatewayconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/apigatewayv2config"
@@ -383,6 +384,13 @@ func All() []Entry {
 			return (&cloudtrailconfig.Reconciler{
 				Client: bctx.Manager.GetClient(),
 				Log:    bctx.Log.WithName("controllers").WithName("CloudTrailConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("appscalingconfig", "AppScalingConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&appscalingconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("AppScalingConfig"),
 				Scheme: bctx.Manager.GetScheme(),
 			}).BuildWithManager(bctx.Manager)
 		}),
