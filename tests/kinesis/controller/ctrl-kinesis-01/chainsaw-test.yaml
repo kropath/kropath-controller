@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# ctrl-kinesis-01 Chainsaw integration tests — AC-6, AC-7, AC-8.
+# ctrl-kinesis-01 Chainsaw integration tests — AC-6, AC-7, AC-8, AC-9.
 # Requires:
 #   - kind cluster with kropath-operator deployed
 #   - KropathConfig CRD applied (crds/awskropathconfig.yaml)
@@ -55,4 +55,14 @@ spec:
             file: ac08-setup.yaml
         - assert:
             file: ac08-assert.yaml
+            timeout: 30s
+
+    # AC-9: KinesisConfig.mandatory.syncedLabels propagates to
+    # effCfg.mandatory.syncedLabels (happy-path: config-synced-labels).
+    - name: ac9-synced-labels-propagate
+      try:
+        - apply:
+            file: ac09-setup.yaml
+        - assert:
+            file: ac09-assert.yaml
             timeout: 30s
