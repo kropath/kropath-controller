@@ -79,6 +79,7 @@ type KropathConfigTier struct {
 	SSM               cascade.SSMKropathSection               `json:"ssm,omitempty"`
 	Cognito           cascade.CognitoKropathSection           `json:"cognito,omitempty"`
 	Kinesis           cascade.KinesisKropathSection           `json:"kinesis,omitempty"`
+	CloudTrail        cascade.CloudTrailKropathSection        `json:"cloudtrail,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
@@ -585,6 +586,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.Cognito.Tags = make(map[string]string, len(in.Spec.Defaults.Cognito.Tags))
 		for k, v := range in.Spec.Defaults.Cognito.Tags {
 			out.Spec.Defaults.Cognito.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.CloudTrail.Tags != nil {
+		out.Spec.Mandatory.CloudTrail.Tags = make(map[string]string, len(in.Spec.Mandatory.CloudTrail.Tags))
+		for k, v := range in.Spec.Mandatory.CloudTrail.Tags {
+			out.Spec.Mandatory.CloudTrail.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.CloudTrail.Tags != nil {
+		out.Spec.Defaults.CloudTrail.Tags = make(map[string]string, len(in.Spec.Defaults.CloudTrail.Tags))
+		for k, v := range in.Spec.Defaults.CloudTrail.Tags {
+			out.Spec.Defaults.CloudTrail.Tags[k] = v
 		}
 	}
 	if in.Spec.Mandatory.SyncedLabels != nil {

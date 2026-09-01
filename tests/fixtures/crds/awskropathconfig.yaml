@@ -509,6 +509,21 @@ spec:
                           format: int64
                           default: 0
                           minimum: 0
+                    cloudtrail:
+                      type: object
+                      default: {}
+                      properties:
+                        isMultiRegionTrail:
+                          type: boolean
+                          default: false
+                        enableLogFileValidation:
+                          type: boolean
+                          default: false
+                        retentionPeriod:
+                          type: integer
+                          format: int64
+                          default: 0
+                          minimum: 0
                     cloudwatch:
                       type: object
                       default: {}
@@ -1191,6 +1206,21 @@ spec:
                           type: string
                           default: ""
                         retentionDays:
+                          type: integer
+                          format: int64
+                          default: 0
+                          minimum: 0
+                    cloudtrail:
+                      type: object
+                      default: {}
+                      properties:
+                        isMultiRegionTrail:
+                          type: boolean
+                          default: false
+                        enableLogFileValidation:
+                          type: boolean
+                          default: false
+                        retentionPeriod:
                           type: integer
                           format: int64
                           default: 0

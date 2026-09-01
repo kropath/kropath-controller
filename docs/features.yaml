@@ -286,3 +286,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: CloudTrailConfig
+      package: cloudtrailconfig
+      description: Reconciles CloudTrailConfig CRs and propagates effective config.
+      kinds:
+        - CloudTrailConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

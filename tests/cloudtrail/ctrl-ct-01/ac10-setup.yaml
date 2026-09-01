@@ -1,0 +1,38 @@
+# AC-10: KropathConfig.mandatory.cloudtrail.isMultiRegionTrail: true (level 1) propagates to
+# effectiveConfig.mandatory.isMultiRegionTrail; and CloudTrailConfig defaults.enableLogFileValidation
+# (level 6) propagates to effectiveConfig.defaults.enableLogFileValidation.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac10-ct-kpc
+  namespace: kro-system
+  labels:
+    aws.kropath.run/resource-name: ac10-ct-kpc
+spec:
+  mandatory:
+    cloudtrail:
+      isMultiRegionTrail: true
+  defaults: {}
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudTrailConfig
+metadata:
+  name: ac10-ct-policy
+  namespace: kro-system
+  labels:
+    aws.kropath.run/resource-name: ac10-ct-policy
+spec:
+  mandatory: {}
+  defaults: {}
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudTrailConfig
+metadata:
+  name: ac10-ct-policy
+  namespace: cloudtrail-prod
+  labels:
+    aws.kropath.run/resource-name: ac10-ct-policy
+spec:
+  mandatory: {}
+  defaults:
+    enableLogFileValidation: true
