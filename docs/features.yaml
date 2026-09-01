@@ -278,3 +278,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: KinesisConfig
+      package: kinesisconfig
+      description: Reconciles KinesisConfig CRs and propagates effective config.
+      kinds:
+        - KinesisConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

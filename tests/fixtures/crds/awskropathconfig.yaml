@@ -930,6 +930,31 @@ spec:
                           additionalProperties:
                             type: string
                           description: Cognito-specific mandatory tags.
+                    kinesis:
+                      type: object
+                      default: {}
+                      description: >-
+                        Mandatory Kinesis governance fields promoted from KropathConfig.
+                      properties:
+                        streamMode:
+                          type: string
+                          default: ""
+                          description: >-
+                            Enforce Kinesis stream mode org-wide ("PROVISIONED" or "ON_DEMAND").
+                            "" = not enforced.
+                        shardCount:
+                          type: integer
+                          format: int64
+                          default: 0
+                          description: >-
+                            Enforce number of shards org-wide for PROVISIONED streams.
+                            0 = not enforced.
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                          description: Kinesis-specific mandatory tags.
                     tags:
                       type: object
                       additionalProperties:
@@ -1588,6 +1613,29 @@ spec:
                           additionalProperties:
                             type: string
                           description: Cognito-specific default tags.
+                    kinesis:
+                      type: object
+                      default: {}
+                      description: >-
+                        Default Kinesis governance fields promoted from KropathConfig.
+                      properties:
+                        streamMode:
+                          type: string
+                          default: ""
+                          description: >-
+                            Default Kinesis stream mode org-wide. "" = no default.
+                        shardCount:
+                          type: integer
+                          format: int64
+                          default: 0
+                          description: >-
+                            Default number of shards org-wide. 0 = no default.
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                          description: Kinesis-specific default tags.
                     tags:
                       type: object
                       additionalProperties:

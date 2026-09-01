@@ -1,0 +1,36 @@
+# AC-8 setup: KropathConfig.mandatory.tags and KinesisConfig.mandatory.tags are
+# union-merged into effCfg.mandatory.tags. Both sets of tags appear in the output.
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac08-kinesis-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      env: prod
+      owner: platform-team
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: KinesisConfig
+metadata:
+  name: ac08-kinesis-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      team: streaming
+      cost-center: cc-42
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: streaming-prod-ac08
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: KinesisConfig
+metadata:
+  name: ac08-kinesis-policy
+  namespace: streaming-prod-ac08
+spec: {}

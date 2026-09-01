@@ -98,6 +98,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&SSMConfigList{},
 		&CognitoConfig{},
 		&CognitoConfigList{},
+		&KinesisConfig{},
+		&KinesisConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil
