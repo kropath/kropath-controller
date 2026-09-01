@@ -149,11 +149,12 @@ jobs:
       #   agent/implementer/3f0e8f62 — AthenaConfig CRD (KRO-856; clear once merged)
       #   kro-736-cognitoconfig-crd — CognitoConfig CRD (KRO-736; clear once merged)
       #   agent/implementer/125ed92da885 — KinesisConfig CRD (KRO-745; clear once merged)
+      #   agent/implementer/617b9cfa8ed6 — CloudTrailConfig CRD (KRO-761; clear once merged)
       - name: Check watched Kinds against kropath-aws CRDs
         if: needs.changes.outputs.code == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          KROPATH_AWS_COMPANION_REFS: "agent/implementer/e14f06bb agent/implementer/3f0e8f62 kro-736-cognitoconfig-crd agent/implementer/125ed92da885"
+          KROPATH_AWS_COMPANION_REFS: "agent/implementer/e14f06bb agent/implementer/3f0e8f62 kro-736-cognitoconfig-crd agent/implementer/125ed92da885 agent/implementer/617b9cfa8ed6"
         run: make crds-verify
 
   security:
