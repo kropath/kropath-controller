@@ -1,0 +1,44 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-ct-01 Chainsaw integration tests — AC-10 (effective-config-merge).
+# Requires:
+#   - kind cluster with kropath-operator deployed
+#   - KropathConfig CRD applied (crds/kropathconfig.yaml from kropath-aws)
+#   - CloudTrailConfig CRD applied (crds/cloudtrailconfig.yaml from kropath-aws)
+#
+# Each AC step uses a unique resource name (acN-ct-policy) so that Chainsaw's
+# deferred LIFO cleanup from prior steps cannot pollute later steps.
+#
+# Test isolation — unique name per step, no inter-step deletes:
+#   Each step owns a distinct set of resource names (ac<N>-*). The controller
+#   pairs a namespaced config with its kro-system counterpart by *name*, so a
+#   per-step name isolates each step completely.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-ct-01-cascade
+spec:
+  namespace: cloudtrail-prod
+  steps:
+    # AC-10: KropathConfig.mandatory.cloudtrail.isMultiRegionTrail=true (level 1) propagates
+    # to effectiveConfig.mandatory; CloudTrailConfig.defaults.enableLogFileValidation=true
+    # (level 6) propagates to effectiveConfig.defaults.
+    - name: ac10-effective-config-merge
+      try:
+        - apply:
+            file: ac10-setup.yaml
+        - assert:
+            file: ac10-assert.yaml
+            timeout: 30s

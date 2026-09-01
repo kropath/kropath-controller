@@ -1,0 +1,13 @@
+# Assert AC-10: effectiveConfig.mandatory.isMultiRegionTrail=true from global KropathConfig (level 1),
+# and effectiveConfig.defaults.enableLogFileValidation=true from local CloudTrailConfig (level 6).
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudTrailConfig
+metadata:
+  name: ac10-ct-policy
+  namespace: cloudtrail-prod
+status:
+  effectiveConfig:
+    mandatory:
+      isMultiRegionTrail: true
+    defaults:
+      enableLogFileValidation: true
