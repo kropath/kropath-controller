@@ -78,6 +78,7 @@ type KropathConfigTier struct {
 	Route53           cascade.Route53KropathSection           `json:"route53,omitempty"`
 	SSM               cascade.SSMKropathSection               `json:"ssm,omitempty"`
 	Cognito           cascade.CognitoKropathSection           `json:"cognito,omitempty"`
+	Kinesis           cascade.KinesisKropathSection           `json:"kinesis,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`

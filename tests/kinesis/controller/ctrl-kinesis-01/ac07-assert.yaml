@@ -1,0 +1,12 @@
+# Assert AC-7: effCfg.mandatory.namingTemplate is "{namespace}-{name}"
+# from KinesisConfig.mandatory (level 3 — global KinesisConfig).
+# KropathConfig has no kinesis.namingTemplate field, so KinesisConfig is the only source.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KinesisConfig
+metadata:
+  name: ac07-kinesis-policy
+  namespace: streaming-prod-ac07
+status:
+  effectiveConfig:
+    mandatory:
+      namingTemplate: "{namespace}-{name}"

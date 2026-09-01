@@ -1,0 +1,25 @@
+# AC-9 setup: KinesisConfig.mandatory.syncedLabels propagates to effCfg.mandatory.syncedLabels.
+# The controller merges syncedLabels from the global KinesisConfig.mandatory into the
+# namespaced effectiveConfig.
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: KinesisConfig
+metadata:
+  name: ac09-kinesis-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    syncedLabels:
+      data-class: streaming
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: streaming-prod-ac09
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: KinesisConfig
+metadata:
+  name: ac09-kinesis-policy
+  namespace: streaming-prod-ac09
+spec: {}

@@ -1,0 +1,68 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-kinesis-01 Chainsaw integration tests — AC-6, AC-7, AC-8, AC-9.
+# Requires:
+#   - kind cluster with kropath-operator deployed
+#   - KropathConfig CRD applied (crds/awskropathconfig.yaml)
+#   - KinesisConfig CRD applied (crds/awskinesisconfig.yaml)
+#
+# Test isolation: each step uses a distinct resource name (ac<N>-kinesis-policy).
+# The controller pairs namespaced KinesisConfig with its kro-system counterpart by
+# *name*, so per-step names provide complete isolation without inter-step deletes.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-kinesis-01-cascade
+spec:
+  steps:
+    # AC-6: globalKropathConfig.mandatory.kinesis.streamMode="ON_DEMAND" (level 1)
+    # propagates to effCfg.mandatory.streamMode, overriding KinesisConfig.mandatory.
+    - name: ac6-global-kpc-mandatory-kinesis-stream-mode
+      try:
+        - apply:
+            file: ac06-setup.yaml
+        - assert:
+            file: ac06-assert.yaml
+            timeout: 30s
+
+    # AC-7: KinesisConfig.mandatory.namingTemplate propagates to
+    # effCfg.mandatory.namingTemplate (no KropathConfig.kinesis equivalent).
+    - name: ac7-naming-template-from-kinesisconfig
+      try:
+        - apply:
+            file: ac07-setup.yaml
+        - assert:
+            file: ac07-assert.yaml
+            timeout: 30s
+
+    # AC-8: KropathConfig.mandatory.tags and KinesisConfig.mandatory.tags
+    # are union-merged into effCfg.mandatory.tags.
+    - name: ac8-tag-union-merge
+      try:
+        - apply:
+            file: ac08-setup.yaml
+        - assert:
+            file: ac08-assert.yaml
+            timeout: 30s
+
+    # AC-9: KinesisConfig.mandatory.syncedLabels propagates to
+    # effCfg.mandatory.syncedLabels (happy-path: config-synced-labels).
+    - name: ac9-synced-labels-propagate
+      try:
+        - apply:
+            file: ac09-setup.yaml
+        - assert:
+            file: ac09-assert.yaml
+            timeout: 30s

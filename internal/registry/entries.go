@@ -15,6 +15,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/cloudwatchconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/cloudwatchlogsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/cognitoconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/kinesisconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/dynamodbconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/ec2config"
 	"github.com/kropath/kropath-controller/internal/reconciler/ecrconfig"
@@ -367,6 +368,13 @@ func All() []Entry {
 			return (&ssmconfig.Reconciler{
 				Client: bctx.Manager.GetClient(),
 				Log:    bctx.Log.WithName("controllers").WithName("SSMConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("kinesisconfig", "KinesisConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&kinesisconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("KinesisConfig"),
 				Scheme: bctx.Manager.GetScheme(),
 			}).BuildWithManager(bctx.Manager)
 		}),

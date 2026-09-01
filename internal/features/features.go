@@ -110,4 +110,5 @@ var All = []Reconciler{
 	cascade("Route53Config", "route53config"),
 	cascade("SSMConfig", "ssmconfig"),
 	cascade("CognitoConfig", "cognitoconfig"),
+	cascade("KinesisConfig", "kinesisconfig"),
 }

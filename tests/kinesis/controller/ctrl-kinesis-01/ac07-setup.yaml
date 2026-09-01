@@ -1,0 +1,23 @@
+# AC-7 setup: KinesisConfig.mandatory.namingTemplate="{namespace}-{name}" propagates
+# to effCfg.mandatory.namingTemplate. KropathConfig has no kinesis.namingTemplate field.
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: KinesisConfig
+metadata:
+  name: ac07-kinesis-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    namingTemplate: "{namespace}-{name}"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: streaming-prod-ac07
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: KinesisConfig
+metadata:
+  name: ac07-kinesis-policy
+  namespace: streaming-prod-ac07
+spec: {}

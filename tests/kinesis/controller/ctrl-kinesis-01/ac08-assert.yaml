@@ -1,0 +1,16 @@
+# Assert AC-8: effCfg.mandatory.tags is the union of KropathConfig.mandatory.tags
+# and KinesisConfig.mandatory.tags (global kro-system instance).
+# All four tags must appear in the merged output.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KinesisConfig
+metadata:
+  name: ac08-kinesis-policy
+  namespace: streaming-prod-ac08
+status:
+  effectiveConfig:
+    mandatory:
+      tags:
+        env: prod
+        owner: platform-team
+        team: streaming
+        cost-center: cc-42

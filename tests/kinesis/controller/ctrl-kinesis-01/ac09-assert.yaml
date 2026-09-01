@@ -1,0 +1,13 @@
+# Assert AC-9: effCfg.mandatory.syncedLabels includes the label from
+# KinesisConfig.mandatory.syncedLabels (global kro-system instance).
+# The data-class label must propagate to the namespaced effectiveConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KinesisConfig
+metadata:
+  name: ac09-kinesis-policy
+  namespace: streaming-prod-ac09
+status:
+  effectiveConfig:
+    mandatory:
+      syncedLabels:
+        data-class: streaming

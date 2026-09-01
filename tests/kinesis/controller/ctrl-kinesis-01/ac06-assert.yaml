@@ -1,0 +1,11 @@
+# Assert AC-6: effCfg.mandatory.streamMode is "ON_DEMAND"
+# from KropathConfig.mandatory.kinesis (level 1), overriding KinesisConfig.mandatory (level 4).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KinesisConfig
+metadata:
+  name: ac06-kinesis-policy
+  namespace: streaming-prod-ac06
+status:
+  effectiveConfig:
+    mandatory:
+      streamMode: ON_DEMAND
