@@ -1,0 +1,26 @@
+# AC-5: KropathConfig(global).defaults.opensearch.tlsSecurityPolicy="Policy-Min-TLS-1-0-2019-10"
+# (level 9) is the weaker fallback. Local OpenSearchConfig.defaults.tlsSecurityPolicy
+# (level 6) wins with "Policy-Min-TLS-1-2-2019-07".
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac5-os-policy
+  namespace: kro-system
+spec:
+  defaults:
+    opensearch:
+      tlsSecurityPolicy: "Policy-Min-TLS-1-0-2019-10"
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+# Local OpenSearchConfig: defaults.tlsSecurityPolicy at level 6 wins.
+apiVersion: aws.kropath.run/v1alpha1
+kind: OpenSearchConfig
+metadata:
+  name: ac5-os-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults:
+    tlsSecurityPolicy: "Policy-Min-TLS-1-2-2019-07"

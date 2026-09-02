@@ -112,6 +112,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&BedrockConfigList{},
 		&SageMakerConfig{},
 		&SageMakerConfigList{},
+		&OpenSearchConfig{},
+		&OpenSearchConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

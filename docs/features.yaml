@@ -334,3 +334,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: OpenSearchConfig
+      package: opensearchconfig
+      description: Reconciles OpenSearchConfig CRs and propagates effective config.
+      kinds:
+        - OpenSearchConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

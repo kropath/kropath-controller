@@ -117,4 +117,5 @@ var All = []Reconciler{
 	cascade("WAFConfig", "wafconfig"),
 	cascade("BedrockConfig", "bedrockconfig"),
 	cascade("SageMakerConfig", "sagemakerconfig"),
+	cascade("OpenSearchConfig", "opensearchconfig"),
 }

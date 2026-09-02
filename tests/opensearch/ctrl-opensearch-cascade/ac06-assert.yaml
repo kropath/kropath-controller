@@ -1,0 +1,11 @@
+# Assert AC-6: mandatory.engineVersion="OpenSearch_2.9" from level-3 globalOpenSearchConfig.
+# No KropathConfig.opensearch section — profile-only field propagates from OSCfg level 3.
+apiVersion: aws.kropath.run/v1alpha1
+kind: OpenSearchConfig
+metadata:
+  name: ac6-os-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      engineVersion: "OpenSearch_2.9"

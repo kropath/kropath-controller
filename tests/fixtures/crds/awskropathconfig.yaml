@@ -1210,6 +1210,34 @@ spec:
                           additionalProperties:
                             type: string
                           description: SageMaker-specific mandatory tags.
+                    opensearch:
+                      type: object
+                      default: {}
+                      description: >-
+                        Mandatory OpenSearch governance fields promoted from KropathConfig.
+                      properties:
+                        encryptionAtRestEnabled:
+                          type: boolean
+                          description: >-
+                            Enforce encryption at rest org-wide. false = not enforced.
+                        nodeToNodeEncryptionEnabled:
+                          type: boolean
+                          description: >-
+                            Enforce node-to-node encryption org-wide. false = not enforced.
+                        enforceHTTPS:
+                          type: boolean
+                          description: >-
+                            Enforce HTTPS-only access org-wide. false = not enforced.
+                        tlsSecurityPolicy:
+                          type: string
+                          description: >-
+                            Org-wide minimum TLS policy. "" = not enforced.
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                          description: OpenSearch-specific mandatory tags.
                     tags:
                       type: object
                       additionalProperties:
@@ -2052,6 +2080,34 @@ spec:
                           additionalProperties:
                             type: string
                           description: SageMaker-specific default tags.
+                    opensearch:
+                      type: object
+                      default: {}
+                      description: >-
+                        Default OpenSearch governance fields promoted from KropathConfig.
+                      properties:
+                        encryptionAtRestEnabled:
+                          type: boolean
+                          description: >-
+                            Default encryption at rest setting. false = no default enforcement.
+                        nodeToNodeEncryptionEnabled:
+                          type: boolean
+                          description: >-
+                            Default node-to-node encryption setting. false = no default enforcement.
+                        enforceHTTPS:
+                          type: boolean
+                          description: >-
+                            Default HTTPS enforcement setting. false = no default enforcement.
+                        tlsSecurityPolicy:
+                          type: string
+                          description: >-
+                            Default minimum TLS policy. "" = no default.
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                          description: OpenSearch-specific default tags.
                     tags:
                       type: object
                       additionalProperties:

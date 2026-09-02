@@ -85,6 +85,7 @@ type KropathConfigTier struct {
 	WAF               cascade.WAFKropathSection               `json:"waf,omitempty"`
 	Bedrock           cascade.BedrockKropathSection           `json:"bedrock,omitempty"`
 	SageMaker         cascade.SageMakerKropathSection         `json:"sagemaker,omitempty"`
+	OpenSearch        cascade.OpenSearchKropathSection        `json:"opensearch,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
@@ -639,6 +640,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.SageMaker.Tags = make(map[string]string, len(in.Spec.Defaults.SageMaker.Tags))
 		for k, v := range in.Spec.Defaults.SageMaker.Tags {
 			out.Spec.Defaults.SageMaker.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.OpenSearch.Tags != nil {
+		out.Spec.Mandatory.OpenSearch.Tags = make(map[string]string, len(in.Spec.Mandatory.OpenSearch.Tags))
+		for k, v := range in.Spec.Mandatory.OpenSearch.Tags {
+			out.Spec.Mandatory.OpenSearch.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.OpenSearch.Tags != nil {
+		out.Spec.Defaults.OpenSearch.Tags = make(map[string]string, len(in.Spec.Defaults.OpenSearch.Tags))
+		for k, v := range in.Spec.Defaults.OpenSearch.Tags {
+			out.Spec.Defaults.OpenSearch.Tags[k] = v
 		}
 	}
 	if in.Spec.Mandatory.SyncedLabels != nil {

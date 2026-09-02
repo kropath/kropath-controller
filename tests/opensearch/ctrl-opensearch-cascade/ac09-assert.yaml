@@ -1,0 +1,14 @@
+# Assert AC-9: mandatory.syncedLabels union-merged from OSCfg levels only.
+# "team"=platform (level 3), "data-class"=public (level 3 wins over level 4), "region"=ap-se-2 (additive).
+apiVersion: aws.kropath.run/v1alpha1
+kind: OpenSearchConfig
+metadata:
+  name: ac9-os-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      syncedLabels:
+        team: platform
+        data-class: public
+        region: ap-se-2
