@@ -1,0 +1,38 @@
+# AC-9: syncedLabels union-merged from OSCfg levels only (no KropathConfig.opensearch equivalent).
+# Global OSCfg.mandatory.syncedLabels (level 3) and local OSCfg.mandatory.syncedLabels (level 4)
+# are union-merged; level 3 wins on key conflict.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac9-os-policy
+  namespace: kro-system
+spec:
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+# Global OpenSearchConfig: syncedLabels at level 3. "data-class" wins over local level 4.
+apiVersion: aws.kropath.run/v1alpha1
+kind: OpenSearchConfig
+metadata:
+  name: ac9-os-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    syncedLabels:
+      team: platform
+      data-class: public
+---
+# Local OpenSearchConfig: syncedLabels at level 4.
+# "region" is additive; "data-class" loses to level 3.
+apiVersion: aws.kropath.run/v1alpha1
+kind: OpenSearchConfig
+metadata:
+  name: ac9-os-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    syncedLabels:
+      data-class: internal
+      region: ap-se-2
+  defaults: {}

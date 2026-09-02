@@ -1,0 +1,24 @@
+# AC-4: KropathConfig(global).mandatory.opensearch.encryptionAtRestEnabled=true (level 1)
+# wins over all lower levels when OSCfg mandatory fields are absent.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac4-os-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    opensearch:
+      encryptionAtRestEnabled: true
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+# Local OpenSearchConfig in payments-prod — mandatory and defaults both empty.
+apiVersion: aws.kropath.run/v1alpha1
+kind: OpenSearchConfig
+metadata:
+  name: ac4-os-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

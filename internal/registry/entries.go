@@ -10,6 +10,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/acmconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/bedrockconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/sagemakerconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/opensearchconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/appscalingconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/documentdbconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/apigatewayconfig"
@@ -423,6 +424,13 @@ func All() []Entry {
 			return (&sagemakerconfig.Reconciler{
 				Client: bctx.Manager.GetClient(),
 				Log:    bctx.Log.WithName("controllers").WithName("SageMakerConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("opensearchconfig", "OpenSearchConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&opensearchconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("OpenSearchConfig"),
 				Scheme: bctx.Manager.GetScheme(),
 			}).BuildWithManager(bctx.Manager)
 		}),

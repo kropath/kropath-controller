@@ -1,0 +1,87 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-opensearch-cascade Chainsaw integration tests — AC-4 through AC-9.
+# Requires:
+#   - kind cluster with kropath-operator deployed
+#   - KropathConfig CRD applied
+#   - OpenSearchConfig CRD applied (awsopensearchconfig.yaml)
+#
+# Test isolation: each step uses unique resource names (ac<N>-*) scoped to
+# the step, so no step can shadow another. Controller pairs configs by name.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-opensearch-cascade
+spec:
+  steps:
+    # AC-4: KropathConfig(global).mandatory.opensearch.encryptionAtRestEnabled=true (level 1)
+    # wins over OpenSearchConfig.mandatory.encryptionAtRestEnabled (levels 3-4 absent).
+    - name: ac4-global-kpc-encryption-level1
+      try:
+        - apply:
+            file: ac04-setup.yaml
+        - assert:
+            file: ac04-assert.yaml
+            timeout: 30s
+
+    # AC-5: OpenSearchConfig(local).defaults.tlsSecurityPolicy (level 6) wins over
+    # KropathConfig(global).defaults.opensearch.tlsSecurityPolicy (level 9).
+    - name: ac5-local-oscfg-defaults-tls-level6-wins-level9
+      try:
+        - apply:
+            file: ac05-setup.yaml
+        - assert:
+            file: ac05-assert.yaml
+            timeout: 30s
+
+    # AC-6: No KropathConfig.opensearch section; OpenSearchConfig(global).mandatory.engineVersion
+    # (level 3; profile-only field) propagates.
+    - name: ac6-global-oscfg-mandatory-engineversion-level3
+      try:
+        - apply:
+            file: ac06-setup.yaml
+        - assert:
+            file: ac06-assert.yaml
+            timeout: 30s
+
+    # AC-7: Tags union-merged from KropathConfig.mandatory.tags and
+    # OpenSearchConfig.mandatory.tags into effectiveConfig.mandatory.tags.
+    - name: ac7-mandatory-tag-union-merge
+      try:
+        - apply:
+            file: ac07-setup.yaml
+        - assert:
+            file: ac07-assert.yaml
+            timeout: 30s
+
+    # AC-8: Two OpenSearchConfig CRs exist (global + local); controller pairs local CR
+    # with same-name global CR and correctly merges both.
+    - name: ac8-two-oscfg-crs-profile-selection
+      try:
+        - apply:
+            file: ac08-setup.yaml
+        - assert:
+            file: ac08-assert.yaml
+            timeout: 30s
+
+    # AC-9: Label selector lookup; syncedLabels union-merged from OSCfg levels only
+    # (no KropathConfig.opensearch equivalent).
+    - name: ac9-syncedlabels-union-merge
+      try:
+        - apply:
+            file: ac09-setup.yaml
+        - assert:
+            file: ac09-assert.yaml
+            timeout: 30s

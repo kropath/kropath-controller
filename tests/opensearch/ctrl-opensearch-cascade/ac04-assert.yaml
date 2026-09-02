@@ -1,0 +1,10 @@
+# Assert AC-4: mandatory.encryptionAtRestEnabled=true from level-1 globalKropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: OpenSearchConfig
+metadata:
+  name: ac4-os-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      encryptionAtRestEnabled: true

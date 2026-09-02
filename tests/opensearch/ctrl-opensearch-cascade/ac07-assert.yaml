@@ -1,0 +1,14 @@
+# Assert AC-7: mandatory.tags union-merged; level-1 KropathConfig wins on key conflict.
+# "cost-centre"=infra (level 1), "owner"=platform (level 1), "team"=search (level 3 additive).
+apiVersion: aws.kropath.run/v1alpha1
+kind: OpenSearchConfig
+metadata:
+  name: ac7-os-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      tags:
+        cost-centre: infra
+        owner: platform
+        team: search

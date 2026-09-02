@@ -1,0 +1,38 @@
+# AC-7: Tags union-merged from KropathConfig.mandatory.tags (level 1) and
+# OpenSearchConfig.mandatory.tags (level 3) into effectiveConfig.mandatory.tags.
+# Level-1 wins on key conflict.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac7-os-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      cost-centre: infra
+      owner: platform
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+# Global OpenSearchConfig: tags at level 3 add "team" and contest "cost-centre".
+apiVersion: aws.kropath.run/v1alpha1
+kind: OpenSearchConfig
+metadata:
+  name: ac7-os-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      cost-centre: payments
+      team: search
+---
+# Local OpenSearchConfig — mandatory empty.
+apiVersion: aws.kropath.run/v1alpha1
+kind: OpenSearchConfig
+metadata:
+  name: ac7-os-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

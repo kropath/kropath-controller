@@ -14,7 +14,7 @@
 
 CHAINSAW ?= chainsaw
 
-.PHONY: setup test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-cloudtrail test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigateway test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-msk test-memorydb test-acm test-emr test-athena test-dsql test-route53 test-ssm test-cognito test-kinesis test-keyspaces test-waf test-sagemaker test-version test-features test-dyn test-dyn-01 test-dyn-02 test-dyn-03 test-dyn-04 test-dyn-05 test-all
+.PHONY: setup test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-cloudtrail test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigateway test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-msk test-memorydb test-acm test-emr test-athena test-dsql test-route53 test-ssm test-cognito test-kinesis test-keyspaces test-waf test-sagemaker test-opensearch test-version test-features test-dyn test-dyn-01 test-dyn-02 test-dyn-03 test-dyn-04 test-dyn-05 test-all
 
 ## setup: Apply all CRDs to the cluster. Run before any test target.
 setup:
@@ -113,6 +113,10 @@ test-ecr:
 test-sagemaker:
 	$(CHAINSAW) test sagemaker/cascade/ctrl-sm-01/
 
+## test-opensearch: Run OpenSearch cascade integration tests (ctrl-opensearch-cascade).
+test-opensearch:
+	$(CHAINSAW) test opensearch/ctrl-opensearch-cascade/
+
 ## test-stepfunctions: Run Step Functions cascade integration tests (ctrl-sfn-01).
 test-stepfunctions:
 	$(CHAINSAW) test stepfunctions/ctrl-sfn-01/
@@ -203,4 +207,4 @@ test-dyn-05:
 test-dyn: test-dyn-01 test-dyn-02 test-dyn-03 test-dyn-04 test-dyn-05
 
 ## test-all: Run all integration test suites.
-test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-cloudtrail test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigateway test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-msk test-memorydb test-acm test-emr test-athena test-dsql test-route53 test-ssm test-cognito test-kinesis test-keyspaces test-waf test-sagemaker test-version test-features test-dyn
+test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-cloudtrail test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigateway test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-msk test-memorydb test-acm test-emr test-athena test-dsql test-route53 test-ssm test-cognito test-kinesis test-keyspaces test-waf test-sagemaker test-opensearch test-version test-features test-dyn

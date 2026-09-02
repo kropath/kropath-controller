@@ -1,0 +1,16 @@
+# Assert AC-8: global OSCfg mandatory (level 3) and local defaults (level 6) both propagate.
+# Mandatory: encryptionAtRestEnabled=true, nodeToNodeEncryptionEnabled=true (from global OSCfg).
+# Defaults: enforceHTTPS=true, tlsSecurityPolicy="Policy-Min-TLS-1-2-2019-07" (from local OSCfg).
+apiVersion: aws.kropath.run/v1alpha1
+kind: OpenSearchConfig
+metadata:
+  name: ac8-os-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      encryptionAtRestEnabled: true
+      nodeToNodeEncryptionEnabled: true
+    defaults:
+      enforceHTTPS: true
+      tlsSecurityPolicy: "Policy-Min-TLS-1-2-2019-07"

@@ -1,0 +1,36 @@
+# AC-8: Two OpenSearchConfig CRs exist — global (kro-system) and local (payments-prod).
+# Controller pairs local CR with same-name global CR by name.
+# Global mandatory has encryptionAtRestEnabled=true (level 3),
+# local defaults has enforceHTTPS=true (level 6).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac8-os-policy
+  namespace: kro-system
+spec:
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+# Global OpenSearchConfig (level 3 mandatory).
+apiVersion: aws.kropath.run/v1alpha1
+kind: OpenSearchConfig
+metadata:
+  name: ac8-os-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    encryptionAtRestEnabled: true
+    nodeToNodeEncryptionEnabled: true
+---
+# Local OpenSearchConfig (level 4 mandatory, level 6 defaults).
+apiVersion: aws.kropath.run/v1alpha1
+kind: OpenSearchConfig
+metadata:
+  name: ac8-os-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults:
+    enforceHTTPS: true
+    tlsSecurityPolicy: "Policy-Min-TLS-1-2-2019-07"

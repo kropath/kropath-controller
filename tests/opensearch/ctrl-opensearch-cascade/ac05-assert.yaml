@@ -1,0 +1,11 @@
+# Assert AC-5: defaults.tlsSecurityPolicy="Policy-Min-TLS-1-2-2019-07" from level-6
+# local OpenSearchConfig wins over level-9 KropathConfig defaults.
+apiVersion: aws.kropath.run/v1alpha1
+kind: OpenSearchConfig
+metadata:
+  name: ac5-os-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    defaults:
+      tlsSecurityPolicy: "Policy-Min-TLS-1-2-2019-07"

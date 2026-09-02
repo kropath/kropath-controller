@@ -1,0 +1,274 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: opensearchconfigs.aws.kropath.run
+spec:
+  group: aws.kropath.run
+  names:
+    kind: OpenSearchConfig
+    listKind: OpenSearchConfigList
+    plural: opensearchconfigs
+    singular: opensearchconfig
+    shortNames:
+      - awsoscfg
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              default: {}
+              properties:
+                mandatory:
+                  type: object
+                  default: {}
+                  description: >-
+                    Mandatory OpenSearch governance fields. Zero-value / nil means the
+                    field is not enforced at this tier.
+                  properties:
+                    encryptionAtRestEnabled:
+                      type: boolean
+                      description: >-
+                        Enforce encryption at rest. false (zero value) = not enforced.
+                    nodeToNodeEncryptionEnabled:
+                      type: boolean
+                      description: >-
+                        Enforce node-to-node encryption. false = not enforced.
+                    enforceHTTPS:
+                      type: boolean
+                      description: >-
+                        Enforce HTTPS-only access. false = not enforced.
+                    tlsSecurityPolicy:
+                      type: string
+                      description: >-
+                        Minimum TLS policy (e.g. "Policy-Min-TLS-1-2-2019-07"). Empty = not enforced.
+                    advancedSecurityEnabled:
+                      type: boolean
+                      description: >-
+                        Enforce fine-grained access control. false = not enforced.
+                        No KropathConfig.opensearch equivalent.
+                    engineVersion:
+                      type: string
+                      description: >-
+                        Restrict engine version (e.g. "OpenSearch_2.9"). Empty = not enforced.
+                        No KropathConfig.opensearch equivalent.
+                    autoTuneDesiredState:
+                      type: string
+                      description: >-
+                        Restrict auto-tune state ("ENABLED" or "DISABLED"). Empty = not enforced.
+                        No KropathConfig.opensearch equivalent.
+                    standbyReplicas:
+                      type: string
+                      description: >-
+                        Restrict standby replicas for serverless ("ENABLED" or "DISABLED"). Empty = not enforced.
+                        No KropathConfig.opensearch equivalent.
+                    namingTemplate:
+                      type: string
+                      description: >-
+                        Naming template (e.g. "{namespace}-{name}"). Empty = not enforced.
+                        No KropathConfig.opensearch equivalent.
+                    tags:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedLabels:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                defaults:
+                  type: object
+                  default: {}
+                  description: >-
+                    Default OpenSearch governance fields. Zero-value / nil means no
+                    default is provided at this tier.
+                  properties:
+                    encryptionAtRestEnabled:
+                      type: boolean
+                      description: >-
+                        Default encryption at rest setting. false = no default.
+                    nodeToNodeEncryptionEnabled:
+                      type: boolean
+                      description: >-
+                        Default node-to-node encryption setting. false = no default.
+                    enforceHTTPS:
+                      type: boolean
+                      description: >-
+                        Default HTTPS enforcement setting. false = no default.
+                    tlsSecurityPolicy:
+                      type: string
+                      description: >-
+                        Default TLS policy. Empty = no default.
+                    advancedSecurityEnabled:
+                      type: boolean
+                      description: >-
+                        Default fine-grained access control setting. false = no default.
+                    engineVersion:
+                      type: string
+                      description: >-
+                        Default engine version. Empty = no default.
+                    autoTuneDesiredState:
+                      type: string
+                      description: >-
+                        Default auto-tune state. Empty = no default.
+                    standbyReplicas:
+                      type: string
+                      description: >-
+                        Default standby replicas for serverless. Empty = no default.
+                    namingTemplate:
+                      type: string
+                      description: >-
+                        Default naming template. Empty = no default.
+                    tags:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedLabels:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+            status:
+              type: object
+              properties:
+                observedGeneration:
+                  type: integer
+                  format: int64
+                syncedTimestamp:
+                  type: string
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                      lastTransitionTime:
+                        type: string
+                      observedGeneration:
+                        type: integer
+                        format: int64
+                effectiveConfig:
+                  type: object
+                  description: >-
+                    Pre-merged OpenSearch governance config written by kropath-controller.
+                    RGDs read exclusively from this field via a single externalRef lookup.
+                  properties:
+                    mandatory:
+                      type: object
+                      properties:
+                        encryptionAtRestEnabled:
+                          type: boolean
+                        nodeToNodeEncryptionEnabled:
+                          type: boolean
+                        enforceHTTPS:
+                          type: boolean
+                        tlsSecurityPolicy:
+                          type: string
+                        advancedSecurityEnabled:
+                          type: boolean
+                        engineVersion:
+                          type: string
+                        autoTuneDesiredState:
+                          type: string
+                        standbyReplicas:
+                          type: string
+                        namingTemplate:
+                          type: string
+                        tags:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedAnnotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                    defaults:
+                      type: object
+                      properties:
+                        encryptionAtRestEnabled:
+                          type: boolean
+                        nodeToNodeEncryptionEnabled:
+                          type: boolean
+                        enforceHTTPS:
+                          type: boolean
+                        tlsSecurityPolicy:
+                          type: string
+                        advancedSecurityEnabled:
+                          type: boolean
+                        engineVersion:
+                          type: string
+                        autoTuneDesiredState:
+                          type: string
+                        standbyReplicas:
+                          type: string
+                        namingTemplate:
+                          type: string
+                        tags:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedAnnotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                    aws:
+                      type: object
+                      properties:
+                        accountId:
+                          type: string
+                        region:
+                          type: string
