@@ -277,6 +277,57 @@ spec:
                   has(self.spec.defaults.ssm.allowedDocumentTypes) &&
                   size(self.spec.defaults.ssm.allowedDocumentTypes) > 0)
               message: "ssm.allowedDocumentTypes cannot be set in both mandatory and defaults"
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.keyspaces) &&
+                  has(self.spec.mandatory.keyspaces.replicationStrategy) &&
+                  self.spec.mandatory.keyspaces.replicationStrategy != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.keyspaces) &&
+                  has(self.spec.defaults.keyspaces.replicationStrategy) &&
+                  self.spec.defaults.keyspaces.replicationStrategy != "")
+              message: >-
+                spec.mandatory.keyspaces.replicationStrategy and
+                spec.defaults.keyspaces.replicationStrategy cannot both be set.
+                Set the field in exactly one tier.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.keyspaces) &&
+                  has(self.spec.mandatory.keyspaces.throughputMode) &&
+                  self.spec.mandatory.keyspaces.throughputMode != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.keyspaces) &&
+                  has(self.spec.defaults.keyspaces.throughputMode) &&
+                  self.spec.defaults.keyspaces.throughputMode != "")
+              message: >-
+                spec.mandatory.keyspaces.throughputMode and
+                spec.defaults.keyspaces.throughputMode cannot both be set.
+                Set the field in exactly one tier.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.keyspaces) &&
+                  has(self.spec.mandatory.keyspaces.encryptionType) &&
+                  self.spec.mandatory.keyspaces.encryptionType != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.keyspaces) &&
+                  has(self.spec.defaults.keyspaces.encryptionType) &&
+                  self.spec.defaults.keyspaces.encryptionType != "")
+              message: >-
+                spec.mandatory.keyspaces.encryptionType and
+                spec.defaults.keyspaces.encryptionType cannot both be set.
+                Set the field in exactly one tier.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.keyspaces) &&
+                  self.spec.mandatory.keyspaces.pointInTimeRecovery == true &&
+                  has(self.spec.defaults) && has(self.spec.defaults.keyspaces) &&
+                  self.spec.defaults.keyspaces.pointInTimeRecovery == true)
+              message: >-
+                spec.mandatory.keyspaces.pointInTimeRecovery and
+                spec.defaults.keyspaces.pointInTimeRecovery cannot both be true.
+                Set the field in exactly one tier.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.keyspaces) &&
+                  self.spec.mandatory.keyspaces.ttlEnabled == true &&
+                  has(self.spec.defaults) && has(self.spec.defaults.keyspaces) &&
+                  self.spec.defaults.keyspaces.ttlEnabled == true)
+              message: >-
+                spec.mandatory.keyspaces.ttlEnabled and
+                spec.defaults.keyspaces.ttlEnabled cannot both be true.
+                Set the field in exactly one tier.
           properties:
             spec:
               type: object
