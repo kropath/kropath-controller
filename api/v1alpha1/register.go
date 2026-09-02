@@ -108,6 +108,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&KeyspacesConfigList{},
 		&WAFConfig{},
 		&WAFConfigList{},
+		&BedrockConfig{},
+		&BedrockConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

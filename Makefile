@@ -65,7 +65,7 @@ CHAINSAW_FLAGS   := --parallel 1 --report-format JUNIT-TEST --report-path $(REPO
         chainsaw-setup chainsaw-start chainsaw-wait chainsaw-stop \
         test-iam test-s3 test-kms test-policy test-label-operator \
         test-apigatewayv2 test-autoscaling test-cwl test-dynamodb test-ec2 \
-        test-ecr test-ecs test-efs test-eks test-elasticache test-eventbridge \
+        test-ecr test-ecs test-efs test-eks test-elasticache test-eventbridge test-bedrock \
         test-rds test-secretsmanager test-sns test-sqs test-stepfunctions \
         test-version test-features \
         test-dyn-01 test-dyn-02 test-dyn-03 test-dyn \
@@ -317,6 +317,10 @@ test-ecs: ## Run ECS cascade Chainsaw suite (ctrl-ecs-01).
 test-efs: ## Run EFS cascade Chainsaw suite (ctrl-efs-01).
 	@mkdir -p $(REPORT_DIR)
 	$(CHAINSAW) test tests/efs/ctrl-efs-01/ $(CHAINSAW_FLAGS)
+
+test-bedrock: ## Run Bedrock cascade Chainsaw suite (ctrl-bedrock-01).
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/bedrock/ctrl-bedrock-01/ $(CHAINSAW_FLAGS)
 
 test-eks: ## Run EKS cascade Chainsaw suite (ctrl-eks-01).
 	@mkdir -p $(REPORT_DIR)

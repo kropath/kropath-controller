@@ -1,0 +1,10 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac14-bedrock-policy
+  namespace: payments-prod
+status:
+  conditions:
+    - type: Valid
+      status: "True"
+      reason: ValidationPassed

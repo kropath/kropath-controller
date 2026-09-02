@@ -1,0 +1,21 @@
+# AC-24: KropathConfig.spec.mandatory.bedrock is a valid field (fixture CRD updated).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac24-bedrock-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    bedrock:
+      guardrailIdentifier: "fixture-test"
+      guardrailVersion: "v1"
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac24-bedrock-policy
+  namespace: payments-prod
+spec: {}

@@ -1,0 +1,14 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac22-bedrock-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    aws:
+      accountId: "999888777666"
+      region: "eu-west-1"
+  conditions:
+    - type: Valid
+      status: "True"
+      reason: ValidationPassed

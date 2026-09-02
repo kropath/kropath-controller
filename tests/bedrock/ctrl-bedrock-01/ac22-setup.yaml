@@ -1,0 +1,17 @@
+# AC-22: globalKropathConfig.spec.aws identity → effCfg.aws.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac22-bedrock-policy
+  namespace: kro-system
+spec:
+  aws:
+    accountId: "999888777666"
+    region: "eu-west-1"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac22-bedrock-policy
+  namespace: payments-prod
+spec: {}

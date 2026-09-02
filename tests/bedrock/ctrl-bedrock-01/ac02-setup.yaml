@@ -1,0 +1,31 @@
+# AC-2: level 1 KPC.mandatory.guardrail wins over level 3 BedrockConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac2-bedrock-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    bedrock:
+      guardrailIdentifier: "kc-guardrail"
+      guardrailVersion: "kc-1"
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac2-bedrock-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    guardrailIdentifier: "bc-guardrail"
+    guardrailVersion: "bc-1"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac2-bedrock-policy
+  namespace: payments-prod
+spec: {}

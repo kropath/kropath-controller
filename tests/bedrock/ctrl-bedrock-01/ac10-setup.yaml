@@ -1,0 +1,16 @@
+# AC-10: globalBedrockConfig.mandatory.maxTokens (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac10-bedrock-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    maxTokens: 50000
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac10-bedrock-policy
+  namespace: payments-prod
+spec: {}

@@ -1,0 +1,16 @@
+# AC-9: globalBedrockConfig.defaults.maxIterations (level 7); mandatory 0.
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac9-bedrock-policy
+  namespace: kro-system
+spec:
+  defaults:
+    maxIterations: 100
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac9-bedrock-policy
+  namespace: payments-prod
+spec: {}

@@ -1,0 +1,32 @@
+# AC-7: level 1 KPC.allowedModels wins over level 3 BedrockConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac7-bedrock-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    bedrock:
+      allowedModels:
+        - "model-a"
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac7-bedrock-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    allowedModels:
+      - "model-b"
+      - "model-c"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac7-bedrock-policy
+  namespace: payments-prod
+spec: {}

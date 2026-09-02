@@ -1151,6 +1151,35 @@ spec:
                           type: boolean
                           default: false
                           description: Enforce sampled request recording for WAF resources org-wide. false = not enforced.
+                    bedrock:
+                      type: object
+                      default: {}
+                      description: >-
+                        Mandatory Bedrock governance fields promoted from KropathConfig.
+                      properties:
+                        guardrailIdentifier:
+                          type: string
+                          default: ""
+                          description: >-
+                            Enforce a Bedrock guardrail ARN/ID org-wide. "" = not enforced.
+                        guardrailVersion:
+                          type: string
+                          default: ""
+                          description: >-
+                            Enforce a Bedrock guardrail version org-wide. "" = not enforced.
+                        allowedModels:
+                          type: array
+                          items:
+                            type: string
+                          description: >-
+                            Org-wide allowlist of permitted foundation model IDs.
+                            Empty = no restriction.
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                          description: Bedrock-specific mandatory tags.
                     tags:
                       type: object
                       additionalProperties:
@@ -1934,6 +1963,35 @@ spec:
                           type: boolean
                           default: false
                           description: Default sampled request recording setting for WAF resources. false = no default.
+                    bedrock:
+                      type: object
+                      default: {}
+                      description: >-
+                        Default Bedrock governance fields promoted from KropathConfig.
+                      properties:
+                        guardrailIdentifier:
+                          type: string
+                          default: ""
+                          description: >-
+                            Default Bedrock guardrail ARN/ID org-wide. "" = no default.
+                        guardrailVersion:
+                          type: string
+                          default: ""
+                          description: >-
+                            Default Bedrock guardrail version org-wide. "" = no default.
+                        allowedModels:
+                          type: array
+                          items:
+                            type: string
+                          description: >-
+                            Default org-wide allowlist of permitted foundation model IDs.
+                            Empty = no default restriction.
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                          description: Bedrock-specific default tags.
                     tags:
                       type: object
                       additionalProperties:

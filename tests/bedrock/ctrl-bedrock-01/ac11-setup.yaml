@@ -1,0 +1,16 @@
+# AC-11: globalBedrockConfig.mandatory.timeoutSeconds (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac11-bedrock-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    timeoutSeconds: 300
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac11-bedrock-policy
+  namespace: payments-prod
+spec: {}

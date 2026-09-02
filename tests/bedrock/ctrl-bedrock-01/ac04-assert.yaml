@@ -1,0 +1,14 @@
+# AC-4: global (level 3) wins.
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac4-bedrock-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      foundationModel: "anthropic.claude-3-5-sonnet-20241022-v2:0"
+  conditions:
+    - type: Valid
+      status: "True"
+      reason: ValidationPassed

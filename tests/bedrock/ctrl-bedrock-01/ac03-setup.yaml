@@ -1,0 +1,17 @@
+# AC-3: only globalBedrockConfig.defaults.guardrail (level 7); mandatory empty.
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac3-bedrock-policy
+  namespace: kro-system
+spec:
+  defaults:
+    guardrailIdentifier: "abc123"
+    guardrailVersion: "DRAFT"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac3-bedrock-policy
+  namespace: payments-prod
+spec: {}

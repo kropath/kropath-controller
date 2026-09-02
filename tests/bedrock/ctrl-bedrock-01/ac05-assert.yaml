@@ -1,0 +1,14 @@
+# AC-5: defaults foundationModel set, mandatory empty.
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac5-bedrock-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    defaults:
+      foundationModel: "anthropic.claude-3-haiku-20240307-v1:0"
+  conditions:
+    - type: Valid
+      status: "True"
+      reason: ValidationPassed

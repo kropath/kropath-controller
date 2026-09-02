@@ -1,0 +1,13 @@
+# AC-19: guardrailIdentifier in both mandatory and defaults on KropathConfig → CRD CEL rejects.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac19-bedrock-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    bedrock:
+      guardrailIdentifier: "abc123"
+  defaults:
+    bedrock:
+      guardrailIdentifier: "def456"

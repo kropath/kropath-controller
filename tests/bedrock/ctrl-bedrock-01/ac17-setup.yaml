@@ -1,0 +1,9 @@
+# AC-17: defaults.guardrailVersion set without guardrailIdentifier → Valid=False.
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac17-bedrock-policy
+  namespace: payments-prod
+spec:
+  defaults:
+    guardrailVersion: "1"

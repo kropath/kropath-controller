@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/kropath/kropath-controller/internal/reconciler/acmconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/bedrockconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/appscalingconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/documentdbconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/apigatewayconfig"
@@ -407,6 +408,13 @@ func All() []Entry {
 			return (&wafconfig.Reconciler{
 				Client: bctx.Manager.GetClient(),
 				Log:    bctx.Log.WithName("controllers").WithName("WAFConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("bedrockconfig", "BedrockConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&bedrockconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("BedrockConfig"),
 				Scheme: bctx.Manager.GetScheme(),
 			}).BuildWithManager(bctx.Manager)
 		}),

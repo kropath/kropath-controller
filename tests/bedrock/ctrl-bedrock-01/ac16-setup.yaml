@@ -1,0 +1,16 @@
+# AC-16: mandatory.guardrailIdentifier set without guardrailVersion → Valid=False.
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac16-bedrock-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    guardrailIdentifier: "abc123"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac16-bedrock-policy
+  namespace: payments-prod
+spec: {}

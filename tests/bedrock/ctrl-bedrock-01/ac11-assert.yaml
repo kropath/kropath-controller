@@ -1,0 +1,13 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac11-bedrock-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      timeoutSeconds: 300
+  conditions:
+    - type: Valid
+      status: "True"
+      reason: ValidationPassed

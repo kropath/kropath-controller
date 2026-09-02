@@ -115,4 +115,5 @@ var All = []Reconciler{
 	cascade("AppScalingConfig", "appscalingconfig"),
 	cascade("KeyspacesConfig", "keyspacesconfig"),
 	cascade("WAFConfig", "wafconfig"),
+	cascade("BedrockConfig", "bedrockconfig"),
 }
