@@ -17,6 +17,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/cloudwatchlogsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/cloudtrailconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/cognitoconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/keyspacesconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/kinesisconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/dynamodbconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/ec2config"
@@ -391,6 +392,13 @@ func All() []Entry {
 			return (&appscalingconfig.Reconciler{
 				Client: bctx.Manager.GetClient(),
 				Log:    bctx.Log.WithName("controllers").WithName("AppScalingConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("keyspacesconfig", "KeyspacesConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&keyspacesconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("KeyspacesConfig"),
 				Scheme: bctx.Manager.GetScheme(),
 			}).BuildWithManager(bctx.Manager)
 		}),

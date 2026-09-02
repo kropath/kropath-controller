@@ -1,0 +1,92 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-keyspaces-01 Chainsaw integration tests — Keyspaces effectiveConfig cascade.
+#
+# Covers acceptance criteria: CC-01, CC-02, CC-03, CC-04, CC-05, CC-06.
+#
+# Test isolation — unique-name-per-step, no inter-step deletes:
+#   Each AC owns a distinct resource name (acN-keyspaces-policy). The controller
+#   resolves a config's global counterpart by *name* — a local KeyspacesConfig
+#   payments-prod/acN-keyspaces-policy merges only kro-system/acN-keyspaces-policy —
+#   so a per-AC name isolates each AC completely.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-keyspaces-01
+spec:
+  description: "Keyspaces effectiveConfig cascade — acceptance criteria CC-01 through CC-06 (ctrl-keyspaces-01)"
+  steps:
+    # CC-01: globalKropathConfig.mandatory.keyspaces.replicationStrategy=SINGLE_REGION (level 1)
+    # → effectiveConfig.mandatory.replicationStrategy=SINGLE_REGION
+    - name: cc01-global-kpc-mandatory-replication-strategy
+      try:
+        - apply:
+            file: ac01-setup.yaml
+        - assert:
+            file: ac01-assert.yaml
+            timeout: 30s
+
+    # CC-02: globalKeyspacesConfig.mandatory.encryptionType=CUSTOMER_MANAGED_KMS_KEY (level 3)
+    # → effectiveConfig.mandatory.encryptionType=CUSTOMER_MANAGED_KMS_KEY
+    - name: cc02-global-keyspacescfg-mandatory-encryption-type
+      try:
+        - apply:
+            file: ac02-setup.yaml
+        - assert:
+            file: ac02-assert.yaml
+            timeout: 30s
+
+    # CC-03: localKeyspacesConfig.defaults.throughputMode=PAY_PER_REQUEST (level 6, strongest default)
+    # → effectiveConfig.defaults.throughputMode=PAY_PER_REQUEST
+    - name: cc03-local-keyspacescfg-defaults-throughput-mode
+      try:
+        - apply:
+            file: ac03-setup.yaml
+        - assert:
+            file: ac03-assert.yaml
+            timeout: 30s
+
+    # CC-04: globalKropathConfig.defaults.keyspaces.ttlEnabled=true (level 9, weakest default)
+    # → effectiveConfig.defaults.ttlEnabled=true (when no stronger default sets it)
+    - name: cc04-global-kpc-defaults-ttl-enabled
+      try:
+        - apply:
+            file: ac04-setup.yaml
+        - assert:
+            file: ac04-assert.yaml
+            timeout: 30s
+
+    # CC-05: KropathConfig.mandatory.tags union KeyspacesConfig.mandatory.tags →
+    # effectiveConfig.mandatory.tags contains keys from both sources; lower level wins on conflict.
+    - name: cc05-tag-union-merge
+      try:
+        - apply:
+            file: ac05-setup.yaml
+        - assert:
+            file: ac05-assert.yaml
+            timeout: 30s
+
+    # CC-06: KropathConfig with pointInTimeRecovery=true in both mandatory.keyspaces and
+    # defaults.keyspaces is rejected at admission by the KropathConfig CRD's CEL mutual-exclusion rule.
+    - name: cc06-mutual-exclusivity-point-in-time-recovery
+      try:
+        - apply:
+            file: ac06-setup.yaml
+            expect:
+            - match:
+                apiVersion: aws.kropath.run/v1alpha1
+                kind: KropathConfig
+              check:
+                ($error != null): true

@@ -302,3 +302,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: KeyspacesConfig
+      package: keyspacesconfig
+      description: Reconciles KeyspacesConfig CRs and propagates effective config.
+      kinds:
+        - KeyspacesConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

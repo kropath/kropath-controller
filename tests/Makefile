@@ -153,6 +153,10 @@ test-cognito:
 test-kinesis:
 	$(CHAINSAW) test kinesis/controller/ctrl-kinesis-01/
 
+## test-keyspaces: Run Keyspaces cascade integration tests (ctrl-keyspaces-01).
+test-keyspaces:
+	$(CHAINSAW) test keyspaces/ctrl-keyspaces-01/
+
 ## test-version: Run build-info and feature-enabled metrics integration tests (ctrl-version-01).
 test-version:
 	$(CHAINSAW) test version/ctrl-version-01/
@@ -191,4 +195,4 @@ test-dyn-05:
 test-dyn: test-dyn-01 test-dyn-02 test-dyn-03 test-dyn-04 test-dyn-05
 
 ## test-all: Run all integration test suites.
-test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-cloudtrail test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigateway test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-msk test-memorydb test-acm test-emr test-athena test-dsql test-route53 test-ssm test-cognito test-kinesis test-version test-features test-dyn
+test-all: test-iam test-s3 test-kms test-sqs test-policy test-label-operator test-secretsmanager test-sns test-dynamodb test-eventbridge test-cloudwatchlogs test-cloudtrail test-rds test-autoscaling test-ecs test-eks test-ec2 test-apigateway test-apigatewayv2 test-efs test-elasticache test-ecr test-stepfunctions test-msk test-memorydb test-acm test-emr test-athena test-dsql test-route53 test-ssm test-cognito test-kinesis test-keyspaces test-version test-features test-dyn

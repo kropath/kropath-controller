@@ -277,6 +277,57 @@ spec:
                   has(self.spec.defaults.ssm.allowedDocumentTypes) &&
                   size(self.spec.defaults.ssm.allowedDocumentTypes) > 0)
               message: "ssm.allowedDocumentTypes cannot be set in both mandatory and defaults"
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.keyspaces) &&
+                  has(self.spec.mandatory.keyspaces.replicationStrategy) &&
+                  self.spec.mandatory.keyspaces.replicationStrategy != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.keyspaces) &&
+                  has(self.spec.defaults.keyspaces.replicationStrategy) &&
+                  self.spec.defaults.keyspaces.replicationStrategy != "")
+              message: >-
+                spec.mandatory.keyspaces.replicationStrategy and
+                spec.defaults.keyspaces.replicationStrategy cannot both be set.
+                Set the field in exactly one tier.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.keyspaces) &&
+                  has(self.spec.mandatory.keyspaces.throughputMode) &&
+                  self.spec.mandatory.keyspaces.throughputMode != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.keyspaces) &&
+                  has(self.spec.defaults.keyspaces.throughputMode) &&
+                  self.spec.defaults.keyspaces.throughputMode != "")
+              message: >-
+                spec.mandatory.keyspaces.throughputMode and
+                spec.defaults.keyspaces.throughputMode cannot both be set.
+                Set the field in exactly one tier.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.keyspaces) &&
+                  has(self.spec.mandatory.keyspaces.encryptionType) &&
+                  self.spec.mandatory.keyspaces.encryptionType != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.keyspaces) &&
+                  has(self.spec.defaults.keyspaces.encryptionType) &&
+                  self.spec.defaults.keyspaces.encryptionType != "")
+              message: >-
+                spec.mandatory.keyspaces.encryptionType and
+                spec.defaults.keyspaces.encryptionType cannot both be set.
+                Set the field in exactly one tier.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.keyspaces) &&
+                  self.spec.mandatory.keyspaces.pointInTimeRecovery == true &&
+                  has(self.spec.defaults) && has(self.spec.defaults.keyspaces) &&
+                  self.spec.defaults.keyspaces.pointInTimeRecovery == true)
+              message: >-
+                spec.mandatory.keyspaces.pointInTimeRecovery and
+                spec.defaults.keyspaces.pointInTimeRecovery cannot both be true.
+                Set the field in exactly one tier.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.keyspaces) &&
+                  self.spec.mandatory.keyspaces.ttlEnabled == true &&
+                  has(self.spec.defaults) && has(self.spec.defaults.keyspaces) &&
+                  self.spec.defaults.keyspaces.ttlEnabled == true)
+              message: >-
+                spec.mandatory.keyspaces.ttlEnabled and
+                spec.defaults.keyspaces.ttlEnabled cannot both be true.
+                Set the field in exactly one tier.
           properties:
             spec:
               type: object
@@ -998,6 +1049,44 @@ spec:
                           additionalProperties:
                             type: string
                           description: Kinesis-specific mandatory tags.
+                    keyspaces:
+                      type: object
+                      default: {}
+                      description: >-
+                        Mandatory Keyspaces governance fields promoted from KropathConfig.
+                      properties:
+                        replicationStrategy:
+                          type: string
+                          default: ""
+                          description: >-
+                            Enforce Keyspaces replication strategy org-wide
+                            ("SINGLE_REGION" or "MULTI_REGION"). "" = not enforced.
+                        throughputMode:
+                          type: string
+                          default: ""
+                          description: >-
+                            Enforce Keyspaces throughput mode org-wide
+                            ("PAY_PER_REQUEST" or "PROVISIONED"). "" = not enforced.
+                        encryptionType:
+                          type: string
+                          default: ""
+                          description: >-
+                            Enforce Keyspaces encryption type org-wide
+                            ("AWS_OWNED_KMS_KEY" or "CUSTOMER_MANAGED_KMS_KEY"). "" = not enforced.
+                        pointInTimeRecovery:
+                          type: boolean
+                          default: false
+                          description: Enforce point-in-time recovery on all keyspaces tables. false = not enforced.
+                        ttlEnabled:
+                          type: boolean
+                          default: false
+                          description: Enforce TTL enabled on all keyspaces tables. false = not enforced.
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                          description: Keyspaces-specific mandatory tags.
                     tags:
                       type: object
                       additionalProperties:
@@ -1722,6 +1811,41 @@ spec:
                           additionalProperties:
                             type: string
                           description: Kinesis-specific default tags.
+                    keyspaces:
+                      type: object
+                      default: {}
+                      description: >-
+                        Default Keyspaces governance fields promoted from KropathConfig.
+                      properties:
+                        replicationStrategy:
+                          type: string
+                          default: ""
+                          description: >-
+                            Default Keyspaces replication strategy org-wide. "" = no default.
+                        throughputMode:
+                          type: string
+                          default: ""
+                          description: >-
+                            Default Keyspaces throughput mode org-wide. "" = no default.
+                        encryptionType:
+                          type: string
+                          default: ""
+                          description: >-
+                            Default Keyspaces encryption type org-wide. "" = no default.
+                        pointInTimeRecovery:
+                          type: boolean
+                          default: false
+                          description: Default point-in-time recovery setting for keyspaces tables. false = no default.
+                        ttlEnabled:
+                          type: boolean
+                          default: false
+                          description: Default TTL enabled setting for keyspaces tables. false = no default.
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                          description: Keyspaces-specific default tags.
                     tags:
                       type: object
                       additionalProperties:

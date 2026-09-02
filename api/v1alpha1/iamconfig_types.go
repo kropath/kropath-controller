@@ -81,6 +81,7 @@ type KropathConfigTier struct {
 	Kinesis           cascade.KinesisKropathSection           `json:"kinesis,omitempty"`
 	CloudTrail        cascade.CloudTrailKropathSection        `json:"cloudtrail,omitempty"`
 	AppScaling        cascade.AppScalingKropathSection        `json:"appScaling,omitempty"`
+	Keyspaces         cascade.KeyspacesKropathSection         `json:"keyspaces,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
@@ -611,6 +612,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.AppScaling.Tags = make(map[string]string, len(in.Spec.Defaults.AppScaling.Tags))
 		for k, v := range in.Spec.Defaults.AppScaling.Tags {
 			out.Spec.Defaults.AppScaling.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.Keyspaces.Tags != nil {
+		out.Spec.Mandatory.Keyspaces.Tags = make(map[string]string, len(in.Spec.Mandatory.Keyspaces.Tags))
+		for k, v := range in.Spec.Mandatory.Keyspaces.Tags {
+			out.Spec.Mandatory.Keyspaces.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.Keyspaces.Tags != nil {
+		out.Spec.Defaults.Keyspaces.Tags = make(map[string]string, len(in.Spec.Defaults.Keyspaces.Tags))
+		for k, v := range in.Spec.Defaults.Keyspaces.Tags {
+			out.Spec.Defaults.Keyspaces.Tags[k] = v
 		}
 	}
 	if in.Spec.Mandatory.SyncedLabels != nil {

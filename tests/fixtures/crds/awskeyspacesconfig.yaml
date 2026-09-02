@@ -1,0 +1,149 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: keyspacesconfigs.aws.kropath.run
+spec:
+  group: aws.kropath.run
+  names:
+    kind: KeyspacesConfig
+    listKind: KeyspacesConfigList
+    plural: keyspacesconfigs
+    singular: keyspacesconfig
+    shortNames:
+      - awskspcfg
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      schema:
+        openAPIV3Schema:
+          type: object
+          x-kubernetes-validations:
+            # String fields: zero-value "" = not enforced.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.replicationStrategy) &&
+                  self.spec.mandatory.replicationStrategy != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.replicationStrategy) &&
+                  self.spec.defaults.replicationStrategy != "")
+              message: >-
+                replicationStrategy cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.throughputMode) &&
+                  self.spec.mandatory.throughputMode != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.throughputMode) &&
+                  self.spec.defaults.throughputMode != "")
+              message: >-
+                throughputMode cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.encryptionType) &&
+                  self.spec.mandatory.encryptionType != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.encryptionType) &&
+                  self.spec.defaults.encryptionType != "")
+              message: >-
+                encryptionType cannot be set in both mandatory and defaults
+            # Boolean fields: zero-value false = not enforced (value boolean pattern, not pointer).
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.pointInTimeRecovery) &&
+                  self.spec.mandatory.pointInTimeRecovery == true &&
+                  has(self.spec.defaults) && has(self.spec.defaults.pointInTimeRecovery) &&
+                  self.spec.defaults.pointInTimeRecovery == true)
+              message: >-
+                pointInTimeRecovery cannot be set to true in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.ttlEnabled) &&
+                  self.spec.mandatory.ttlEnabled == true &&
+                  has(self.spec.defaults) && has(self.spec.defaults.ttlEnabled) &&
+                  self.spec.defaults.ttlEnabled == true)
+              message: >-
+                ttlEnabled cannot be set to true in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.namingTemplate) &&
+                  self.spec.mandatory.namingTemplate != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.namingTemplate) &&
+                  self.spec.defaults.namingTemplate != "")
+              message: >-
+                namingTemplate cannot be set in both mandatory and defaults
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              properties:
+                mandatory:
+                  type: object
+                  properties:
+                    replicationStrategy:
+                      type: string
+                    throughputMode:
+                      type: string
+                    encryptionType:
+                      type: string
+                    pointInTimeRecovery:
+                      type: boolean
+                    ttlEnabled:
+                      type: boolean
+                    namingTemplate:
+                      type: string
+                    tags:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    syncedLabels:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      additionalProperties:
+                        type: string
+                defaults:
+                  type: object
+                  properties:
+                    replicationStrategy:
+                      type: string
+                    throughputMode:
+                      type: string
+                    encryptionType:
+                      type: string
+                    pointInTimeRecovery:
+                      type: boolean
+                    ttlEnabled:
+                      type: boolean
+                    namingTemplate:
+                      type: string
+                    tags:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    syncedLabels:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      additionalProperties:
+                        type: string
+            status:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
