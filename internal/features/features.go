@@ -116,4 +116,5 @@ var All = []Reconciler{
 	cascade("KeyspacesConfig", "keyspacesconfig"),
 	cascade("WAFConfig", "wafconfig"),
 	cascade("BedrockConfig", "bedrockconfig"),
+	cascade("SageMakerConfig", "sagemakerconfig"),
 }

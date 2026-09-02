@@ -1,0 +1,10 @@
+# Assert AC-T02-4: mandatory.kmsKeyId from L1 KropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac04-sm-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      kmsKeyId: "arn:aws:kms:us-east-1:123456789012:key/kpc-key"

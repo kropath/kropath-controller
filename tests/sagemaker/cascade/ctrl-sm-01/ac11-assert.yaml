@@ -1,0 +1,11 @@
+# Assert AC-T02-11: aws.accountId and aws.region flow from KropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac11-sm-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    aws:
+      accountId: "111222333444"
+      region: "eu-west-1"

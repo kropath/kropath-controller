@@ -1,0 +1,21 @@
+# AC-T02-5: KropathConfig.mandatory.sagemaker.enableNetworkIsolation (L1) flows to
+# effectiveConfig.mandatory.enableNetworkIsolation.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac05-sm-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    sagemaker:
+      enableNetworkIsolation: true
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac05-sm-policy
+  namespace: payments-prod
+spec: {}

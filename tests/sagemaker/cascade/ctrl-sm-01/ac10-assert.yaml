@@ -1,0 +1,13 @@
+# Assert AC-T02-10: syncedLabels union; global (L3) wins "tier" conflict over local (L4).
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac10-sm-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      syncedLabels:
+        data-class: "sensitive"
+        env: "prod"
+        tier: "global"

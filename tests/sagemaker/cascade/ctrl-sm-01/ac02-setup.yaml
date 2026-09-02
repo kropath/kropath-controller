@@ -1,0 +1,19 @@
+# AC-T02-2: SageMakerConfig.mandatory.instanceType (L3) overrides
+# SageMakerConfig.defaults.instanceType (L7) in effectiveConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac02-sm-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    instanceType: "ml.m5.xlarge"
+  defaults:
+    instanceType: "ml.t3.medium"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac02-sm-policy
+  namespace: payments-prod
+spec: {}

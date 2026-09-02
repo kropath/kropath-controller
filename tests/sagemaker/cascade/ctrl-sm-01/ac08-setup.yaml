@@ -1,0 +1,17 @@
+# AC-T02-8: SageMakerConfig.defaults.namingTemplate (L7) flows to
+# effectiveConfig.defaults.namingTemplate.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac08-sm-policy
+  namespace: kro-system
+spec:
+  defaults:
+    namingTemplate: "{namespace}-{name}"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac08-sm-policy
+  namespace: payments-prod
+spec: {}

@@ -1,0 +1,18 @@
+# AC-T02-11: Provider identity (accountId, region) from KropathConfig flows to
+# effectiveConfig.aws.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac11-sm-policy
+  namespace: kro-system
+spec:
+  aws:
+    accountId: "111222333444"
+    region: "eu-west-1"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac11-sm-policy
+  namespace: payments-prod
+spec: {}

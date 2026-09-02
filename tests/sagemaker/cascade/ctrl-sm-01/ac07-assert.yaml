@@ -1,0 +1,10 @@
+# Assert AC-T02-7: mandatory.directInternetAccess="Disabled" from global SageMakerConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac07-sm-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      directInternetAccess: "Disabled"

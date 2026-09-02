@@ -1180,6 +1180,36 @@ spec:
                           additionalProperties:
                             type: string
                           description: Bedrock-specific mandatory tags.
+                    sagemaker:
+                      type: object
+                      default: {}
+                      description: >-
+                        Mandatory SageMaker governance fields promoted from KropathConfig.
+                      properties:
+                        instanceType:
+                          type: string
+                          default: ""
+                          description: >-
+                            Enforce a SageMaker instance type org-wide. "" = not enforced.
+                        kmsKeyId:
+                          type: string
+                          default: ""
+                          description: >-
+                            Enforce a KMS key ARN for SageMaker storage encryption. "" = not enforced.
+                        enableNetworkIsolation:
+                          type: boolean
+                          description: >-
+                            Force network isolation on SageMaker resources. false = not enforced.
+                        enableInterContainerTrafficEncryption:
+                          type: boolean
+                          description: >-
+                            Force inter-container traffic encryption. false = not enforced.
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                          description: SageMaker-specific mandatory tags.
                     tags:
                       type: object
                       additionalProperties:
@@ -1992,6 +2022,36 @@ spec:
                           additionalProperties:
                             type: string
                           description: Bedrock-specific default tags.
+                    sagemaker:
+                      type: object
+                      default: {}
+                      description: >-
+                        Default SageMaker governance fields promoted from KropathConfig.
+                      properties:
+                        instanceType:
+                          type: string
+                          default: ""
+                          description: >-
+                            Default SageMaker instance type org-wide. "" = no default.
+                        kmsKeyId:
+                          type: string
+                          default: ""
+                          description: >-
+                            Default KMS key ARN for SageMaker storage encryption. "" = no default.
+                        enableNetworkIsolation:
+                          type: boolean
+                          description: >-
+                            Default network isolation setting. false = no default enforcement.
+                        enableInterContainerTrafficEncryption:
+                          type: boolean
+                          description: >-
+                            Default inter-container traffic encryption. false = no default enforcement.
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                          description: SageMaker-specific default tags.
                     tags:
                       type: object
                       additionalProperties:

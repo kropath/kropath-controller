@@ -110,6 +110,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&WAFConfigList{},
 		&BedrockConfig{},
 		&BedrockConfigList{},
+		&SageMakerConfig{},
+		&SageMakerConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

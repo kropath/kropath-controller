@@ -1,0 +1,22 @@
+# AC-T02-10: syncedLabels union merge from SageMakerConfig.mandatory levels.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac10-sm-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    syncedLabels:
+      data-class: "sensitive"
+      tier: "global"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac10-sm-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    syncedLabels:
+      env: "prod"
+      tier: "local"

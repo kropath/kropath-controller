@@ -84,6 +84,7 @@ type KropathConfigTier struct {
 	Keyspaces         cascade.KeyspacesKropathSection         `json:"keyspaces,omitempty"`
 	WAF               cascade.WAFKropathSection               `json:"waf,omitempty"`
 	Bedrock           cascade.BedrockKropathSection           `json:"bedrock,omitempty"`
+	SageMaker         cascade.SageMakerKropathSection         `json:"sagemaker,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
@@ -626,6 +627,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.Keyspaces.Tags = make(map[string]string, len(in.Spec.Defaults.Keyspaces.Tags))
 		for k, v := range in.Spec.Defaults.Keyspaces.Tags {
 			out.Spec.Defaults.Keyspaces.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.SageMaker.Tags != nil {
+		out.Spec.Mandatory.SageMaker.Tags = make(map[string]string, len(in.Spec.Mandatory.SageMaker.Tags))
+		for k, v := range in.Spec.Mandatory.SageMaker.Tags {
+			out.Spec.Mandatory.SageMaker.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.SageMaker.Tags != nil {
+		out.Spec.Defaults.SageMaker.Tags = make(map[string]string, len(in.Spec.Defaults.SageMaker.Tags))
+		for k, v := range in.Spec.Defaults.SageMaker.Tags {
+			out.Spec.Defaults.SageMaker.Tags[k] = v
 		}
 	}
 	if in.Spec.Mandatory.SyncedLabels != nil {

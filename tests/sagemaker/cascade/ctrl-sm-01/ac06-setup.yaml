@@ -1,0 +1,17 @@
+# AC-T02-6: SageMakerConfig.defaults.rootAccess (L7) flows to
+# effectiveConfig.defaults.rootAccess.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac06-sm-policy
+  namespace: kro-system
+spec:
+  defaults:
+    rootAccess: "Enabled"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac06-sm-policy
+  namespace: payments-prod
+spec: {}
