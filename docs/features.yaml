@@ -310,3 +310,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: WAFConfig
+      package: wafconfig
+      description: Reconciles WAFConfig CRs and propagates effective config.
+      kinds:
+        - WAFConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

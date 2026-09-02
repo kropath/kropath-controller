@@ -19,6 +19,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/cognitoconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/keyspacesconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/kinesisconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/wafconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/dynamodbconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/ec2config"
 	"github.com/kropath/kropath-controller/internal/reconciler/ecrconfig"
@@ -399,6 +400,13 @@ func All() []Entry {
 			return (&keyspacesconfig.Reconciler{
 				Client: bctx.Manager.GetClient(),
 				Log:    bctx.Log.WithName("controllers").WithName("KeyspacesConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("wafconfig", "WAFConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&wafconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("WAFConfig"),
 				Scheme: bctx.Manager.GetScheme(),
 			}).BuildWithManager(bctx.Manager)
 		}),

@@ -328,6 +328,46 @@ spec:
                 spec.mandatory.keyspaces.ttlEnabled and
                 spec.defaults.keyspaces.ttlEnabled cannot both be true.
                 Set the field in exactly one tier.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.waf) &&
+                  has(self.spec.mandatory.waf.scope) &&
+                  self.spec.mandatory.waf.scope != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.waf) &&
+                  has(self.spec.defaults.waf.scope) &&
+                  self.spec.defaults.waf.scope != "")
+              message: >-
+                spec.mandatory.waf.scope and
+                spec.defaults.waf.scope cannot both be set.
+                Set the field in exactly one tier.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.waf) &&
+                  has(self.spec.mandatory.waf.defaultAction) &&
+                  self.spec.mandatory.waf.defaultAction != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.waf) &&
+                  has(self.spec.defaults.waf.defaultAction) &&
+                  self.spec.defaults.waf.defaultAction != "")
+              message: >-
+                spec.mandatory.waf.defaultAction and
+                spec.defaults.waf.defaultAction cannot both be set.
+                Set the field in exactly one tier.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.waf) &&
+                  self.spec.mandatory.waf.cloudWatchMetricsEnabled == true &&
+                  has(self.spec.defaults) && has(self.spec.defaults.waf) &&
+                  self.spec.defaults.waf.cloudWatchMetricsEnabled == true)
+              message: >-
+                spec.mandatory.waf.cloudWatchMetricsEnabled and
+                spec.defaults.waf.cloudWatchMetricsEnabled cannot both be true.
+                Set the field in exactly one tier.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.waf) &&
+                  self.spec.mandatory.waf.sampledRequestsEnabled == true &&
+                  has(self.spec.defaults) && has(self.spec.defaults.waf) &&
+                  self.spec.defaults.waf.sampledRequestsEnabled == true)
+              message: >-
+                spec.mandatory.waf.sampledRequestsEnabled and
+                spec.defaults.waf.sampledRequestsEnabled cannot both be true.
+                Set the field in exactly one tier.
           properties:
             spec:
               type: object
@@ -1087,6 +1127,30 @@ spec:
                           additionalProperties:
                             type: string
                           description: Keyspaces-specific mandatory tags.
+                    waf:
+                      type: object
+                      default: {}
+                      description: >-
+                        Mandatory WAF governance fields promoted from KropathConfig.
+                      properties:
+                        scope:
+                          type: string
+                          default: ""
+                          description: >-
+                            Enforce WAF scope org-wide ("CLOUDFRONT" or "REGIONAL"). "" = not enforced.
+                        defaultAction:
+                          type: string
+                          default: ""
+                          description: >-
+                            Enforce WAF default action org-wide ("allow" or "block"). "" = not enforced.
+                        cloudWatchMetricsEnabled:
+                          type: boolean
+                          default: false
+                          description: Enforce CloudWatch metrics for WAF resources org-wide. false = not enforced.
+                        sampledRequestsEnabled:
+                          type: boolean
+                          default: false
+                          description: Enforce sampled request recording for WAF resources org-wide. false = not enforced.
                     tags:
                       type: object
                       additionalProperties:
@@ -1846,6 +1910,30 @@ spec:
                           additionalProperties:
                             type: string
                           description: Keyspaces-specific default tags.
+                    waf:
+                      type: object
+                      default: {}
+                      description: >-
+                        Default WAF governance fields promoted from KropathConfig.
+                      properties:
+                        scope:
+                          type: string
+                          default: ""
+                          description: >-
+                            Default WAF scope org-wide. "" = no default.
+                        defaultAction:
+                          type: string
+                          default: ""
+                          description: >-
+                            Default WAF default action org-wide. "" = no default.
+                        cloudWatchMetricsEnabled:
+                          type: boolean
+                          default: false
+                          description: Default CloudWatch metrics setting for WAF resources. false = no default.
+                        sampledRequestsEnabled:
+                          type: boolean
+                          default: false
+                          description: Default sampled request recording setting for WAF resources. false = no default.
                     tags:
                       type: object
                       additionalProperties:
