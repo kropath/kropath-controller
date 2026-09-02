@@ -114,4 +114,5 @@ var All = []Reconciler{
 	cascade("CloudTrailConfig", "cloudtrailconfig"),
 	cascade("AppScalingConfig", "appscalingconfig"),
 	cascade("KeyspacesConfig", "keyspacesconfig"),
+	cascade("WAFConfig", "wafconfig"),
 }

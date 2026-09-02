@@ -106,6 +106,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&AppScalingConfigList{},
 		&KeyspacesConfig{},
 		&KeyspacesConfigList{},
+		&WAFConfig{},
+		&WAFConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

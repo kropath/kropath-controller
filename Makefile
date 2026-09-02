@@ -393,7 +393,7 @@ test-chainsaw: chainsaw-stop chainsaw-start chainsaw-wait ## Stop any stale cont
 		tests/emr/ tests/eventbridge/ tests/features/ tests/glue/ tests/iam/ tests/kms/ \
 		tests/label-operator/ tests/memorydb/ tests/msk/ tests/policy/ \
 		tests/rds/ tests/s3/ tests/secretsmanager/ tests/sns/ tests/sqs/ \
-		tests/stepfunctions/ tests/version/ \
+		tests/stepfunctions/ tests/version/ tests/waf/ \
 		$(CHAINSAW_FLAGS)
 	$(MAKE) chainsaw-stop
 

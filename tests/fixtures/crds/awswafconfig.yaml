@@ -1,0 +1,135 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: wafconfigs.aws.kropath.run
+spec:
+  group: aws.kropath.run
+  names:
+    kind: WAFConfig
+    listKind: WAFConfigList
+    plural: wafconfigs
+    singular: wafconfig
+    shortNames:
+      - awswafcfg
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      schema:
+        openAPIV3Schema:
+          type: object
+          x-kubernetes-validations:
+            # String fields: zero-value "" = not enforced.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.scope) &&
+                  self.spec.mandatory.scope != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.scope) &&
+                  self.spec.defaults.scope != "")
+              message: >-
+                scope cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.defaultAction) &&
+                  self.spec.mandatory.defaultAction != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.defaultAction) &&
+                  self.spec.defaults.defaultAction != "")
+              message: >-
+                defaultAction cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.namingTemplate) &&
+                  self.spec.mandatory.namingTemplate != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.namingTemplate) &&
+                  self.spec.defaults.namingTemplate != "")
+              message: >-
+                namingTemplate cannot be set in both mandatory and defaults
+            # Boolean fields: false = not enforced (zero value), true = enforced.
+            # Mutual-exclusion rule: cannot be true in both tiers simultaneously.
+            - rule: >-
+                !(has(self.spec.mandatory) && self.spec.mandatory.cloudWatchMetricsEnabled == true &&
+                  has(self.spec.defaults) && self.spec.defaults.cloudWatchMetricsEnabled == true)
+              message: >-
+                cloudWatchMetricsEnabled cannot be set to true in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && self.spec.mandatory.sampledRequestsEnabled == true &&
+                  has(self.spec.defaults) && self.spec.defaults.sampledRequestsEnabled == true)
+              message: >-
+                sampledRequestsEnabled cannot be set to true in both mandatory and defaults
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              properties:
+                mandatory:
+                  type: object
+                  properties:
+                    scope:
+                      type: string
+                    defaultAction:
+                      type: string
+                    cloudWatchMetricsEnabled:
+                      type: boolean
+                    sampledRequestsEnabled:
+                      type: boolean
+                    namingTemplate:
+                      type: string
+                    tags:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    syncedLabels:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      additionalProperties:
+                        type: string
+                defaults:
+                  type: object
+                  properties:
+                    scope:
+                      type: string
+                    defaultAction:
+                      type: string
+                    cloudWatchMetricsEnabled:
+                      type: boolean
+                    sampledRequestsEnabled:
+                      type: boolean
+                    namingTemplate:
+                      type: string
+                    tags:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    syncedLabels:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      additionalProperties:
+                        type: string
+            status:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
