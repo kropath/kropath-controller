@@ -1,0 +1,41 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# CC-05: KropathConfig.mandatory.tags and KeyspacesConfig.mandatory.tags are union-merged.
+# KropathConfig.mandatory.tags: env=prod, owner=platform (lower level number wins on conflict).
+# KeyspacesConfig.mandatory.tags: team=data.
+# effectiveConfig.mandatory.tags must contain all three keys.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac5-keyspaces-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      env: prod
+      owner: platform
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: KeyspacesConfig
+metadata:
+  name: ac5-keyspaces-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    tags:
+      team: data
