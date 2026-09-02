@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.8.0](https://github.com/kropath/kropath-controller/compare/v0.7.0...v0.8.0) (2026-09-02)
+
+
+### Features
+
+* **KRO-737:** implement CognitoConfig effectiveConfig cascade ([#76](https://github.com/kropath/kropath-controller/issues/76)) ([3038c6f](https://github.com/kropath/kropath-controller/commit/3038c6f61819b2c40d6fb4efabdb112ec302b5e4))
+* **KRO-746:** effectiveConfig cascade for Kinesis fields ([#78](https://github.com/kropath/kropath-controller/issues/78)) ([2c26af9](https://github.com/kropath/kropath-controller/commit/2c26af95ca27620c700f0e3935db80f4e24d29a0))
+* **KRO-762:** add CloudTrail effectiveConfig cascade ([#79](https://github.com/kropath/kropath-controller/issues/79)) ([5c89a92](https://github.com/kropath/kropath-controller/commit/5c89a92c7ae31b964c8832fa61f1c3e2874e9cea))
+* **KRO-772:** add AppScalingConfig effectiveConfig cascade ([#80](https://github.com/kropath/kropath-controller/issues/80)) ([6e3d0cb](https://github.com/kropath/kropath-controller/commit/6e3d0cb2b32bad24e803a8111c080948e0cdfdb8))
+* **KRO-790:** add Keyspaces effectiveConfig cascade ([9892c6c](https://github.com/kropath/kropath-controller/commit/9892c6c3a409144c23b575fc76b7ca127109e1a9))
+* **KRO-806:** add OpenSearch effectiveConfig cascade controller ([#85](https://github.com/kropath/kropath-controller/issues/85)) ([a72a22e](https://github.com/kropath/kropath-controller/commit/a72a22e423bfc0591266c8337a060fe843d2c928))
+* **KRO-814:** add Bedrock effectiveConfig cascade ([#82](https://github.com/kropath/kropath-controller/issues/82)) ([34e5af7](https://github.com/kropath/kropath-controller/commit/34e5af795161ffbf8bec5f112f73c88225cac2a3))
+* **KRO-822:** add SageMakerConfig effectiveConfig cascade ([#84](https://github.com/kropath/kropath-controller/issues/84)) ([d5b02aa](https://github.com/kropath/kropath-controller/commit/d5b02aae1a9688ae97c5b697136d9a0d47c91071))
+* **KRO-882:** add WAF effectiveConfig cascade ([#83](https://github.com/kropath/kropath-controller/issues/83)) ([b2b3680](https://github.com/kropath/kropath-controller/commit/b2b3680aeba907be3b39512acd63c55a1b1f2624))
+
 ## [0.7.0](https://github.com/kropath/kropath-controller/compare/v0.6.0...v0.7.0) (2026-08-28)
 
 
