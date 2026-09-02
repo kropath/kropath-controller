@@ -1,0 +1,18 @@
+# AC-13: foundationModel not in allowedModels → Valid=False InvalidModelNotInAllowedList.
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac13-bedrock-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    foundationModel: "anthropic.claude-v2"
+    allowedModels:
+      - "anthropic.claude-3-sonnet"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac13-bedrock-policy
+  namespace: payments-prod
+spec: {}

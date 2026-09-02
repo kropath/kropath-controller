@@ -1,0 +1,244 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-bedrock-01 Chainsaw integration tests — all 24 acceptance criteria.
+#
+# Requires a kind cluster with kropath-operator running and the fixture CRDs
+# applied (`make chainsaw-start chainsaw-wait`, or just `make test-bedrock`).
+#
+# Isolation: each AC owns a distinct resource name (acN-bedrock-policy).
+# The controller pairs a namespaced BedrockConfig with its kro-system counterpart
+# by *name*, so per-AC names provide complete isolation.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-bedrock-01
+spec:
+  description: "Bedrock effectiveConfig cascade — all 24 acceptance criteria (ctrl-bedrock-01)"
+  steps:
+    # AC-1: globalKropathConfig.mandatory.bedrock.guardrailIdentifier/Version (level 1) → effCfg.mandatory
+    - name: ac1-kpc-mandatory-guardrail
+      try:
+        - apply:
+            file: ac01-setup.yaml
+        - assert:
+            file: ac01-assert.yaml
+            timeout: 30s
+
+    # AC-2: level 1 KropathConfig.mandatory.guardrail wins over level 3 BedrockConfig
+    - name: ac2-level1-wins-over-level3-guardrail
+      try:
+        - apply:
+            file: ac02-setup.yaml
+        - assert:
+            file: ac02-assert.yaml
+            timeout: 30s
+
+    # AC-3: globalBedrockConfig.defaults.guardrail (level 7) → effCfg.defaults; mandatory empty
+    - name: ac3-defaults-guardrail-level7
+      try:
+        - apply:
+            file: ac03-setup.yaml
+        - assert:
+            file: ac03-assert.yaml
+            timeout: 30s
+
+    # AC-4: globalBedrockConfig.mandatory.foundationModel (level 3) wins over local (level 4)
+    - name: ac4-global-foundationmodel-wins
+      try:
+        - apply:
+            file: ac04-setup.yaml
+        - assert:
+            file: ac04-assert.yaml
+            timeout: 30s
+
+    # AC-5: only globalBedrockConfig.defaults.foundationModel → effCfg.defaults; mandatory empty
+    - name: ac5-defaults-foundationmodel
+      try:
+        - apply:
+            file: ac05-setup.yaml
+        - assert:
+            file: ac05-assert.yaml
+            timeout: 30s
+
+    # AC-6: globalKropathConfig.mandatory.bedrock.allowedModels (level 1) → effCfg.mandatory
+    - name: ac6-kpc-mandatory-allowedmodels
+      try:
+        - apply:
+            file: ac06-setup.yaml
+        - assert:
+            file: ac06-assert.yaml
+            timeout: 30s
+
+    # AC-7: level 1 KropathConfig.allowedModels wins over level 3 BedrockConfig
+    - name: ac7-level1-allowedmodels-wins
+      try:
+        - apply:
+            file: ac07-setup.yaml
+        - assert:
+            file: ac07-assert.yaml
+            timeout: 30s
+
+    # AC-8: globalBedrockConfig.mandatory.maxIterations (level 3) → effCfg.mandatory
+    - name: ac8-mandatory-maxiterations
+      try:
+        - apply:
+            file: ac08-setup.yaml
+        - assert:
+            file: ac08-assert.yaml
+            timeout: 30s
+
+    # AC-9: globalBedrockConfig.defaults.maxIterations (level 7) → effCfg.defaults; mandatory 0
+    - name: ac9-defaults-maxiterations
+      try:
+        - apply:
+            file: ac09-setup.yaml
+        - assert:
+            file: ac09-assert.yaml
+            timeout: 30s
+
+    # AC-10: globalBedrockConfig.mandatory.maxTokens (level 3) → effCfg.mandatory
+    - name: ac10-mandatory-maxtokens
+      try:
+        - apply:
+            file: ac10-setup.yaml
+        - assert:
+            file: ac10-assert.yaml
+            timeout: 30s
+
+    # AC-11: globalBedrockConfig.mandatory.timeoutSeconds (level 3) → effCfg.mandatory
+    - name: ac11-mandatory-timeout
+      try:
+        - apply:
+            file: ac11-setup.yaml
+        - assert:
+            file: ac11-assert.yaml
+            timeout: 30s
+
+    # AC-12: globalBedrockConfig.mandatory.idleSessionTTLInSeconds (level 3) → effCfg.mandatory
+    - name: ac12-mandatory-idlesession
+      try:
+        - apply:
+            file: ac12-setup.yaml
+        - assert:
+            file: ac12-assert.yaml
+            timeout: 30s
+
+    # AC-13: foundationModel not in allowedModels → Valid=False InvalidModelNotInAllowedList
+    - name: ac13-negative-model-not-in-allowedlist
+      try:
+        - apply:
+            file: ac13-setup.yaml
+        - assert:
+            file: ac13-assert.yaml
+            timeout: 30s
+
+    # AC-14: foundationModel in allowedModels → Valid=True
+    - name: ac14-model-in-allowedlist
+      try:
+        - apply:
+            file: ac14-setup.yaml
+        - assert:
+            file: ac14-assert.yaml
+            timeout: 30s
+
+    # AC-15: foundationModel set, allowedModels empty → Valid=True (no restriction)
+    - name: ac15-model-empty-allowedlist
+      try:
+        - apply:
+            file: ac15-setup.yaml
+        - assert:
+            file: ac15-assert.yaml
+            timeout: 30s
+
+    # AC-16: mandatory.guardrailIdentifier set without guardrailVersion → Valid=False
+    - name: ac16-negative-guardrail-pair-mismatch-mandatory
+      try:
+        - apply:
+            file: ac16-setup.yaml
+        - assert:
+            file: ac16-assert.yaml
+            timeout: 30s
+
+    # AC-17: defaults.guardrailVersion set without guardrailIdentifier → Valid=False
+    - name: ac17-negative-guardrail-pair-mismatch-defaults
+      try:
+        - apply:
+            file: ac17-setup.yaml
+        - assert:
+            file: ac17-assert.yaml
+            timeout: 30s
+
+    # AC-18: both guardrail fields set in mandatory → Valid=True
+    - name: ac18-guardrail-pair-consistent
+      try:
+        - apply:
+            file: ac18-setup.yaml
+        - assert:
+            file: ac18-assert.yaml
+            timeout: 30s
+
+    # AC-19: KropathConfig guardrailIdentifier in both mandatory and defaults → CRD CEL rejected
+    - name: ac19-negative-kc-both-tiers-guardrailidentifier
+      try:
+        - apply:
+            file: ac19-setup.yaml
+            expect:
+              - check:
+                  ($error != null): true
+
+    # AC-20: KropathConfig guardrailVersion in both mandatory and defaults → CRD CEL rejected
+    - name: ac20-negative-kc-both-tiers-guardrailversion
+      try:
+        - apply:
+            file: ac20-setup.yaml
+            expect:
+              - check:
+                  ($error != null): true
+
+    # AC-21: KropathConfig allowedModels in both mandatory and defaults → CRD CEL rejected
+    - name: ac21-negative-kc-both-tiers-allowedmodels
+      try:
+        - apply:
+            file: ac21-setup.yaml
+            expect:
+              - check:
+                  ($error != null): true
+
+    # AC-22: globalKropathConfig.spec.aws identity → effCfg.aws.accountId/region
+    - name: ac22-provider-identity
+      try:
+        - apply:
+            file: ac22-setup.yaml
+        - assert:
+            file: ac22-assert.yaml
+            timeout: 30s
+
+    # AC-23: tags union-merge across KropathConfig.mandatory + BedrockConfig.mandatory
+    - name: ac23-mandatory-tag-union-merge
+      try:
+        - apply:
+            file: ac23-setup.yaml
+        - assert:
+            file: ac23-assert.yaml
+            timeout: 30s
+
+    # AC-24: bedrock section present in KropathConfig CRD fixture
+    - name: ac24-fixture-crd-bedrock-section
+      try:
+        - apply:
+            file: ac24-setup.yaml
+        - assert:
+            file: ac24-assert.yaml
+            timeout: 30s

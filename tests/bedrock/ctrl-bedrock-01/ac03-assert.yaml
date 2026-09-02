@@ -1,0 +1,15 @@
+# AC-3: defaults populated, mandatory empty.
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac3-bedrock-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    defaults:
+      guardrailIdentifier: "abc123"
+      guardrailVersion: "DRAFT"
+  conditions:
+    - type: Valid
+      status: "True"
+      reason: ValidationPassed

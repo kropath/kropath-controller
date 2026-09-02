@@ -1,0 +1,15 @@
+# AC-24: KropathConfig accepted and guardrail fields appear in effectiveConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac24-bedrock-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      guardrailIdentifier: "fixture-test"
+      guardrailVersion: "v1"
+  conditions:
+    - type: Valid
+      status: "True"
+      reason: ValidationPassed

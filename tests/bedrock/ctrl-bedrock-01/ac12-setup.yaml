@@ -1,0 +1,16 @@
+# AC-12: globalBedrockConfig.mandatory.idleSessionTTLInSeconds (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac12-bedrock-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    idleSessionTTLInSeconds: 1800
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac12-bedrock-policy
+  namespace: payments-prod
+spec: {}

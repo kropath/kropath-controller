@@ -318,3 +318,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: BedrockConfig
+      package: bedrockconfig
+      description: Reconciles BedrockConfig CRs and propagates effective config.
+      kinds:
+        - BedrockConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

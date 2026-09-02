@@ -1,0 +1,19 @@
+# AC-14: foundationModel is in allowedModels → Valid=True.
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac14-bedrock-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    foundationModel: "anthropic.claude-3-5-sonnet-20241022-v2:0"
+    allowedModels:
+      - "anthropic.claude-3-5-sonnet-20241022-v2:0"
+      - "amazon.titan-text-premier-v1:0"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac14-bedrock-policy
+  namespace: payments-prod
+spec: {}

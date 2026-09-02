@@ -1,0 +1,13 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac10-bedrock-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      maxTokens: 50000
+  conditions:
+    - type: Valid
+      status: "True"
+      reason: ValidationPassed

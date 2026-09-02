@@ -1,0 +1,13 @@
+# AC-20: guardrailVersion in both mandatory and defaults on KropathConfig → CRD CEL rejects.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac20-bedrock-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    bedrock:
+      guardrailVersion: "1"
+  defaults:
+    bedrock:
+      guardrailVersion: "2"

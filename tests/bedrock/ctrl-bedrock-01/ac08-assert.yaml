@@ -1,0 +1,13 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: BedrockConfig
+metadata:
+  name: ac8-bedrock-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      maxIterations: 50
+  conditions:
+    - type: Valid
+      status: "True"
+      reason: ValidationPassed

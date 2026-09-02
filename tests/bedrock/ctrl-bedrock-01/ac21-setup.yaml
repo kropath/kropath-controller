@@ -1,0 +1,15 @@
+# AC-21: allowedModels in both mandatory and defaults on KropathConfig → CRD CEL rejects.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac21-bedrock-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    bedrock:
+      allowedModels:
+        - "model-a"
+  defaults:
+    bedrock:
+      allowedModels:
+        - "model-b"

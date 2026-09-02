@@ -83,6 +83,7 @@ type KropathConfigTier struct {
 	AppScaling        cascade.AppScalingKropathSection        `json:"appScaling,omitempty"`
 	Keyspaces         cascade.KeyspacesKropathSection         `json:"keyspaces,omitempty"`
 	WAF               cascade.WAFKropathSection               `json:"waf,omitempty"`
+	Bedrock           cascade.BedrockKropathSection           `json:"bedrock,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
