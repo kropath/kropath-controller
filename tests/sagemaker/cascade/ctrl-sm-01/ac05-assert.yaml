@@ -1,0 +1,10 @@
+# Assert AC-T02-5: mandatory.enableNetworkIsolation=true from L1 KropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac05-sm-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      enableNetworkIsolation: true

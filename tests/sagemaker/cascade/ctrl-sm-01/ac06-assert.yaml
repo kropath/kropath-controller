@@ -1,0 +1,10 @@
+# Assert AC-T02-6: defaults.rootAccess="Enabled" from global SageMakerConfig defaults.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac06-sm-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    defaults:
+      rootAccess: "Enabled"

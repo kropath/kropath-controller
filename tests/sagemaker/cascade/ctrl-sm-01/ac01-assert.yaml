@@ -1,0 +1,10 @@
+# Assert AC-T02-1: mandatory.instanceType="ml.m5.xlarge" from L1 KropathConfig wins.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac01-sm-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      instanceType: "ml.m5.xlarge"

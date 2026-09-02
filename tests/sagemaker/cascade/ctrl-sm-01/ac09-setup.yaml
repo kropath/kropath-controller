@@ -1,0 +1,34 @@
+# AC-T02-9: Tag union merge — KropathConfig.mandatory.tags and
+# SageMakerConfig.mandatory.tags combine in effectiveConfig.mandatory.tags.
+# KropathConfig wins on key conflict.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac09-sm-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      cost-centre: "platform"
+      owner: "platform-team"
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac09-sm-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      resource-type: "sagemaker"
+      owner: "ml-team"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac09-sm-policy
+  namespace: payments-prod
+spec: {}

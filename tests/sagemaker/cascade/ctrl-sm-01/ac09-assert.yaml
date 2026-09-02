@@ -1,0 +1,13 @@
+# Assert AC-T02-9: Tags union: both keys present; KropathConfig wins "owner" conflict.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac09-sm-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      tags:
+        cost-centre: "platform"
+        owner: "platform-team"
+        resource-type: "sagemaker"

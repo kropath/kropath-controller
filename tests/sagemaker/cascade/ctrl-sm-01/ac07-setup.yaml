@@ -1,0 +1,17 @@
+# AC-T02-7: SageMakerConfig.mandatory.directInternetAccess (L3) flows to
+# effectiveConfig.mandatory.directInternetAccess.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac07-sm-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    directInternetAccess: "Disabled"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac07-sm-policy
+  namespace: payments-prod
+spec: {}

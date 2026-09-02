@@ -1,0 +1,10 @@
+# Assert AC-T02-3: mandatory.volumeSizeInGB=100 from global SageMakerConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac03-sm-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      volumeSizeInGB: 100

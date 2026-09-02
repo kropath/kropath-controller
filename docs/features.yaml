@@ -326,3 +326,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: SageMakerConfig
+      package: sagemakerconfig
+      description: Reconciles SageMakerConfig CRs and propagates effective config.
+      kinds:
+        - SageMakerConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

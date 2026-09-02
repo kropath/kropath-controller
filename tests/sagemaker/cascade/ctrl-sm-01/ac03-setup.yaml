@@ -1,0 +1,16 @@
+# AC-T02-3: mandatory.volumeSizeInGB (L3) flows to effectiveConfig.mandatory.
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac03-sm-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    volumeSizeInGB: 100
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: SageMakerConfig
+metadata:
+  name: ac03-sm-policy
+  namespace: payments-prod
+spec: {}
