@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# ctrl-waf-02 Chainsaw integration tests — controller cascade ACs: 7, 10, 11.
+# ctrl-waf-02 Chainsaw integration tests — controller cascade ACs: 7, 8, 10, 11.
 #
 # Test isolation — unique-name-per-step, no inter-step deletes:
 #   Each AC owns a distinct resource name (acN-waf-policy). The controller
@@ -23,7 +23,8 @@ kind: Test
 metadata:
   name: ctrl-waf-02
 spec:
-  description: "WAF effectiveConfig cascade — controller ACs 7, 10, 11 (ctrl-waf-02)"
+  description: "WAF effectiveConfig cascade — controller ACs 7, 8, 10, 11 (ctrl-waf-02)"
+  namespace: security-prod
   steps:
     # AC-7: globalKropathConfig.mandatory.waf.scope="REGIONAL" (level 1) → effCfg.mandatory.scope
     - name: ac7-global-kpc-mandatory-scope
@@ -41,6 +42,15 @@ spec:
             file: ac10-setup.yaml
         - assert:
             file: ac10-assert.yaml
+            timeout: 30s
+
+    # AC-8: WAFConfig.defaults.namingTemplate="{namespace}-{name}" (level 6) → effCfg.defaults.namingTemplate
+    - name: ac8-defaults-naming-template
+      try:
+        - apply:
+            file: ac08-setup.yaml
+        - assert:
+            file: ac08-assert.yaml
             timeout: 30s
 
     # AC-11: WAFConfig.mandatory.syncedLabels (level 4) → effCfg.mandatory.syncedLabels
