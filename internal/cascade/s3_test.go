@@ -269,3 +269,77 @@ func TestMergeS3Cascade_SyncedAnnotationsMandatoryAdditiveMergeS3ConfigOnly(t *t
 		t.Fatalf("mandatory.syncedAnnotations[ann-l] = %q, want %q", got.Mandatory.SyncedAnnotations["ann-l"], "v2")
 	}
 }
+
+func TestMergeS3Cascade_LoggingTargetPrefixMandatoryGlobalS3ConfigWins(t *testing.T) {
+	got := mergeS3All(
+		zeroS3, zeroS3,
+		cascade.S3ConfigSection{LoggingTargetPrefix: "logs/mandatory-global/"}, // level 3 (global S3Config mandatory)
+		cascade.S3ConfigSection{LoggingTargetPrefix: "logs/mandatory-local/"},  // level 4 (local S3Config mandatory)
+		cascade.S3ConfigSection{LoggingTargetPrefix: "logs/defaults-local/"},   // defaults local
+		cascade.S3ConfigSection{LoggingTargetPrefix: "logs/defaults-global/"},  // defaults global
+		zeroS3, zeroS3,
+	)
+
+	if got.Mandatory.LoggingTargetPrefix != "logs/mandatory-global/" {
+		t.Fatalf("mandatory.loggingTargetPrefix = %q, want %q", got.Mandatory.LoggingTargetPrefix, "logs/mandatory-global/")
+	}
+}
+
+func TestMergeS3Cascade_LoggingTargetPrefixMandatoryLocalWhenGlobalEmpty(t *testing.T) {
+	got := mergeS3All(
+		zeroS3, zeroS3,
+		zeroS3Cfg, // level 3 global S3Config mandatory empty
+		cascade.S3ConfigSection{LoggingTargetPrefix: "logs/mandatory-local/"}, // level 4 local
+		zeroS3Cfg, zeroS3Cfg, zeroS3, zeroS3,
+	)
+
+	if got.Mandatory.LoggingTargetPrefix != "logs/mandatory-local/" {
+		t.Fatalf("mandatory.loggingTargetPrefix = %q, want %q", got.Mandatory.LoggingTargetPrefix, "logs/mandatory-local/")
+	}
+}
+
+func TestMergeS3Cascade_LoggingTargetPrefixMandatoryEmptyWhenNoneSet(t *testing.T) {
+	got := mergeS3All(zeroS3, zeroS3, zeroS3Cfg, zeroS3Cfg, zeroS3Cfg, zeroS3Cfg, zeroS3, zeroS3)
+
+	if got.Mandatory.LoggingTargetPrefix != "" {
+		t.Fatalf("mandatory.loggingTargetPrefix = %q, want empty", got.Mandatory.LoggingTargetPrefix)
+	}
+}
+
+func TestMergeS3Cascade_LoggingTargetPrefixDefaultsLocalS3ConfigWins(t *testing.T) {
+	got := mergeS3All(
+		zeroS3, zeroS3, zeroS3Cfg, zeroS3Cfg,
+		cascade.S3ConfigSection{LoggingTargetPrefix: "logs/defaults-local/"},  // defaults local (strongest)
+		cascade.S3ConfigSection{LoggingTargetPrefix: "logs/defaults-global/"}, // defaults global
+		zeroS3, zeroS3,
+	)
+
+	if got.Defaults.LoggingTargetPrefix != "logs/defaults-local/" {
+		t.Fatalf("defaults.loggingTargetPrefix = %q, want %q", got.Defaults.LoggingTargetPrefix, "logs/defaults-local/")
+	}
+}
+
+func TestMergeS3Cascade_LoggingTargetPrefixDefaultsGlobalFallback(t *testing.T) {
+	got := mergeS3All(
+		zeroS3, zeroS3, zeroS3Cfg, zeroS3Cfg,
+		zeroS3Cfg, // defaults local empty
+		cascade.S3ConfigSection{LoggingTargetPrefix: "logs/defaults-global/"}, // defaults global
+		zeroS3, zeroS3,
+	)
+
+	if got.Defaults.LoggingTargetPrefix != "logs/defaults-global/" {
+		t.Fatalf("defaults.loggingTargetPrefix = %q, want %q", got.Defaults.LoggingTargetPrefix, "logs/defaults-global/")
+	}
+}
+
+func TestMergeS3Cascade_LoggingTargetPrefixNotFromKropathConfig(t *testing.T) {
+	// KropathConfig has no loggingTargetPrefix field — it must not bleed into effectiveConfig
+	got := mergeS3All(
+		cascade.S3Section{LogDeliveryBucket: "log-bucket"}, // KropathConfig mandatory has logDeliveryBucket but not loggingTargetPrefix
+		zeroS3, zeroS3Cfg, zeroS3Cfg, zeroS3Cfg, zeroS3Cfg, zeroS3, zeroS3,
+	)
+
+	if got.Mandatory.LoggingTargetPrefix != "" {
+		t.Fatalf("mandatory.loggingTargetPrefix = %q, want empty (not from KropathConfig)", got.Mandatory.LoggingTargetPrefix)
+	}
+}
