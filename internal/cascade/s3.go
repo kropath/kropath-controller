@@ -92,6 +92,11 @@ type S3ConfigSection struct {
 	// LogDeliveryBucket is the target bucket for server access logs. Empty string = not enforced.
 	LogDeliveryBucket string `json:"logDeliveryBucket,omitempty"`
 
+	// LoggingTargetPrefix is the target prefix for server access log objects.
+	// Supports {namespace}/{name}/{account_id}/{region}/{configRef} tokens.
+	// Empty string = not enforced; governed at S3Config levels only (not KropathConfig).
+	LoggingTargetPrefix string `json:"loggingTargetPrefix,omitempty"`
+
 	// EnforceHttpsOnly requires TLS for bucket access when true. false = not enforced.
 	EnforceHttpsOnly bool `json:"enforceHttpsOnly,omitempty"`
 
@@ -131,6 +136,7 @@ type EffectiveS3Section struct {
 	Versioning              string            `json:"versioning,omitempty"`
 	LoggingEnabled          bool              `json:"loggingEnabled,omitempty"`
 	LogDeliveryBucket       string            `json:"logDeliveryBucket,omitempty"`
+	LoggingTargetPrefix     string            `json:"loggingTargetPrefix,omitempty"`
 	EnforceHttpsOnly        bool              `json:"enforceHttpsOnly,omitempty"`
 	ObjectLockMode          string            `json:"objectLockMode,omitempty"`
 	ObjectLockRetentionDays int64             `json:"objectLockRetentionDays,omitempty"`
@@ -218,6 +224,11 @@ func MergeS3Cascade(
 				globalS3CfgMandatory.LogDeliveryBucket,
 				localS3CfgMandatory.LogDeliveryBucket,
 			),
+			// LoggingTargetPrefix: S3Config levels only (not KropathConfig)
+			LoggingTargetPrefix: firstNonEmptyString(
+				globalS3CfgMandatory.LoggingTargetPrefix,
+				localS3CfgMandatory.LoggingTargetPrefix,
+			),
 			EnforceHttpsOnly: firstTrue(
 				globalKropathMandatory.EnforceHttpsOnly,
 				localKropathMandatory.EnforceHttpsOnly,
@@ -295,6 +306,11 @@ func MergeS3Cascade(
 				globalS3CfgDefaults.LogDeliveryBucket,
 				localKropathDefaults.LogDeliveryBucket,
 				globalKropathDefaults.LogDeliveryBucket,
+			),
+			// LoggingTargetPrefix: S3Config levels only (not KropathConfig)
+			LoggingTargetPrefix: firstNonEmptyString(
+				localS3CfgDefaults.LoggingTargetPrefix,
+				globalS3CfgDefaults.LoggingTargetPrefix,
 			),
 			EnforceHttpsOnly: firstTrue(
 				localS3CfgDefaults.EnforceHttpsOnly,
