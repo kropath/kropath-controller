@@ -342,3 +342,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: PipesConfig
+      package: pipesconfig
+      description: Reconciles PipesConfig CRs and propagates effective config.
+      kinds:
+        - PipesConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable
