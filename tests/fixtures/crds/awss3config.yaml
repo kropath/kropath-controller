@@ -47,6 +47,8 @@ spec:
                     logDeliveryBucket:
                       type: string
                       default: ""
+                    loggingTargetPrefix:
+                      type: string
                     enforceHttpsOnly:
                       type: boolean
                       default: false
@@ -97,6 +99,8 @@ spec:
                     logDeliveryBucket:
                       type: string
                       default: ""
+                    loggingTargetPrefix:
+                      type: string
                     enforceHttpsOnly:
                       type: boolean
                       default: false
@@ -151,6 +155,8 @@ spec:
                           type: boolean
                         logDeliveryBucket:
                           type: string
+                        loggingTargetPrefix:
+                          type: string
                         enforceHttpsOnly:
                           type: boolean
                         objectLockMode:
@@ -186,6 +192,8 @@ spec:
                         loggingEnabled:
                           type: boolean
                         logDeliveryBucket:
+                          type: string
+                        loggingTargetPrefix:
                           type: string
                         enforceHttpsOnly:
                           type: boolean
