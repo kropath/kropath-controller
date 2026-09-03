@@ -99,16 +99,24 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.PipesConfig) (
 
 	cfg.Status.ObservedGeneration = cfg.Generation
 
-	// Augment each PipesKropathSection with the tier-level tags so that tag cascade
-	// flows through MergePipesCascade alongside Pipes-specific fields.
+	// Augment each PipesKropathSection with the tier-level tags, syncedLabels, and
+	// syncedAnnotations so that the full org-wide field set flows through MergePipesCascade.
 	globalKropathMandatoryPipes := globalKropath.Spec.Mandatory.Pipes
 	globalKropathMandatoryPipes.Tags = globalKropath.Spec.Mandatory.Tags
+	globalKropathMandatoryPipes.SyncedLabels = globalKropath.Spec.Mandatory.SyncedLabels
+	globalKropathMandatoryPipes.SyncedAnnotations = globalKropath.Spec.Mandatory.SyncedAnnotations
 	localKropathMandatoryPipes := localKropath.Spec.Mandatory.Pipes
 	localKropathMandatoryPipes.Tags = localKropath.Spec.Mandatory.Tags
+	localKropathMandatoryPipes.SyncedLabels = localKropath.Spec.Mandatory.SyncedLabels
+	localKropathMandatoryPipes.SyncedAnnotations = localKropath.Spec.Mandatory.SyncedAnnotations
 	localKropathDefaultsPipes := localKropath.Spec.Defaults.Pipes
 	localKropathDefaultsPipes.Tags = localKropath.Spec.Defaults.Tags
+	localKropathDefaultsPipes.SyncedLabels = localKropath.Spec.Defaults.SyncedLabels
+	localKropathDefaultsPipes.SyncedAnnotations = localKropath.Spec.Defaults.SyncedAnnotations
 	globalKropathDefaultsPipes := globalKropath.Spec.Defaults.Pipes
 	globalKropathDefaultsPipes.Tags = globalKropath.Spec.Defaults.Tags
+	globalKropathDefaultsPipes.SyncedLabels = globalKropath.Spec.Defaults.SyncedLabels
+	globalKropathDefaultsPipes.SyncedAnnotations = globalKropath.Spec.Defaults.SyncedAnnotations
 
 	eff := cascade.MergePipesCascade(
 		globalKropathMandatoryPipes,

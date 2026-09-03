@@ -16,8 +16,9 @@ package cascade
 
 // PipesKropathSection holds the EventBridge Pipes governance fields from
 // KropathConfig.spec.mandatory.pipes / .defaults.pipes (ADR-015 §3.5)
-// PLUS the tier-level tags from KropathConfig.spec.mandatory.tags (populated
-// by the reconciler so that tag cascade flows through MergePipesCascade).
+// PLUS the tier-level tags, syncedLabels, and syncedAnnotations from
+// KropathConfig.spec.mandatory / .defaults (populated by the reconciler so
+// that the full org-wide field set flows through MergePipesCascade).
 //
 // Tags, syncedLabels, and syncedAnnotations are org-wide fields at the
 // KropathConfig tier level — they do NOT appear under spec.pipes.
@@ -32,6 +33,16 @@ type PipesKropathSection struct {
 	// or KropathConfig.spec.defaults.tags. Populated by the reconciler from the
 	// tier-level field, not from spec.mandatory.pipes. nil / empty = no tags.
 	Tags map[string]string `json:"tags,omitempty"`
+
+	// SyncedLabels are tier-level Kubernetes labels to propagate from
+	// KropathConfig.spec.mandatory.syncedLabels or .defaults.syncedLabels.
+	// Populated by the reconciler. nil / empty = no synced labels at this level.
+	SyncedLabels map[string]string `json:"syncedLabels,omitempty"`
+
+	// SyncedAnnotations are tier-level Kubernetes annotations to propagate from
+	// KropathConfig.spec.mandatory.syncedAnnotations or .defaults.syncedAnnotations.
+	// Populated by the reconciler. nil / empty = no synced annotations at this level.
+	SyncedAnnotations map[string]string `json:"syncedAnnotations,omitempty"`
 }
 
 // PipesConfigSection holds the EventBridge Pipes governance fields from
@@ -98,9 +109,9 @@ type EffectivePipesConfig struct {
 //
 // desiredState appears at all four mandatory/defaults levels (both KropathConfig and PipesConfig).
 // namingTemplate appears only at levels 3–4 (mandatory) and 6–7 (defaults) — not in KropathConfig.
-// syncedLabels and syncedAnnotations appear at levels 3–4 (mandatory) and 6–7 (defaults) only.
-// Tags appear at all four mandatory/defaults levels; PipesKropathSection.Tags carries the
-// tier-level KropathConfig.mandatory.tags / defaults.tags (populated by the reconciler).
+// Tags, syncedLabels, and syncedAnnotations appear at all four mandatory/defaults levels;
+// PipesKropathSection.Tags/.SyncedLabels/.SyncedAnnotations carry the tier-level fields from
+// KropathConfig.mandatory / defaults (populated by the reconciler).
 func MergePipesCascade(
 	// Mandatory inputs (highest → lowest priority)
 	globalKropathMandatory PipesKropathSection, // level 1
@@ -133,15 +144,19 @@ func MergePipesCascade(
 				localKropathMandatory.Tags,    // level 2
 				globalKropathMandatory.Tags,   // level 1 (highest priority, last to write)
 			),
-			// syncedLabels not in KropathConfig: levels 3 and 4 only.
+			// syncedLabels: all mandatory sources; L4 added first, L1 wins on key conflicts.
 			SyncedLabels: mergeMaps(
 				localPipesCfgMandatory.SyncedLabels,  // level 4
 				globalPipesCfgMandatory.SyncedLabels, // level 3
+				localKropathMandatory.SyncedLabels,   // level 2
+				globalKropathMandatory.SyncedLabels,  // level 1
 			),
-			// syncedAnnotations not in KropathConfig: levels 3 and 4 only.
+			// syncedAnnotations: all mandatory sources; L4 added first, L1 wins on key conflicts.
 			SyncedAnnotations: mergeMaps(
 				localPipesCfgMandatory.SyncedAnnotations,  // level 4
 				globalPipesCfgMandatory.SyncedAnnotations, // level 3
+				localKropathMandatory.SyncedAnnotations,   // level 2
+				globalKropathMandatory.SyncedAnnotations,  // level 1
 			),
 		},
 		Defaults: EffectivePipesSection{
@@ -163,13 +178,17 @@ func MergePipesCascade(
 				globalPipesCfgDefaults.Tags, // level 7
 				localPipesCfgDefaults.Tags,  // level 6 (highest priority)
 			),
-			// syncedLabels not in KropathConfig: levels 6 and 7 only.
+			// syncedLabels: all defaults sources; L9 added first, L6 wins on key conflicts.
 			SyncedLabels: mergeMaps(
+				globalKropathDefaults.SyncedLabels,  // level 9
+				localKropathDefaults.SyncedLabels,   // level 8
 				globalPipesCfgDefaults.SyncedLabels, // level 7
 				localPipesCfgDefaults.SyncedLabels,  // level 6 (wins)
 			),
-			// syncedAnnotations not in KropathConfig: levels 6 and 7 only.
+			// syncedAnnotations: all defaults sources; L9 added first, L6 wins on key conflicts.
 			SyncedAnnotations: mergeMaps(
+				globalKropathDefaults.SyncedAnnotations,  // level 9
+				localKropathDefaults.SyncedAnnotations,   // level 8
 				globalPipesCfgDefaults.SyncedAnnotations, // level 7
 				localPipesCfgDefaults.SyncedAnnotations,  // level 6 (wins)
 			),

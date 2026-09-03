@@ -213,6 +213,105 @@ func TestMergePipesCascade_SyncedLabelsAndAnnotations(t *testing.T) {
 	}
 }
 
+func TestMergePipesCascade_KropathMandatorySyncedLabelsWin(t *testing.T) {
+	t.Parallel()
+
+	got := cascade.MergePipesCascade(
+		cascade.PipesKropathSection{SyncedLabels: map[string]string{"env": "prod", "owner": "platform"}}, // L1
+		cascade.PipesKropathSection{SyncedLabels: map[string]string{"env": "staging", "team": "infra"}},  // L2
+		cascade.PipesConfigSection{SyncedLabels: map[string]string{"cost-center": "cc1"}},                // L3
+		cascade.PipesConfigSection{SyncedLabels: map[string]string{"cost-center": "cc2", "app": "myapp"}}, // L4
+		emptyPipesCfg, emptyPipesCfg,
+		emptyPipesKropath, emptyPipesKropath,
+	)
+
+	// L1 wins on "env"; all unique keys should be present.
+	if got.Mandatory.SyncedLabels["env"] != "prod" {
+		t.Errorf("SyncedLabels[env] = %q, want prod (L1 wins)", got.Mandatory.SyncedLabels["env"])
+	}
+	if got.Mandatory.SyncedLabels["owner"] != "platform" {
+		t.Errorf("SyncedLabels[owner] = %q, want platform", got.Mandatory.SyncedLabels["owner"])
+	}
+	if got.Mandatory.SyncedLabels["team"] != "infra" {
+		t.Errorf("SyncedLabels[team] = %q, want infra", got.Mandatory.SyncedLabels["team"])
+	}
+	if got.Mandatory.SyncedLabels["cost-center"] != "cc1" {
+		t.Errorf("SyncedLabels[cost-center] = %q, want cc1 (L3 wins over L4)", got.Mandatory.SyncedLabels["cost-center"])
+	}
+	if got.Mandatory.SyncedLabels["app"] != "myapp" {
+		t.Errorf("SyncedLabels[app] = %q, want myapp", got.Mandatory.SyncedLabels["app"])
+	}
+}
+
+func TestMergePipesCascade_KropathMandatorySyncedAnnotationsWin(t *testing.T) {
+	t.Parallel()
+
+	got := cascade.MergePipesCascade(
+		cascade.PipesKropathSection{SyncedAnnotations: map[string]string{"iam.role": "arn:global", "owner": "platform"}}, // L1
+		cascade.PipesKropathSection{SyncedAnnotations: map[string]string{"iam.role": "arn:local"}},                       // L2
+		cascade.PipesConfigSection{SyncedAnnotations: map[string]string{"cost-center": "cc1"}},                           // L3
+		emptyPipesCfg,
+		emptyPipesCfg, emptyPipesCfg,
+		emptyPipesKropath, emptyPipesKropath,
+	)
+
+	// L1 wins on "iam.role" conflict.
+	if got.Mandatory.SyncedAnnotations["iam.role"] != "arn:global" {
+		t.Errorf("SyncedAnnotations[iam.role] = %q, want arn:global (L1 wins)", got.Mandatory.SyncedAnnotations["iam.role"])
+	}
+	if got.Mandatory.SyncedAnnotations["owner"] != "platform" {
+		t.Errorf("SyncedAnnotations[owner] = %q, want platform", got.Mandatory.SyncedAnnotations["owner"])
+	}
+	if got.Mandatory.SyncedAnnotations["cost-center"] != "cc1" {
+		t.Errorf("SyncedAnnotations[cost-center] = %q, want cc1", got.Mandatory.SyncedAnnotations["cost-center"])
+	}
+}
+
+func TestMergePipesCascade_KropathDefaultsSyncedLabelsFallthrough(t *testing.T) {
+	t.Parallel()
+
+	got := cascade.MergePipesCascade(
+		emptyPipesKropath, emptyPipesKropath,
+		emptyPipesCfg, emptyPipesCfg,
+		cascade.PipesConfigSection{SyncedLabels: map[string]string{"env": "dev", "team": "pipes"}}, // L6
+		cascade.PipesConfigSection{SyncedLabels: map[string]string{"env": "staging"}},              // L7
+		cascade.PipesKropathSection{SyncedLabels: map[string]string{"org": "acme"}},                // L8
+		cascade.PipesKropathSection{SyncedLabels: map[string]string{"org": "global", "tier": "free"}}, // L9
+	)
+
+	// L6 wins on "env"; L8 wins on "org"; L9 contributes unique "tier".
+	if got.Defaults.SyncedLabels["env"] != "dev" {
+		t.Errorf("SyncedLabels[env] = %q, want dev (L6 wins)", got.Defaults.SyncedLabels["env"])
+	}
+	if got.Defaults.SyncedLabels["team"] != "pipes" {
+		t.Errorf("SyncedLabels[team] = %q, want pipes", got.Defaults.SyncedLabels["team"])
+	}
+	if got.Defaults.SyncedLabels["org"] != "acme" {
+		t.Errorf("SyncedLabels[org] = %q, want acme (L8 wins over L9)", got.Defaults.SyncedLabels["org"])
+	}
+	if got.Defaults.SyncedLabels["tier"] != "free" {
+		t.Errorf("SyncedLabels[tier] = %q, want free (L9 contributes)", got.Defaults.SyncedLabels["tier"])
+	}
+}
+
+func TestMergePipesCascade_KropathDefaultsSyncedAnnotationsFallthrough(t *testing.T) {
+	t.Parallel()
+
+	got := cascade.MergePipesCascade(
+		emptyPipesKropath, emptyPipesKropath,
+		emptyPipesCfg, emptyPipesCfg,
+		emptyPipesCfg,
+		emptyPipesCfg,
+		cascade.PipesKropathSection{SyncedAnnotations: map[string]string{"iam.role": "arn:ns"}},      // L8
+		cascade.PipesKropathSection{SyncedAnnotations: map[string]string{"iam.role": "arn:global"}},  // L9
+	)
+
+	// L8 wins over L9 on "iam.role".
+	if got.Defaults.SyncedAnnotations["iam.role"] != "arn:ns" {
+		t.Errorf("SyncedAnnotations[iam.role] = %q, want arn:ns (L8 wins over L9)", got.Defaults.SyncedAnnotations["iam.role"])
+	}
+}
+
 func TestMergePipesCascade_AllFieldsEmpty(t *testing.T) {
 	t.Parallel()
 
