@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.9.0](https://github.com/kropath/kropath-controller/compare/v0.8.0...v0.9.0) (2026-09-04)
+
+
+### Features
+
+* **KRO-873:** effectiveConfig cascade for EventBridge Pipes fields ([8647822](https://github.com/kropath/kropath-controller/commit/8647822b583335e43342da405e0807f67f0a6f8d))
+* **KRO-961:** add SESConfig effectiveConfig cascade ([#89](https://github.com/kropath/kropath-controller/issues/89)) ([9894516](https://github.com/kropath/kropath-controller/commit/98945166590db70e34c7f7517f097f0c21aa8fcf))
+* **KRO-973:** add CodeArtifact effectiveConfig cascade support ([dd84566](https://github.com/kropath/kropath-controller/commit/dd845662a7ce9bdf157d9e140c0a0bc456595eaf))
+* **KRO-979:** add LoggingTargetPrefix to S3 cascade ([#87](https://github.com/kropath/kropath-controller/issues/87)) ([ffb1900](https://github.com/kropath/kropath-controller/commit/ffb1900131a03e5da2e35f8eda851afbd41f94b7))
+
 ## [0.8.0](https://github.com/kropath/kropath-controller/compare/v0.7.0...v0.8.0) (2026-09-02)
 
 
