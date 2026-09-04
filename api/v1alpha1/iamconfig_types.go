@@ -88,6 +88,7 @@ type KropathConfigTier struct {
 	OpenSearch        cascade.OpenSearchKropathSection        `json:"opensearch,omitempty"`
 	Pipes             cascade.PipesKropathSection             `json:"pipes,omitempty"`
 	CodeArtifact      cascade.CodeArtifactKropathSection      `json:"codeartifact,omitempty"`
+	MWAA              cascade.MWAAKropathSection              `json:"mwaa,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
@@ -666,6 +667,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.CodeArtifact.Tags = make(map[string]string, len(in.Spec.Defaults.CodeArtifact.Tags))
 		for k, v := range in.Spec.Defaults.CodeArtifact.Tags {
 			out.Spec.Defaults.CodeArtifact.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.MWAA.AirflowConfigurationOptions != nil {
+		out.Spec.Mandatory.MWAA.AirflowConfigurationOptions = make(map[string]string, len(in.Spec.Mandatory.MWAA.AirflowConfigurationOptions))
+		for k, v := range in.Spec.Mandatory.MWAA.AirflowConfigurationOptions {
+			out.Spec.Mandatory.MWAA.AirflowConfigurationOptions[k] = v
+		}
+	}
+	if in.Spec.Defaults.MWAA.AirflowConfigurationOptions != nil {
+		out.Spec.Defaults.MWAA.AirflowConfigurationOptions = make(map[string]string, len(in.Spec.Defaults.MWAA.AirflowConfigurationOptions))
+		for k, v := range in.Spec.Defaults.MWAA.AirflowConfigurationOptions {
+			out.Spec.Defaults.MWAA.AirflowConfigurationOptions[k] = v
 		}
 	}
 	if in.Spec.Mandatory.SyncedLabels != nil {
