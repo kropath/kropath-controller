@@ -116,8 +116,12 @@ crds-verify: ## CI gate: fail if a watched Kind is missing or mis-cased vs kropa
 	    gh api "repos/kropath/kropath-aws/contents/$$path?ref=$(KROPATH_AWS_REF)" \
 	      --jq '.[] | select(.type == "file") | select(.name | endswith(".yaml")) | .name' \
 	    | while read -r name; do \
-	        gh api "repos/kropath/kropath-aws/contents/$$path/$$name?ref=$(KROPATH_AWS_REF)" \
-	          --jq .content | base64 -d > "$$dir/$$name"; \
+	        for _i in 1 2 3; do \
+	          gh api "repos/kropath/kropath-aws/contents/$$path/$$name?ref=$(KROPATH_AWS_REF)" \
+	            --jq .content 2>/dev/null | base64 -d > "$$dir/$$name" 2>/dev/null && break || true; \
+	          [ $$_i -lt 3 ] && sleep 1 || true; \
+	        done; \
+	        test -s "$$dir/$$name"; \
 	      done; \
 	  done; \
 	  for companion_ref in $(KROPATH_AWS_COMPANION_REFS); do \
@@ -127,8 +131,11 @@ crds-verify: ## CI gate: fail if a watched Kind is missing or mis-cased vs kropa
 	        --jq '.[] | select(.type == "file") | select(.name | endswith(".yaml")) | .name' \
 	      2>/dev/null \
 	      | while read -r name; do \
+	          _tmpf=$$(mktemp); \
 	          gh api "repos/kropath/kropath-aws/contents/$$path/$$name?ref=$$companion_ref" \
-	            --jq .content 2>/dev/null | base64 -d > "$$dir/$$name" || true; \
+	            --jq .content 2>/dev/null | base64 -d > "$$_tmpf" 2>/dev/null \
+	          && test -s "$$_tmpf" && mv "$$_tmpf" "$$dir/$$name" \
+	          || rm -f "$$_tmpf"; \
 	        done; \
 	    done || true; \
 	  done; \
