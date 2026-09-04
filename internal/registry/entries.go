@@ -9,6 +9,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/kropath/kropath-controller/internal/reconciler/acmconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/bedrockconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/codeartifactconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/sagemakerconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/opensearchconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/pipesconfig"
@@ -447,6 +448,13 @@ func All() []Entry {
 			return (&sesconfig.Reconciler{
 				Client: bctx.Manager.GetClient(),
 				Log:    bctx.Log.WithName("controllers").WithName("SESConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("codeartifactconfig", "CodeArtifactConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&codeartifactconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("CodeArtifactConfig"),
 				Scheme: bctx.Manager.GetScheme(),
 			}).BuildWithManager(bctx.Manager)
 		}),
