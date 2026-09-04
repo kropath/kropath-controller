@@ -116,12 +116,18 @@ crds-verify: ## CI gate: fail if a watched Kind is missing or mis-cased vs kropa
 	    gh api "repos/kropath/kropath-aws/contents/$$path?ref=$(KROPATH_AWS_REF)" \
 	      --jq '.[] | select(.type == "file") | select(.name | endswith(".yaml")) | .name' \
 	    | while read -r name; do \
-	        for _i in 1 2 3; do \
+	        _done=0; \
+	        for _i in 1 2 3 4 5; do \
+	          _tmpf=$$(mktemp); \
 	          gh api "repos/kropath/kropath-aws/contents/$$path/$$name?ref=$(KROPATH_AWS_REF)" \
-	            --jq .content 2>/dev/null | base64 -d > "$$dir/$$name" 2>/dev/null && break || true; \
-	          [ $$_i -lt 3 ] && sleep 1 || true; \
+	            --jq .content 2>/dev/null | base64 -d > "$$_tmpf" 2>/dev/null || true; \
+	          if test -s "$$_tmpf"; then \
+	            mv "$$_tmpf" "$$dir/$$name"; _done=1; break; \
+	          fi; \
+	          rm -f "$$_tmpf"; \
+	          [ $$_i -lt 5 ] && sleep 5 || true; \
 	        done; \
-	        test -s "$$dir/$$name"; \
+	        [ $$_done -eq 1 ]; \
 	      done; \
 	  done; \
 	  for companion_ref in $(KROPATH_AWS_COMPANION_REFS); do \
