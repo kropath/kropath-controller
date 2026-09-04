@@ -146,12 +146,12 @@ jobs:
       # KROPATH_AWS_COMPANION_REFS lists CRD PR branches not yet on main so that
       # parallel controller+CRD PR pairs can be reviewed together.
       #   agent/implementer/e14f06bb — EMRConfig CRD (KRO-829; clear once merged)
-      #   agent/implementer/f70d279bdc68 — CodeArtifactConfig CRD (KRO-972; clear once merged)
+      #   agent/implementer/5c0bce178e36 — MWAAConfig CRD stub (KRO-991; clear once KRO-990 merges)
       - name: Check watched Kinds against kropath-aws CRDs
         if: needs.changes.outputs.code == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          KROPATH_AWS_COMPANION_REFS: "agent/implementer/e14f06bb agent/implementer/f70d279bdc68"
+          KROPATH_AWS_COMPANION_REFS: "agent/implementer/e14f06bb agent/implementer/5c0bce178e36"
         run: make crds-verify
 
   security:

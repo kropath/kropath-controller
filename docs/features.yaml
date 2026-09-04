@@ -366,3 +366,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: MWAAConfig
+      package: mwaaconfig
+      description: Reconciles MWAAConfig CRs and propagates effective config.
+      kinds:
+        - MWAAConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable
