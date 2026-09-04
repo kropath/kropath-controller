@@ -16,6 +16,7 @@ package sesconfig
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"time"
 
@@ -33,6 +34,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 )
 
+const resourceNameLabel = "aws.kropath.run/resource-name"
+
 type Reconciler struct {
 	Client client.Client
 	Log    logr.Logger
@@ -44,6 +47,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("SESConfig"))
 	if err := r.Client.Get(ctx, req.NamespacedName, cfg); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	if err := r.ensureLabel(ctx, cfg); err != nil {
+		return ctrl.Result{}, err
 	}
 
 	updated, result, err := r.reconcile(ctx, cfg)
@@ -274,6 +281,15 @@ func mergeAWSIdentity(local, global v1alpha1.ProviderIdentity) v1alpha1.Provider
 		out.Region = local.Region
 	}
 	return out
+}
+
+// ensureLabel idempotently patches aws.kropath.run/resource-name onto the SESConfig CR (KRO-224).
+func (r *Reconciler) ensureLabel(ctx context.Context, cfg *v1alpha1.SESConfig) error {
+	if labels := cfg.GetLabels(); labels[resourceNameLabel] == cfg.Name {
+		return nil
+	}
+	patch := []byte(fmt.Sprintf(`{"metadata":{"labels":{%q:%q}}}`, resourceNameLabel, cfg.Name))
+	return r.Client.Patch(ctx, cfg, client.RawPatch(types.MergePatchType, patch))
 }
 
 func conditionNeedsUpdate(conditions []metav1.Condition, new metav1.Condition) bool {

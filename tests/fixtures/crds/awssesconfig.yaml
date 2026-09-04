@@ -62,7 +62,6 @@ spec:
                   properties:
                     namingTemplate:
                       type: string
-                      default: ""
                       description: >-
                         Configuration set naming template (e.g. "{namespace}-{name}").
                         Empty = not enforced. Cannot be set together with defaults.namingTemplate.
@@ -90,7 +89,6 @@ spec:
                   properties:
                     namingTemplate:
                       type: string
-                      default: ""
                       description: >-
                         Default naming template (e.g. "{namespace}-{name}").
                         Empty = no default. Cannot be set together with mandatory.namingTemplate.
