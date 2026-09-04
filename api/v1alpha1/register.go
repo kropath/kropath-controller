@@ -116,6 +116,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&OpenSearchConfigList{},
 		&PipesConfig{},
 		&PipesConfigList{},
+		&SESConfig{},
+		&SESConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

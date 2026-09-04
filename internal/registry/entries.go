@@ -12,6 +12,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/sagemakerconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/opensearchconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/pipesconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/sesconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/appscalingconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/documentdbconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/apigatewayconfig"
@@ -439,6 +440,13 @@ func All() []Entry {
 			return (&pipesconfig.Reconciler{
 				Client: bctx.Manager.GetClient(),
 				Log:    bctx.Log.WithName("controllers").WithName("PipesConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("sesconfig", "SESConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&sesconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("SESConfig"),
 				Scheme: bctx.Manager.GetScheme(),
 			}).BuildWithManager(bctx.Manager)
 		}),
