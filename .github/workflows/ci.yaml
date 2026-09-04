@@ -146,6 +146,7 @@ jobs:
       # KROPATH_AWS_COMPANION_REFS lists CRD PR branches not yet on main so that
       # parallel controller+CRD PR pairs can be reviewed together.
       #   agent/implementer/e14f06bb — EMRConfig CRD (KRO-829; clear once merged)
+      #   SESConfig CRD (KRO-960) was a companion during KRO-961 review; now merged.
       - name: Check watched Kinds against kropath-aws CRDs
         if: needs.changes.outputs.code == 'true'
         env:
