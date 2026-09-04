@@ -59,6 +59,48 @@ func (in *MWAAConfig) DeepCopyInto(out *MWAAConfig) {
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
 	// Spec
 	out.Spec = in.Spec
+	// Spec.Mandatory *bool fields — deep-copy each pointer.
+	if in.Spec.Mandatory.DagProcessingLogsEnabled != nil {
+		v := *in.Spec.Mandatory.DagProcessingLogsEnabled
+		out.Spec.Mandatory.DagProcessingLogsEnabled = &v
+	}
+	if in.Spec.Mandatory.SchedulerLogsEnabled != nil {
+		v := *in.Spec.Mandatory.SchedulerLogsEnabled
+		out.Spec.Mandatory.SchedulerLogsEnabled = &v
+	}
+	if in.Spec.Mandatory.TaskLogsEnabled != nil {
+		v := *in.Spec.Mandatory.TaskLogsEnabled
+		out.Spec.Mandatory.TaskLogsEnabled = &v
+	}
+	if in.Spec.Mandatory.WebserverLogsEnabled != nil {
+		v := *in.Spec.Mandatory.WebserverLogsEnabled
+		out.Spec.Mandatory.WebserverLogsEnabled = &v
+	}
+	if in.Spec.Mandatory.WorkerLogsEnabled != nil {
+		v := *in.Spec.Mandatory.WorkerLogsEnabled
+		out.Spec.Mandatory.WorkerLogsEnabled = &v
+	}
+	// Spec.Defaults *bool fields — deep-copy each pointer.
+	if in.Spec.Defaults.DagProcessingLogsEnabled != nil {
+		v := *in.Spec.Defaults.DagProcessingLogsEnabled
+		out.Spec.Defaults.DagProcessingLogsEnabled = &v
+	}
+	if in.Spec.Defaults.SchedulerLogsEnabled != nil {
+		v := *in.Spec.Defaults.SchedulerLogsEnabled
+		out.Spec.Defaults.SchedulerLogsEnabled = &v
+	}
+	if in.Spec.Defaults.TaskLogsEnabled != nil {
+		v := *in.Spec.Defaults.TaskLogsEnabled
+		out.Spec.Defaults.TaskLogsEnabled = &v
+	}
+	if in.Spec.Defaults.WebserverLogsEnabled != nil {
+		v := *in.Spec.Defaults.WebserverLogsEnabled
+		out.Spec.Defaults.WebserverLogsEnabled = &v
+	}
+	if in.Spec.Defaults.WorkerLogsEnabled != nil {
+		v := *in.Spec.Defaults.WorkerLogsEnabled
+		out.Spec.Defaults.WorkerLogsEnabled = &v
+	}
 	if in.Spec.Mandatory.AirflowConfigurationOptions != nil {
 		out.Spec.Mandatory.AirflowConfigurationOptions = make(map[string]string, len(in.Spec.Mandatory.AirflowConfigurationOptions))
 		for k, v := range in.Spec.Mandatory.AirflowConfigurationOptions {
@@ -109,6 +151,48 @@ func (in *MWAAConfig) DeepCopyInto(out *MWAAConfig) {
 	}
 	// Status
 	out.Status = in.Status
+	// Status.EffectiveConfig.Mandatory *bool fields — deep-copy each pointer.
+	if in.Status.EffectiveConfig.Mandatory.DagProcessingLogsEnabled != nil {
+		v := *in.Status.EffectiveConfig.Mandatory.DagProcessingLogsEnabled
+		out.Status.EffectiveConfig.Mandatory.DagProcessingLogsEnabled = &v
+	}
+	if in.Status.EffectiveConfig.Mandatory.SchedulerLogsEnabled != nil {
+		v := *in.Status.EffectiveConfig.Mandatory.SchedulerLogsEnabled
+		out.Status.EffectiveConfig.Mandatory.SchedulerLogsEnabled = &v
+	}
+	if in.Status.EffectiveConfig.Mandatory.TaskLogsEnabled != nil {
+		v := *in.Status.EffectiveConfig.Mandatory.TaskLogsEnabled
+		out.Status.EffectiveConfig.Mandatory.TaskLogsEnabled = &v
+	}
+	if in.Status.EffectiveConfig.Mandatory.WebserverLogsEnabled != nil {
+		v := *in.Status.EffectiveConfig.Mandatory.WebserverLogsEnabled
+		out.Status.EffectiveConfig.Mandatory.WebserverLogsEnabled = &v
+	}
+	if in.Status.EffectiveConfig.Mandatory.WorkerLogsEnabled != nil {
+		v := *in.Status.EffectiveConfig.Mandatory.WorkerLogsEnabled
+		out.Status.EffectiveConfig.Mandatory.WorkerLogsEnabled = &v
+	}
+	// Status.EffectiveConfig.Defaults *bool fields — deep-copy each pointer.
+	if in.Status.EffectiveConfig.Defaults.DagProcessingLogsEnabled != nil {
+		v := *in.Status.EffectiveConfig.Defaults.DagProcessingLogsEnabled
+		out.Status.EffectiveConfig.Defaults.DagProcessingLogsEnabled = &v
+	}
+	if in.Status.EffectiveConfig.Defaults.SchedulerLogsEnabled != nil {
+		v := *in.Status.EffectiveConfig.Defaults.SchedulerLogsEnabled
+		out.Status.EffectiveConfig.Defaults.SchedulerLogsEnabled = &v
+	}
+	if in.Status.EffectiveConfig.Defaults.TaskLogsEnabled != nil {
+		v := *in.Status.EffectiveConfig.Defaults.TaskLogsEnabled
+		out.Status.EffectiveConfig.Defaults.TaskLogsEnabled = &v
+	}
+	if in.Status.EffectiveConfig.Defaults.WebserverLogsEnabled != nil {
+		v := *in.Status.EffectiveConfig.Defaults.WebserverLogsEnabled
+		out.Status.EffectiveConfig.Defaults.WebserverLogsEnabled = &v
+	}
+	if in.Status.EffectiveConfig.Defaults.WorkerLogsEnabled != nil {
+		v := *in.Status.EffectiveConfig.Defaults.WorkerLogsEnabled
+		out.Status.EffectiveConfig.Defaults.WorkerLogsEnabled = &v
+	}
 	if in.Status.Conditions != nil {
 		out.Status.Conditions = make([]metav1.Condition, len(in.Status.Conditions))
 		copy(out.Status.Conditions, in.Status.Conditions)
