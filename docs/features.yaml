@@ -350,3 +350,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: SESConfig
+      package: sesconfig
+      description: Reconciles SESConfig CRs and propagates effective config.
+      kinds:
+        - SESConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

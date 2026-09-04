@@ -119,4 +119,5 @@ var All = []Reconciler{
 	cascade("SageMakerConfig", "sagemakerconfig"),
 	cascade("OpenSearchConfig", "opensearchconfig"),
 	cascade("PipesConfig", "pipesconfig"),
+	cascade("SESConfig", "sesconfig"),
 }
