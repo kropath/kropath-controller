@@ -120,4 +120,5 @@ var All = []Reconciler{
 	cascade("OpenSearchConfig", "opensearchconfig"),
 	cascade("PipesConfig", "pipesconfig"),
 	cascade("SESConfig", "sesconfig"),
+	cascade("CodeArtifactConfig", "codeartifactconfig"),
 }

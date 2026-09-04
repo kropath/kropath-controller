@@ -118,6 +118,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&PipesConfigList{},
 		&SESConfig{},
 		&SESConfigList{},
+		&CodeArtifactConfig{},
+		&CodeArtifactConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

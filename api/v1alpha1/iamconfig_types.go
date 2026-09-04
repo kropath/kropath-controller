@@ -87,6 +87,7 @@ type KropathConfigTier struct {
 	SageMaker         cascade.SageMakerKropathSection         `json:"sagemaker,omitempty"`
 	OpenSearch        cascade.OpenSearchKropathSection        `json:"opensearch,omitempty"`
 	Pipes             cascade.PipesKropathSection             `json:"pipes,omitempty"`
+	CodeArtifact      cascade.CodeArtifactKropathSection      `json:"codeartifact,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
@@ -653,6 +654,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.OpenSearch.Tags = make(map[string]string, len(in.Spec.Defaults.OpenSearch.Tags))
 		for k, v := range in.Spec.Defaults.OpenSearch.Tags {
 			out.Spec.Defaults.OpenSearch.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.CodeArtifact.Tags != nil {
+		out.Spec.Mandatory.CodeArtifact.Tags = make(map[string]string, len(in.Spec.Mandatory.CodeArtifact.Tags))
+		for k, v := range in.Spec.Mandatory.CodeArtifact.Tags {
+			out.Spec.Mandatory.CodeArtifact.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.CodeArtifact.Tags != nil {
+		out.Spec.Defaults.CodeArtifact.Tags = make(map[string]string, len(in.Spec.Defaults.CodeArtifact.Tags))
+		for k, v := range in.Spec.Defaults.CodeArtifact.Tags {
+			out.Spec.Defaults.CodeArtifact.Tags[k] = v
 		}
 	}
 	if in.Spec.Mandatory.SyncedLabels != nil {

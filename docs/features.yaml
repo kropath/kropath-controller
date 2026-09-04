@@ -358,3 +358,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: CodeArtifactConfig
+      package: codeartifactconfig
+      description: Reconciles CodeArtifactConfig CRs and propagates effective config.
+      kinds:
+        - CodeArtifactConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

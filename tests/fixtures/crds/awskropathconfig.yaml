@@ -1261,6 +1261,23 @@ spec:
                           additionalProperties:
                             type: string
                           description: Pipes-specific mandatory tags.
+                    codeartifact:
+                      type: object
+                      default: {}
+                      description: >-
+                        Mandatory CodeArtifact governance fields promoted from KropathConfig.
+                      properties:
+                        encryptionKey:
+                          type: string
+                          default: ""
+                          description: >-
+                            Enforce this KMS key ARN for CodeArtifact domain encryption org-wide. "" = not enforced.
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                          description: CodeArtifact-specific mandatory tags.
                     tags:
                       type: object
                       additionalProperties:
@@ -2148,6 +2165,23 @@ spec:
                           additionalProperties:
                             type: string
                           description: Pipes-specific default tags.
+                    codeartifact:
+                      type: object
+                      default: {}
+                      description: >-
+                        Default CodeArtifact governance fields promoted from KropathConfig.
+                      properties:
+                        encryptionKey:
+                          type: string
+                          default: ""
+                          description: >-
+                            Default KMS key ARN for CodeArtifact domain encryption org-wide. "" = no default.
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                          description: CodeArtifact-specific default tags.
                     tags:
                       type: object
                       additionalProperties:
