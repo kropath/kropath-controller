@@ -86,6 +86,7 @@ type KropathConfigTier struct {
 	Bedrock           cascade.BedrockKropathSection           `json:"bedrock,omitempty"`
 	SageMaker         cascade.SageMakerKropathSection         `json:"sagemaker,omitempty"`
 	OpenSearch        cascade.OpenSearchKropathSection        `json:"opensearch,omitempty"`
+	Pipes             cascade.PipesKropathSection             `json:"pipes,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`

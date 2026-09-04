@@ -114,6 +114,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&SageMakerConfigList{},
 		&OpenSearchConfig{},
 		&OpenSearchConfigList{},
+		&PipesConfig{},
+		&PipesConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

@@ -368,6 +368,12 @@ spec:
                 spec.mandatory.waf.sampledRequestsEnabled and
                 spec.defaults.waf.sampledRequestsEnabled cannot both be true.
                 Set the field in exactly one tier.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.pipes) &&
+                  self.spec.mandatory.pipes.desiredState != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.pipes) &&
+                  self.spec.defaults.pipes.desiredState != "")
+              message: "pipes.desiredState cannot be set in both mandatory and defaults"
           properties:
             spec:
               type: object
@@ -1238,6 +1244,23 @@ spec:
                           additionalProperties:
                             type: string
                           description: OpenSearch-specific mandatory tags.
+                    pipes:
+                      type: object
+                      default: {}
+                      description: >-
+                        Mandatory EventBridge Pipes governance fields promoted from KropathConfig.
+                      properties:
+                        desiredState:
+                          type: string
+                          default: ""
+                          description: >-
+                            Enforce a desired state for EventBridge Pipes org-wide (RUNNING | STOPPED). "" = not enforced.
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                          description: Pipes-specific mandatory tags.
                     tags:
                       type: object
                       additionalProperties:
@@ -2108,6 +2131,23 @@ spec:
                           additionalProperties:
                             type: string
                           description: OpenSearch-specific default tags.
+                    pipes:
+                      type: object
+                      default: {}
+                      description: >-
+                        Default EventBridge Pipes governance fields promoted from KropathConfig.
+                      properties:
+                        desiredState:
+                          type: string
+                          default: ""
+                          description: >-
+                            Default desired state for EventBridge Pipes org-wide (RUNNING | STOPPED). "" = no default.
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                          description: Pipes-specific default tags.
                     tags:
                       type: object
                       additionalProperties:
