@@ -124,6 +124,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&MWAAConfigList{},
 		&NetworkFirewallConfig{},
 		&NetworkFirewallConfigList{},
+		&BackupConfig{},
+		&BackupConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

@@ -10,6 +10,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/acmconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/bedrockconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/codeartifactconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/backupconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/mwaaconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/networkfirewallconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/sagemakerconfig"
@@ -471,6 +472,13 @@ func All() []Entry {
 			return (&networkfirewallconfig.Reconciler{
 				Client: bctx.Manager.GetClient(),
 				Log:    bctx.Log.WithName("controllers").WithName("NetworkFirewallConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("backupconfig", "BackupConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&backupconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("BackupConfig"),
 				Scheme: bctx.Manager.GetScheme(),
 			}).BuildWithManager(bctx.Manager)
 		}),

@@ -382,3 +382,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: BackupConfig
+      package: backupconfig
+      description: Reconciles BackupConfig CRs and propagates effective config.
+      kinds:
+        - BackupConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable
