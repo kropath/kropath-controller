@@ -91,6 +91,7 @@ type KropathConfigTier struct {
 	MWAA              cascade.MWAAKropathSection              `json:"mwaa,omitempty"`
 	NetworkFirewall   cascade.NetworkFirewallKropathSection   `json:"networkfirewall,omitempty"`
 	Backup            cascade.BackupKropathSection            `json:"backup,omitempty"`
+	Organizations     cascade.OrganizationsKropathSection     `json:"organizations,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
@@ -779,6 +780,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.Backup.Tags = make(map[string]string, len(in.Spec.Defaults.Backup.Tags))
 		for k, v := range in.Spec.Defaults.Backup.Tags {
 			out.Spec.Defaults.Backup.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.Organizations.Tags != nil {
+		out.Spec.Mandatory.Organizations.Tags = make(map[string]string, len(in.Spec.Mandatory.Organizations.Tags))
+		for k, v := range in.Spec.Mandatory.Organizations.Tags {
+			out.Spec.Mandatory.Organizations.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.Organizations.Tags != nil {
+		out.Spec.Defaults.Organizations.Tags = make(map[string]string, len(in.Spec.Defaults.Organizations.Tags))
+		for k, v := range in.Spec.Defaults.Organizations.Tags {
+			out.Spec.Defaults.Organizations.Tags[k] = v
 		}
 	}
 }

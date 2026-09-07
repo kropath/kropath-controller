@@ -1,0 +1,27 @@
+# AC-10: globalKropathConfig with mandatory.tags (tier-level tags, level 1).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac10-org-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      cost-centre: infra
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+# AC-10: local OrganizationsConfig with mandatory.tags (OrganizationsConfig-level tags, level 4).
+apiVersion: aws.kropath.run/v1alpha1
+kind: OrganizationsConfig
+metadata:
+  name: ac10-org-policy
+  namespace: org-prod
+  labels:
+    aws.kropath.run/resource-name: ac10-org-policy
+spec:
+  mandatory:
+    tags:
+      team: platform
+  defaults: {}

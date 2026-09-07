@@ -1,0 +1,26 @@
+# AC-9: globalKropathConfig with mandatory.organizations.iamUserAccessToBilling="deny" (level 1).
+# Verifies that org-wide mandatory billing enforcement propagates through the cascade.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac9-org-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    organizations:
+      iamUserAccessToBilling: "deny"
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+# AC-9: local OrganizationsConfig — mandatory and defaults empty so only L1 feeds effectiveConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: OrganizationsConfig
+metadata:
+  name: ac9-org-policy
+  namespace: org-prod
+  labels:
+    aws.kropath.run/resource-name: ac9-org-policy
+spec:
+  mandatory: {}
+  defaults: {}

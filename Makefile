@@ -69,6 +69,7 @@ CHAINSAW_FLAGS   := --parallel 1 --report-format JUNIT-TEST --report-path $(REPO
         test-rds test-secretsmanager test-sns test-sqs test-stepfunctions \
         test-version test-features \
         test-dyn-01 test-dyn-02 test-dyn-03 test-dyn \
+        test-organizations \
         test-chainsaw \
         install-tools gosec vulncheck security \
         help default
@@ -339,6 +340,10 @@ test-eks: ## Run EKS cascade Chainsaw suite (ctrl-eks-01).
 	@mkdir -p $(REPORT_DIR)
 	$(CHAINSAW) test tests/eks/ctrl-eks-01/ $(CHAINSAW_FLAGS)
 
+test-organizations: ## Run Organizations cascade Chainsaw suite (ctrl-org-01).
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/organizations/controller/ctrl-org-01/ $(CHAINSAW_FLAGS)
+
 test-elasticache: ## Run ElastiCache cascade Chainsaw suite (ctrl-elasticache-01).
 	@mkdir -p $(REPORT_DIR)
 	$(CHAINSAW) test tests/elasticache/ctrl-elasticache-01/ $(CHAINSAW_FLAGS)
@@ -411,6 +416,7 @@ test-chainsaw: chainsaw-stop chainsaw-start chainsaw-wait ## Stop any stale cont
 		tests/label-operator/ tests/memorydb/ tests/msk/ tests/policy/ \
 		tests/rds/ tests/s3/ tests/secretsmanager/ tests/sns/ tests/sqs/ \
 		tests/stepfunctions/ tests/version/ tests/waf/ \
+		tests/organizations/ \
 		$(CHAINSAW_FLAGS)
 	$(MAKE) chainsaw-stop
 

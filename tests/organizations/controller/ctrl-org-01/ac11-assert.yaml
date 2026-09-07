@@ -1,0 +1,12 @@
+# Assert AC-11: effectiveConfig.mandatory.syncedLabels carries
+# OrganizationsConfig.mandatory.syncedLabels from level 4.
+apiVersion: aws.kropath.run/v1alpha1
+kind: OrganizationsConfig
+metadata:
+  name: ac11-org-policy
+  namespace: org-prod
+status:
+  effectiveConfig:
+    mandatory:
+      syncedLabels:
+        data-class: restricted
