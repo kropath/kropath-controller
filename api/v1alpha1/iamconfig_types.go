@@ -89,6 +89,7 @@ type KropathConfigTier struct {
 	Pipes             cascade.PipesKropathSection             `json:"pipes,omitempty"`
 	CodeArtifact      cascade.CodeArtifactKropathSection      `json:"codeartifact,omitempty"`
 	MWAA              cascade.MWAAKropathSection              `json:"mwaa,omitempty"`
+	NetworkFirewall   cascade.NetworkFirewallKropathSection   `json:"networkfirewall,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
@@ -722,6 +723,26 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 	if in.Spec.Defaults.MWAA.WorkerLogsEnabled != nil {
 		v := *in.Spec.Defaults.MWAA.WorkerLogsEnabled
 		out.Spec.Defaults.MWAA.WorkerLogsEnabled = &v
+	}
+	if in.Spec.Mandatory.NetworkFirewall.StatefulDefaultActions != nil {
+		out.Spec.Mandatory.NetworkFirewall.StatefulDefaultActions = make([]string, len(in.Spec.Mandatory.NetworkFirewall.StatefulDefaultActions))
+		copy(out.Spec.Mandatory.NetworkFirewall.StatefulDefaultActions, in.Spec.Mandatory.NetworkFirewall.StatefulDefaultActions)
+	}
+	if in.Spec.Mandatory.NetworkFirewall.Tags != nil {
+		out.Spec.Mandatory.NetworkFirewall.Tags = make(map[string]string, len(in.Spec.Mandatory.NetworkFirewall.Tags))
+		for k, v := range in.Spec.Mandatory.NetworkFirewall.Tags {
+			out.Spec.Mandatory.NetworkFirewall.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.NetworkFirewall.StatefulDefaultActions != nil {
+		out.Spec.Defaults.NetworkFirewall.StatefulDefaultActions = make([]string, len(in.Spec.Defaults.NetworkFirewall.StatefulDefaultActions))
+		copy(out.Spec.Defaults.NetworkFirewall.StatefulDefaultActions, in.Spec.Defaults.NetworkFirewall.StatefulDefaultActions)
+	}
+	if in.Spec.Defaults.NetworkFirewall.Tags != nil {
+		out.Spec.Defaults.NetworkFirewall.Tags = make(map[string]string, len(in.Spec.Defaults.NetworkFirewall.Tags))
+		for k, v := range in.Spec.Defaults.NetworkFirewall.Tags {
+			out.Spec.Defaults.NetworkFirewall.Tags[k] = v
+		}
 	}
 	if in.Spec.Mandatory.SyncedLabels != nil {
 		out.Spec.Mandatory.SyncedLabels = make(map[string]string, len(in.Spec.Mandatory.SyncedLabels))
