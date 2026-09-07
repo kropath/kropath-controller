@@ -1,0 +1,132 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-nfw-01 Chainsaw integration tests — all 11 acceptance criteria.
+#
+# Requires a kind cluster with kropath-operator running and the fixture CRDs
+# applied (`make chainsaw-start chainsaw-wait`, or just `make test-networkfirewall`
+# against an already-running controller).
+#
+# Test isolation — unique-name-per-step, no inter-step deletes:
+#   Each AC owns a distinct resource name (acN-nfw-policy). The controller
+#   resolves a config's global counterpart by *name* — a local NetworkFirewallConfig
+#   networkfirewall/acN-nfw-policy merges only kro-system/acN-nfw-policy — so a
+#   per-AC name isolates each AC completely. Nothing an AC applies can shadow
+#   another AC, in either direction, regardless of step order.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-nfw-01
+spec:
+  description: "Network Firewall effectiveConfig cascade — all 11 acceptance criteria (ctrl-nfw-01)"
+  namespace: networkfirewall
+  steps:
+    # AC-1: KropathConfig.mandatory.networkfirewall.encryptionType (level 1) → effCfg.mandatory.encryptionType
+    - name: ac1-global-kpc-mandatory-encryption
+      try:
+        - apply:
+            file: ac01-setup.yaml
+        - assert:
+            file: ac01-assert.yaml
+            timeout: 30s
+
+    # AC-2: globalNFWConfig.mandatory.encryptionType (level 3) → effCfg.mandatory.encryptionType
+    - name: ac2-global-nfwcfg-mandatory-encryption
+      try:
+        - apply:
+            file: ac02-setup.yaml
+        - assert:
+            file: ac02-assert.yaml
+            timeout: 30s
+
+    # AC-3: KropathConfig.mandatory.networkfirewall.deleteProtection (level 1) → effCfg.mandatory.deleteProtection
+    - name: ac3-global-kpc-mandatory-delete-protection
+      try:
+        - apply:
+            file: ac03-setup.yaml
+        - assert:
+            file: ac03-assert.yaml
+            timeout: 30s
+
+    # AC-4: KropathConfig.mandatory.networkfirewall.statefulRuleOrder (level 1) → effCfg.mandatory.statefulRuleOrder
+    - name: ac4-global-kpc-mandatory-stateful-rule-order
+      try:
+        - apply:
+            file: ac04-setup.yaml
+        - assert:
+            file: ac04-assert.yaml
+            timeout: 30s
+
+    # AC-5: KropathConfig.mandatory.networkfirewall.statefulDefaultActions (level 1) → effCfg.mandatory
+    - name: ac5-global-kpc-mandatory-stateful-default-actions
+      try:
+        - apply:
+            file: ac05-setup.yaml
+        - assert:
+            file: ac05-assert.yaml
+            timeout: 30s
+
+    # AC-6: KropathConfig.mandatory.networkfirewall.streamExceptionPolicy (level 1) → effCfg.mandatory
+    - name: ac6-global-kpc-mandatory-stream-exception-policy
+      try:
+        - apply:
+            file: ac06-setup.yaml
+        - assert:
+            file: ac06-assert.yaml
+            timeout: 30s
+
+    # AC-7: globalNFWConfig.defaults (level 7) → effCfg.defaults
+    - name: ac7-global-nfwcfg-defaults
+      try:
+        - apply:
+            file: ac07-setup.yaml
+        - assert:
+            file: ac07-assert.yaml
+            timeout: 30s
+
+    # AC-8: globalNFWConfig.mandatory.namingTemplate (level 3) → effCfg.mandatory.namingTemplate
+    - name: ac8-global-nfwcfg-mandatory-naming-template
+      try:
+        - apply:
+            file: ac08-setup.yaml
+        - assert:
+            file: ac08-assert.yaml
+            timeout: 30s
+
+    # AC-9: globalNFWConfig.defaults.namingTemplate (level 7) → effCfg.defaults.namingTemplate
+    - name: ac9-global-nfwcfg-defaults-naming-template
+      try:
+        - apply:
+            file: ac09-setup.yaml
+        - assert:
+            file: ac09-assert.yaml
+            timeout: 30s
+
+    # AC-10: KropathConfig.mandatory.tags + NetworkFirewallConfig.mandatory.tags union-merge
+    - name: ac10-mandatory-tag-union-merge
+      try:
+        - apply:
+            file: ac10-setup.yaml
+        - assert:
+            file: ac10-assert.yaml
+            timeout: 30s
+
+    # AC-11: KropathConfig.spec.aws identity → effCfg.aws
+    - name: ac11-provider-identity-propagates
+      try:
+        - apply:
+            file: ac11-setup.yaml
+        - assert:
+            file: ac11-assert.yaml
+            timeout: 30s

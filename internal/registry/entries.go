@@ -11,6 +11,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/bedrockconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/codeartifactconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/mwaaconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/networkfirewallconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/sagemakerconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/opensearchconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/pipesconfig"
@@ -463,6 +464,13 @@ func All() []Entry {
 			return (&mwaaconfig.Reconciler{
 				Client: bctx.Manager.GetClient(),
 				Log:    bctx.Log.WithName("controllers").WithName("MWAAConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("networkfirewallconfig", "NetworkFirewallConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&networkfirewallconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("NetworkFirewallConfig"),
 				Scheme: bctx.Manager.GetScheme(),
 			}).BuildWithManager(bctx.Manager)
 		}),

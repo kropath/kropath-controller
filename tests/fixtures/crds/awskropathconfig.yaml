@@ -1356,6 +1356,35 @@ spec:
                           default: {}
                           additionalProperties:
                             type: string
+                    networkfirewall:
+                      type: object
+                      default: {}
+                      description: Mandatory Network Firewall governance fields promoted from KropathConfig.
+                      properties:
+                        deleteProtection:
+                          type: boolean
+                        firewallPolicyChangeProtection:
+                          type: boolean
+                        subnetChangeProtection:
+                          type: boolean
+                        encryptionType:
+                          type: string
+                          default: ""
+                        statefulRuleOrder:
+                          type: string
+                          default: ""
+                        statefulDefaultActions:
+                          type: array
+                          items:
+                            type: string
+                        streamExceptionPolicy:
+                          type: string
+                          default: ""
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
                     tags:
                       type: object
                       additionalProperties:
@@ -2333,6 +2362,35 @@ spec:
                           default: {}
                           additionalProperties:
                             type: string
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                    networkfirewall:
+                      type: object
+                      default: {}
+                      description: Default Network Firewall governance fields promoted from KropathConfig.
+                      properties:
+                        deleteProtection:
+                          type: boolean
+                        firewallPolicyChangeProtection:
+                          type: boolean
+                        subnetChangeProtection:
+                          type: boolean
+                        encryptionType:
+                          type: string
+                          default: ""
+                        statefulRuleOrder:
+                          type: string
+                          default: ""
+                        statefulDefaultActions:
+                          type: array
+                          items:
+                            type: string
+                        streamExceptionPolicy:
+                          type: string
+                          default: ""
                         tags:
                           type: object
                           default: {}
