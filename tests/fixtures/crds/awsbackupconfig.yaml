@@ -44,6 +44,20 @@ spec:
               message: >-
                 encryptionKeyARN cannot be set in both mandatory and defaults
             - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.vaultLockMinRetentionDays) &&
+                  self.spec.mandatory.vaultLockMinRetentionDays > 0 &&
+                  has(self.spec.defaults) && has(self.spec.defaults.vaultLockMinRetentionDays) &&
+                  self.spec.defaults.vaultLockMinRetentionDays > 0)
+              message: >-
+                vaultLockMinRetentionDays cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.vaultLockMaxRetentionDays) &&
+                  self.spec.mandatory.vaultLockMaxRetentionDays > 0 &&
+                  has(self.spec.defaults) && has(self.spec.defaults.vaultLockMaxRetentionDays) &&
+                  self.spec.defaults.vaultLockMaxRetentionDays > 0)
+              message: >-
+                vaultLockMaxRetentionDays cannot be set in both mandatory and defaults
+            - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.enableContinuousBackup) &&
                   self.spec.mandatory.enableContinuousBackup == true &&
                   has(self.spec.defaults) && has(self.spec.defaults.enableContinuousBackup) &&
@@ -51,12 +65,33 @@ spec:
               message: >-
                 enableContinuousBackup cannot be set to true in both mandatory and defaults
             - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.defaultLifecycleDeleteAfterDays) &&
+                  self.spec.mandatory.defaultLifecycleDeleteAfterDays > 0 &&
+                  has(self.spec.defaults) && has(self.spec.defaults.defaultLifecycleDeleteAfterDays) &&
+                  self.spec.defaults.defaultLifecycleDeleteAfterDays > 0)
+              message: >-
+                defaultLifecycleDeleteAfterDays cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.defaultLifecycleMoveToColdStorageAfterDays) &&
+                  self.spec.mandatory.defaultLifecycleMoveToColdStorageAfterDays > 0 &&
+                  has(self.spec.defaults) && has(self.spec.defaults.defaultLifecycleMoveToColdStorageAfterDays) &&
+                  self.spec.defaults.defaultLifecycleMoveToColdStorageAfterDays > 0)
+              message: >-
+                defaultLifecycleMoveToColdStorageAfterDays cannot be set in both mandatory and defaults
+            - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.enableMalwareScan) &&
                   self.spec.mandatory.enableMalwareScan == true &&
                   has(self.spec.defaults) && has(self.spec.defaults.enableMalwareScan) &&
                   self.spec.defaults.enableMalwareScan == true)
               message: >-
                 enableMalwareScan cannot be set to true in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.scannerRoleARN) &&
+                  self.spec.mandatory.scannerRoleARN != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.scannerRoleARN) &&
+                  self.spec.defaults.scannerRoleARN != "")
+              message: >-
+                scannerRoleARN cannot be set in both mandatory and defaults
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.iamRoleARN) &&
                   self.spec.mandatory.iamRoleARN != "" &&
@@ -91,47 +126,37 @@ spec:
                   properties:
                     encryptionKeyARN:
                       type: string
-                      default: ""
                       description: Empty string = not enforced.
                     vaultLockMinRetentionDays:
                       type: integer
                       format: int64
-                      default: 0
                       description: 0 = not enforced.
                     vaultLockMaxRetentionDays:
                       type: integer
                       format: int64
-                      default: 0
                       description: 0 = not enforced.
                     enableContinuousBackup:
                       type: boolean
-                      default: false
                       description: When true, continuous backup is enforced. false = not enforced.
                     defaultLifecycleDeleteAfterDays:
                       type: integer
                       format: int64
-                      default: 0
                       description: 0 = not enforced.
                     defaultLifecycleMoveToColdStorageAfterDays:
                       type: integer
                       format: int64
-                      default: 0
                       description: 0 = not enforced.
                     enableMalwareScan:
                       type: boolean
-                      default: false
                       description: When true, malware scan is enforced. false = not enforced.
                     scannerRoleARN:
                       type: string
-                      default: ""
                       description: Empty string = not enforced.
                     iamRoleARN:
                       type: string
-                      default: ""
                       description: Empty string = not enforced.
                     namingTemplate:
                       type: string
-                      default: ""
                       description: Empty string = no mandatory naming template.
                     tags:
                       type: object
@@ -157,47 +182,37 @@ spec:
                   properties:
                     encryptionKeyARN:
                       type: string
-                      default: ""
                       description: Default encryption key ARN. Empty string = no default.
                     vaultLockMinRetentionDays:
                       type: integer
                       format: int64
-                      default: 0
                       description: Default vault lock min retention in days. 0 = no default.
                     vaultLockMaxRetentionDays:
                       type: integer
                       format: int64
-                      default: 0
                       description: Default vault lock max retention in days. 0 = no default.
                     enableContinuousBackup:
                       type: boolean
-                      default: false
                       description: Default continuous backup toggle.
                     defaultLifecycleDeleteAfterDays:
                       type: integer
                       format: int64
-                      default: 0
                       description: Default lifecycle delete after days. 0 = no default.
                     defaultLifecycleMoveToColdStorageAfterDays:
                       type: integer
                       format: int64
-                      default: 0
                       description: Default lifecycle move to cold storage after days. 0 = no default.
                     enableMalwareScan:
                       type: boolean
-                      default: false
                       description: Default malware scan toggle.
                     scannerRoleARN:
                       type: string
-                      default: ""
                       description: Default scanner role ARN. Empty string = no default.
                     iamRoleARN:
                       type: string
-                      default: ""
                       description: Default IAM role ARN. Empty string = no default.
                     namingTemplate:
                       type: string
-                      default: ""
                       description: Default naming template. Empty string = no default.
                     tags:
                       type: object
