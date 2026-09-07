@@ -390,3 +390,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: OrganizationsConfig
+      package: organizationsconfig
+      description: Reconciles OrganizationsConfig CRs and propagates effective config.
+      kinds:
+        - OrganizationsConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable
