@@ -123,4 +123,5 @@ var All = []Reconciler{
 	cascade("CodeArtifactConfig", "codeartifactconfig"),
 	cascade("MWAAConfig", "mwaaconfig"),
 	cascade("NetworkFirewallConfig", "networkfirewallconfig"),
+	cascade("BackupConfig", "backupconfig"),
 }

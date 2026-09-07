@@ -1385,6 +1385,38 @@ spec:
                           default: {}
                           additionalProperties:
                             type: string
+                    backup:
+                      type: object
+                      default: {}
+                      properties:
+                        encryptionKeyARN:
+                          type: string
+                          default: ""
+                        vaultLockMinRetentionDays:
+                          type: integer
+                          format: int64
+                          default: 0
+                        vaultLockMaxRetentionDays:
+                          type: integer
+                          format: int64
+                          default: 0
+                        enableContinuousBackup:
+                          type: boolean
+                          default: false
+                        defaultLifecycleDeleteAfterDays:
+                          type: integer
+                          format: int64
+                          default: 0
+                        defaultLifecycleMoveToColdStorageAfterDays:
+                          type: integer
+                          format: int64
+                          default: 0
+                        enableMalwareScan:
+                          type: boolean
+                          default: false
+                        scannerRoleARN:
+                          type: string
+                          default: ""
                     tags:
                       type: object
                       additionalProperties:
@@ -2396,6 +2428,38 @@ spec:
                           default: {}
                           additionalProperties:
                             type: string
+                    backup:
+                      type: object
+                      default: {}
+                      properties:
+                        encryptionKeyARN:
+                          type: string
+                          default: ""
+                        vaultLockMinRetentionDays:
+                          type: integer
+                          format: int64
+                          default: 0
+                        vaultLockMaxRetentionDays:
+                          type: integer
+                          format: int64
+                          default: 0
+                        enableContinuousBackup:
+                          type: boolean
+                          default: false
+                        defaultLifecycleDeleteAfterDays:
+                          type: integer
+                          format: int64
+                          default: 0
+                        defaultLifecycleMoveToColdStorageAfterDays:
+                          type: integer
+                          format: int64
+                          default: 0
+                        enableMalwareScan:
+                          type: boolean
+                          default: false
+                        scannerRoleARN:
+                          type: string
+                          default: ""
                     tags:
                       type: object
                       additionalProperties:
