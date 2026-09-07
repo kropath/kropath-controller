@@ -106,7 +106,8 @@ type EffectiveOrganizationsConfig struct {
 // MergeOrganizationsCascade merges Organizations governance fields from all cascade
 // sources and returns the effective configuration to be written to status.effectiveConfig.
 //
-// Ten-level priority chain for Organizations (ADR-015 §5.3):
+// Nine-level priority chain for Organizations (ADR-015 §5.3); this controller handles 8 of the 9
+// active levels — level 5 (instance spec) is resolved in RGD CEL, not here:
 //
 //	Level 1 — globalKropathMandatory  (KropathConfig in kro-system, mandatory.organizations)
 //	Level 2 — localKropathMandatory   (KropathConfig in resource namespace, mandatory.organizations)
