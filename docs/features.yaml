@@ -374,3 +374,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: NetworkFirewallConfig
+      package: networkfirewallconfig
+      description: Reconciles NetworkFirewallConfig CRs and propagates effective config.
+      kinds:
+        - NetworkFirewallConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

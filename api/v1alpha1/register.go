@@ -122,6 +122,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&CodeArtifactConfigList{},
 		&MWAAConfig{},
 		&MWAAConfigList{},
+		&NetworkFirewallConfig{},
+		&NetworkFirewallConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil
