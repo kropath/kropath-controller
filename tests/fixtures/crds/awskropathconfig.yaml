@@ -1278,6 +1278,84 @@ spec:
                           additionalProperties:
                             type: string
                           description: CodeArtifact-specific mandatory tags.
+                    mwaa:
+                      type: object
+                      default: {}
+                      description: Mandatory MWAA governance fields promoted from KropathConfig.
+                      properties:
+                        airflowVersion:
+                          type: string
+                          default: ""
+                        environmentClass:
+                          type: string
+                          default: ""
+                        webserverAccessMode:
+                          type: string
+                          default: ""
+                        endpointManagement:
+                          type: string
+                          default: ""
+                        kmsKeyARN:
+                          type: string
+                          default: ""
+                        dagProcessingLogsEnabled:
+                          type: boolean
+                        dagProcessingLogsLevel:
+                          type: string
+                          default: ""
+                        schedulerLogsEnabled:
+                          type: boolean
+                        schedulerLogsLevel:
+                          type: string
+                          default: ""
+                        taskLogsEnabled:
+                          type: boolean
+                        taskLogsLevel:
+                          type: string
+                          default: ""
+                        webserverLogsEnabled:
+                          type: boolean
+                        webserverLogsLevel:
+                          type: string
+                          default: ""
+                        workerLogsEnabled:
+                          type: boolean
+                        workerLogsLevel:
+                          type: string
+                          default: ""
+                        maxWorkers:
+                          type: integer
+                          format: int64
+                          default: 0
+                        minWorkers:
+                          type: integer
+                          format: int64
+                          default: 0
+                        maxWebservers:
+                          type: integer
+                          format: int64
+                          default: 0
+                        minWebservers:
+                          type: integer
+                          format: int64
+                          default: 0
+                        schedulers:
+                          type: integer
+                          format: int64
+                          default: 0
+                        weeklyMaintenanceWindowStart:
+                          type: string
+                          default: ""
+                        airflowConfigurationOptions:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
                     tags:
                       type: object
                       additionalProperties:
@@ -2182,6 +2260,84 @@ spec:
                           additionalProperties:
                             type: string
                           description: CodeArtifact-specific default tags.
+                    mwaa:
+                      type: object
+                      default: {}
+                      description: Default MWAA governance fields promoted from KropathConfig.
+                      properties:
+                        airflowVersion:
+                          type: string
+                          default: ""
+                        environmentClass:
+                          type: string
+                          default: ""
+                        webserverAccessMode:
+                          type: string
+                          default: ""
+                        endpointManagement:
+                          type: string
+                          default: ""
+                        kmsKeyARN:
+                          type: string
+                          default: ""
+                        dagProcessingLogsEnabled:
+                          type: boolean
+                        dagProcessingLogsLevel:
+                          type: string
+                          default: ""
+                        schedulerLogsEnabled:
+                          type: boolean
+                        schedulerLogsLevel:
+                          type: string
+                          default: ""
+                        taskLogsEnabled:
+                          type: boolean
+                        taskLogsLevel:
+                          type: string
+                          default: ""
+                        webserverLogsEnabled:
+                          type: boolean
+                        webserverLogsLevel:
+                          type: string
+                          default: ""
+                        workerLogsEnabled:
+                          type: boolean
+                        workerLogsLevel:
+                          type: string
+                          default: ""
+                        maxWorkers:
+                          type: integer
+                          format: int64
+                          default: 0
+                        minWorkers:
+                          type: integer
+                          format: int64
+                          default: 0
+                        maxWebservers:
+                          type: integer
+                          format: int64
+                          default: 0
+                        minWebservers:
+                          type: integer
+                          format: int64
+                          default: 0
+                        schedulers:
+                          type: integer
+                          format: int64
+                          default: 0
+                        weeklyMaintenanceWindowStart:
+                          type: string
+                          default: ""
+                        airflowConfigurationOptions:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
+                        tags:
+                          type: object
+                          default: {}
+                          additionalProperties:
+                            type: string
                     tags:
                       type: object
                       additionalProperties:

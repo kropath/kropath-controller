@@ -88,6 +88,7 @@ type KropathConfigTier struct {
 	OpenSearch        cascade.OpenSearchKropathSection        `json:"opensearch,omitempty"`
 	Pipes             cascade.PipesKropathSection             `json:"pipes,omitempty"`
 	CodeArtifact      cascade.CodeArtifactKropathSection      `json:"codeartifact,omitempty"`
+	MWAA              cascade.MWAAKropathSection              `json:"mwaa,omitempty"`
 	Tags              map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
@@ -667,6 +668,60 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		for k, v := range in.Spec.Defaults.CodeArtifact.Tags {
 			out.Spec.Defaults.CodeArtifact.Tags[k] = v
 		}
+	}
+	if in.Spec.Mandatory.MWAA.AirflowConfigurationOptions != nil {
+		out.Spec.Mandatory.MWAA.AirflowConfigurationOptions = make(map[string]string, len(in.Spec.Mandatory.MWAA.AirflowConfigurationOptions))
+		for k, v := range in.Spec.Mandatory.MWAA.AirflowConfigurationOptions {
+			out.Spec.Mandatory.MWAA.AirflowConfigurationOptions[k] = v
+		}
+	}
+	// MWAA.mandatory *bool fields — deep-copy each pointer.
+	if in.Spec.Mandatory.MWAA.DagProcessingLogsEnabled != nil {
+		v := *in.Spec.Mandatory.MWAA.DagProcessingLogsEnabled
+		out.Spec.Mandatory.MWAA.DagProcessingLogsEnabled = &v
+	}
+	if in.Spec.Mandatory.MWAA.SchedulerLogsEnabled != nil {
+		v := *in.Spec.Mandatory.MWAA.SchedulerLogsEnabled
+		out.Spec.Mandatory.MWAA.SchedulerLogsEnabled = &v
+	}
+	if in.Spec.Mandatory.MWAA.TaskLogsEnabled != nil {
+		v := *in.Spec.Mandatory.MWAA.TaskLogsEnabled
+		out.Spec.Mandatory.MWAA.TaskLogsEnabled = &v
+	}
+	if in.Spec.Mandatory.MWAA.WebserverLogsEnabled != nil {
+		v := *in.Spec.Mandatory.MWAA.WebserverLogsEnabled
+		out.Spec.Mandatory.MWAA.WebserverLogsEnabled = &v
+	}
+	if in.Spec.Mandatory.MWAA.WorkerLogsEnabled != nil {
+		v := *in.Spec.Mandatory.MWAA.WorkerLogsEnabled
+		out.Spec.Mandatory.MWAA.WorkerLogsEnabled = &v
+	}
+	if in.Spec.Defaults.MWAA.AirflowConfigurationOptions != nil {
+		out.Spec.Defaults.MWAA.AirflowConfigurationOptions = make(map[string]string, len(in.Spec.Defaults.MWAA.AirflowConfigurationOptions))
+		for k, v := range in.Spec.Defaults.MWAA.AirflowConfigurationOptions {
+			out.Spec.Defaults.MWAA.AirflowConfigurationOptions[k] = v
+		}
+	}
+	// MWAA.defaults *bool fields — deep-copy each pointer.
+	if in.Spec.Defaults.MWAA.DagProcessingLogsEnabled != nil {
+		v := *in.Spec.Defaults.MWAA.DagProcessingLogsEnabled
+		out.Spec.Defaults.MWAA.DagProcessingLogsEnabled = &v
+	}
+	if in.Spec.Defaults.MWAA.SchedulerLogsEnabled != nil {
+		v := *in.Spec.Defaults.MWAA.SchedulerLogsEnabled
+		out.Spec.Defaults.MWAA.SchedulerLogsEnabled = &v
+	}
+	if in.Spec.Defaults.MWAA.TaskLogsEnabled != nil {
+		v := *in.Spec.Defaults.MWAA.TaskLogsEnabled
+		out.Spec.Defaults.MWAA.TaskLogsEnabled = &v
+	}
+	if in.Spec.Defaults.MWAA.WebserverLogsEnabled != nil {
+		v := *in.Spec.Defaults.MWAA.WebserverLogsEnabled
+		out.Spec.Defaults.MWAA.WebserverLogsEnabled = &v
+	}
+	if in.Spec.Defaults.MWAA.WorkerLogsEnabled != nil {
+		v := *in.Spec.Defaults.MWAA.WorkerLogsEnabled
+		out.Spec.Defaults.MWAA.WorkerLogsEnabled = &v
 	}
 	if in.Spec.Mandatory.SyncedLabels != nil {
 		out.Spec.Mandatory.SyncedLabels = make(map[string]string, len(in.Spec.Mandatory.SyncedLabels))
