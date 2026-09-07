@@ -1,0 +1,11 @@
+# Assert AC-9: effectiveConfig.mandatory.iamUserAccessToBilling carries the
+# KropathConfig.mandatory.organizations.iamUserAccessToBilling="deny" from level 1.
+apiVersion: aws.kropath.run/v1alpha1
+kind: OrganizationsConfig
+metadata:
+  name: ac9-org-policy
+  namespace: org-prod
+status:
+  effectiveConfig:
+    mandatory:
+      iamUserAccessToBilling: "deny"

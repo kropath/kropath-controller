@@ -374,6 +374,12 @@ spec:
                   has(self.spec.defaults) && has(self.spec.defaults.pipes) &&
                   self.spec.defaults.pipes.desiredState != "")
               message: "pipes.desiredState cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.organizations) && self.spec.mandatory.organizations.iamUserAccessToBilling != "" && has(self.spec.defaults.organizations) && self.spec.defaults.organizations.iamUserAccessToBilling != "")'
+              message: "organizations.iamUserAccessToBilling cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.organizations) && self.spec.mandatory.organizations.roleName != "" && has(self.spec.defaults.organizations) && self.spec.defaults.organizations.roleName != "")'
+              message: "organizations.roleName cannot be set in both mandatory and defaults"
+            - rule: '!(has(self.spec.mandatory.organizations) && self.spec.mandatory.organizations.parentId != "" && has(self.spec.defaults.organizations) && self.spec.defaults.organizations.parentId != "")'
+              message: "organizations.parentId cannot be set in both mandatory and defaults"
           properties:
             spec:
               type: object
@@ -1417,6 +1423,19 @@ spec:
                         scannerRoleARN:
                           type: string
                           default: ""
+                    organizations:
+                      type: object
+                      default: {}
+                      properties:
+                        iamUserAccessToBilling:
+                          type: string
+                          default: ""
+                        roleName:
+                          type: string
+                          default: ""
+                        parentId:
+                          type: string
+                          default: ""
                     tags:
                       type: object
                       additionalProperties:
@@ -2458,6 +2477,19 @@ spec:
                           type: boolean
                           default: false
                         scannerRoleARN:
+                          type: string
+                          default: ""
+                    organizations:
+                      type: object
+                      default: {}
+                      properties:
+                        iamUserAccessToBilling:
+                          type: string
+                          default: ""
+                        roleName:
+                          type: string
+                          default: ""
+                        parentId:
                           type: string
                           default: ""
                     tags:

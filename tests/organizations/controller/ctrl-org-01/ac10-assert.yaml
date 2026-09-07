@@ -1,0 +1,13 @@
+# Assert AC-10: effectiveConfig.mandatory.tags is the union of
+# KropathConfig.mandatory.tags and OrganizationsConfig.mandatory.tags.
+apiVersion: aws.kropath.run/v1alpha1
+kind: OrganizationsConfig
+metadata:
+  name: ac10-org-policy
+  namespace: org-prod
+status:
+  effectiveConfig:
+    mandatory:
+      tags:
+        cost-centre: infra
+        team: platform

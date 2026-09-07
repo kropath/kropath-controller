@@ -1,0 +1,64 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-org-01 Chainsaw integration tests — controller-relevant acceptance criteria
+# for the AWS Organizations effectiveConfig cascade (AC-9, AC-10, AC-11 from spec
+# kropath-core/docs/specs/aws/aws-org-01-organizationsconfig.md).
+#
+# Requires:
+#   - kind cluster with kropath-operator deployed
+#   - KropathConfig CRD applied (crds/awskropathconfig.yaml from kropath-aws)
+#   - OrganizationsConfig CRD applied (crds/organizationsconfig.yaml from kropath-aws)
+#
+# Test isolation — unique resource name per step:
+#   Each AC step owns a distinct resource name (ac<N>-org-policy). The controller
+#   pairs a namespaced OrganizationsConfig with its kro-system KropathConfig by
+#   name, so a per-step name is a complete isolation boundary. No inter-step cleanup
+#   needed. See kropath-controller/docs/frequent-chainsaw-errors.md §1.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-org-01-cascade
+spec:
+  namespace: org-prod
+  steps:
+    # AC-9: KropathConfig.mandatory.organizations.iamUserAccessToBilling="deny" (level 1)
+    # propagates to effectiveConfig.mandatory.iamUserAccessToBilling.
+    - name: ac9-kpc-mandatory-iam-billing
+      try:
+        - apply:
+            file: ac09-setup.yaml
+        - assert:
+            file: ac09-assert.yaml
+            timeout: 30s
+
+    # AC-10: KropathConfig.mandatory.tags and OrganizationsConfig.mandatory.tags
+    # are union-merged into effectiveConfig.mandatory.tags.
+    - name: ac10-tag-union-merge
+      try:
+        - apply:
+            file: ac10-setup.yaml
+        - assert:
+            file: ac10-assert.yaml
+            timeout: 30s
+
+    # AC-11: OrganizationsConfig.mandatory.syncedLabels={data-class: restricted}
+    # propagates to effectiveConfig.mandatory.syncedLabels.
+    - name: ac11-synced-labels-propagate
+      try:
+        - apply:
+            file: ac11-setup.yaml
+        - assert:
+            file: ac11-assert.yaml
+            timeout: 30s
