@@ -1,0 +1,21 @@
+# AC-4: no tier sets namingTemplate — defaults.namingTemplate falls back to "{namespace}-{name}".
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac04-amp-policy
+  namespace: kro-system
+spec:
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: ManagedPrometheusConfig
+metadata:
+  name: ac04-amp-policy
+  namespace: monitoring-prod
+  labels:
+    aws.kropath.run/resource-name: ac04-amp-policy
+spec:
+  mandatory: {}
+  defaults: {}

@@ -398,3 +398,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: ManagedPrometheusConfig
+      package: managedprometheusconfig
+      description: Reconciles ManagedPrometheusConfig CRs and propagates effective config.
+      kinds:
+        - ManagedPrometheusConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

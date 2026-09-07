@@ -640,6 +640,16 @@ spec:
                           format: int64
                           default: 0
                           minimum: 0
+                    managedprometheus:
+                      type: object
+                      default: {}
+                      properties:
+                        alias:
+                          type: string
+                          default: ""
+                        logGroupARN:
+                          type: string
+                          default: ""
                     cloudtrail:
                       type: object
                       default: {}
@@ -1704,6 +1714,16 @@ spec:
                           format: int64
                           default: 0
                           minimum: 0
+                    managedprometheus:
+                      type: object
+                      default: {}
+                      properties:
+                        alias:
+                          type: string
+                          default: ""
+                        logGroupARN:
+                          type: string
+                          default: ""
                     cloudtrail:
                       type: object
                       default: {}

@@ -90,9 +90,10 @@ type KropathConfigTier struct {
 	CodeArtifact      cascade.CodeArtifactKropathSection      `json:"codeartifact,omitempty"`
 	MWAA              cascade.MWAAKropathSection              `json:"mwaa,omitempty"`
 	NetworkFirewall   cascade.NetworkFirewallKropathSection   `json:"networkfirewall,omitempty"`
-	Backup            cascade.BackupKropathSection            `json:"backup,omitempty"`
-	Organizations     cascade.OrganizationsKropathSection     `json:"organizations,omitempty"`
-	Tags              map[string]string                       `json:"tags,omitempty"`
+	Backup              cascade.BackupKropathSection              `json:"backup,omitempty"`
+	Organizations       cascade.OrganizationsKropathSection       `json:"organizations,omitempty"`
+	ManagedPrometheus   cascade.ManagedPrometheusKropathSection   `json:"managedprometheus,omitempty"`
+	Tags                map[string]string                         `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
 }
@@ -224,6 +225,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.CloudWatchLogs.Tags = make(map[string]string, len(in.Spec.Defaults.CloudWatchLogs.Tags))
 		for k, v := range in.Spec.Defaults.CloudWatchLogs.Tags {
 			out.Spec.Defaults.CloudWatchLogs.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.ManagedPrometheus.Tags != nil {
+		out.Spec.Mandatory.ManagedPrometheus.Tags = make(map[string]string, len(in.Spec.Mandatory.ManagedPrometheus.Tags))
+		for k, v := range in.Spec.Mandatory.ManagedPrometheus.Tags {
+			out.Spec.Mandatory.ManagedPrometheus.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.ManagedPrometheus.Tags != nil {
+		out.Spec.Defaults.ManagedPrometheus.Tags = make(map[string]string, len(in.Spec.Defaults.ManagedPrometheus.Tags))
+		for k, v := range in.Spec.Defaults.ManagedPrometheus.Tags {
+			out.Spec.Defaults.ManagedPrometheus.Tags[k] = v
 		}
 	}
 	// CloudWatch.ActionsEnabled is *bool — deep-copy the pointer.

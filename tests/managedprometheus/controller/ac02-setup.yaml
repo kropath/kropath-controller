@@ -1,0 +1,22 @@
+# AC-2: localMPConfig.defaults.logGroupARN (level 6) propagates; mandatory stays empty.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac02-amp-policy
+  namespace: kro-system
+spec:
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: ManagedPrometheusConfig
+metadata:
+  name: ac02-amp-policy
+  namespace: monitoring-prod
+  labels:
+    aws.kropath.run/resource-name: ac02-amp-policy
+spec:
+  mandatory: {}
+  defaults:
+    logGroupARN: "arn:aws:logs:us-east-1:123:log-group/amp"

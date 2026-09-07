@@ -128,6 +128,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&BackupConfigList{},
 		&OrganizationsConfig{},
 		&OrganizationsConfigList{},
+		&ManagedPrometheusConfig{},
+		&ManagedPrometheusConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil
