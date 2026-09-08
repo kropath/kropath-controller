@@ -46,58 +46,59 @@ type KropathConfigSpec struct {
 }
 
 type KropathConfigTier struct {
-	IAM            cascade.IAMSection                   `json:"iam,omitempty"`
-	S3             cascade.S3Section                    `json:"s3,omitempty"`
-	KMS            cascade.KMSKropathSection            `json:"kms,omitempty"`
-	SQS            cascade.SQSKropathSection            `json:"sqs,omitempty"`
-	SecretsManager cascade.SMKropathSection             `json:"secretsManager,omitempty"`
-	SNS            cascade.SNSKropathSection            `json:"sns,omitempty"`
-	DynamoDB       cascade.DynamoDBKropathSection       `json:"dynamodb,omitempty"`
-	EventBridge    cascade.EventBridgeKropathSection    `json:"eventbridge,omitempty"`
-	CloudWatchLogs cascade.CloudWatchLogsKropathSection `json:"cloudwatchlogs,omitempty"`
-	CloudWatch     cascade.CloudWatchKropathSection     `json:"cloudwatch,omitempty"`
-	ELB            cascade.ELBKropathSection            `json:"elb,omitempty"`
-	RDS            cascade.RDSKropathSection            `json:"rds,omitempty"`
-	AutoScaling       cascade.AutoScalingKropathSection    `json:"autoscaling,omitempty"`
-	ECS               cascade.ECSKropathSection            `json:"ecs,omitempty"`
-	EKS               cascade.EKSKropathSection            `json:"eks,omitempty"`
-	EC2               cascade.EC2KropathSection            `json:"ec2,omitempty"`
-	ApiGatewayV2      cascade.ApiGatewayV2KropathSection      `json:"apigatewayv2,omitempty"`
-	ApiGateway        cascade.ApiGatewayKropathSection        `json:"apigateway,omitempty"`
-	ElastiCache       cascade.ElastiCacheKropathSection       `json:"elasticache,omitempty"`
-	ECR               cascade.ECRKropathSection               `json:"ecr,omitempty"`
-	StepFunctions     cascade.StepFunctionsKropathSection     `json:"stepfunctions,omitempty"`
-	MSK               cascade.MSKKropathSection               `json:"msk,omitempty"`
-	MemoryDB          cascade.MemoryDBKropathSection          `json:"memorydb,omitempty"`
-	CertificateManager cascade.ACMKropathSection             `json:"certificateManager,omitempty"`
-	EMR               cascade.EMRKropathSection               `json:"emr,omitempty"`
-	DocumentDB        cascade.DocumentDBKropathSection        `json:"documentdb,omitempty"`
-	Glue              cascade.GlueKropathSection              `json:"glue,omitempty"`
-	Athena            cascade.AthenaKropathSection            `json:"athena,omitempty"`
-	DSQL              cascade.DSQLKropathSection              `json:"dsql,omitempty"`
-	Route53           cascade.Route53KropathSection           `json:"route53,omitempty"`
-	SSM               cascade.SSMKropathSection               `json:"ssm,omitempty"`
-	Cognito           cascade.CognitoKropathSection           `json:"cognito,omitempty"`
-	Kinesis           cascade.KinesisKropathSection           `json:"kinesis,omitempty"`
-	CloudTrail        cascade.CloudTrailKropathSection        `json:"cloudtrail,omitempty"`
-	AppScaling        cascade.AppScalingKropathSection        `json:"appScaling,omitempty"`
-	Keyspaces         cascade.KeyspacesKropathSection         `json:"keyspaces,omitempty"`
-	WAF               cascade.WAFKropathSection               `json:"waf,omitempty"`
-	Bedrock           cascade.BedrockKropathSection           `json:"bedrock,omitempty"`
-	SageMaker         cascade.SageMakerKropathSection         `json:"sagemaker,omitempty"`
-	OpenSearch        cascade.OpenSearchKropathSection        `json:"opensearch,omitempty"`
-	Pipes             cascade.PipesKropathSection             `json:"pipes,omitempty"`
-	CodeArtifact      cascade.CodeArtifactKropathSection      `json:"codeartifact,omitempty"`
-	MWAA              cascade.MWAAKropathSection              `json:"mwaa,omitempty"`
-	NetworkFirewall   cascade.NetworkFirewallKropathSection   `json:"networkfirewall,omitempty"`
-	Backup              cascade.BackupKropathSection              `json:"backup,omitempty"`
-	Organizations       cascade.OrganizationsKropathSection       `json:"organizations,omitempty"`
-	ManagedPrometheus   cascade.ManagedPrometheusKropathSection   `json:"managedprometheus,omitempty"`
-	RAM                 cascade.RAMKropathSection                 `json:"ram,omitempty"`
-	MQ                  cascade.MQKropathSection                  `json:"mq,omitempty"`
-	Tags                map[string]string                         `json:"tags,omitempty"`
-	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
-	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
+	IAM                cascade.IAMSection                      `json:"iam,omitempty"`
+	S3                 cascade.S3Section                       `json:"s3,omitempty"`
+	KMS                cascade.KMSKropathSection               `json:"kms,omitempty"`
+	SQS                cascade.SQSKropathSection               `json:"sqs,omitempty"`
+	SecretsManager     cascade.SMKropathSection                `json:"secretsManager,omitempty"`
+	SNS                cascade.SNSKropathSection               `json:"sns,omitempty"`
+	DynamoDB           cascade.DynamoDBKropathSection          `json:"dynamodb,omitempty"`
+	EventBridge        cascade.EventBridgeKropathSection       `json:"eventbridge,omitempty"`
+	CloudWatchLogs     cascade.CloudWatchLogsKropathSection    `json:"cloudwatchlogs,omitempty"`
+	CloudWatch         cascade.CloudWatchKropathSection        `json:"cloudwatch,omitempty"`
+	ELB                cascade.ELBKropathSection               `json:"elb,omitempty"`
+	RDS                cascade.RDSKropathSection               `json:"rds,omitempty"`
+	AutoScaling        cascade.AutoScalingKropathSection       `json:"autoscaling,omitempty"`
+	ECS                cascade.ECSKropathSection               `json:"ecs,omitempty"`
+	EKS                cascade.EKSKropathSection               `json:"eks,omitempty"`
+	EC2                cascade.EC2KropathSection               `json:"ec2,omitempty"`
+	ApiGatewayV2       cascade.ApiGatewayV2KropathSection      `json:"apigatewayv2,omitempty"`
+	ApiGateway         cascade.ApiGatewayKropathSection        `json:"apigateway,omitempty"`
+	ElastiCache        cascade.ElastiCacheKropathSection       `json:"elasticache,omitempty"`
+	ECR                cascade.ECRKropathSection               `json:"ecr,omitempty"`
+	StepFunctions      cascade.StepFunctionsKropathSection     `json:"stepfunctions,omitempty"`
+	MSK                cascade.MSKKropathSection               `json:"msk,omitempty"`
+	MemoryDB           cascade.MemoryDBKropathSection          `json:"memorydb,omitempty"`
+	CertificateManager cascade.ACMKropathSection               `json:"certificateManager,omitempty"`
+	EMR                cascade.EMRKropathSection               `json:"emr,omitempty"`
+	DocumentDB         cascade.DocumentDBKropathSection        `json:"documentdb,omitempty"`
+	Glue               cascade.GlueKropathSection              `json:"glue,omitempty"`
+	Athena             cascade.AthenaKropathSection            `json:"athena,omitempty"`
+	DSQL               cascade.DSQLKropathSection              `json:"dsql,omitempty"`
+	Route53            cascade.Route53KropathSection           `json:"route53,omitempty"`
+	SSM                cascade.SSMKropathSection               `json:"ssm,omitempty"`
+	Cognito            cascade.CognitoKropathSection           `json:"cognito,omitempty"`
+	Kinesis            cascade.KinesisKropathSection           `json:"kinesis,omitempty"`
+	CloudTrail         cascade.CloudTrailKropathSection        `json:"cloudtrail,omitempty"`
+	AppScaling         cascade.AppScalingKropathSection        `json:"appScaling,omitempty"`
+	Keyspaces          cascade.KeyspacesKropathSection         `json:"keyspaces,omitempty"`
+	WAF                cascade.WAFKropathSection               `json:"waf,omitempty"`
+	Bedrock            cascade.BedrockKropathSection           `json:"bedrock,omitempty"`
+	SageMaker          cascade.SageMakerKropathSection         `json:"sagemaker,omitempty"`
+	OpenSearch         cascade.OpenSearchKropathSection        `json:"opensearch,omitempty"`
+	Pipes              cascade.PipesKropathSection             `json:"pipes,omitempty"`
+	CodeArtifact       cascade.CodeArtifactKropathSection      `json:"codeartifact,omitempty"`
+	MWAA               cascade.MWAAKropathSection              `json:"mwaa,omitempty"`
+	NetworkFirewall    cascade.NetworkFirewallKropathSection   `json:"networkfirewall,omitempty"`
+	Backup             cascade.BackupKropathSection            `json:"backup,omitempty"`
+	Organizations      cascade.OrganizationsKropathSection     `json:"organizations,omitempty"`
+	ManagedPrometheus  cascade.ManagedPrometheusKropathSection `json:"managedprometheus,omitempty"`
+	RAM                cascade.RAMKropathSection               `json:"ram,omitempty"`
+	MQ                 cascade.MQKropathSection                `json:"mq,omitempty"`
+	QuickSight         cascade.QuickSightKropathSection        `json:"quicksight,omitempty"`
+	Tags               map[string]string                       `json:"tags,omitempty"`
+	SyncedLabels       map[string]string                       `json:"syncedLabels,omitempty"`
+	SyncedAnnotations  map[string]string                       `json:"syncedAnnotations,omitempty"`
 }
 
 type IAMConfig struct {
@@ -122,14 +123,14 @@ type IAMConfigSpec struct {
 
 type IAMConfigStatus struct {
 	EffectiveConfig    EffectiveIAMConfig `json:"effectiveConfig,omitempty"`
-	ObservedGeneration int64                 `json:"observedGeneration,omitempty"`
-	SyncedTimestamp    string                `json:"syncedTimestamp,omitempty"`
+	ObservedGeneration int64              `json:"observedGeneration,omitempty"`
+	SyncedTimestamp    string             `json:"syncedTimestamp,omitempty"`
 }
 
 type EffectiveIAMConfig struct {
-	AWS       ProviderIdentity `json:"aws,omitempty"`
-	Mandatory cascade.IAMSection  `json:"mandatory,omitempty"`
-	Defaults  cascade.IAMSection  `json:"defaults,omitempty"`
+	AWS       ProviderIdentity   `json:"aws,omitempty"`
+	Mandatory cascade.IAMSection `json:"mandatory,omitempty"`
+	Defaults  cascade.IAMSection `json:"defaults,omitempty"`
 }
 
 func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {

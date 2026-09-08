@@ -422,3 +422,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: QuickSightConfig
+      package: quicksightconfig
+      description: Reconciles QuickSightConfig CRs and propagates effective config.
+      kinds:
+        - QuickSightConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

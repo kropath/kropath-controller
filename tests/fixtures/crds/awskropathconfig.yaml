@@ -1509,6 +1509,17 @@ spec:
                           description: >-
                             Org-wide allowed shareable resource types. First-non-empty wins.
                             Cannot be set together with defaults.ram.allowedResourceTypes.
+                    quicksight:
+                      type: object
+                      default: {}
+                      properties:
+                        importMode:
+                          type: string
+                          default: ""
+                          description: >-
+                            Enforced dataset import mode. Empty = not enforced.
+                            Allowed values: SPICE, DIRECT_QUERY.
+                            Cannot be set together with defaults.quicksight.importMode.
                     tags:
                       type: object
                       additionalProperties:
@@ -2624,6 +2635,17 @@ spec:
                           description: >-
                             Default org-wide allowed shareable resource types. First-non-empty wins.
                             Cannot be set together with mandatory.ram.allowedResourceTypes.
+                    quicksight:
+                      type: object
+                      default: {}
+                      properties:
+                        importMode:
+                          type: string
+                          default: ""
+                          description: >-
+                            Default dataset import mode. Empty = no default.
+                            Allowed values: SPICE, DIRECT_QUERY.
+                            Cannot be set together with mandatory.quicksight.importMode.
                     tags:
                       type: object
                       additionalProperties:
