@@ -77,15 +77,12 @@ spec:
                   properties:
                     alias:
                       type: string
-                      default: ""
                       description: Workspace alias to enforce. Empty string = not enforced.
                     logGroupARN:
                       type: string
-                      default: ""
                       description: CloudWatch Logs log group ARN for vended metrics. Empty = not enforced.
                     namingTemplate:
                       type: string
-                      default: ""
                       description: Workspace naming template (e.g. "{namespace}-{name}"). Empty = not enforced.
                     tags:
                       type: object
@@ -111,15 +108,12 @@ spec:
                   properties:
                     alias:
                       type: string
-                      default: ""
                       description: Default workspace alias. Empty string = no default.
                     logGroupARN:
                       type: string
-                      default: ""
                       description: Default CloudWatch Logs log group ARN. Empty string = no default.
                     namingTemplate:
                       type: string
-                      default: ""
                       description: >-
                         Default naming template. Empty string = falls back to "{namespace}-{name}".
                     tags:
