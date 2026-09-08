@@ -26,8 +26,8 @@ metadata:
 spec:
   description: "/features endpoint — listing, query filtering, method enforcement (ctrl-features-01)"
   steps:
-    # AC-2: GET /features returns HTTP 200, Content-Type: application/json, and lists 51 reconcilers.
-    - name: ac2-get-returns-200-and-51-reconcilers
+    # AC-2: GET /features returns HTTP 200, Content-Type: application/json, and lists 52 reconcilers.
+    - name: ac2-get-returns-200-and-52-reconcilers
       try:
         - script:
             timeout: 30s
@@ -51,8 +51,8 @@ spec:
               # Verify it is valid JSON with a features array
               count=$(echo "$body" | python3 -c "import json,sys; d=json.load(sys.stdin); print(len(d['features']))")
               echo "reconciler count: $count"
-              if [ "$count" -ne 51 ]; then
-                echo "FAIL: expected 51 reconcilers, got $count"
+              if [ "$count" -ne 52 ]; then
+                echo "FAIL: expected 52 reconcilers, got $count"
                 echo "$body" | python3 -m json.tool || true
                 exit 1
               fi
