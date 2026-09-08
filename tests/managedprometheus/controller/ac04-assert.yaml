@@ -1,0 +1,10 @@
+# Assert AC-4: defaults.namingTemplate="{namespace}-{name}" (built-in fallback when all tiers empty).
+apiVersion: aws.kropath.run/v1alpha1
+kind: ManagedPrometheusConfig
+metadata:
+  name: ac04-amp-policy
+  namespace: monitoring-prod
+status:
+  effectiveConfig:
+    defaults:
+      namingTemplate: "{namespace}-{name}"

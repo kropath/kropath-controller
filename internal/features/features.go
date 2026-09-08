@@ -125,4 +125,5 @@ var All = []Reconciler{
 	cascade("NetworkFirewallConfig", "networkfirewallconfig"),
 	cascade("BackupConfig", "backupconfig"),
 	cascade("OrganizationsConfig", "organizationsconfig"),
+	cascade("ManagedPrometheusConfig", "managedprometheusconfig"),
 }

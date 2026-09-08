@@ -1,0 +1,10 @@
+# Assert AC-1: mandatory.alias="prod-amp" from level-1 globalKropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: ManagedPrometheusConfig
+metadata:
+  name: ac01-amp-policy
+  namespace: monitoring-prod
+status:
+  effectiveConfig:
+    mandatory:
+      alias: "prod-amp"

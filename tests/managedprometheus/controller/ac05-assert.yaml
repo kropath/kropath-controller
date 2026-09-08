@@ -1,0 +1,11 @@
+# Assert AC-5: effectiveConfig.aws.region and accountId populated from KropathConfig.spec.aws.
+apiVersion: aws.kropath.run/v1alpha1
+kind: ManagedPrometheusConfig
+metadata:
+  name: ac05-amp-policy
+  namespace: monitoring-prod
+status:
+  effectiveConfig:
+    aws:
+      accountId: "123456789012"
+      region: "us-east-1"

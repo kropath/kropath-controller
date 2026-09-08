@@ -1,0 +1,26 @@
+# AC-3: KropathConfig.mandatory.tags and MPConfig.mandatory.tags union-merged.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac03-amp-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      cost-centre: "infra"
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: ManagedPrometheusConfig
+metadata:
+  name: ac03-amp-policy
+  namespace: monitoring-prod
+  labels:
+    aws.kropath.run/resource-name: ac03-amp-policy
+spec:
+  mandatory:
+    tags:
+      env: "prod"
+  defaults: {}

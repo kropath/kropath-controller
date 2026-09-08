@@ -13,6 +13,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/backupconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/mwaaconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/networkfirewallconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/managedprometheusconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/organizationsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/sagemakerconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/opensearchconfig"
@@ -487,6 +488,13 @@ func All() []Entry {
 			return (&organizationsconfig.Reconciler{
 				Client: bctx.Manager.GetClient(),
 				Log:    bctx.Log.WithName("controllers").WithName("OrganizationsConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("managedprometheusconfig", "ManagedPrometheusConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&managedprometheusconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("ManagedPrometheusConfig"),
 				Scheme: bctx.Manager.GetScheme(),
 			}).BuildWithManager(bctx.Manager)
 		}),

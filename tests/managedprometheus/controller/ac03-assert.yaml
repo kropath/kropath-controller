@@ -1,0 +1,12 @@
+# Assert AC-3: mandatory.tags contains both "cost-centre" (from KropathConfig) and "env" (from MPConfig).
+apiVersion: aws.kropath.run/v1alpha1
+kind: ManagedPrometheusConfig
+metadata:
+  name: ac03-amp-policy
+  namespace: monitoring-prod
+status:
+  effectiveConfig:
+    mandatory:
+      tags:
+        cost-centre: "infra"
+        env: "prod"

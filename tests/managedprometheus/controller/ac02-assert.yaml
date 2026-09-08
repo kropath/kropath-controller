@@ -1,0 +1,10 @@
+# Assert AC-2: defaults.logGroupARN="arn:aws:logs:us-east-1:123:log-group/amp" from level-6 localMPConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: ManagedPrometheusConfig
+metadata:
+  name: ac02-amp-policy
+  namespace: monitoring-prod
+status:
+  effectiveConfig:
+    defaults:
+      logGroupARN: "arn:aws:logs:us-east-1:123:log-group/amp"
