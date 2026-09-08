@@ -31,16 +31,12 @@ spec:
                   properties:
                     engineType:
                       type: string
-                      default: ""
                     authenticationStrategy:
                       type: string
-                      default: ""
                     deploymentMode:
                       type: string
-                      default: ""
                     hostInstanceType:
                       type: string
-                      default: ""
                     publiclyAccessible:
                       type: boolean
                       nullable: true
@@ -58,10 +54,8 @@ spec:
                       nullable: true
                     storageType:
                       type: string
-                      default: ""
                     namingTemplate:
                       type: string
-                      default: ""
                     tags:
                       type: object
                       additionalProperties:
@@ -79,16 +73,12 @@ spec:
                   properties:
                     engineType:
                       type: string
-                      default: ""
                     authenticationStrategy:
                       type: string
-                      default: ""
                     deploymentMode:
                       type: string
-                      default: ""
                     hostInstanceType:
                       type: string
-                      default: ""
                     publiclyAccessible:
                       type: boolean
                       nullable: true
@@ -106,10 +96,8 @@ spec:
                       nullable: true
                     storageType:
                       type: string
-                      default: ""
                     namingTemplate:
                       type: string
-                      default: ""
                     tags:
                       type: object
                       additionalProperties:
