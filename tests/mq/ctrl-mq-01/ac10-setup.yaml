@@ -1,0 +1,38 @@
+# CC-10: localKropathDefaults.mq.autoMinorVersionUpgrade=true (level 8) wins over
+# globalKropathDefaults.mq.autoMinorVersionUpgrade=false (level 9).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac10-mq-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  defaults:
+    mq:
+      autoMinorVersionUpgrade: false
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+# Local KropathConfig in resource namespace — level 8 wins.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: default
+  namespace: mq-prod
+spec:
+  mandatory: {}
+  defaults:
+    mq:
+      autoMinorVersionUpgrade: true
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: MQConfig
+metadata:
+  name: ac10-mq-policy
+  namespace: mq-prod
+  labels:
+    aws.kropath.run/resource-name: ac10-mq-policy
+spec:
+  mandatory: {}
+  defaults: {}

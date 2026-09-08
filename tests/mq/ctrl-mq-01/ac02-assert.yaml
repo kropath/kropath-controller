@@ -1,0 +1,10 @@
+# Assert CC-2: effCfg.mandatory.publiclyAccessible=false (level 1 wins over level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: MQConfig
+metadata:
+  name: ac2-mq-policy
+  namespace: mq-prod
+status:
+  effectiveConfig:
+    mandatory:
+      publiclyAccessible: false

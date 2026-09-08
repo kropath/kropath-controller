@@ -1,0 +1,10 @@
+# Assert CC-7: effCfg.defaults.logsGeneral=true (level 6 wins over level 7).
+apiVersion: aws.kropath.run/v1alpha1
+kind: MQConfig
+metadata:
+  name: ac7-mq-policy
+  namespace: mq-prod
+status:
+  effectiveConfig:
+    defaults:
+      logsGeneral: true

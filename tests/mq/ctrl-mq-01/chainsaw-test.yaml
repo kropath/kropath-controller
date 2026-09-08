@@ -1,0 +1,149 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-mq-01 Chainsaw integration tests — all 12 acceptance criteria (CC-1 through CC-12).
+# Requires:
+#   - kind cluster with kropath-operator deployed
+#   - KropathConfig CRD applied (crds/kropathconfig.yaml from kropath-aws)
+#   - MQConfig CRD applied (crds/mqconfig.yaml from kropath-aws)
+#
+# Each AC step uses a unique resource name (acN-mq-policy) so that the controller
+# pairs a namespaced config with its kro-system counterpart *by name*.
+# A per-step name is a complete isolation boundary — no cleanup between steps needed.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-mq-01-cascade
+spec:
+  namespace: mq-prod
+  steps:
+    # CC-1: globalKropathConfig.mandatory.mq.publiclyAccessible=false (level 1) propagates.
+    # false is a valid enforced value — nil is the only skip sentinel.
+    - name: cc1-global-kpc-publicly-accessible-level1
+      try:
+        - apply:
+            file: ac01-setup.yaml
+        - assert:
+            file: ac01-assert.yaml
+            timeout: 30s
+
+    # CC-2: globalKropathConfig.mandatory.mq.publiclyAccessible=false (level 1) wins over
+    # globalMQConfig.mandatory.publiclyAccessible=true (level 3).
+    - name: cc2-level1-wins-over-level3
+      try:
+        - apply:
+            file: ac02-setup.yaml
+        - assert:
+            file: ac02-assert.yaml
+            timeout: 30s
+
+    # CC-3: globalMQConfig.mandatory.engineType="ACTIVEMQ" (level 3) propagates when
+    # KropathConfig.mandatory.mq is empty.
+    - name: cc3-global-mqcfg-engine-type-level3
+      try:
+        - apply:
+            file: ac03-setup.yaml
+        - assert:
+            file: ac03-assert.yaml
+            timeout: 30s
+
+    # CC-4: localMQConfig.mandatory.hostInstanceType="mq.m5.large" (level 4) propagates.
+    # hostInstanceType is MQConfig-only — KropathConfig.mq has no such field.
+    - name: cc4-local-mqcfg-host-instance-type-level4
+      try:
+        - apply:
+            file: ac04-setup.yaml
+        - assert:
+            file: ac04-assert.yaml
+            timeout: 30s
+
+    # CC-5: globalMQConfig.mandatory.hostInstanceType="mq.m5.xlarge" (level 3) wins over
+    # localMQConfig.mandatory.hostInstanceType="mq.m5.large" (level 4).
+    - name: cc5-level3-host-instance-wins-over-level4
+      try:
+        - apply:
+            file: ac05-setup.yaml
+        - assert:
+            file: ac05-assert.yaml
+            timeout: 30s
+
+    # CC-6: localMQConfig.defaults.deploymentMode="SINGLE_INSTANCE" (level 6) propagates to
+    # effCfg.defaults. Mandatory stays empty (no mandatory level set).
+    - name: cc6-local-mqcfg-defaults-deployment-mode-level6
+      try:
+        - apply:
+            file: ac06-setup.yaml
+        - assert:
+            file: ac06-assert.yaml
+            timeout: 30s
+
+    # CC-7: localMQConfig.defaults.logsGeneral=true (level 6) wins over
+    # globalMQConfig.defaults.logsGeneral=false (level 7).
+    - name: cc7-level6-defaults-wins-over-level7
+      try:
+        - apply:
+            file: ac07-setup.yaml
+        - assert:
+            file: ac07-assert.yaml
+            timeout: 30s
+
+    # CC-8: globalMQConfig.defaults.namingTemplate="{namespace}-{name}" (level 7) propagates
+    # when localMQConfig.defaults has no namingTemplate. MQConfig-only field.
+    - name: cc8-global-mqcfg-defaults-naming-template-level7
+      try:
+        - apply:
+            file: ac08-setup.yaml
+        - assert:
+            file: ac08-assert.yaml
+            timeout: 30s
+
+    # CC-9: globalKropathDefaults.mq.encryptionUseAWSOwnedKey=false (level 9) propagates
+    # when no MQConfig defaults are set.
+    - name: cc9-global-kpc-defaults-encryption-level9
+      try:
+        - apply:
+            file: ac09-setup.yaml
+        - assert:
+            file: ac09-assert.yaml
+            timeout: 30s
+
+    # CC-10: localKropathDefaults.mq.autoMinorVersionUpgrade=true (level 8) wins over
+    # globalKropathDefaults.mq.autoMinorVersionUpgrade=false (level 9).
+    - name: cc10-level8-defaults-wins-over-level9
+      try:
+        - apply:
+            file: ac10-setup.yaml
+        - assert:
+            file: ac10-assert.yaml
+            timeout: 30s
+
+    # CC-11: Tags are union-merged across all mandatory levels.
+    # Level 1 wins on key conflict; unique keys from all levels appear.
+    - name: cc11-tag-union-merge
+      try:
+        - apply:
+            file: ac11-setup.yaml
+        - assert:
+            file: ac11-assert.yaml
+            timeout: 30s
+
+    # CC-12: SyncedLabels and SyncedAnnotations are additive-merged from MQConfig levels only.
+    # KropathConfig.mq has no syncedLabels/syncedAnnotations.
+    - name: cc12-synced-labels-annotations-mqconfig-only
+      try:
+        - apply:
+            file: ac12-setup.yaml
+        - assert:
+            file: ac12-assert.yaml
+            timeout: 30s

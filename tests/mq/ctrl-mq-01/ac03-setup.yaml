@@ -1,0 +1,33 @@
+# CC-3: globalMQConfig.mandatory.engineType="ACTIVEMQ" (level 3) propagates
+# when KropathConfig.mandatory.mq is empty.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac3-mq-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: MQConfig
+metadata:
+  name: ac3-mq-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    engineType: ACTIVEMQ
+  defaults: {}
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: MQConfig
+metadata:
+  name: ac3-mq-policy
+  namespace: mq-prod
+  labels:
+    aws.kropath.run/resource-name: ac3-mq-policy
+spec:
+  mandatory: {}
+  defaults: {}

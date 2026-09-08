@@ -132,6 +132,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&ManagedPrometheusConfigList{},
 		&RAMConfig{},
 		&RAMConfigList{},
+		&MQConfig{},
+		&MQConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

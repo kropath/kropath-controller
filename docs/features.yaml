@@ -414,3 +414,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: MQConfig
+      package: mqconfig
+      description: Reconciles MQConfig CRs and propagates effective config.
+      kinds:
+        - MQConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

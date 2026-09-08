@@ -1,0 +1,23 @@
+# Assert CC-12: SyncedLabels/SyncedAnnotations merged from MQConfig only.
+# Mandatory: L3 wins on key conflict, L4 fills unique keys.
+# Defaults: L6 wins on key conflict, L7 fills unique keys.
+apiVersion: aws.kropath.run/v1alpha1
+kind: MQConfig
+metadata:
+  name: ac12-mq-policy
+  namespace: mq-prod
+status:
+  effectiveConfig:
+    mandatory:
+      syncedLabels:
+        app.kubernetes.io/managed-by: kropath
+        tier: backend
+      syncedAnnotations:
+        cost-center: cc-global
+        app: broker
+    defaults:
+      syncedLabels:
+        environment: prod
+      syncedAnnotations:
+        team: platform
+        managed-by: ops

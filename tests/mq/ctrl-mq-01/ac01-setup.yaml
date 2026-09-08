@@ -1,0 +1,26 @@
+# CC-1: globalKropathConfig with mandatory.mq.publiclyAccessible=false (level 1).
+# false is a valid enforced value — nil is the only skip sentinel.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac1-mq-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    mq:
+      publiclyAccessible: false
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+# Empty local MQConfig for ac1 — cascade sources come from global KropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: MQConfig
+metadata:
+  name: ac1-mq-policy
+  namespace: mq-prod
+  labels:
+    aws.kropath.run/resource-name: ac1-mq-policy
+spec:
+  mandatory: {}
+  defaults: {}

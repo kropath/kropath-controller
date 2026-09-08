@@ -1,0 +1,10 @@
+# Assert CC-8: effCfg.defaults.namingTemplate={namespace}-{name} from globalMQConfig (level 7).
+apiVersion: aws.kropath.run/v1alpha1
+kind: MQConfig
+metadata:
+  name: ac8-mq-policy
+  namespace: mq-prod
+status:
+  effectiveConfig:
+    defaults:
+      namingTemplate: "{namespace}-{name}"
