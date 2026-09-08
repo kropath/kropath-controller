@@ -383,10 +383,8 @@ spec:
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.ram) &&
                   has(self.spec.mandatory.ram.allowExternalPrincipals) &&
-                  self.spec.mandatory.ram.allowExternalPrincipals != null &&
                   has(self.spec.defaults) && has(self.spec.defaults.ram) &&
-                  has(self.spec.defaults.ram.allowExternalPrincipals) &&
-                  self.spec.defaults.ram.allowExternalPrincipals != null)
+                  has(self.spec.defaults.ram.allowExternalPrincipals))
               message: "ram.allowExternalPrincipals cannot be set in both mandatory and defaults"
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.ram) &&

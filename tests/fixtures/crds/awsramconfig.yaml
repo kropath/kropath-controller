@@ -38,9 +38,7 @@ spec:
           x-kubernetes-validations:
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.allowExternalPrincipals) &&
-                  self.spec.mandatory.allowExternalPrincipals != null &&
-                  has(self.spec.defaults) && has(self.spec.defaults.allowExternalPrincipals) &&
-                  self.spec.defaults.allowExternalPrincipals != null)
+                  has(self.spec.defaults) && has(self.spec.defaults.allowExternalPrincipals))
               message: "allowExternalPrincipals cannot be set in both mandatory and defaults"
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.allowedResourceTypes) &&
