@@ -93,6 +93,7 @@ type KropathConfigTier struct {
 	Backup              cascade.BackupKropathSection              `json:"backup,omitempty"`
 	Organizations       cascade.OrganizationsKropathSection       `json:"organizations,omitempty"`
 	ManagedPrometheus   cascade.ManagedPrometheusKropathSection   `json:"managedprometheus,omitempty"`
+	RAM                 cascade.RAMKropathSection                 `json:"ram,omitempty"`
 	Tags                map[string]string                         `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`
@@ -805,6 +806,51 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.Organizations.Tags = make(map[string]string, len(in.Spec.Defaults.Organizations.Tags))
 		for k, v := range in.Spec.Defaults.Organizations.Tags {
 			out.Spec.Defaults.Organizations.Tags[k] = v
+		}
+	}
+	// RAM.AllowExternalPrincipals *bool — shallow copy is safe (values never mutated).
+	if in.Spec.Mandatory.RAM.AllowedResourceTypes != nil {
+		out.Spec.Mandatory.RAM.AllowedResourceTypes = make([]string, len(in.Spec.Mandatory.RAM.AllowedResourceTypes))
+		copy(out.Spec.Mandatory.RAM.AllowedResourceTypes, in.Spec.Mandatory.RAM.AllowedResourceTypes)
+	}
+	if in.Spec.Mandatory.RAM.Tags != nil {
+		out.Spec.Mandatory.RAM.Tags = make(map[string]string, len(in.Spec.Mandatory.RAM.Tags))
+		for k, v := range in.Spec.Mandatory.RAM.Tags {
+			out.Spec.Mandatory.RAM.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.RAM.SyncedLabels != nil {
+		out.Spec.Mandatory.RAM.SyncedLabels = make(map[string]string, len(in.Spec.Mandatory.RAM.SyncedLabels))
+		for k, v := range in.Spec.Mandatory.RAM.SyncedLabels {
+			out.Spec.Mandatory.RAM.SyncedLabels[k] = v
+		}
+	}
+	if in.Spec.Mandatory.RAM.SyncedAnnotations != nil {
+		out.Spec.Mandatory.RAM.SyncedAnnotations = make(map[string]string, len(in.Spec.Mandatory.RAM.SyncedAnnotations))
+		for k, v := range in.Spec.Mandatory.RAM.SyncedAnnotations {
+			out.Spec.Mandatory.RAM.SyncedAnnotations[k] = v
+		}
+	}
+	if in.Spec.Defaults.RAM.AllowedResourceTypes != nil {
+		out.Spec.Defaults.RAM.AllowedResourceTypes = make([]string, len(in.Spec.Defaults.RAM.AllowedResourceTypes))
+		copy(out.Spec.Defaults.RAM.AllowedResourceTypes, in.Spec.Defaults.RAM.AllowedResourceTypes)
+	}
+	if in.Spec.Defaults.RAM.Tags != nil {
+		out.Spec.Defaults.RAM.Tags = make(map[string]string, len(in.Spec.Defaults.RAM.Tags))
+		for k, v := range in.Spec.Defaults.RAM.Tags {
+			out.Spec.Defaults.RAM.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.RAM.SyncedLabels != nil {
+		out.Spec.Defaults.RAM.SyncedLabels = make(map[string]string, len(in.Spec.Defaults.RAM.SyncedLabels))
+		for k, v := range in.Spec.Defaults.RAM.SyncedLabels {
+			out.Spec.Defaults.RAM.SyncedLabels[k] = v
+		}
+	}
+	if in.Spec.Defaults.RAM.SyncedAnnotations != nil {
+		out.Spec.Defaults.RAM.SyncedAnnotations = make(map[string]string, len(in.Spec.Defaults.RAM.SyncedAnnotations))
+		for k, v := range in.Spec.Defaults.RAM.SyncedAnnotations {
+			out.Spec.Defaults.RAM.SyncedAnnotations[k] = v
 		}
 	}
 }

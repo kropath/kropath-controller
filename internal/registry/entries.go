@@ -18,6 +18,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/sagemakerconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/opensearchconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/pipesconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/ramconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/sesconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/appscalingconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/documentdbconfig"
@@ -495,6 +496,13 @@ func All() []Entry {
 			return (&managedprometheusconfig.Reconciler{
 				Client: bctx.Manager.GetClient(),
 				Log:    bctx.Log.WithName("controllers").WithName("ManagedPrometheusConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("ramconfig", "RAMConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&ramconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("RAMConfig"),
 				Scheme: bctx.Manager.GetScheme(),
 			}).BuildWithManager(bctx.Manager)
 		}),
