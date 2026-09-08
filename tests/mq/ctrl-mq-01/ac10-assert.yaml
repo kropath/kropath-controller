@@ -1,0 +1,10 @@
+# Assert CC-10: effCfg.defaults.autoMinorVersionUpgrade=true (level 8 wins over level 9).
+apiVersion: aws.kropath.run/v1alpha1
+kind: MQConfig
+metadata:
+  name: ac10-mq-policy
+  namespace: mq-prod
+status:
+  effectiveConfig:
+    defaults:
+      autoMinorVersionUpgrade: true

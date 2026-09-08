@@ -1,0 +1,56 @@
+# CC-12: SyncedLabels and SyncedAnnotations are additive-merged from MQConfig levels only.
+# KropathConfig.mq has no syncedLabels/syncedAnnotations fields.
+# Mandatory: level 3 wins over level 4 on key conflict.
+# Defaults: level 6 wins over level 7 on key conflict.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac12-mq-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+# Global MQConfig mandatory (level 3) — wins on key conflict in mandatory syncedLabels.
+apiVersion: aws.kropath.run/v1alpha1
+kind: MQConfig
+metadata:
+  name: ac12-mq-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    syncedLabels:
+      app.kubernetes.io/managed-by: kropath
+    syncedAnnotations:
+      cost-center: cc-global
+  defaults:
+    syncedLabels:
+      environment: staging
+    syncedAnnotations:
+      team: infra
+      managed-by: ops
+---
+# Local MQConfig mandatory (level 4) — loses on key conflict, contributes unique keys.
+# Defaults level 6 — wins on key conflict.
+apiVersion: aws.kropath.run/v1alpha1
+kind: MQConfig
+metadata:
+  name: ac12-mq-policy
+  namespace: mq-prod
+  labels:
+    aws.kropath.run/resource-name: ac12-mq-policy
+spec:
+  mandatory:
+    syncedLabels:
+      app.kubernetes.io/managed-by: local
+      tier: backend
+    syncedAnnotations:
+      cost-center: cc-local
+      app: broker
+  defaults:
+    syncedLabels:
+      environment: prod
+    syncedAnnotations:
+      team: platform

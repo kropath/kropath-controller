@@ -127,4 +127,5 @@ var All = []Reconciler{
 	cascade("OrganizationsConfig", "organizationsconfig"),
 	cascade("ManagedPrometheusConfig", "managedprometheusconfig"),
 	cascade("RAMConfig", "ramconfig"),
+	cascade("MQConfig", "mqconfig"),
 }

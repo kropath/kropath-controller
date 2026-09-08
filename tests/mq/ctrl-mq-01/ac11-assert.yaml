@@ -1,0 +1,15 @@
+# Assert CC-11: effCfg.mandatory.tags union-merged; level 1 wins on key conflict.
+# env=prod (L1 wins), owner=platform (L1 only), cost-center=cc-001 (L3 wins over L4), app=broker (L4 only).
+apiVersion: aws.kropath.run/v1alpha1
+kind: MQConfig
+metadata:
+  name: ac11-mq-policy
+  namespace: mq-prod
+status:
+  effectiveConfig:
+    mandatory:
+      tags:
+        env: prod
+        owner: platform
+        cost-center: cc-001
+        app: broker

@@ -1,0 +1,24 @@
+# CC-6: localMQConfig.defaults.deploymentMode="SINGLE_INSTANCE" (level 6) propagates
+# to effCfg.defaults. Mandatory stays empty (no mandatory level set).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac6-mq-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: MQConfig
+metadata:
+  name: ac6-mq-policy
+  namespace: mq-prod
+  labels:
+    aws.kropath.run/resource-name: ac6-mq-policy
+spec:
+  mandatory: {}
+  defaults:
+    deploymentMode: SINGLE_INSTANCE

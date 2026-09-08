@@ -664,6 +664,37 @@ spec:
                         logGroupARN:
                           type: string
                           default: ""
+                    mq:
+                      type: object
+                      default: {}
+                      properties:
+                        engineType:
+                          type: string
+                          default: ""
+                        authenticationStrategy:
+                          type: string
+                          default: ""
+                        deploymentMode:
+                          type: string
+                          default: ""
+                        publiclyAccessible:
+                          type: boolean
+                          nullable: true
+                        autoMinorVersionUpgrade:
+                          type: boolean
+                          nullable: true
+                        logsGeneral:
+                          type: boolean
+                          nullable: true
+                        logsAudit:
+                          type: boolean
+                          nullable: true
+                        encryptionUseAWSOwnedKey:
+                          type: boolean
+                          nullable: true
+                        storageType:
+                          type: string
+                          default: ""
                     cloudtrail:
                       type: object
                       default: {}
@@ -1754,6 +1785,37 @@ spec:
                           type: string
                           default: ""
                         logGroupARN:
+                          type: string
+                          default: ""
+                    mq:
+                      type: object
+                      default: {}
+                      properties:
+                        engineType:
+                          type: string
+                          default: ""
+                        authenticationStrategy:
+                          type: string
+                          default: ""
+                        deploymentMode:
+                          type: string
+                          default: ""
+                        publiclyAccessible:
+                          type: boolean
+                          nullable: true
+                        autoMinorVersionUpgrade:
+                          type: boolean
+                          nullable: true
+                        logsGeneral:
+                          type: boolean
+                          nullable: true
+                        logsAudit:
+                          type: boolean
+                          nullable: true
+                        encryptionUseAWSOwnedKey:
+                          type: boolean
+                          nullable: true
+                        storageType:
                           type: string
                           default: ""
                     cloudtrail:

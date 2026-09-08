@@ -1,0 +1,10 @@
+# Assert CC-1: effCfg.mandatory.publiclyAccessible=false from globalKropathConfig (level 1).
+apiVersion: aws.kropath.run/v1alpha1
+kind: MQConfig
+metadata:
+  name: ac1-mq-policy
+  namespace: mq-prod
+status:
+  effectiveConfig:
+    mandatory:
+      publiclyAccessible: false

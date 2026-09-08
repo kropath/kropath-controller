@@ -94,6 +94,7 @@ type KropathConfigTier struct {
 	Organizations       cascade.OrganizationsKropathSection       `json:"organizations,omitempty"`
 	ManagedPrometheus   cascade.ManagedPrometheusKropathSection   `json:"managedprometheus,omitempty"`
 	RAM                 cascade.RAMKropathSection                 `json:"ram,omitempty"`
+	MQ                  cascade.MQKropathSection                  `json:"mq,omitempty"`
 	Tags                map[string]string                         `json:"tags,omitempty"`
 	SyncedLabels      map[string]string                    `json:"syncedLabels,omitempty"`
 	SyncedAnnotations map[string]string                    `json:"syncedAnnotations,omitempty"`

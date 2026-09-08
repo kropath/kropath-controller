@@ -1,0 +1,36 @@
+# CC-7: localMQConfig.defaults.logsGeneral=true (level 6) wins over
+# globalMQConfig.defaults.logsGeneral=false (level 7).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac7-mq-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  aws:
+    accountId: "123456789012"
+    region: "ap-southeast-2"
+---
+# Global MQConfig defaults: logsGeneral=false (level 7) — should lose to level 6.
+apiVersion: aws.kropath.run/v1alpha1
+kind: MQConfig
+metadata:
+  name: ac7-mq-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  defaults:
+    logsGeneral: false
+---
+# Local MQConfig defaults: logsGeneral=true (level 6) — wins.
+apiVersion: aws.kropath.run/v1alpha1
+kind: MQConfig
+metadata:
+  name: ac7-mq-policy
+  namespace: mq-prod
+  labels:
+    aws.kropath.run/resource-name: ac7-mq-policy
+spec:
+  mandatory: {}
+  defaults:
+    logsGeneral: true

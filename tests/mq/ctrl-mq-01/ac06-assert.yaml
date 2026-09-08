@@ -1,0 +1,11 @@
+# Assert CC-6: effCfg.defaults.deploymentMode=SINGLE_INSTANCE from localMQConfig (level 6).
+# Mandatory should have no deploymentMode (no mandatory level was set).
+apiVersion: aws.kropath.run/v1alpha1
+kind: MQConfig
+metadata:
+  name: ac6-mq-policy
+  namespace: mq-prod
+status:
+  effectiveConfig:
+    defaults:
+      deploymentMode: SINGLE_INSTANCE

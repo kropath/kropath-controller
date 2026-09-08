@@ -1,0 +1,10 @@
+# Assert CC-3: effCfg.mandatory.engineType=ACTIVEMQ from globalMQConfig (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: MQConfig
+metadata:
+  name: ac3-mq-policy
+  namespace: mq-prod
+status:
+  effectiveConfig:
+    mandatory:
+      engineType: ACTIVEMQ
