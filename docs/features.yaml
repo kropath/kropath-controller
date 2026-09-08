@@ -406,3 +406,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: RAMConfig
+      package: ramconfig
+      description: Reconciles RAMConfig CRs and propagates effective config.
+      kinds:
+        - RAMConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

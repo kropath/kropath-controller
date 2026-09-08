@@ -148,11 +148,12 @@ jobs:
       #   agent/implementer/e14f06bb — EMRConfig CRD (KRO-829; clear once merged)
       #   agent/implementer/5c0bce178e36 — MWAAConfig CRD stub (KRO-991; clear once KRO-990 merges)
       #   kro-952-managedprometheusconfig-crd — ManagedPrometheusConfig CRD (KRO-952; clear once merged)
+      #   agent/implementer/8e4d093a801d — RAMConfig CRD stub (KRO-1006; clear once KRO-1006 merges)
       - name: Check watched Kinds against kropath-aws CRDs
         if: needs.changes.outputs.code == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          KROPATH_AWS_COMPANION_REFS: "agent/implementer/e14f06bb agent/implementer/5c0bce178e36 kro-952-managedprometheusconfig-crd"
+          KROPATH_AWS_COMPANION_REFS: "agent/implementer/e14f06bb agent/implementer/5c0bce178e36 kro-952-managedprometheusconfig-crd agent/implementer/8e4d093a801d"
         run: make crds-verify
 
   security:

@@ -380,6 +380,20 @@ spec:
               message: "organizations.roleName cannot be set in both mandatory and defaults"
             - rule: '!(has(self.spec.mandatory.organizations) && self.spec.mandatory.organizations.parentId != "" && has(self.spec.defaults.organizations) && self.spec.defaults.organizations.parentId != "")'
               message: "organizations.parentId cannot be set in both mandatory and defaults"
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.ram) &&
+                  has(self.spec.mandatory.ram.allowExternalPrincipals) &&
+                  has(self.spec.defaults) && has(self.spec.defaults.ram) &&
+                  has(self.spec.defaults.ram.allowExternalPrincipals))
+              message: "ram.allowExternalPrincipals cannot be set in both mandatory and defaults"
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.ram) &&
+                  has(self.spec.mandatory.ram.allowedResourceTypes) &&
+                  size(self.spec.mandatory.ram.allowedResourceTypes) > 0 &&
+                  has(self.spec.defaults) && has(self.spec.defaults.ram) &&
+                  has(self.spec.defaults.ram.allowedResourceTypes) &&
+                  size(self.spec.defaults.ram.allowedResourceTypes) > 0)
+              message: "ram.allowedResourceTypes cannot be set in both mandatory and defaults"
           properties:
             spec:
               type: object
@@ -1446,6 +1460,24 @@ spec:
                         parentId:
                           type: string
                           default: ""
+                    ram:
+                      type: object
+                      default: {}
+                      properties:
+                        allowExternalPrincipals:
+                          type: boolean
+                          nullable: true
+                          description: >-
+                            Controls whether external principals may be added to RAM resource shares.
+                            nil = not enforced. Cannot be set together with defaults.ram.allowExternalPrincipals.
+                        allowedResourceTypes:
+                          type: array
+                          default: []
+                          items:
+                            type: string
+                          description: >-
+                            Org-wide allowed shareable resource types. First-non-empty wins.
+                            Cannot be set together with defaults.ram.allowedResourceTypes.
                     tags:
                       type: object
                       additionalProperties:
@@ -2512,6 +2544,24 @@ spec:
                         parentId:
                           type: string
                           default: ""
+                    ram:
+                      type: object
+                      default: {}
+                      properties:
+                        allowExternalPrincipals:
+                          type: boolean
+                          nullable: true
+                          description: >-
+                            Default external principals setting for RAM resource shares.
+                            nil = no default. Cannot be set together with mandatory.ram.allowExternalPrincipals.
+                        allowedResourceTypes:
+                          type: array
+                          default: []
+                          items:
+                            type: string
+                          description: >-
+                            Default org-wide allowed shareable resource types. First-non-empty wins.
+                            Cannot be set together with mandatory.ram.allowedResourceTypes.
                     tags:
                       type: object
                       additionalProperties:
