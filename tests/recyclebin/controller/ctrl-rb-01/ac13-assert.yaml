@@ -1,0 +1,12 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: RecycleBinConfig
+metadata:
+  name: ac13-rb-config
+  namespace: recyclebin-prod
+status:
+  effectiveConfig:
+    mandatory:
+      tags:
+        env: prod
+        cost-center: kpc
+        service: recyclebin

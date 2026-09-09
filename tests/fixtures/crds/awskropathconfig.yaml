@@ -1519,6 +1519,24 @@ spec:
                             Enforced dataset import mode. Empty = not enforced.
                             Allowed values: SPICE, DIRECT_QUERY.
                             Cannot be set together with defaults.quicksight.importMode.
+                    ebsrecyclebin:
+                      type: object
+                      default: {}
+                      properties:
+                        retentionPeriodValue:
+                          type: integer
+                          format: int64
+                          default: 0
+                          minimum: 0
+                          description: >-
+                            Enforced retention period value for Recycle Bin rules.
+                            0 = not enforced; first-non-zero-wins in cascade.
+                        lockRule:
+                          type: boolean
+                          default: false
+                          description: >-
+                            Enforces that Recycle Bin rules are locked.
+                            false = not enforced; true wins in cascade.
                     tags:
                       type: object
                       additionalProperties:
@@ -2644,6 +2662,24 @@ spec:
                             Default dataset import mode. Empty = no default.
                             Allowed values: SPICE, DIRECT_QUERY.
                             Cannot be set together with mandatory.quicksight.importMode.
+                    ebsrecyclebin:
+                      type: object
+                      default: {}
+                      properties:
+                        retentionPeriodValue:
+                          type: integer
+                          format: int64
+                          default: 0
+                          minimum: 0
+                          description: >-
+                            Default retention period value for Recycle Bin rules.
+                            0 = no default; first-non-zero-wins in cascade.
+                        lockRule:
+                          type: boolean
+                          default: false
+                          description: >-
+                            Default lock enforcement for Recycle Bin rules.
+                            false = no default; true wins in cascade.
                     tags:
                       type: object
                       additionalProperties:

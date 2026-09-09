@@ -96,6 +96,7 @@ type KropathConfigTier struct {
 	RAM                cascade.RAMKropathSection               `json:"ram,omitempty"`
 	MQ                 cascade.MQKropathSection                `json:"mq,omitempty"`
 	QuickSight         cascade.QuickSightKropathSection        `json:"quicksight,omitempty"`
+	EBSRecycleBin      cascade.EBSRecycleBinKropathSection     `json:"ebsrecyclebin,omitempty"`
 	Tags               map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels       map[string]string                       `json:"syncedLabels,omitempty"`
 	SyncedAnnotations  map[string]string                       `json:"syncedAnnotations,omitempty"`
@@ -240,6 +241,18 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.ManagedPrometheus.Tags = make(map[string]string, len(in.Spec.Defaults.ManagedPrometheus.Tags))
 		for k, v := range in.Spec.Defaults.ManagedPrometheus.Tags {
 			out.Spec.Defaults.ManagedPrometheus.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.EBSRecycleBin.Tags != nil {
+		out.Spec.Mandatory.EBSRecycleBin.Tags = make(map[string]string, len(in.Spec.Mandatory.EBSRecycleBin.Tags))
+		for k, v := range in.Spec.Mandatory.EBSRecycleBin.Tags {
+			out.Spec.Mandatory.EBSRecycleBin.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.EBSRecycleBin.Tags != nil {
+		out.Spec.Defaults.EBSRecycleBin.Tags = make(map[string]string, len(in.Spec.Defaults.EBSRecycleBin.Tags))
+		for k, v := range in.Spec.Defaults.EBSRecycleBin.Tags {
+			out.Spec.Defaults.EBSRecycleBin.Tags[k] = v
 		}
 	}
 	// CloudWatch.ActionsEnabled is *bool — deep-copy the pointer.

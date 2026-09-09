@@ -1,0 +1,11 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: RecycleBinConfig
+metadata:
+  name: ac14-rb-config
+  namespace: recyclebin-prod
+status:
+  effectiveConfig:
+    mandatory:
+      syncedLabels:
+        team: platform
+        managed-by: kropath

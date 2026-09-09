@@ -438,3 +438,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: RecycleBinConfig
+      package: recyclebinconfig
+      description: Reconciles RecycleBinConfig CRs and propagates effective config.
+      kinds:
+        - RecycleBinConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable
