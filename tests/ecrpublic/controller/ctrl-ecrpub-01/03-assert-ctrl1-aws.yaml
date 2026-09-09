@@ -1,0 +1,10 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: ECRPublicConfig
+metadata:
+  name: ac1-ecrpub
+  namespace: registry-prod
+status:
+  effectiveConfig:
+    aws:
+      accountId: "123456789012"
+      region: us-east-1

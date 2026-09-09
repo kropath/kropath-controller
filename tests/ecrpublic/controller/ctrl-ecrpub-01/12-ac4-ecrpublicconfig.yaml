@@ -1,0 +1,6 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: ECRPublicConfig
+metadata:
+  name: ac4-ecrpub
+  namespace: registry-prod
+spec: {}

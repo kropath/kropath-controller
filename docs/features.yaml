@@ -430,3 +430,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: ECRPublicConfig
+      package: ecrpublicconfig
+      description: Reconciles ECRPublicConfig CRs and propagates effective config.
+      kinds:
+        - ECRPublicConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable
