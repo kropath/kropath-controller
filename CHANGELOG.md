@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.9.0](https://github.com/kropath/kropath-controller/compare/v0.8.0...v0.9.0) (2026-09-09)
+
+
+### Features
+
+* **KRO-1007:** add RAM effectiveConfig cascade controller ([#97](https://github.com/kropath/kropath-controller/issues/97)) ([7a8b455](https://github.com/kropath/kropath-controller/commit/7a8b455c18b3d5b3b9d138487a48f694019c571b))
+* **KRO-1015:** add BackupConfig effectiveConfig cascade ([#94](https://github.com/kropath/kropath-controller/issues/94)) ([9db0b88](https://github.com/kropath/kropath-controller/commit/9db0b887cc1be00c841fe07188a9b5d0c9f8763a))
+* **KRO-1023:** add QuickSight effectiveConfig cascade ([#98](https://github.com/kropath/kropath-controller/issues/98)) ([4cabc3b](https://github.com/kropath/kropath-controller/commit/4cabc3b63bdcfbfbe489fa46a6e9748552f381a8))
+* **KRO-1031:** add ECRPublicConfig effectiveConfig cascade ([#99](https://github.com/kropath/kropath-controller/issues/99)) ([babd88f](https://github.com/kropath/kropath-controller/commit/babd88f7aba47141993f0b3775037fc5dcc8442c))
+* **KRO-1039:** add EBS Recycle Bin effectiveConfig cascade ([#100](https://github.com/kropath/kropath-controller/issues/100)) ([9020e6d](https://github.com/kropath/kropath-controller/commit/9020e6de62e84c73fce3a458007a6a751320007b))
+* **KRO-866:** add MQConfig effectiveConfig cascade ([#96](https://github.com/kropath/kropath-controller/issues/96)) ([6b409c9](https://github.com/kropath/kropath-controller/commit/6b409c97a311b172040241be21e28b0653f6c4ed))
+* **KRO-873:** effectiveConfig cascade for EventBridge Pipes fields ([8647822](https://github.com/kropath/kropath-controller/commit/8647822b583335e43342da405e0807f67f0a6f8d))
+* **KRO-944:** effectiveConfig cascade: Network Firewall fields ([#93](https://github.com/kropath/kropath-controller/issues/93)) ([157b3f9](https://github.com/kropath/kropath-controller/commit/157b3f9b8530c22579d2ea363f723a09c6e9f6b7))
+* **KRO-953:** add ManagedPrometheus effectiveConfig cascade ([#95](https://github.com/kropath/kropath-controller/issues/95)) ([b66f3bd](https://github.com/kropath/kropath-controller/commit/b66f3bd35a434f6cf4c89bd2a84fb2e8f55d8996))
+* **KRO-961:** add SESConfig effectiveConfig cascade ([#89](https://github.com/kropath/kropath-controller/issues/89)) ([9894516](https://github.com/kropath/kropath-controller/commit/98945166590db70e34c7f7517f097f0c21aa8fcf))
+* **KRO-973:** add CodeArtifact effectiveConfig cascade support ([dd84566](https://github.com/kropath/kropath-controller/commit/dd845662a7ce9bdf157d9e140c0a0bc456595eaf))
+* **KRO-979:** add LoggingTargetPrefix to S3 cascade ([#87](https://github.com/kropath/kropath-controller/issues/87)) ([ffb1900](https://github.com/kropath/kropath-controller/commit/ffb1900131a03e5da2e35f8eda851afbd41f94b7))
+* **KRO-991:** add MWAA effectiveConfig cascade ([15a2c58](https://github.com/kropath/kropath-controller/commit/15a2c582b7a920fe1bc9802c1a778ed8bfc93c5d))
+* **KRO-999:** effectiveConfig cascade for Organizations fields ([bc49dc9](https://github.com/kropath/kropath-controller/commit/bc49dc93f7bcb2c0a440226de5bc4a3828c04d9f))
+
 ## [0.8.0](https://github.com/kropath/kropath-controller/compare/v0.7.0...v0.8.0) (2026-09-02)
 
 
