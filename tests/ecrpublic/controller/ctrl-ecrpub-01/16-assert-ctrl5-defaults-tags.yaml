@@ -1,0 +1,10 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: ECRPublicConfig
+metadata:
+  name: ac5-ecrpub
+  namespace: registry-prod
+status:
+  effectiveConfig:
+    defaults:
+      tags:
+        managed-by: kropath

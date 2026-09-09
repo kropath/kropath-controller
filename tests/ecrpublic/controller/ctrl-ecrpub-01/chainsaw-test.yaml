@@ -1,0 +1,125 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-ecrpub-01: ECRPublicConfig controller cascade integration tests.
+# Covers implicit controller scenarios: AWS identity, KPC mandatory tags,
+# KPC tag priority, ECRPublicConfig mandatory namingTemplate, and defaults tags.
+# Requires:
+#   - kind cluster with kropath-operator deployed
+#   - KropathConfig CRD applied
+#   - ECRPublicConfig CRD applied (crds/awsecrpublicconfig.yaml)
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-ecrpub-01-cascade
+spec:
+  steps:
+    # -----------------------------------------------------------------------
+    # ctrl-1: aws.accountId and aws.region from KPC spec.aws are written to
+    # effectiveConfig.aws.accountId and effectiveConfig.aws.region.
+    # -----------------------------------------------------------------------
+    - name: ctrl1-aws-identity
+      try:
+        - apply:
+            file: 01-global-kpc-aws-identity.yaml
+        - apply:
+            file: 02-ac1-ecrpublicconfig.yaml
+        - assert:
+            file: 03-assert-ctrl1-aws.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 02-ac1-ecrpublicconfig.yaml
+        - delete:
+            file: 01-global-kpc-aws-identity.yaml
+
+    # -----------------------------------------------------------------------
+    # ctrl-2: KropathConfig.mandatory.tags propagate to
+    # effectiveConfig.mandatory.tags.
+    # -----------------------------------------------------------------------
+    - name: ctrl2-kpc-mandatory-tags-propagate
+      try:
+        - apply:
+            file: 04-global-kpc-mandatory-tags.yaml
+        - apply:
+            file: 05-ac2-ecrpublicconfig.yaml
+        - assert:
+            file: 06-assert-ctrl2-kpc-tags.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 05-ac2-ecrpublicconfig.yaml
+        - delete:
+            file: 04-global-kpc-mandatory-tags.yaml
+
+    # -----------------------------------------------------------------------
+    # ctrl-3: KPC mandatory tags (L1) win over ECRPublicConfig mandatory tags
+    # (L3) on key conflict.
+    # -----------------------------------------------------------------------
+    - name: ctrl3-kpc-l1-wins-ecrcfg-l3
+      try:
+        - apply:
+            file: 07-global-kpc-mandatory-tags-conflict.yaml
+        - apply:
+            file: 08-global-ecrcfg-mandatory-tags-conflict.yaml
+        - apply:
+            file: 09-ac3-ecrpublicconfig.yaml
+        - assert:
+            file: 10-assert-ctrl3-kpc-wins.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 09-ac3-ecrpublicconfig.yaml
+        - delete:
+            file: 08-global-ecrcfg-mandatory-tags-conflict.yaml
+        - delete:
+            file: 07-global-kpc-mandatory-tags-conflict.yaml
+
+    # -----------------------------------------------------------------------
+    # ctrl-4: ECRPublicConfig.mandatory.namingTemplate propagates to
+    # effectiveConfig.mandatory.namingTemplate.
+    # -----------------------------------------------------------------------
+    - name: ctrl4-mandatory-namingtemplate
+      try:
+        - apply:
+            file: 11-global-ecrcfg-mandatory-namingtemplate.yaml
+        - apply:
+            file: 12-ac4-ecrpublicconfig.yaml
+        - assert:
+            file: 13-assert-ctrl4-namingtemplate.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 12-ac4-ecrpublicconfig.yaml
+        - delete:
+            file: 11-global-ecrcfg-mandatory-namingtemplate.yaml
+
+    # -----------------------------------------------------------------------
+    # ctrl-5: ECRPublicConfig.defaults.tags propagate to
+    # effectiveConfig.defaults.tags.
+    # -----------------------------------------------------------------------
+    - name: ctrl5-defaults-tags
+      try:
+        - apply:
+            file: 14-global-ecrcfg-defaults-tags.yaml
+        - apply:
+            file: 15-ac5-ecrpublicconfig.yaml
+        - assert:
+            file: 16-assert-ctrl5-defaults-tags.yaml
+            timeout: 30s
+      cleanup:
+        - delete:
+            file: 15-ac5-ecrpublicconfig.yaml
+        - delete:
+            file: 14-global-ecrcfg-defaults-tags.yaml
