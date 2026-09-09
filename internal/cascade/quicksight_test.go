@@ -21,27 +21,45 @@ import (
 func TestMergeQuickSightCascade_ImportMode_KropathConfigLevel1Wins(t *testing.T) {
 	// AC-1: KropathConfig global mandatory importMode (level 1) wins over all other sources.
 	got := MergeQuickSightCascade(
-		QuickSightKropathSection{ImportMode: "SPICE"},    // level 1
+		QuickSightKropathSection{ImportMode: "SPICE"},        // level 1
 		QuickSightKropathSection{ImportMode: "DIRECT_QUERY"}, // level 2
-		QuickSightConfigSection{ImportMode: "DIRECT_QUERY"},   // level 3
-		QuickSightConfigSection{ImportMode: "DIRECT_QUERY"},   // level 4
-		QuickSightConfigSection{},                              // level 6
-		QuickSightConfigSection{},                              // level 7
-		QuickSightKropathSection{},                             // level 8
-		QuickSightKropathSection{},                             // level 9
+		QuickSightConfigSection{ImportMode: "DIRECT_QUERY"},  // level 3
+		QuickSightConfigSection{ImportMode: "DIRECT_QUERY"},  // level 4
+		QuickSightConfigSection{},                            // level 6
+		QuickSightConfigSection{},                            // level 7
+		QuickSightKropathSection{},                           // level 8
+		QuickSightKropathSection{},                           // level 9
 	)
 	if got.Mandatory.ImportMode != "SPICE" {
 		t.Errorf("expected SPICE, got %q", got.Mandatory.ImportMode)
 	}
 }
 
+func TestMergeQuickSightCascade_ImportMode_KropathConfigLevel2WinsOverLevel3(t *testing.T) {
+	// AC-9: KropathConfig local mandatory importMode (level 2) contributes and
+	// outranks the QuickSightConfig mandatory tiers when level 1 is empty.
+	got := MergeQuickSightCascade(
+		QuickSightKropathSection{},                           // level 1 empty
+		QuickSightKropathSection{ImportMode: "DIRECT_QUERY"}, // level 2
+		QuickSightConfigSection{ImportMode: "SPICE"},         // level 3
+		QuickSightConfigSection{ImportMode: "SPICE"},         // level 4
+		QuickSightConfigSection{},                            // level 6
+		QuickSightConfigSection{},                            // level 7
+		QuickSightKropathSection{},                           // level 8
+		QuickSightKropathSection{},                           // level 9
+	)
+	if got.Mandatory.ImportMode != "DIRECT_QUERY" {
+		t.Errorf("expected DIRECT_QUERY, got %q", got.Mandatory.ImportMode)
+	}
+}
+
 func TestMergeQuickSightCascade_ImportMode_Level3WhenKropathEmpty(t *testing.T) {
 	// AC-2: QuickSightConfig global mandatory (level 3) wins when levels 1-2 are empty.
 	got := MergeQuickSightCascade(
-		QuickSightKropathSection{},                           // level 1 empty
-		QuickSightKropathSection{},                           // level 2 empty
+		QuickSightKropathSection{},                          // level 1 empty
+		QuickSightKropathSection{},                          // level 2 empty
 		QuickSightConfigSection{ImportMode: "DIRECT_QUERY"}, // level 3
-		QuickSightConfigSection{ImportMode: "SPICE"},         // level 4
+		QuickSightConfigSection{ImportMode: "SPICE"},        // level 4
 		QuickSightConfigSection{},
 		QuickSightConfigSection{},
 		QuickSightKropathSection{},
@@ -55,12 +73,12 @@ func TestMergeQuickSightCascade_ImportMode_Level3WhenKropathEmpty(t *testing.T) 
 func TestMergeQuickSightCascade_ImportMode_DefaultsLevel6(t *testing.T) {
 	// AC-3: all mandatory tiers empty; QuickSightConfig local defaults (level 6) sets importMode.
 	got := MergeQuickSightCascade(
-		QuickSightKropathSection{}, // level 1
-		QuickSightKropathSection{}, // level 2
-		QuickSightConfigSection{},  // level 3
-		QuickSightConfigSection{},  // level 4
-		QuickSightConfigSection{ImportMode: "SPICE"}, // level 6
-		QuickSightConfigSection{ImportMode: "DIRECT_QUERY"}, // level 7
+		QuickSightKropathSection{},                           // level 1
+		QuickSightKropathSection{},                           // level 2
+		QuickSightConfigSection{},                            // level 3
+		QuickSightConfigSection{},                            // level 4
+		QuickSightConfigSection{ImportMode: "SPICE"},         // level 6
+		QuickSightConfigSection{ImportMode: "DIRECT_QUERY"},  // level 7
 		QuickSightKropathSection{ImportMode: "DIRECT_QUERY"}, // level 8
 		QuickSightKropathSection{ImportMode: "DIRECT_QUERY"}, // level 9
 	)
@@ -93,7 +111,7 @@ func TestMergeQuickSightCascade_NamingTemplate_DefaultsLevel7(t *testing.T) {
 		QuickSightKropathSection{},
 		QuickSightConfigSection{},
 		QuickSightConfigSection{},
-		QuickSightConfigSection{}, // level 6 empty
+		QuickSightConfigSection{},                                     // level 6 empty
 		QuickSightConfigSection{NamingTemplate: "{namespace}-{name}"}, // level 7
 		QuickSightKropathSection{},
 		QuickSightKropathSection{},

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# ctrl-qs-01 Chainsaw integration tests — all 8 acceptance criteria.
+# ctrl-qs-01 Chainsaw integration tests — all 9 acceptance criteria.
 #
 # Test isolation — unique-name-per-step, no inter-step deletes:
 #   Each AC owns a distinct resource name (acN-qs-policy). The controller
@@ -24,7 +24,7 @@ kind: Test
 metadata:
   name: ctrl-qs-01
 spec:
-  description: "QuickSight effectiveConfig cascade — all 8 acceptance criteria (ctrl-qs-01)"
+  description: "QuickSight effectiveConfig cascade — all 9 acceptance criteria (ctrl-qs-01)"
   steps:
     # AC-1: KropathConfig.mandatory.quicksight.importMode (level 1) → effCfg.mandatory.importMode
     - name: ac1-kpc-mandatory-import-mode
@@ -96,4 +96,16 @@ spec:
             file: ac08-setup.yaml
         - assert:
             file: ac08-assert.yaml
+            timeout: 30s
+
+    # AC-9: local KropathConfig.mandatory.quicksight.importMode (level 2) wins over
+    # the global QuickSightConfig mandatory tier (level 3).
+    # Runs in `data-platform`: level 2 is keyed by the fixed name `default`, so the
+    # per-AC name is not an isolation boundary here — see ac09-setup.yaml.
+    - name: ac9-local-kpc-mandatory-import-mode
+      try:
+        - apply:
+            file: ac09-setup.yaml
+        - assert:
+            file: ac09-assert.yaml
             timeout: 30s
