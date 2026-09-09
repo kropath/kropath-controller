@@ -134,6 +134,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&RAMConfigList{},
 		&MQConfig{},
 		&MQConfigList{},
+		&QuickSightConfig{},
+		&QuickSightConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil
