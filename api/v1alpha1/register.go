@@ -138,6 +138,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&QuickSightConfigList{},
 		&ECRPublicConfig{},
 		&ECRPublicConfigList{},
+		&RecycleBinConfig{},
+		&RecycleBinConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

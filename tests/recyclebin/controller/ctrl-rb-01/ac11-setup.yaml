@@ -1,0 +1,9 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: RecycleBinConfig
+metadata:
+  name: ac11-rb-config
+  namespace: recyclebin-prod
+spec:
+  mandatory:
+    retentionPeriodValue: 30
+    retentionPeriodUnit: DAYS

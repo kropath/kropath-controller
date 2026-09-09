@@ -1,0 +1,19 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac12-rb-config
+  namespace: kro-system
+spec:
+  mandatory:
+    ebsrecyclebin:
+      lockRule: true
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: RecycleBinConfig
+metadata:
+  name: ac12-rb-config
+  namespace: recyclebin-prod
+spec:
+  mandatory:
+    retentionPeriodValue: 14
+    retentionPeriodUnit: DAYS

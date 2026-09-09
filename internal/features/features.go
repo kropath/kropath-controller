@@ -130,4 +130,5 @@ var All = []Reconciler{
 	cascade("MQConfig", "mqconfig"),
 	cascade("QuickSightConfig", "quicksightconfig"),
 	cascade("ECRPublicConfig", "ecrpublicconfig"),
+	cascade("RecycleBinConfig", "recyclebinconfig"),
 }

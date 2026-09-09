@@ -26,6 +26,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/ec2config"
 	"github.com/kropath/kropath-controller/internal/reconciler/ecrconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/ecrpublicconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/recyclebinconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/ecsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/efsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/eksconfig"
@@ -527,6 +528,13 @@ func All() []Entry {
 			return (&ecrpublicconfig.Reconciler{
 				Client: bctx.Manager.GetClient(),
 				Log:    bctx.Log.WithName("controllers").WithName("ECRPublicConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("recyclebinconfig", "RecycleBinConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&recyclebinconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("RecycleBinConfig"),
 				Scheme: bctx.Manager.GetScheme(),
 			}).BuildWithManager(bctx.Manager)
 		}),
