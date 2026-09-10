@@ -18,12 +18,9 @@ on:
     branches:
       - main
 
-# Keep these in sync with the version pins at the top of the Makefile.
-env:
-  KIND_VERSION:     v0.25.0
-  CHAINSAW_VERSION: v0.2.15
-  GOLANGCI_VERSION: v2.11.4
-
+# Tool versions deliberately do NOT appear here. They are pinned once at the top
+# of the Makefile and reached through the `install-*` targets below, so a CI run
+# and a local `make lint` cannot drift onto different versions of the same tool.
 jobs:
   changes:
     name: Detect changed paths
@@ -93,7 +90,7 @@ jobs:
 
       - name: Install golangci-lint
         if: needs.changes.outputs.code == 'true'
-        run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${{ env.GOLANGCI_VERSION }}
+        run: make install-golangci-lint
 
       - name: Lint
         if: needs.changes.outputs.code == 'true'
@@ -176,13 +173,9 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Install gosec
+      - name: Install security scanners
         if: needs.changes.outputs.code == 'true'
-        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
-
-      - name: Install govulncheck
-        if: needs.changes.outputs.code == 'true'
-        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+        run: make install-gosec install-govulncheck
 
       - name: Run security scans
         if: needs.changes.outputs.code == 'true'
@@ -256,14 +249,23 @@ jobs:
 
       - name: Install kind
         if: needs.changes.outputs.code == 'true'
-        run: |
-          curl -sSLo /tmp/kind https://kind.sigs.k8s.io/dl/${{ env.KIND_VERSION }}/kind-linux-amd64
-          chmod +x /tmp/kind
-          sudo mv /tmp/kind /usr/local/bin/kind
+        run: make install-kind
+
+      # Chainsaw is the one tool taken as a prebuilt release rather than built
+      # by `go install`, so its version has to be handed to the action as an
+      # input. Reading it back out of the Makefile keeps the pin single-sourced;
+      # the `@v0.2.15` on the action is the action's own version, which
+      # dependabot manages.
+      - name: Read pinned tool versions
+        id: tools
+        if: needs.changes.outputs.code == 'true'
+        run: make print-tool-versions >> "$GITHUB_OUTPUT"
 
       - name: Install Chainsaw
         if: needs.changes.outputs.code == 'true'
         uses: kyverno/action-install-chainsaw@v0.2.15
+        with:
+          release: ${{ steps.tools.outputs.CHAINSAW_VERSION }}
 
       - name: Run Chainsaw tests
         if: needs.changes.outputs.code == 'true'
