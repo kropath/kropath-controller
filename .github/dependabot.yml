@@ -1,11 +1,68 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# Every `commit-message.prefix` below is load-bearing twice over. PRs are
+# squash-merged, so dependabot's commit message becomes the PR title, which
+# `.github/workflows/pr-title.yaml` lints as a conventional commit and
+# release-please then parses. An unprefixed or mistyped bump either fails the
+# title gate or silently never reaches CHANGELOG.md.
+#
+#   deps  -> patch release, listed under "Dependencies"  (ships in the binary)
+#   ci    -> no release                                  (workflow-only)
+#   build -> no release                                  (image build only)
+#
+# `include: "scope"` is deliberately omitted: it would produce `deps(deps):`,
+# and this repo reserves the scope for the ticket id.
 
 version: 2
 updates:
-  - package-ecosystem: "gomod" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  # Go module dependencies. These are compiled into the shipped binary, so a
+  # bump is a real user-visible change and earns a patch release.
+  - package-ecosystem: "gomod"
+    directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps"
+    groups:
+      # The k8s.io/* and sigs.k8s.io/* modules are released in lockstep and
+      # controller-runtime pins a matching set. Bumping them one PR at a time
+      # produces a queue of PRs that cannot compile until the last one lands.
+      kubernetes:
+        patterns:
+          - "k8s.io/*"
+          - "sigs.k8s.io/*"
+      golang-x:
+        patterns:
+          - "golang.org/x/*"
+          - "google.golang.org/*"
+
+  # Action versions pinned as `uses: owner/action@vN` across .github/workflows.
+  # Workflow-only, so no release — but unmanaged action pins are exactly how the
+  # Go / golangci-lint / golangci-lint-action version triplet drifts out of sync.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # Dockerfile base images: the `golang:` builder stage and the distroless
+  # runtime stage. The builder tag should stay at or above the toolchain in
+  # go.mod; CI compiles the tree on every PR, so a bump that breaks that pairing
+  # fails visibly rather than silently.
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "build"
