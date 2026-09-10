@@ -25,10 +25,20 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: "deps"
+    # Grouping strategy: one PR for all patch bumps, one for all minor bumps, and
+    # a PR of its own for each major. Patches and minors are reviewed as a batch
+    # because the interesting signal is "did CI stay green", which is the same
+    # answer for all of them; a major needs its changelog read, so it gets an
+    # isolated PR that can be reverted without dragging routine bumps with it.
+    #
+    # Order matters — a dependency joins the first group it matches, so the
+    # lockstep groups have to come before the catch-all ones.
     groups:
       # The k8s.io/* and sigs.k8s.io/* modules are released in lockstep and
       # controller-runtime pins a matching set. Bumping them one PR at a time
       # produces a queue of PRs that cannot compile until the last one lands.
+      # Deliberately no `update-types`, so this holds for a major too, and so a
+      # patch to one of them can never be split from a minor to another.
       kubernetes:
         patterns:
           - "k8s.io/*"
@@ -37,6 +47,17 @@ updates:
         patterns:
           - "golang.org/x/*"
           - "google.golang.org/*"
+      # Everything else, split by blast radius rather than by package.
+      gomod-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+      gomod-minor:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
 
   # Action versions pinned as `uses: owner/action@vN` across .github/workflows.
   # Workflow-only, so no release — but unmanaged action pins are exactly how the
@@ -66,3 +87,14 @@ updates:
     open-pull-requests-limit: 3
     commit-message:
       prefix: "build"
+    groups:
+      docker-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+      docker-minor:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"

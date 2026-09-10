@@ -55,7 +55,15 @@ jobs:
           # Reject the historical `[KRO-637]: feat: …` shape, which parses as a
           # subject rather than a type and is the reason ~20 features are missing
           # from the changelog.
-          subjectPattern: ^(?![\[A-Z]).+$
+          #
+          # Dependabot gets the bracket rule but not the leading-capital rule.
+          # Its title is generated, not typed by a human: the type comes from the
+          # `commit-message.prefix` pinned per ecosystem in .github/dependabot.yml
+          # and is therefore always valid, but the verb it puts after the prefix
+          # is dependabot's to choose and has been capitalised ("Bump …") in the
+          # past. Failing a bump on that would block a security update on a
+          # cosmetic rule, and release-please parses the type either way.
+          subjectPattern: ${{ github.actor == 'dependabot[bot]' && '^(?!\[).+$' || '^(?![\[A-Z]).+$' }}
           subjectPatternError: |
             The subject "{subject}" of PR title "{title}" is invalid.
 
