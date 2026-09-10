@@ -12,13 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# ─── Version pins — keep in sync with .github/workflows/ci.yaml ───────────────
+# ─── Version pins — the single source of truth ─────────────────────────────────
 #
-# Go version is read from go.mod via setup-go; all other tool versions are
-# pinned here and mirrored in ci.yaml so local and CI environments are identical.
-KIND_VERSION     := v0.25.0
-GOLANGCI_VERSION := v2.11.4
-CHAINSAW_VERSION := v0.2.15
+# The Go version is read from go.mod via setup-go. Every other tool version is
+# pinned here and *only* here. ci.yaml installs through the `install-*` targets
+# below and reads `print-tool-versions` for the one tool it takes as a prebuilt
+# binary, so there is no second copy of these numbers to keep in sync and CI
+# cannot silently run a different golangci-lint from a local `make lint`.
+#
+# gosec and govulncheck previously floated on `@latest` in CI, which meant a
+# security scan could start failing on a tree that had not changed. They are
+# pinned to what `@latest` resolved to when this pin was introduced, so the
+# change is a freeze, not an upgrade.
+KIND_VERSION        := v0.25.0
+GOLANGCI_VERSION    := v2.11.4
+CHAINSAW_VERSION    := v0.2.15
+GOSEC_VERSION       := v2.29.0
+GOVULNCHECK_VERSION := v1.8.0
+GOIMPORTS_VERSION   := v0.50.0
 
 # ─── Paths ─────────────────────────────────────────────────────────────────────
 BINARY           := bin/kropath-operator
@@ -71,7 +82,9 @@ CHAINSAW_FLAGS   := --parallel 1 --report-format JUNIT-TEST --report-path $(REPO
         test-dyn-01 test-dyn-02 test-dyn-03 test-dyn \
         test-organizations \
         test-chainsaw \
-        install-tools gosec vulncheck security \
+        install-tools install-kind install-chainsaw install-golangci-lint \
+        install-goimports install-gosec install-govulncheck \
+        print-tool-versions gosec vulncheck security \
         help default
 
 default: help
@@ -422,11 +435,41 @@ test-chainsaw: chainsaw-stop chainsaw-start chainsaw-wait ## Stop any stale cont
 
 # ─── Tool installation ─────────────────────────────────────────────────────────
 
-install-tools: ## Install kind, chainsaw, golangci-lint, and goimports locally.
+# Each tool gets its own target so that a CI job installs exactly what it needs
+# at exactly the pinned version, without ci.yaml ever naming a version itself.
+
+install-kind: ## Install the pinned kind binary.
 	go install sigs.k8s.io/kind@$(KIND_VERSION)
+
+install-chainsaw: ## Install the pinned chainsaw binary.
 	go install github.com/kyverno/chainsaw@$(CHAINSAW_VERSION)
+
+install-golangci-lint: ## Install the pinned golangci-lint binary.
 	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_VERSION)
-	go install golang.org/x/tools/cmd/goimports@latest
+
+install-goimports: ## Install the pinned goimports binary.
+	go install golang.org/x/tools/cmd/goimports@$(GOIMPORTS_VERSION)
+
+install-gosec: ## Install the pinned gosec binary.
+	go install github.com/securego/gosec/v2/cmd/gosec@$(GOSEC_VERSION)
+
+install-govulncheck: ## Install the pinned govulncheck binary.
+	go install golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION)
+
+install-tools: install-kind install-chainsaw install-golangci-lint install-goimports \
+	install-gosec install-govulncheck ## Install every pinned tool locally.
+
+# Emitted as KEY=value lines so a CI step can redirect it straight into
+# $$GITHUB_OUTPUT. Used for tools installed from a prebuilt release rather than
+# through `go install`, which is the only case ci.yaml cannot cover with an
+# `install-*` target.
+print-tool-versions: ## Print the pinned tool versions as KEY=value lines.
+	@echo "KIND_VERSION=$(KIND_VERSION)"
+	@echo "CHAINSAW_VERSION=$(CHAINSAW_VERSION)"
+	@echo "GOLANGCI_VERSION=$(GOLANGCI_VERSION)"
+	@echo "GOIMPORTS_VERSION=$(GOIMPORTS_VERSION)"
+	@echo "GOSEC_VERSION=$(GOSEC_VERSION)"
+	@echo "GOVULNCHECK_VERSION=$(GOVULNCHECK_VERSION)"
 
 # ─── Security scans ────────────────────────────────────────────────────────────
 # Run only when implementation is complete. Do not run during active development.
