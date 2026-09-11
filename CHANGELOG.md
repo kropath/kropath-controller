@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.9.1](https://github.com/kropath/kropath-controller/compare/v0.9.0...v0.9.1) (2026-09-11)
+
+
+### Dependencies
+
+* bump github.com/prometheus/client_golang from 1.24.0 to 1.24.1 ([#104](https://github.com/kropath/kropath-controller/issues/104)) ([3bf4c05](https://github.com/kropath/kropath-controller/commit/3bf4c05b44c6ef837afdd9f189584804b40929a8))
+* bump the gomod-patch group with 2 updates ([#110](https://github.com/kropath/kropath-controller/issues/110)) ([edddb1e](https://github.com/kropath/kropath-controller/commit/edddb1e9b977fd0bf502063d75fcdadee3bcfadc))
+* bump the kubernetes group across 1 directory with 3 updates ([#103](https://github.com/kropath/kropath-controller/issues/103)) ([56ff281](https://github.com/kropath/kropath-controller/commit/56ff2817858f6b5aea3896ee84817d2d7d009f05))
+
 ## [0.9.0](https://github.com/kropath/kropath-controller/compare/v0.8.0...v0.9.0) (2026-09-09)
 
 
