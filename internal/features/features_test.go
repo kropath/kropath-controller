@@ -14,6 +14,7 @@ import (
 
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/features"
+	"github.com/kropath/kropath-controller/internal/registry"
 )
 
 // helperPackages lists directories under internal/reconciler/ that contain shared
@@ -545,5 +546,50 @@ func TestEveryRegisteredReconcilerIsWired(t *testing.T) {
 				"/features and docs/features.yaml would otherwise advertise a reconciler the binary does not run.",
 				r.Name, r.Package)
 		}
+	}
+}
+
+// TestPolicyDocumentKindsCoverRegistryGVKs verifies that features.All for the
+// policydocument reconciler declares every Required kind the registry entry
+// watches. Optional GVKs are conditional watches — the manager operates without
+// them and they may not exist as upstream CRDs yet — so they are intentionally
+// excluded from features.All.Kinds and from this check.
+//
+// Without this guard, removing a Required kind from registry/entries.go would
+// leave features.All silently under-declaring the manager's hard dependencies —
+// the regression that prompted KRO-851.
+func TestPolicyDocumentKindsCoverRegistryGVKs(t *testing.T) {
+	const pkg = "policydocument"
+
+	var pdKinds map[string]bool
+	for _, r := range features.All {
+		if r.Package == pkg {
+			pdKinds = make(map[string]bool, len(r.Kinds))
+			for _, k := range r.Kinds {
+				pdKinds[k] = true
+			}
+			break
+		}
+	}
+	if pdKinds == nil {
+		t.Fatalf("features.All has no entry for package %q", pkg)
+	}
+
+	var found bool
+	for _, e := range registry.All() {
+		if e.Package != pkg {
+			continue
+		}
+		found = true
+		for _, gvk := range e.Required {
+			if !pdKinds[gvk.Kind] {
+				t.Errorf("registry requires kind %q for %s but features.All does not declare it; "+
+					"add it to the Kinds slice in internal/features/features.go and run make features-gen",
+					gvk.Kind, pkg)
+			}
+		}
+	}
+	if !found {
+		t.Fatalf("registry.All has no entry for package %q", pkg)
 	}
 }
