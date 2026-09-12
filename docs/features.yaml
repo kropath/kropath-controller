@@ -47,12 +47,6 @@ reconcilers:
       kinds:
         - PolicyDocument
         - KropathConfig
-        - AWSIAMRole
-        - AWSS3Bucket
-        - AWSLambdaFunction
-        - AWSSQSQueue
-        - AWSKMSKey
-        - AWSSecretsManagerSecret
       sinceVersion: v0.0.1
       stability: stable
     - name: LabelOperator

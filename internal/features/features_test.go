@@ -550,10 +550,14 @@ func TestEveryRegisteredReconcilerIsWired(t *testing.T) {
 }
 
 // TestPolicyDocumentKindsCoverRegistryGVKs verifies that features.All for the
-// policydocument reconciler declares every kind the registry entry watches
-// (Required + Optional). Without this guard, a future edit to
-// policyDocumentRefGVKs in registry/entries.go would leave features.All and
-// docs/features.yaml silently stale — the regression that prompted KRO-851.
+// policydocument reconciler declares every Required kind the registry entry
+// watches. Optional GVKs are conditional watches — the manager operates without
+// them and they may not exist as upstream CRDs yet — so they are intentionally
+// excluded from features.All.Kinds and from this check.
+//
+// Without this guard, removing a Required kind from registry/entries.go would
+// leave features.All silently under-declaring the manager's hard dependencies —
+// the regression that prompted KRO-851.
 func TestPolicyDocumentKindsCoverRegistryGVKs(t *testing.T) {
 	const pkg = "policydocument"
 
@@ -577,9 +581,9 @@ func TestPolicyDocumentKindsCoverRegistryGVKs(t *testing.T) {
 			continue
 		}
 		found = true
-		for _, gvk := range append(e.Required, e.Optional...) {
+		for _, gvk := range e.Required {
 			if !pdKinds[gvk.Kind] {
-				t.Errorf("registry watches kind %q for %s but features.All does not declare it; "+
+				t.Errorf("registry requires kind %q for %s but features.All does not declare it; "+
 					"add it to the Kinds slice in internal/features/features.go and run make features-gen",
 					gvk.Kind, pkg)
 			}
