@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.2](https://github.com/kropath/kropath-controller/compare/v0.9.1...v0.9.2) (2026-09-12)
+
+
+### Bug Fixes
+
+* **KRO-851:** declare all eight watched kinds for PolicyDocument in features.All ([#112](https://github.com/kropath/kropath-controller/issues/112)) ([81bd624](https://github.com/kropath/kropath-controller/commit/81bd62468ad72d36b83f0be4a6d9b459a570d416))
+
 ## [0.9.1](https://github.com/kropath/kropath-controller/compare/v0.9.0...v0.9.1) (2026-09-11)
 
 
