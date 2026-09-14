@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/kropath/kropath-controller/compare/v0.9.2...v0.10.0) (2026-09-14)
+
+
+### Features
+
+* **KRO-1081:** effectiveConfig cascade for S3 Advanced fields ([08f6ab6](https://github.com/kropath/kropath-controller/commit/08f6ab685220e6f89c5fb830bb6057953bcbcd3a))
+
 ## [0.9.2](https://github.com/kropath/kropath-controller/compare/v0.9.1...v0.9.2) (2026-09-12)
 
 
