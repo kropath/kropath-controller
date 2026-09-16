@@ -71,6 +71,8 @@ spec:
     # -----------------------------------------------------------------------
     - name: ac3-ecrcfg-defaults-only
       try:
+        - script:
+            content: kubectl delete ecrconfigs.aws.kropath.run general-policy -n kro-system --ignore-not-found=true
         - apply:
             file: 09-global-ecrcfg-defaults-imagetagmutability.yaml
         - apply:

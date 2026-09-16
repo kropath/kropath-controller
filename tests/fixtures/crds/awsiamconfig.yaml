@@ -246,29 +246,39 @@ spec:
                       properties:
                         permissionsBoundaryArn:
                           type: string
+                          default: ""
                         blockIamUserAccessKeys:
                           type: boolean
+                          default: false
                         maxSessionDurationSeconds:
                           type: integer
                           format: int64
+                          default: 0
                         namingTemplate:
                           type: string
+                          default: ""
                         addSsmPolicy:
                           type: boolean
+                          default: false
                         addEcsExecutionPolicy:
                           type: boolean
+                          default: false
                         addLambdaBasicPolicy:
                           type: boolean
+                          default: false
                         tags:
                           type: object
+                          default: {}
                           additionalProperties:
                             type: string
                         syncedLabels:
                           type: object
+                          default: {}
                           additionalProperties:
                             type: string
                         syncedAnnotations:
                           type: object
+                          default: {}
                           additionalProperties:
                             type: string
                     defaults:
@@ -277,29 +287,39 @@ spec:
                       properties:
                         permissionsBoundaryArn:
                           type: string
+                          default: ""
                         blockIamUserAccessKeys:
                           type: boolean
+                          default: false
                         maxSessionDurationSeconds:
                           type: integer
                           format: int64
+                          default: 0
                         namingTemplate:
                           type: string
+                          default: ""
                         addSsmPolicy:
                           type: boolean
+                          default: false
                         addEcsExecutionPolicy:
                           type: boolean
+                          default: false
                         addLambdaBasicPolicy:
                           type: boolean
+                          default: false
                         tags:
                           type: object
+                          default: {}
                           additionalProperties:
                             type: string
                         syncedLabels:
                           type: object
+                          default: {}
                           additionalProperties:
                             type: string
                         syncedAnnotations:
                           type: object
+                          default: {}
                           additionalProperties:
                             type: string
                     aws:
@@ -308,5 +328,7 @@ spec:
                       properties:
                         accountId:
                           type: string
+                          default: ""
                         region:
                           type: string
+                          default: ""
