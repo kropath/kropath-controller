@@ -47,7 +47,6 @@ spec:
                   enum:
                     - delete
                     - retain
-                  default: retain
                 configRef:
                   type: string
                 mandatory:
@@ -57,22 +56,17 @@ spec:
                     retentionPeriodValue:
                       type: integer
                       format: int64
-                      default: 0
                       minimum: 0
                     retentionPeriodUnit:
                       type: string
-                      default: ""
                     lockRule:
                       type: boolean
-                      default: false
                     unlockDelayValue:
                       type: integer
                       format: int64
-                      default: 0
                       minimum: 0
                     unlockDelayUnit:
                       type: string
-                      default: ""
                     tags:
                       type: object
                       default: {}
@@ -95,22 +89,17 @@ spec:
                     retentionPeriodValue:
                       type: integer
                       format: int64
-                      default: 0
                       minimum: 0
                     retentionPeriodUnit:
                       type: string
-                      default: ""
                     lockRule:
                       type: boolean
-                      default: false
                     unlockDelayValue:
                       type: integer
                       format: int64
-                      default: 0
                       minimum: 0
                     unlockDelayUnit:
                       type: string
-                      default: ""
                     tags:
                       type: object
                       default: {}

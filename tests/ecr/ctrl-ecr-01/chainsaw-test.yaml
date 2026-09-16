@@ -48,6 +48,8 @@ spec:
     # -----------------------------------------------------------------------
     - name: ac2-kc-l1-wins-ecrcfg-l3
       try:
+        - script:
+            content: kubectl delete ecrconfigs.aws.kropath.run general-policy -n kro-system --ignore-not-found=true
         - apply:
             file: 04-global-kpc-imagetagmutability-l1.yaml
         - apply:
@@ -92,6 +94,8 @@ spec:
     # -----------------------------------------------------------------------
     - name: ac4-global-ecrcfg-l3-wins-local-l4
       try:
+        - script:
+            content: kubectl delete ecrconfigs.aws.kropath.run general-policy -n kro-system --ignore-not-found=true
         - apply:
             file: 27-global-ecrcfg-mandatory-imagetagmutability-l3.yaml
         - apply:
@@ -130,6 +134,8 @@ spec:
     # -----------------------------------------------------------------------
     - name: ac6-ecrcfg-defaults-encryptiontype
       try:
+        - script:
+            content: kubectl delete ecrconfigs.aws.kropath.run general-policy -n kro-system --ignore-not-found=true
         - apply:
             file: 32-global-ecrcfg-defaults-encryptiontype.yaml
         - apply:
@@ -149,6 +155,8 @@ spec:
     # -----------------------------------------------------------------------
     - name: ac7-ecrcfg-mandatory-kmskey
       try:
+        - script:
+            content: kubectl delete ecrconfigs.aws.kropath.run general-policy -n kro-system --ignore-not-found=true
         - apply:
             file: 07-global-ecrcfg-mandatory-kmskey.yaml
         - apply:
@@ -168,6 +176,8 @@ spec:
     # -----------------------------------------------------------------------
     - name: ac8-ecrcfg-defaults-kmskey
       try:
+        - script:
+            content: kubectl delete ecrconfigs.aws.kropath.run general-policy -n kro-system --ignore-not-found=true
         - apply:
             file: 34-global-ecrcfg-defaults-kmskey.yaml
         - apply:
@@ -206,6 +216,8 @@ spec:
     # -----------------------------------------------------------------------
     - name: ac10-ecrcfg-defaults-lifecyclepolicy
       try:
+        - script:
+            content: kubectl delete ecrconfigs.aws.kropath.run general-policy -n kro-system --ignore-not-found=true
         - apply:
             file: 38-global-ecrcfg-defaults-lifecyclepolicy.yaml
         - apply:
@@ -225,6 +237,8 @@ spec:
     # -----------------------------------------------------------------------
     - name: ac11-kc-l1-wins-ecrcfg-l3-lifecyclepolicy
       try:
+        - script:
+            content: kubectl delete ecrconfigs.aws.kropath.run general-policy -n kro-system --ignore-not-found=true
         - apply:
             file: 40-global-kpc-mandatory-lifecyclepolicy-l1.yaml
         - apply:
@@ -248,6 +262,8 @@ spec:
     # -----------------------------------------------------------------------
     - name: ac12-ecrcfg-defaults-namingtemplate
       try:
+        - script:
+            content: kubectl delete ecrconfigs.aws.kropath.run general-policy -n kro-system --ignore-not-found=true
         - apply:
             file: 43-global-ecrcfg-defaults-namingtemplate.yaml
         - apply:
@@ -267,6 +283,8 @@ spec:
     # -----------------------------------------------------------------------
     - name: ac13-ecrcfg-mandatory-namingtemplate
       try:
+        - script:
+            content: kubectl delete ecrconfigs.aws.kropath.run general-policy -n kro-system --ignore-not-found=true
         - apply:
             file: 45-global-ecrcfg-mandatory-namingtemplate.yaml
         - apply:
@@ -305,6 +323,8 @@ spec:
     # -----------------------------------------------------------------------
     - name: ac15-mandatory-syncedlabels
       try:
+        - script:
+            content: kubectl delete ecrconfigs.aws.kropath.run general-policy -n kro-system --ignore-not-found=true
         - apply:
             file: 17-global-ecrcfg-mandatory-syncedlabels.yaml
         - apply:

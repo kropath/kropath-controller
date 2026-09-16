@@ -141,20 +141,14 @@ jobs:
       # from it -- see the crds-verify comment in the Makefile (KRO-675).
       #
       # KROPATH_AWS_COMPANION_REFS lists CRD PR branches not yet on main so that
-      # parallel controller+CRD PR pairs can be reviewed together.
-      #   agent/implementer/e14f06bb — EMRConfig CRD (KRO-829; clear once merged)
-      #   agent/implementer/5c0bce178e36 — MWAAConfig CRD stub (KRO-991; clear once KRO-990 merges)
-      #   kro-952-managedprometheusconfig-crd — ManagedPrometheusConfig CRD (KRO-952; clear once merged)
-      #   agent/implementer/8e4d093a801d — RAMConfig CRD stub (KRO-1006; clear once KRO-1006 merges)
-      #   agent/implementer/cc989712def6 — QuickSightConfig CRD + KropathConfig quicksight
-      #     section (KRO-1023, kropath-aws#245; clear once merged)
-      #   kro-1030-ecrpublicconfig-crd — ECRPublicConfig CRD stub (KRO-1030, kropath-aws#252; clear once merged)
-      #   kro-1039-recyclebinconfig-crd-stub — RecycleBinConfig CRD stub (KRO-1039/KRO-1038; clear once KRO-1038 merges)
+      # parallel controller+CRD PR pairs can be reviewed together. Companion refs
+      # are fetched after main and overwrite its CRDs, so clear each entry as soon
+      # as its CRD merges -- a stale ref silently reverts later upstream changes.
       - name: Check watched Kinds against kropath-aws CRDs
         if: needs.changes.outputs.code == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          KROPATH_AWS_COMPANION_REFS: "agent/implementer/e14f06bb agent/implementer/5c0bce178e36 kro-952-managedprometheusconfig-crd agent/implementer/8e4d093a801d agent/implementer/cc989712def6 kro-1030-ecrpublicconfig-crd kro-1039-recyclebinconfig-crd-stub"
+          KROPATH_AWS_COMPANION_REFS: ""
         run: make crds-verify
 
   security:
