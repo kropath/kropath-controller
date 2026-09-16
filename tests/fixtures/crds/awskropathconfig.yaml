@@ -3128,6 +3128,61 @@ spec:
                             Empty list = not enforced.
                           items:
                             type: string
+                    athena:
+                      type: object
+                      description: >-
+                        Athena-family mandatory governance fields applied across all Athena resource
+                        types. Cascade levels 1-2 in the ten-level priority chain (ADR-015 §5.3).
+                      properties:
+                        enforceWorkGroupConfiguration:
+                          type: boolean
+                          description: >-
+                            When true, forces all Athena queries to use the work group configuration.
+                            false (zero value) = not enforced.
+                        enableMinimumEncryptionConfiguration:
+                          type: boolean
+                          description: >-
+                            When true, requires minimum encryption configuration for all Athena queries.
+                            false (zero value) = not enforced.
+                        publishCloudWatchMetricsEnabled:
+                          type: boolean
+                          description: >-
+                            When true, requires CloudWatch metrics publishing for all Athena work groups.
+                            false (zero value) = not enforced.
+                    emr:
+                      type: object
+                      description: >-
+                        EMR-family mandatory governance fields applied across all EMR resource
+                        types. Cascade levels 1-2 in the ten-level priority chain (ADR-015 §5.3).
+                      properties:
+                        releaseLabel:
+                          type: string
+                          description: >-
+                            Org-wide EMR release label enforcement (e.g. "emr-7.1.0").
+                            Empty string = not enforced.
+                    apigateway:
+                      type: object
+                      description: >-
+                        API Gateway-family mandatory governance fields applied across all API Gateway
+                        resource types. Cascade levels 1-2 in the ten-level priority chain (ADR-015 §5.3).
+                      properties:
+                        endpointType:
+                          type: string
+                          description: >-
+                            Org-wide API Gateway endpoint type enforcement ("REGIONAL" | "EDGE" | "PRIVATE").
+                            Empty string = not enforced.
+                    organizations:
+                      type: object
+                      description: >-
+                        Organizations-family mandatory governance fields applied across all
+                        Organizations resource types. Cascade levels 1-2 in the ten-level
+                        priority chain (ADR-015 §5.3).
+                      properties:
+                        iamUserAccessToBilling:
+                          type: string
+                          description: >-
+                            Org-wide IAM user access to billing enforcement ("allow" | "deny").
+                            Empty string = not enforced.
 
                 defaults:
                   type: object
@@ -4422,6 +4477,56 @@ spec:
                           description: Default EKS control plane logging types. Empty list = no default.
                           items:
                             type: string
+                    athena:
+                      type: object
+                      description: >-
+                        Default Athena-family governance fields. Cascade levels 8-9 in the
+                        ten-level priority chain (ADR-015 §5.3). Applied only when no
+                        higher-priority source sets the field.
+                      properties:
+                        enforceWorkGroupConfiguration:
+                          type: boolean
+                          description: Default work group configuration enforcement. false = no default.
+                        enableMinimumEncryptionConfiguration:
+                          type: boolean
+                          description: Default minimum encryption configuration requirement. false = no default.
+                        publishCloudWatchMetricsEnabled:
+                          type: boolean
+                          description: Default CloudWatch metrics publishing requirement. false = no default.
+                    emr:
+                      type: object
+                      description: >-
+                        Default EMR-family governance fields. Cascade levels 8-9 in the
+                        ten-level priority chain (ADR-015 §5.3). Applied only when no
+                        higher-priority source sets the field.
+                      properties:
+                        releaseLabel:
+                          type: string
+                          description: Default EMR release label (e.g. "emr-7.1.0"). Empty string = no default.
+                    apigateway:
+                      type: object
+                      description: >-
+                        Default API Gateway-family governance fields. Cascade levels 8-9 in the
+                        ten-level priority chain (ADR-015 §5.3). Applied only when no
+                        higher-priority source sets the field.
+                      properties:
+                        endpointType:
+                          type: string
+                          description: >-
+                            Default API Gateway endpoint type ("REGIONAL" | "EDGE" | "PRIVATE").
+                            Empty string = no default.
+                    organizations:
+                      type: object
+                      description: >-
+                        Default Organizations-family governance fields. Cascade levels 8-9 in the
+                        ten-level priority chain (ADR-015 §5.3). Applied only when no
+                        higher-priority source sets the field.
+                      properties:
+                        iamUserAccessToBilling:
+                          type: string
+                          description: >-
+                            Default IAM user access to billing setting ("allow" | "deny").
+                            Empty string = no default.
 
                 aws:
                   type: object
