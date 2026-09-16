@@ -3026,6 +3026,44 @@ spec:
                             Enforced dataset import mode org-wide. Empty = not enforced.
                             Allowed values: SPICE, DIRECT_QUERY.
                             Cannot be set together with defaults.quicksight.importMode.
+                    waf:
+                      type: object
+                      default: {}
+                      description: >-
+                        WAF-family mandatory governance fields applied across all WAF resource
+                        types. Cascade levels 1-2 in the ten-level priority chain (ADR-015 §5.3).
+                        Four scalar fields are governed at the KropathConfig level: scope,
+                        defaultAction, cloudWatchMetricsEnabled, sampledRequestsEnabled.
+                        namingTemplate, syncedLabels, and syncedAnnotations are WAFConfig-only.
+                      properties:
+                        scope:
+                          type: string
+                          description: >-
+                            Org-wide WAF scope enforcement ("CLOUDFRONT" | "REGIONAL").
+                            Empty string = not enforced; instances cannot override when set.
+                        defaultAction:
+                          type: string
+                          description: >-
+                            Org-wide default action enforcement ("allow" | "block").
+                            Empty string = not enforced; instances cannot override when set.
+                        cloudWatchMetricsEnabled:
+                          type: boolean
+                          default: false
+                          description: >-
+                            When true, all WAF WebACLs must enable CloudWatch metrics org-wide.
+                            false (zero value) = not enforced.
+                        sampledRequestsEnabled:
+                          type: boolean
+                          default: false
+                          description: >-
+                            When true, all WAF WebACLs must enable sampled request recording org-wide.
+                            false (zero value) = not enforced.
+                        tags:
+                          type: object
+                          default: {}
+                          description: Org-wide mandatory WAF cloud resource tags.
+                          additionalProperties:
+                            type: string
 
                 defaults:
                   type: object
@@ -4233,6 +4271,38 @@ spec:
                             Default dataset import mode org-wide. Empty = no default.
                             Allowed values: SPICE, DIRECT_QUERY.
                             Cannot be set together with mandatory.quicksight.importMode.
+                    waf:
+                      type: object
+                      default: {}
+                      description: >-
+                        Default WAF-family governance fields. Cascade levels 8-9 in the
+                        ten-level priority chain (ADR-015 §5.3). Applied only when no
+                        higher-priority source sets the field.
+                      properties:
+                        scope:
+                          type: string
+                          description: >-
+                            Default WAF scope ("CLOUDFRONT" | "REGIONAL").
+                            Empty string = no default.
+                        defaultAction:
+                          type: string
+                          description: >-
+                            Default WAF default action ("allow" | "block").
+                            Empty string = no default.
+                        cloudWatchMetricsEnabled:
+                          type: boolean
+                          default: false
+                          description: Default CloudWatch metrics enablement for WAF WebACLs. false = no default.
+                        sampledRequestsEnabled:
+                          type: boolean
+                          default: false
+                          description: Default sampled request recording enablement for WAF WebACLs. false = no default.
+                        tags:
+                          type: object
+                          default: {}
+                          description: Default WAF cloud resource tags.
+                          additionalProperties:
+                            type: string
 
                 aws:
                   type: object
