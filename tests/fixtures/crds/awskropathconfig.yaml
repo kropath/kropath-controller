@@ -3060,6 +3060,50 @@ spec:
                           description: Org-wide mandatory WAF cloud resource tags.
                           additionalProperties:
                             type: string
+                    glue:
+                      type: object
+                      description: >-
+                        Glue-family mandatory governance fields applied across all Glue resource
+                        types. Cascade levels 1-2 in the ten-level priority chain (ADR-015 §5.3).
+                      properties:
+                        glueVersion:
+                          type: string
+                          description: >-
+                            Org-wide Glue version enforcement (e.g. "4.0").
+                            Empty string = not enforced.
+                        workerType:
+                          type: string
+                          description: >-
+                            Org-wide Glue worker type enforcement (e.g. "G.1X", "G.2X").
+                            Empty string = not enforced.
+                        numberOfWorkers:
+                          type: integer
+                          format: int64
+                          description: Org-wide Glue number of workers enforcement. 0 = not enforced.
+                        executionClass:
+                          type: string
+                          description: >-
+                            Org-wide Glue execution class enforcement (e.g. "FLEX", "STANDARD").
+                            Empty string = not enforced.
+                        timeout:
+                          type: integer
+                          format: int64
+                          description: Org-wide Glue job timeout in minutes. 0 = not enforced.
+                        maxRetries:
+                          type: integer
+                          format: int64
+                          description: Org-wide Glue max job retries. 0 = not enforced.
+                        maxConcurrentRuns:
+                          type: integer
+                          format: int64
+                          description: Org-wide Glue max concurrent runs. 0 = not enforced.
+                        securityConfiguration:
+                          type: string
+                          description: Org-wide Glue security configuration name. Empty string = not enforced.
+                        notifyDelayAfter:
+                          type: integer
+                          format: int64
+                          description: Org-wide Glue notification delay in minutes. 0 = not enforced.
 
                 defaults:
                   type: object
@@ -4295,6 +4339,45 @@ spec:
                           description: Default WAF cloud resource tags.
                           additionalProperties:
                             type: string
+                    glue:
+                      type: object
+                      description: >-
+                        Default Glue-family governance fields. Cascade levels 8-9 in the
+                        ten-level priority chain (ADR-015 §5.3). Applied only when no
+                        higher-priority source sets the field.
+                      properties:
+                        glueVersion:
+                          type: string
+                          description: Default Glue version (e.g. "4.0"). Empty string = no default.
+                        workerType:
+                          type: string
+                          description: Default Glue worker type. Empty string = no default.
+                        numberOfWorkers:
+                          type: integer
+                          format: int64
+                          description: Default Glue number of workers. 0 = no default.
+                        executionClass:
+                          type: string
+                          description: Default Glue execution class. Empty string = no default.
+                        timeout:
+                          type: integer
+                          format: int64
+                          description: Default Glue job timeout in minutes. 0 = no default.
+                        maxRetries:
+                          type: integer
+                          format: int64
+                          description: Default Glue max job retries. 0 = no default.
+                        maxConcurrentRuns:
+                          type: integer
+                          format: int64
+                          description: Default Glue max concurrent runs. 0 = no default.
+                        securityConfiguration:
+                          type: string
+                          description: Default Glue security configuration name. Empty string = no default.
+                        notifyDelayAfter:
+                          type: integer
+                          format: int64
+                          description: Default Glue notification delay in minutes. 0 = no default.
 
                 aws:
                   type: object
