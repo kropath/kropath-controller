@@ -214,18 +214,18 @@ spec:
                   properties:
                     encryptionAlgorithm:
                       type: string
-                      default: ""
+                      default: "aws:kms"
                       description: >-
-                        Default encryption algorithm. Empty string = no default (controller inherits from global tier).
+                        Default encryption algorithm. Baseline: aws:kms.
                     kmsKeyArn:
                       type: string
                       default: ""
                       description: Default KMS key ARN. Empty string = use AWS-managed key.
                     blockPublicAccess:
                       type: boolean
-                      default: false
+                      default: true
                       description: >-
-                        Default public access block. false = no default at this tier (S3Bucket RGD falls back to true if no tier sets this).
+                        Default public access block. Baseline: true.
                     versioning:
                       type: string
                       default: ""
@@ -260,9 +260,9 @@ spec:
                       description: Default object lock retention period in days. 0 = no default.
                     namingTemplate:
                       type: string
-                      default: ""
+                      default: "{namespace}-{name}-{account_id}"
                       description: >-
-                        Default naming template. Empty string = no default at this tier (controller inherits from global tier).
+                        Default naming template. S3 names are lowercased by the RGD.
                     tags:
                       type: object
                       default: {}
