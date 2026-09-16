@@ -3028,7 +3028,6 @@ spec:
                             Cannot be set together with defaults.quicksight.importMode.
                     waf:
                       type: object
-                      default: {}
                       description: >-
                         WAF-family mandatory governance fields applied across all WAF resource
                         types. Cascade levels 1-2 in the ten-level priority chain (ADR-015 §5.3).
@@ -3048,19 +3047,16 @@ spec:
                             Empty string = not enforced; instances cannot override when set.
                         cloudWatchMetricsEnabled:
                           type: boolean
-                          default: false
                           description: >-
                             When true, all WAF WebACLs must enable CloudWatch metrics org-wide.
                             false (zero value) = not enforced.
                         sampledRequestsEnabled:
                           type: boolean
-                          default: false
                           description: >-
                             When true, all WAF WebACLs must enable sampled request recording org-wide.
                             false (zero value) = not enforced.
                         tags:
                           type: object
-                          default: {}
                           description: Org-wide mandatory WAF cloud resource tags.
                           additionalProperties:
                             type: string
@@ -4273,7 +4269,6 @@ spec:
                             Cannot be set together with mandatory.quicksight.importMode.
                     waf:
                       type: object
-                      default: {}
                       description: >-
                         Default WAF-family governance fields. Cascade levels 8-9 in the
                         ten-level priority chain (ADR-015 §5.3). Applied only when no
@@ -4291,15 +4286,12 @@ spec:
                             Empty string = no default.
                         cloudWatchMetricsEnabled:
                           type: boolean
-                          default: false
                           description: Default CloudWatch metrics enablement for WAF WebACLs. false = no default.
                         sampledRequestsEnabled:
                           type: boolean
-                          default: false
                           description: Default sampled request recording enablement for WAF WebACLs. false = no default.
                         tags:
                           type: object
-                          default: {}
                           description: Default WAF cloud resource tags.
                           additionalProperties:
                             type: string
