@@ -3104,6 +3104,30 @@ spec:
                           type: integer
                           format: int64
                           description: Org-wide Glue notification delay in minutes. 0 = not enforced.
+                    eks:
+                      type: object
+                      description: >-
+                        EKS-family mandatory governance fields applied across all EKS resource
+                        types. Cascade levels 1-2 in the ten-level priority chain (ADR-015 §5.3).
+                      properties:
+                        version:
+                          type: string
+                          description: >-
+                            Org-wide EKS Kubernetes version enforcement (e.g. "1.31").
+                            Empty string = not enforced.
+                        authenticationMode:
+                          type: string
+                          description: >-
+                            Org-wide EKS authentication mode enforcement
+                            ("API" | "API_AND_CONFIG_MAP" | "CONFIG_MAP").
+                            Empty string = not enforced.
+                        loggingTypes:
+                          type: array
+                          description: >-
+                            Org-wide EKS control plane logging types enforcement.
+                            Empty list = not enforced.
+                          items:
+                            type: string
 
                 defaults:
                   type: object
@@ -4378,6 +4402,26 @@ spec:
                           type: integer
                           format: int64
                           description: Default Glue notification delay in minutes. 0 = no default.
+                    eks:
+                      type: object
+                      description: >-
+                        Default EKS-family governance fields. Cascade levels 8-9 in the
+                        ten-level priority chain (ADR-015 §5.3). Applied only when no
+                        higher-priority source sets the field.
+                      properties:
+                        version:
+                          type: string
+                          description: Default EKS Kubernetes version (e.g. "1.31"). Empty string = no default.
+                        authenticationMode:
+                          type: string
+                          description: >-
+                            Default EKS authentication mode
+                            ("API" | "API_AND_CONFIG_MAP" | "CONFIG_MAP"). Empty string = no default.
+                        loggingTypes:
+                          type: array
+                          description: Default EKS control plane logging types. Empty list = no default.
+                          items:
+                            type: string
 
                 aws:
                   type: object
