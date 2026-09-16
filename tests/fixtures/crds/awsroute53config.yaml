@@ -24,7 +24,7 @@ spec:
     plural: route53configs
     singular: route53config
     shortNames:
-      - awsr53cfg
+      - r53cfg
   scope: Namespaced
   versions:
     - name: v1alpha1
@@ -36,64 +36,56 @@ spec:
         openAPIV3Schema:
           type: object
           x-kubernetes-validations:
+            # Mutual-exclusivity: each governance field must not be set (non-zero/non-empty)
+            # in both mandatory and defaults simultaneously.
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.defaultTTL) &&
-                  self.spec.mandatory.defaultTTL > 0 &&
+                  self.spec.mandatory.defaultTTL != 0 &&
                   has(self.spec.defaults) && has(self.spec.defaults.defaultTTL) &&
-                  self.spec.defaults.defaultTTL > 0)
-              message: >-
-                defaultTTL cannot be set in both mandatory and defaults
+                  self.spec.defaults.defaultTTL != 0)
+              message: "defaultTTL cannot be set in both mandatory and defaults simultaneously."
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.healthCheckRequestInterval) &&
-                  self.spec.mandatory.healthCheckRequestInterval > 0 &&
+                  self.spec.mandatory.healthCheckRequestInterval != 0 &&
                   has(self.spec.defaults) && has(self.spec.defaults.healthCheckRequestInterval) &&
-                  self.spec.defaults.healthCheckRequestInterval > 0)
-              message: >-
-                healthCheckRequestInterval cannot be set in both mandatory and defaults
+                  self.spec.defaults.healthCheckRequestInterval != 0)
+              message: "healthCheckRequestInterval cannot be set in both mandatory and defaults simultaneously."
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.healthCheckFailureThreshold) &&
-                  self.spec.mandatory.healthCheckFailureThreshold > 0 &&
+                  self.spec.mandatory.healthCheckFailureThreshold != 0 &&
                   has(self.spec.defaults) && has(self.spec.defaults.healthCheckFailureThreshold) &&
-                  self.spec.defaults.healthCheckFailureThreshold > 0)
-              message: >-
-                healthCheckFailureThreshold cannot be set in both mandatory and defaults
+                  self.spec.defaults.healthCheckFailureThreshold != 0)
+              message: "healthCheckFailureThreshold cannot be set in both mandatory and defaults simultaneously."
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.resolverEndpointType) &&
                   self.spec.mandatory.resolverEndpointType != "" &&
                   has(self.spec.defaults) && has(self.spec.defaults.resolverEndpointType) &&
                   self.spec.defaults.resolverEndpointType != "")
-              message: >-
-                resolverEndpointType cannot be set in both mandatory and defaults
+              message: "resolverEndpointType cannot be set in both mandatory and defaults simultaneously."
+            # healthCheckRequestInterval valid values: 0 (not enforced), 10, or 30 only.
             - rule: >-
-                !has(self.spec.mandatory) ||
-                !has(self.spec.mandatory.healthCheckRequestInterval) ||
+                !has(self.spec.mandatory) || !has(self.spec.mandatory.healthCheckRequestInterval) ||
                 self.spec.mandatory.healthCheckRequestInterval == 0 ||
                 self.spec.mandatory.healthCheckRequestInterval == 10 ||
                 self.spec.mandatory.healthCheckRequestInterval == 30
-              message: >-
-                healthCheckRequestInterval must be 0, 10, or 30
+              message: "mandatory.healthCheckRequestInterval must be 0 (not enforced), 10, or 30."
             - rule: >-
-                !has(self.spec.defaults) ||
-                !has(self.spec.defaults.healthCheckRequestInterval) ||
+                !has(self.spec.defaults) || !has(self.spec.defaults.healthCheckRequestInterval) ||
                 self.spec.defaults.healthCheckRequestInterval == 0 ||
                 self.spec.defaults.healthCheckRequestInterval == 10 ||
                 self.spec.defaults.healthCheckRequestInterval == 30
-              message: >-
-                healthCheckRequestInterval must be 0, 10, or 30
+              message: "defaults.healthCheckRequestInterval must be 0 (not enforced), 10, or 30."
+            # healthCheckFailureThreshold valid range: 0 (not enforced) or 1–10.
             - rule: >-
-                !has(self.spec.mandatory) ||
-                !has(self.spec.mandatory.healthCheckFailureThreshold) ||
+                !has(self.spec.mandatory) || !has(self.spec.mandatory.healthCheckFailureThreshold) ||
                 (self.spec.mandatory.healthCheckFailureThreshold >= 0 &&
                  self.spec.mandatory.healthCheckFailureThreshold <= 10)
-              message: >-
-                healthCheckFailureThreshold must be between 0 and 10
+              message: "mandatory.healthCheckFailureThreshold must be 0 (not enforced) or 1–10."
             - rule: >-
-                !has(self.spec.defaults) ||
-                !has(self.spec.defaults.healthCheckFailureThreshold) ||
+                !has(self.spec.defaults) || !has(self.spec.defaults.healthCheckFailureThreshold) ||
                 (self.spec.defaults.healthCheckFailureThreshold >= 0 &&
                  self.spec.defaults.healthCheckFailureThreshold <= 10)
-              message: >-
-                healthCheckFailureThreshold must be between 0 and 10
+              message: "defaults.healthCheckFailureThreshold must be 0 (not enforced) or 1–10."
           properties:
             apiVersion:
               type: string
@@ -109,134 +101,151 @@ spec:
                   type: object
                   default: {}
                   description: >-
-                    Mandatory Route53 governance fields. Zero-value / nil means the field
-                    is not enforced at this tier.
+                    Mandatory Route53 governance fields. Zero-value (0 for integers, "" for
+                    strings) means the field is not enforced at this tier. Non-zero/non-empty
+                    values override the instance spec and cannot be overridden by defaults.
                   properties:
                     defaultTTL:
                       type: integer
                       format: int64
-                      default: 0
                       minimum: 0
                       description: >-
-                        Default TTL in seconds for DNS records. 0 = not enforced.
-                        Does not apply to alias records.
+                        0 = not enforced. >0 = all record sets org-wide use this TTL (seconds).
+                        Does not apply to alias records. Instance cannot override when set.
                     healthCheckRequestInterval:
                       type: integer
                       format: int64
-                      default: 0
+                      minimum: 0
                       description: >-
-                        Health check polling interval in seconds. 0 = not enforced.
-                        Valid non-zero values: 10 (fast) or 30 (standard).
+                        0 = not enforced. 10 = fast interval (higher cost). 30 = standard interval.
+                        Instance cannot override when set.
                     healthCheckFailureThreshold:
                       type: integer
                       format: int64
-                      default: 0
                       minimum: 0
-                      maximum: 10
                       description: >-
-                        Consecutive failures before marking a health check unhealthy.
-                        0 = not enforced. Valid non-zero range: 1–10.
+                        0 = not enforced. 1–10 = all health checks use this failure threshold.
+                        Instance cannot override when set.
                     resolverEndpointType:
                       type: string
-                      default: ""
                       description: >-
-                        IP address family for Resolver endpoints. Empty = not enforced.
-                        Valid values: IPV4, IPV6, DUALSTACK.
+                        Empty string = not enforced. IPV4 | IPV6 | DUALSTACK = all resolver
+                        endpoints use this IP type. Instance cannot override when set.
                     tags:
                       type: object
                       default: {}
+                      description: >-
+                        Mandatory cloud tags merged into all Route53 resources.
+                        Instance cannot remove mandatory tags.
                       additionalProperties:
                         type: string
                     syncedLabels:
                       type: object
                       default: {}
+                      description: >-
+                        Mandatory labels synced to K8s metadata.labels (prefixed aws.kropath.run/)
+                        and cloud tags. Instance cannot remove mandatory synced labels.
                       additionalProperties:
                         type: string
                     syncedAnnotations:
                       type: object
                       default: {}
+                      description: >-
+                        Mandatory annotations synced to K8s metadata.annotations.
+                        Instance cannot remove mandatory synced annotations.
                       additionalProperties:
                         type: string
                 defaults:
                   type: object
                   default: {}
                   description: >-
-                    Default Route53 governance fields. Zero-value / nil means no default
+                    Default Route53 governance fields. Applied when the instance spec is empty
+                    at that field. Zero-value (0 for integers, "" for strings) means no default
                     is provided at this tier.
                   properties:
                     defaultTTL:
                       type: integer
                       format: int64
-                      default: 0
                       minimum: 0
-                      description: Default TTL in seconds for DNS records. 0 = no default.
+                      description: >-
+                        Default TTL for record sets in seconds. 0 = no profile default (use
+                        Route53 built-in fallback of 300).
                     healthCheckRequestInterval:
                       type: integer
                       format: int64
-                      default: 0
+                      minimum: 0
                       description: >-
-                        Default health check polling interval in seconds. 0 = no default.
-                        Valid non-zero values: 10 or 30.
+                        Default health check request interval. 0 = no profile default. 10 or 30.
                     healthCheckFailureThreshold:
                       type: integer
                       format: int64
-                      default: 0
                       minimum: 0
-                      maximum: 10
                       description: >-
-                        Default consecutive-failure threshold. 0 = no default.
-                        Valid non-zero range: 1–10.
+                        Default health check failure threshold (1–10). 0 = no profile default.
                     resolverEndpointType:
                       type: string
-                      default: ""
                       description: >-
-                        Default IP address family for Resolver endpoints. Empty = no default.
-                        Valid values: IPV4, IPV6, DUALSTACK.
+                        Default resolver endpoint IP type. Empty string = no default; use
+                        instance value (Route53 defaults to IPV4). IPV4 | IPV6 | DUALSTACK.
                     tags:
                       type: object
                       default: {}
+                      description: Baseline cloud tags applied when instance does not override.
                       additionalProperties:
                         type: string
                     syncedLabels:
                       type: object
                       default: {}
+                      description: Baseline synced labels applied when instance does not override.
                       additionalProperties:
                         type: string
                     syncedAnnotations:
                       type: object
                       default: {}
+                      description: Baseline synced annotations applied when instance does not override.
                       additionalProperties:
                         type: string
             status:
               type: object
               properties:
-                observedGeneration:
-                  type: integer
-                  format: int64
-                syncedTimestamp:
-                  type: string
                 conditions:
                   type: array
+                  description: Conditions represent the latest available observations of an object state.
+                  x-kubernetes-list-type: map
+                  x-kubernetes-list-map-keys:
+                    - type
                   items:
                     type: object
+                    required:
+                      - type
+                      - status
                     properties:
                       type:
                         type: string
                       status:
                         type: string
+                        enum: ["True", "False", "Unknown"]
+                      observedGeneration:
+                        type: integer
+                        format: int64
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
                       reason:
                         type: string
                       message:
                         type: string
-                      lastTransitionTime:
-                        type: string
-                      observedGeneration:
-                        type: integer
-                        format: int64
+                observedGeneration:
+                  type: integer
+                  format: int64
+                  description: Generation of the spec most recently reconciled by kropath-controller.
+                syncedTimestamp:
+                  type: string
+                  description: RFC3339 timestamp of the last successful reconcile.
                 effectiveConfig:
                   type: object
                   description: >-
-                    Pre-merged Route53 governance config written by kropath-controller.
+                    Pre-merged governance config written by kropath-controller. All Route53
                     RGDs read exclusively from this field via a single externalRef lookup.
                   properties:
                     mandatory:

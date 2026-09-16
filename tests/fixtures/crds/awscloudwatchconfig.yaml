@@ -24,7 +24,7 @@ spec:
     plural: cloudwatchconfigs
     singular: cloudwatchconfig
     shortNames:
-      - awscwcfg
+      - cwcfg
   scope: Namespaced
   versions:
     - name: v1alpha1
@@ -37,31 +37,47 @@ spec:
           type: object
           x-kubernetes-validations:
             - rule: >-
-                !(has(self.spec.mandatory) && has(self.spec.mandatory.actionsEnabled) &&
-                  has(self.spec.defaults) && has(self.spec.defaults.actionsEnabled))
-              message: >-
-                actionsEnabled cannot be set in both mandatory and defaults
+                !(has(self.spec.mandatory.actionsEnabled) &&
+                  has(self.spec.defaults.actionsEnabled))
+              message: "actionsEnabled must be set in either mandatory or defaults, not both."
             - rule: >-
-                !(has(self.spec.mandatory) && has(self.spec.mandatory.treatMissingData) &&
-                  self.spec.mandatory.treatMissingData != "" &&
-                  has(self.spec.defaults) && has(self.spec.defaults.treatMissingData) &&
-                  self.spec.defaults.treatMissingData != "")
-              message: >-
-                treatMissingData cannot be set in both mandatory and defaults
+                !(
+                  (has(self.spec.mandatory.treatMissingData) && self.spec.mandatory.treatMissingData != '') &&
+                  (has(self.spec.defaults.treatMissingData) && self.spec.defaults.treatMissingData != '')
+                )
+              message: "treatMissingData must be set in either mandatory or defaults, not both."
             - rule: >-
-                !(has(self.spec.mandatory) && has(self.spec.mandatory.outputFormat) &&
-                  self.spec.mandatory.outputFormat != "" &&
-                  has(self.spec.defaults) && has(self.spec.defaults.outputFormat) &&
-                  self.spec.defaults.outputFormat != "")
-              message: >-
-                outputFormat cannot be set in both mandatory and defaults
+                !(
+                  (has(self.spec.mandatory.outputFormat) && self.spec.mandatory.outputFormat != '') &&
+                  (has(self.spec.defaults.outputFormat) && self.spec.defaults.outputFormat != '')
+                )
+              message: "outputFormat must be set in either mandatory or defaults, not both."
             - rule: >-
-                !(has(self.spec.mandatory) && has(self.spec.mandatory.namingTemplate) &&
-                  self.spec.mandatory.namingTemplate != "" &&
-                  has(self.spec.defaults) && has(self.spec.defaults.namingTemplate) &&
-                  self.spec.defaults.namingTemplate != "")
-              message: >-
-                namingTemplate cannot be set in both mandatory and defaults
+                !(
+                  (has(self.spec.mandatory.namingTemplate) && self.spec.mandatory.namingTemplate != '') &&
+                  (has(self.spec.defaults.namingTemplate) && self.spec.defaults.namingTemplate != '')
+                )
+              message: "namingTemplate must be set in either mandatory or defaults, not both."
+            - rule: >-
+                !has(self.spec.mandatory.treatMissingData) ||
+                self.spec.mandatory.treatMissingData == '' ||
+                self.spec.mandatory.treatMissingData in ['breaching', 'notBreaching', 'ignore', 'missing']
+              message: "mandatory.treatMissingData must be empty or one of: breaching, notBreaching, ignore, missing."
+            - rule: >-
+                !has(self.spec.defaults.treatMissingData) ||
+                self.spec.defaults.treatMissingData == '' ||
+                self.spec.defaults.treatMissingData in ['breaching', 'notBreaching', 'ignore', 'missing']
+              message: "defaults.treatMissingData must be empty or one of: breaching, notBreaching, ignore, missing."
+            - rule: >-
+                !has(self.spec.mandatory.outputFormat) ||
+                self.spec.mandatory.outputFormat == '' ||
+                self.spec.mandatory.outputFormat in ['json', 'opentelemetry1.0', 'opentelemetry0.7']
+              message: "mandatory.outputFormat must be empty or one of: json, opentelemetry1.0, opentelemetry0.7."
+            - rule: >-
+                !has(self.spec.defaults.outputFormat) ||
+                self.spec.defaults.outputFormat == '' ||
+                self.spec.defaults.outputFormat in ['json', 'opentelemetry1.0', 'opentelemetry0.7']
+              message: "defaults.outputFormat must be empty or one of: json, opentelemetry1.0, opentelemetry0.7."
           properties:
             apiVersion:
               type: string
@@ -77,122 +93,169 @@ spec:
                   type: object
                   default: {}
                   description: >-
-                    Mandatory CloudWatch governance fields. Zero-value / nil means the field
-                    is not enforced at this tier.
+                    Mandatory CloudWatch governance fields. Non-empty values enforce governance
+                    constraints regardless of instance spec or defaults.
+                    For actionsEnabled: absent = not enforced; true/false = forced.
+                    For string fields: empty string = not enforced.
                   properties:
                     actionsEnabled:
                       type: boolean
-                      nullable: true
                       description: >-
-                        Enforce alarm actions org-wide. nil = not enforced.
-                        Distinct from false — nil means this level does not participate.
+                        Forces alarm actions enabled/disabled for all alarms in scope.
+                        Absent = not enforced; true/false = forced. Nil ≠ false.
+                        Cannot be set in both mandatory and defaults tiers.
                     treatMissingData:
                       type: string
-                      default: ""
                       description: >-
-                        Missing data treatment. Empty = not enforced.
-                        Allowed: breaching | notBreaching | ignore | missing.
+                        Forces missing data treatment for all alarms. Empty string = not enforced.
+                        Allowed values: "", breaching, notBreaching, ignore, missing.
+                        Cannot be set in both mandatory and defaults tiers.
                     outputFormat:
                       type: string
-                      default: ""
                       description: >-
-                        Metric stream output format. Empty = not enforced.
-                        Allowed: json | opentelemetry1.0 | opentelemetry0.7.
+                        Forces output format for all metric streams. Empty string = not enforced.
+                        Allowed values: "", json, opentelemetry1.0, opentelemetry0.7.
+                        Cannot be set in both mandatory and defaults tiers.
                     namingTemplate:
                       type: string
-                      default: ""
-                      description: Naming template (e.g. "{namespace}-{name}"). Empty = not enforced.
+                      description: >-
+                        Forces naming pattern; spec.nameOverride is the only escape hatch.
+                        Empty string = not enforced.
+                        Token vocabulary: {name}, {namespace}, {account_id}, {region}, {configRef}, {tag.<key>}.
+                        Cannot be set in both mandatory and defaults tiers.
                     tags:
                       type: object
                       default: {}
+                      description: >-
+                        CloudWatch-specific mandatory cloud tags applied to all CloudWatchAlarm
+                        and CloudWatchMetricStream resources under this profile.
+                        Uses additive merge semantics with KropathConfig.mandatory.tags.
+                        Not applied to CloudWatchDashboard (no cloud tag support in ACK).
                       additionalProperties:
                         type: string
                     syncedLabels:
                       type: object
                       default: {}
+                      description: >-
+                        Labels synced to both metadata.labels (aws.kropath.run/ prefix) and
+                        cloud resource tags for CloudWatchAlarm and CloudWatchMetricStream
+                        (ADR-015 section 6.1). Not synced to Dashboard cloud tags.
                       additionalProperties:
                         type: string
                     syncedAnnotations:
                       type: object
                       default: {}
+                      description: >-
+                        Annotations synced to metadata.annotations (aws.kropath.run/ prefix)
+                        for all CloudWatch resource types.
                       additionalProperties:
                         type: string
                 defaults:
                   type: object
                   default: {}
                   description: >-
-                    Default CloudWatch governance fields. Zero-value / nil means no default
-                    is provided at this tier.
+                    Default CloudWatch governance fields. Applied when no higher-priority
+                    source provides a value. Zero-value means no default from this level.
                   properties:
                     actionsEnabled:
                       type: boolean
-                      nullable: true
-                      description: Default alarm actions setting. nil = no default.
+                      description: >-
+                        Default alarm actions enablement. Absent = not defaulted at this tier;
+                        RGD built-in true applies. Nil ≠ false.
+                        Cannot be set in both mandatory and defaults tiers.
                     treatMissingData:
                       type: string
-                      default: ""
-                      description: Default missing data treatment. Empty = no default.
+                      description: >-
+                        Default missing data treatment for alarms. AWS default: alarm state
+                        unchanged on missing data. Empty string = not set at this tier.
+                        Allowed values: "", breaching, notBreaching, ignore, missing.
+                        Cannot be set in both mandatory and defaults tiers.
                     outputFormat:
                       type: string
-                      default: ""
-                      description: Default metric stream output format. Empty = no default.
+                      description: >-
+                        Default output format for metric streams. JSON output by default.
+                        Empty string = not set at this tier.
+                        Allowed values: "", json, opentelemetry1.0, opentelemetry0.7.
+                        Cannot be set in both mandatory and defaults tiers.
                     namingTemplate:
                       type: string
-                      default: ""
-                      description: Default naming template. Empty = no default.
+                      description: >-
+                        Default naming template for CloudWatch resource names.
+                        CloudWatch alarm and metric stream names are account+region scoped.
+                        Token vocabulary: {name}, {namespace}, {account_id}, {region}, {configRef}, {tag.<key>}.
+                        Cannot be set in both mandatory and defaults tiers.
                     tags:
                       type: object
                       default: {}
+                      description: >-
+                        Default cloud resource tags applied to CloudWatchAlarm and
+                        CloudWatchMetricStream resources. Overridable per-instance.
                       additionalProperties:
                         type: string
                     syncedLabels:
                       type: object
                       default: {}
+                      description: >-
+                        Default labels synced to child resources and cloud tags.
+                        Overridable per-instance.
                       additionalProperties:
                         type: string
                     syncedAnnotations:
                       type: object
                       default: {}
+                      description: >-
+                        Default annotations synced to child resources. Overridable per-instance.
                       additionalProperties:
                         type: string
             status:
               type: object
               properties:
-                observedGeneration:
-                  type: integer
-                  format: int64
-                syncedTimestamp:
-                  type: string
                 conditions:
                   type: array
+                  description: Conditions represent the latest available observations of an object state.
+                  x-kubernetes-list-type: map
+                  x-kubernetes-list-map-keys:
+                    - type
                   items:
                     type: object
+                    required:
+                      - type
+                      - status
                     properties:
                       type:
                         type: string
                       status:
                         type: string
+                        enum: ["True", "False", "Unknown"]
+                      observedGeneration:
+                        type: integer
+                        format: int64
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
                       reason:
                         type: string
                       message:
                         type: string
-                      lastTransitionTime:
-                        type: string
-                      observedGeneration:
-                        type: integer
-                        format: int64
+                observedGeneration:
+                  type: integer
+                  format: int64
+                  description: Generation of the spec most recently reconciled by kropath-controller.
+                syncedTimestamp:
+                  type: string
+                  description: RFC3339 timestamp of the last successful reconcile.
                 effectiveConfig:
                   type: object
                   description: >-
-                    Pre-merged CloudWatch governance config written by kropath-controller.
-                    RGDs read exclusively from this field via a single externalRef lookup.
+                    Pre-merged governance config written by kropath-controller. RGDs read
+                    exclusively from this field via a single externalRef lookup.
+                    Combines KropathConfig.cloudwatch.* and CloudWatchConfig spec tiers.
                   properties:
                     mandatory:
                       type: object
                       properties:
                         actionsEnabled:
                           type: boolean
-                          nullable: true
                         treatMissingData:
                           type: string
                         outputFormat:
@@ -216,7 +279,6 @@ spec:
                       properties:
                         actionsEnabled:
                           type: boolean
-                          nullable: true
                         treatMissingData:
                           type: string
                         outputFormat:
@@ -238,7 +300,7 @@ spec:
                     aws:
                       type: object
                       properties:
-                        accountId:
-                          type: string
                         region:
+                          type: string
+                        accountId:
                           type: string

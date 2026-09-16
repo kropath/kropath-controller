@@ -24,7 +24,7 @@ spec:
     plural: acmconfigs
     singular: acmconfig
     shortNames:
-      - awsacmcfg
+      - acmcfg
   scope: Namespaced
   versions:
     - name: v1alpha1
@@ -41,29 +41,25 @@ spec:
                   self.spec.mandatory.keyAlgorithm != "" &&
                   has(self.spec.defaults) && has(self.spec.defaults.keyAlgorithm) &&
                   self.spec.defaults.keyAlgorithm != "")
-              message: >-
-                keyAlgorithm cannot be set in both mandatory and defaults
+              message: "keyAlgorithm cannot be set in both mandatory and defaults"
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.certificateTransparencyLogging) &&
                   self.spec.mandatory.certificateTransparencyLogging != "" &&
                   has(self.spec.defaults) && has(self.spec.defaults.certificateTransparencyLogging) &&
                   self.spec.defaults.certificateTransparencyLogging != "")
-              message: >-
-                certificateTransparencyLogging cannot be set in both mandatory and defaults
+              message: "certificateTransparencyLogging cannot be set in both mandatory and defaults"
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.usageMode) &&
                   self.spec.mandatory.usageMode != "" &&
                   has(self.spec.defaults) && has(self.spec.defaults.usageMode) &&
                   self.spec.defaults.usageMode != "")
-              message: >-
-                usageMode cannot be set in both mandatory and defaults
+              message: "usageMode cannot be set in both mandatory and defaults"
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.keyStorageSecurityStandard) &&
                   self.spec.mandatory.keyStorageSecurityStandard != "" &&
                   has(self.spec.defaults) && has(self.spec.defaults.keyStorageSecurityStandard) &&
                   self.spec.defaults.keyStorageSecurityStandard != "")
-              message: >-
-                keyStorageSecurityStandard cannot be set in both mandatory and defaults
+              message: "keyStorageSecurityStandard cannot be set in both mandatory and defaults"
           properties:
             apiVersion:
               type: string
@@ -79,95 +75,138 @@ spec:
                   type: object
                   default: {}
                   description: >-
-                    Mandatory Certificate Manager governance fields. Zero-value / nil means the
-                    field is not enforced at this tier.
+                    Mandatory ACM governance fields. Zero-value means the field is not
+                    enforced at this tier. Non-empty scalar fields override the instance spec.
                   properties:
                     keyAlgorithm:
                       type: string
-                      default: ""
                       description: >-
-                        Enforces the RSA or ECDSA key algorithm for certificates and CAs.
-                        e.g. "RSA_2048", "EC_prime256v1".
+                        Empty string = not enforced. Valid: RSA_2048 | EC_prime256v1 | EC_secp384r1.
                     certificateTransparencyLogging:
                       type: string
-                      default: ""
                       description: >-
-                        Enforces certificate transparency logging preference.
-                        e.g. "ENABLED", "DISABLED".
+                        Empty string = not enforced. Valid: ENABLED | DISABLED.
                     usageMode:
                       type: string
-                      default: ""
                       description: >-
-                        Enforces the private CA usage mode.
-                        e.g. "GENERAL_PURPOSE", "SHORT_LIVED_CERTIFICATE".
+                        Empty string = not enforced. Valid: GENERAL_PURPOSE | SHORT_LIVED_CERTIFICATE.
+                        Applies to private CAs only.
                     keyStorageSecurityStandard:
                       type: string
-                      default: ""
                       description: >-
-                        Enforces the FIPS level for private CAs.
-                        e.g. "FIPS_140_2_LEVEL_2_OR_HIGHER".
+                        Empty string = not enforced. Valid: FIPS_140_2_LEVEL_2_OR_HIGHER |
+                        FIPS_140_2_LEVEL_3_OR_HIGHER. Applies to private CAs only.
                     tags:
                       type: object
                       default: {}
+                      description: >-
+                        Mandatory cloud tags merged into all Certificate Manager resources.
+                        Instance cannot remove mandatory tags.
                       additionalProperties:
                         type: string
                     syncedLabels:
                       type: object
                       default: {}
+                      description: >-
+                        Mandatory labels synced to K8s metadata.labels (prefixed aws.kropath.run/)
+                        and cloud tags. Instance cannot remove mandatory synced labels.
                       additionalProperties:
                         type: string
                     syncedAnnotations:
                       type: object
                       default: {}
+                      description: >-
+                        Mandatory annotations synced to K8s metadata.annotations.
+                        Instance cannot remove mandatory synced annotations.
                       additionalProperties:
                         type: string
                 defaults:
                   type: object
                   default: {}
                   description: >-
-                    Default Certificate Manager governance fields. Zero-value / nil means the
-                    field is not enforced at this tier.
+                    Default ACM governance fields. Applied when the instance spec is empty at
+                    that field. Zero-value means no default is provided at this tier.
                   properties:
                     keyAlgorithm:
                       type: string
-                      default: ""
+                      description: >-
+                        Default key algorithm. Valid: RSA_2048 | EC_prime256v1 | EC_secp384r1.
                     certificateTransparencyLogging:
                       type: string
-                      default: ""
+                      description: >-
+                        Default CT logging preference. Valid: ENABLED | DISABLED.
+                        Only meaningful for public certificates.
                     usageMode:
                       type: string
-                      default: ""
+                      description: >-
+                        Default usage mode for private CAs. Valid: GENERAL_PURPOSE |
+                        SHORT_LIVED_CERTIFICATE.
                     keyStorageSecurityStandard:
                       type: string
-                      default: ""
+                      description: >-
+                        Default FIPS key storage security standard for private CAs.
+                        Valid: FIPS_140_2_LEVEL_2_OR_HIGHER | FIPS_140_2_LEVEL_3_OR_HIGHER.
                     tags:
                       type: object
                       default: {}
+                      description: Baseline cloud tags applied when instance does not override.
                       additionalProperties:
                         type: string
                     syncedLabels:
                       type: object
                       default: {}
+                      description: Baseline synced labels applied when instance does not override.
                       additionalProperties:
                         type: string
                     syncedAnnotations:
                       type: object
                       default: {}
+                      description: Baseline synced annotations applied when instance does not override.
                       additionalProperties:
                         type: string
             status:
               type: object
               properties:
+                conditions:
+                  type: array
+                  description: Conditions represent the latest available observations of an object state.
+                  x-kubernetes-list-type: map
+                  x-kubernetes-list-map-keys:
+                    - type
+                  items:
+                    type: object
+                    required:
+                      - type
+                      - status
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                        enum: ["True", "False", "Unknown"]
+                      observedGeneration:
+                        type: integer
+                        format: int64
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                observedGeneration:
+                  type: integer
+                  format: int64
+                  description: Generation of the spec most recently reconciled by kropath-controller.
+                syncedTimestamp:
+                  type: string
+                  description: RFC3339 timestamp of the last successful reconcile.
                 effectiveConfig:
                   type: object
+                  description: >-
+                    Pre-merged governance config written by kropath-controller. All Certificate
+                    Manager RGDs read exclusively from this field via a single externalRef lookup.
                   properties:
-                    aws:
-                      type: object
-                      properties:
-                        accountId:
-                          type: string
-                        region:
-                          type: string
                     mandatory:
                       type: object
                       properties:
@@ -214,33 +253,10 @@ spec:
                           type: object
                           additionalProperties:
                             type: string
-                conditions:
-                  type: array
-                  items:
-                    type: object
-                    required:
-                      - lastTransitionTime
-                      - message
-                      - reason
-                      - status
-                      - type
-                    properties:
-                      lastTransitionTime:
-                        type: string
-                        format: date-time
-                      message:
-                        type: string
-                      observedGeneration:
-                        type: integer
-                        format: int64
-                      reason:
-                        type: string
-                      status:
-                        type: string
-                      type:
-                        type: string
-                observedGeneration:
-                  type: integer
-                  format: int64
-                syncedTimestamp:
-                  type: string
+                    aws:
+                      type: object
+                      properties:
+                        accountId:
+                          type: string
+                        region:
+                          type: string

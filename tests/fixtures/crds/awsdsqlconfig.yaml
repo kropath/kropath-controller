@@ -24,7 +24,7 @@ spec:
     plural: dsqlconfigs
     singular: dsqlconfig
     shortNames:
-      - awsdsqlcfg
+      - dsqlcfg
   scope: Namespaced
   versions:
     - name: v1alpha1
@@ -35,23 +35,6 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
-          x-kubernetes-validations:
-            # Boolean fields: zero-value false = not enforced (value boolean pattern, not pointer).
-            - rule: >-
-                !(has(self.spec.mandatory) && has(self.spec.mandatory.deletionProtectionEnabled) &&
-                  self.spec.mandatory.deletionProtectionEnabled == true &&
-                  has(self.spec.defaults) && has(self.spec.defaults.deletionProtectionEnabled) &&
-                  self.spec.defaults.deletionProtectionEnabled == true)
-              message: >-
-                deletionProtectionEnabled cannot be set to true in both mandatory and defaults
-            # String fields: zero-value "" = not enforced.
-            - rule: >-
-                !(has(self.spec.mandatory) && has(self.spec.mandatory.kmsEncryptionKey) &&
-                  self.spec.mandatory.kmsEncryptionKey != "" &&
-                  has(self.spec.defaults) && has(self.spec.defaults.kmsEncryptionKey) &&
-                  self.spec.defaults.kmsEncryptionKey != "")
-              message: >-
-                kmsEncryptionKey cannot be set in both mandatory and defaults
           properties:
             apiVersion:
               type: string
@@ -61,45 +44,158 @@ spec:
               type: object
             spec:
               type: object
+              default: {}
+              # x-kubernetes-validations on spec-level so rules reference self.mandatory.* not self.spec.mandatory.*
+              # (Design Reviewer note on PR #308). Aurora DSQL has no namingTemplate (naming exemption KRO-236).
+              x-kubernetes-validations:
+                - rule: >-
+                    !(has(self.mandatory) && has(self.mandatory.deletionProtectionEnabled) &&
+                      self.mandatory.deletionProtectionEnabled == true &&
+                      has(self.defaults) && has(self.defaults.deletionProtectionEnabled) &&
+                      self.defaults.deletionProtectionEnabled == true)
+                  message: >-
+                    deletionProtectionEnabled cannot be set to true in both mandatory and defaults
+                - rule: >-
+                    !(has(self.mandatory) && has(self.mandatory.kmsEncryptionKey) &&
+                      self.mandatory.kmsEncryptionKey != "" &&
+                      has(self.defaults) && has(self.defaults.kmsEncryptionKey) &&
+                      self.defaults.kmsEncryptionKey != "")
+                  message: >-
+                    kmsEncryptionKey cannot be set in both mandatory and defaults
               properties:
                 mandatory:
                   type: object
+                  default: {}
+                  description: >-
+                    Mandatory DSQLConfig governance fields. Zero-value means the field is not
+                    enforced at this tier. mandatory.deletionProtectionEnabled=false means
+                    "not enforced" (boolean zero-value sentinel), not "force off".
                   properties:
                     deletionProtectionEnabled:
                       type: boolean
+                      description: >-
+                        When true, deletion protection is enforced on all DSQL clusters
+                        using this profile. false = not enforced (zero-value sentinel).
                     kmsEncryptionKey:
                       type: string
+                      description: >-
+                        ARN of the customer-managed KMS key to enforce. Empty string = not enforced;
+                        AWS-owned key is used unless the instance or defaults tier specifies one.
                     tags:
                       type: object
+                      default: {}
                       additionalProperties:
                         type: string
                     syncedLabels:
                       type: object
+                      default: {}
                       additionalProperties:
                         type: string
                     syncedAnnotations:
                       type: object
+                      default: {}
                       additionalProperties:
                         type: string
                 defaults:
                   type: object
+                  default: {}
+                  description: >-
+                    Default DSQLConfig governance fields. Applied when the instance spec field
+                    is not set. Zero-value means no default is provided at this tier.
                   properties:
                     deletionProtectionEnabled:
                       type: boolean
+                      description: >-
+                        Default deletion protection setting. true = enable deletion protection
+                        on clusters that do not explicitly set this field.
                     kmsEncryptionKey:
                       type: string
+                      description: >-
+                        Default KMS key ARN. Empty string = use AWS-owned KMS key (provider default).
                     tags:
                       type: object
+                      default: {}
                       additionalProperties:
                         type: string
                     syncedLabels:
                       type: object
+                      default: {}
                       additionalProperties:
                         type: string
                     syncedAnnotations:
                       type: object
+                      default: {}
                       additionalProperties:
                         type: string
             status:
               type: object
-              x-kubernetes-preserve-unknown-fields: true
+              properties:
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                      lastTransitionTime:
+                        type: string
+                      observedGeneration:
+                        type: integer
+                        format: int64
+                effectiveConfig:
+                  type: object
+                  description: >-
+                    Pre-merged governance config written by kropath-controller. DSQLCluster RGDs
+                    read exclusively from this field via a single resources.get() call (ADR-010).
+                  properties:
+                    mandatory:
+                      type: object
+                      properties:
+                        deletionProtectionEnabled:
+                          type: boolean
+                        kmsEncryptionKey:
+                          type: string
+                        tags:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedAnnotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                    defaults:
+                      type: object
+                      properties:
+                        deletionProtectionEnabled:
+                          type: boolean
+                        kmsEncryptionKey:
+                          type: string
+                        tags:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedAnnotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                    aws:
+                      type: object
+                      properties:
+                        accountId:
+                          type: string
+                        region:
+                          type: string

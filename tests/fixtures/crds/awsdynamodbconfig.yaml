@@ -24,7 +24,7 @@ spec:
     plural: dynamodbconfigs
     singular: dynamodbconfig
     shortNames:
-      - awsddbcfg
+      - ddbcfg
   scope: Namespaced
   versions:
     - name: v1alpha1
@@ -37,33 +37,61 @@ spec:
           type: object
           x-kubernetes-validations:
             - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.encryptionEnabled) &&
+                  self.spec.mandatory.encryptionEnabled == true &&
+                  has(self.spec.defaults) && has(self.spec.defaults.encryptionEnabled) &&
+                  self.spec.defaults.encryptionEnabled == true)
+              message: >-
+                encryptionEnabled cannot be set in both mandatory and defaults simultaneously.
+            - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.kmsMasterKeyId) &&
                   self.spec.mandatory.kmsMasterKeyId != "" &&
                   has(self.spec.defaults) && has(self.spec.defaults.kmsMasterKeyId) &&
                   self.spec.defaults.kmsMasterKeyId != "")
               message: >-
-                kmsMasterKeyId cannot be set in both mandatory and defaults
+                kmsMasterKeyId cannot be set in both mandatory and defaults simultaneously.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.deletionProtectionEnabled) &&
+                  self.spec.mandatory.deletionProtectionEnabled == true &&
+                  has(self.spec.defaults) && has(self.spec.defaults.deletionProtectionEnabled) &&
+                  self.spec.defaults.deletionProtectionEnabled == true)
+              message: >-
+                deletionProtectionEnabled cannot be set in both mandatory and defaults simultaneously.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.pointInTimeRecoveryEnabled) &&
+                  self.spec.mandatory.pointInTimeRecoveryEnabled == true &&
+                  has(self.spec.defaults) && has(self.spec.defaults.pointInTimeRecoveryEnabled) &&
+                  self.spec.defaults.pointInTimeRecoveryEnabled == true)
+              message: >-
+                pointInTimeRecoveryEnabled cannot be set in both mandatory and defaults simultaneously.
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.billingMode) &&
                   self.spec.mandatory.billingMode != "" &&
                   has(self.spec.defaults) && has(self.spec.defaults.billingMode) &&
                   self.spec.defaults.billingMode != "")
               message: >-
-                billingMode cannot be set in both mandatory and defaults
+                billingMode cannot be set in both mandatory and defaults simultaneously.
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.tableClass) &&
                   self.spec.mandatory.tableClass != "" &&
                   has(self.spec.defaults) && has(self.spec.defaults.tableClass) &&
                   self.spec.defaults.tableClass != "")
               message: >-
-                tableClass cannot be set in both mandatory and defaults
+                tableClass cannot be set in both mandatory and defaults simultaneously.
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.contributorInsights) &&
                   self.spec.mandatory.contributorInsights != "" &&
                   has(self.spec.defaults) && has(self.spec.defaults.contributorInsights) &&
                   self.spec.defaults.contributorInsights != "")
               message: >-
-                contributorInsights cannot be set in both mandatory and defaults
+                contributorInsights cannot be set in both mandatory and defaults simultaneously.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.namingTemplate) &&
+                  self.spec.mandatory.namingTemplate != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.namingTemplate) &&
+                  self.spec.defaults.namingTemplate != "")
+              message: >-
+                namingTemplate cannot be set in both mandatory and defaults simultaneously.
           properties:
             apiVersion:
               type: string
@@ -79,140 +107,195 @@ spec:
                   type: object
                   default: {}
                   description: >-
-                    Mandatory DynamoDB governance fields. Zero-value / nil means the field
-                    is not enforced at this tier.
+                    Mandatory DynamoDB governance fields. Non-zero values enforce governance
+                    constraints regardless of instance spec or defaults. Zero-value means
+                    the field is not enforced at this tier.
                   properties:
                     encryptionEnabled:
                       type: boolean
+                      default: false
                       description: >-
-                        Enable SSE encryption. Omit (nil) = not enforced at this tier;
-                        false = explicitly disabled. No default declared — nil (*bool)
-                        detection is required for the cascade priority chain.
+                        When true, forces customer-managed KMS encryption on all DynamoDB tables.
+                        false = not enforced at this tier.
                     kmsMasterKeyId:
                       type: string
                       default: ""
-                      description: KMS key ARN/ID for SSE-KMS. Empty = not enforced.
+                      description: >-
+                        Mandatory KMS key ARN or alias for customer-managed encryption.
+                        Empty string = not enforced.
                     deletionProtectionEnabled:
                       type: boolean
-                      description: Prevent table deletion. Omit (nil) = not enforced.
+                      default: false
+                      description: >-
+                        When true, forces deletion protection on all DynamoDB tables.
+                        false = not enforced at this tier.
                     pointInTimeRecoveryEnabled:
                       type: boolean
-                      description: Enable PITR. Omit (nil) = not enforced.
+                      default: false
+                      description: >-
+                        When true, forces point-in-time recovery on all DynamoDB tables.
+                        false = not enforced at this tier.
                     billingMode:
                       type: string
                       default: ""
-                      description: Capacity billing mode ("PROVISIONED" or "PAY_PER_REQUEST"). Empty = not enforced.
+                      description: >-
+                        Mandatory billing mode. Empty string = not enforced.
+                        One of: "PROVISIONED", "PAY_PER_REQUEST".
                     tableClass:
                       type: string
                       default: ""
-                      description: DynamoDB table class ("STANDARD" or "STANDARD_INFREQUENT_ACCESS"). Empty = not enforced.
+                      description: >-
+                        Mandatory table class. Empty string = not enforced.
+                        One of: "STANDARD", "STANDARD_INFREQUENT_ACCESS".
                     contributorInsights:
                       type: string
                       default: ""
-                      description: CloudWatch Contributor Insights action ("ENABLE" or "DISABLE"). Empty = not enforced.
+                      description: >-
+                        Mandatory Contributor Insights setting. Empty string = not enforced.
+                        One of: "ENABLE", "DISABLE".
                     namingTemplate:
                       type: string
                       default: ""
-                      description: Table naming template (e.g. "{namespace}-{name}"). Empty = no mandatory template.
+                      description: >-
+                        Mandatory naming template for DynamoDB table names.
+                        Empty string = no mandatory template.
                     tags:
                       type: object
                       default: {}
+                      description: >-
+                        DynamoDB-specific mandatory cloud tags applied to all tables under this profile.
+                        Merged additively with KropathConfig.mandatory.tags.
                       additionalProperties:
                         type: string
                     syncedLabels:
                       type: object
                       default: {}
+                      description: >-
+                        Labels synced to both metadata.labels (aws.kropath.run/ prefix) and
+                        cloud resource tags (ADR-015 section 6.1).
                       additionalProperties:
                         type: string
                     syncedAnnotations:
                       type: object
                       default: {}
+                      description: >-
+                        Annotations synced to metadata.annotations (aws.kropath.run/ prefix).
                       additionalProperties:
                         type: string
                 defaults:
                   type: object
                   default: {}
                   description: >-
-                    Default DynamoDB governance fields. Zero-value / nil means no default
-                    is provided at this tier.
+                    Default DynamoDB governance fields. Applied when no higher-priority source
+                    provides a value. Zero-value means no default from this level.
                   properties:
                     encryptionEnabled:
                       type: boolean
+                      default: false
                       description: >-
-                        Default encryption setting. Omit (nil) = no default at this tier;
-                        false = explicitly disabled by default.
+                        Default encryption setting. false = DynamoDB-owned encryption (AWS default).
                     kmsMasterKeyId:
                       type: string
                       default: ""
-                      description: Default KMS key ARN/ID. Empty string = no default.
+                      description: >-
+                        Default KMS key ARN or alias. Empty string = no default CMK.
                     deletionProtectionEnabled:
                       type: boolean
-                      description: Default deletion-protection setting. Omit (nil) = no default.
+                      default: false
+                      description: >-
+                        Default deletion protection setting. false = no deletion protection by default.
                     pointInTimeRecoveryEnabled:
                       type: boolean
-                      description: Default PITR setting. Omit (nil) = no default.
+                      default: false
+                      description: >-
+                        Default PITR setting. false = no PITR by default.
                     billingMode:
                       type: string
                       default: ""
-                      description: Default billing mode. Empty string = no default.
+                      description: >-
+                        Default billing mode. Empty string = RGD built-in default (PAY_PER_REQUEST).
+                        One of: "PROVISIONED", "PAY_PER_REQUEST".
                     tableClass:
                       type: string
                       default: ""
-                      description: Default table class. Empty string = no default.
+                      description: >-
+                        Default table class. Empty string = RGD built-in default (STANDARD).
+                        One of: "STANDARD", "STANDARD_INFREQUENT_ACCESS".
                     contributorInsights:
                       type: string
                       default: ""
-                      description: Default Contributor Insights action. Empty string = no default.
+                      description: >-
+                        Default Contributor Insights setting. Empty string = RGD built-in default (DISABLE).
+                        One of: "ENABLE", "DISABLE".
                     namingTemplate:
                       type: string
                       default: ""
-                      description: Default naming template. Empty string = no default.
+                      description: >-
+                        Default naming template for DynamoDB table names.
+                        Empty string = no default at this tier (controller inherits from global tier).
                     tags:
                       type: object
                       default: {}
+                      description: >-
+                        DynamoDB-specific baseline cloud tags. Overridable per-instance.
+                        Merged additively with KropathConfig.defaults.tags.
                       additionalProperties:
                         type: string
                     syncedLabels:
                       type: object
                       default: {}
+                      description: >-
+                        Default labels synced to child resources and cloud tags.
                       additionalProperties:
                         type: string
                     syncedAnnotations:
                       type: object
                       default: {}
+                      description: Default annotations synced to child resources.
                       additionalProperties:
                         type: string
             status:
               type: object
               properties:
-                observedGeneration:
-                  type: integer
-                  format: int64
-                syncedTimestamp:
-                  type: string
                 conditions:
                   type: array
+                  description: Conditions represent the latest available observations of an object state.
+                  x-kubernetes-list-type: map
+                  x-kubernetes-list-map-keys:
+                    - type
                   items:
                     type: object
+                    required:
+                      - type
+                      - status
                     properties:
                       type:
                         type: string
                       status:
                         type: string
+                        enum: ["True", "False", "Unknown"]
+                      observedGeneration:
+                        type: integer
+                        format: int64
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
                       reason:
                         type: string
                       message:
                         type: string
-                      lastTransitionTime:
-                        type: string
-                      observedGeneration:
-                        type: integer
-                        format: int64
+                observedGeneration:
+                  type: integer
+                  format: int64
+                  description: Generation of the spec most recently reconciled by kropath-controller.
+                syncedTimestamp:
+                  type: string
+                  description: RFC3339 timestamp of the last successful reconcile.
                 effectiveConfig:
                   type: object
                   description: >-
-                    Pre-merged DynamoDB governance config written by kropath-controller.
-                    RGDs read exclusively from this field via a single externalRef lookup.
+                    Pre-merged governance config written by kropath-controller. RGDs read
+                    exclusively from this field via a single externalRef lookup.
                   properties:
                     mandatory:
                       type: object
@@ -279,7 +362,7 @@ spec:
                     aws:
                       type: object
                       properties:
-                        accountId:
-                          type: string
                         region:
+                          type: string
+                        accountId:
                           type: string

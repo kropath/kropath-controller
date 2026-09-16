@@ -24,7 +24,7 @@ spec:
     plural: ecrconfigs
     singular: ecrconfig
     shortNames:
-      - awsecrcfg
+      - ecrcfg
   scope: Namespaced
   versions:
     - name: v1alpha1
@@ -35,7 +35,49 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
+          x-kubernetes-validations:
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.imageTagMutability) &&
+                  self.spec.mandatory.imageTagMutability != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.imageTagMutability) &&
+                  self.spec.defaults.imageTagMutability != "")
+              message: >-
+                imageTagMutability cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.encryptionType) &&
+                  self.spec.mandatory.encryptionType != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.encryptionType) &&
+                  self.spec.defaults.encryptionType != "")
+              message: >-
+                encryptionType cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.kmsKeyID) &&
+                  self.spec.mandatory.kmsKeyID != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.kmsKeyID) &&
+                  self.spec.defaults.kmsKeyID != "")
+              message: >-
+                kmsKeyID cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.lifecyclePolicy) &&
+                  self.spec.mandatory.lifecyclePolicy != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.lifecyclePolicy) &&
+                  self.spec.defaults.lifecyclePolicy != "")
+              message: >-
+                lifecyclePolicy cannot be set in both mandatory and defaults
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.namingTemplate) &&
+                  self.spec.mandatory.namingTemplate != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.namingTemplate) &&
+                  self.spec.defaults.namingTemplate != "")
+              message: >-
+                namingTemplate cannot be set in both mandatory and defaults
           properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
             spec:
               type: object
               default: {}
@@ -43,81 +85,111 @@ spec:
                 mandatory:
                   type: object
                   default: {}
+                  description: >-
+                    Mandatory ECR governance fields. Zero-value means the field is not
+                    enforced at this tier.
                   properties:
                     imageTagMutability:
                       type: string
-                      default: ""
+                      description: >-
+                        Empty string = not enforced. "IMMUTABLE" forces tag immutability
+                        across all repositories governed by this profile.
                     encryptionType:
                       type: string
-                      default: ""
+                      description: >-
+                        Empty string = not enforced. "KMS" forces KMS encryption.
                     kmsKeyID:
                       type: string
-                      default: ""
+                      description: >-
+                        Empty string = not enforced. Non-empty forces the specified KMS key
+                        ARN or alias across all repositories.
                     lifecyclePolicy:
                       type: string
-                      default: ""
+                      description: >-
+                        Empty string = not enforced. Non-empty is a JSON lifecycle policy
+                        document enforced on all repositories.
                     namingTemplate:
                       type: string
-                      default: ""
+                      description: >-
+                        Empty string = not enforced. Supports tokens: {name}, {namespace},
+                        {account_id}, {region}, {configRef}.
                     tags:
                       type: object
                       default: {}
+                      description: >-
+                        Mandatory ECR-specific cloud tags. Merged additively with defaults
+                        tier and instance spec tags. Mandatory wins on key collision.
                       additionalProperties:
                         type: string
                     syncedLabels:
                       type: object
                       default: {}
+                      description: >-
+                        ADR-015 §6.1: labels synced to both Kubernetes metadata and cloud
+                        tags. Additive with defaults tier.
                       additionalProperties:
                         type: string
                     syncedAnnotations:
                       type: object
                       default: {}
+                      description: Annotations synced to cloud resource tags. Additive with defaults tier.
                       additionalProperties:
                         type: string
                 defaults:
                   type: object
                   default: {}
+                  description: >-
+                    Default ECR governance fields. Zero-value means no default is provided
+                    at this tier; the controller applies built-in platform defaults.
                   properties:
                     imageTagMutability:
                       type: string
-                      default: ""
+                      description: >-
+                        Empty string = no profile-level default (controller uses "MUTABLE").
+                        Set to "IMMUTABLE" or "MUTABLE" to override the platform default.
                     encryptionType:
                       type: string
-                      default: ""
+                      description: >-
+                        Empty string = no profile-level default (controller uses "AES256").
+                        Set to "AES256" or "KMS" to override the platform default.
                     kmsKeyID:
                       type: string
-                      default: ""
+                      description: Empty string = no default KMS key.
                     lifecyclePolicy:
                       type: string
-                      default: ""
+                      description: Empty string = no default lifecycle policy.
                     namingTemplate:
                       type: string
-                      default: ""
+                      description: >-
+                        Empty string = no profile-level default (controller uses
+                        "{namespace}/{name}").
                     tags:
                       type: object
                       default: {}
+                      description: Default cloud tags. Merged additively with mandatory and instance tags.
                       additionalProperties:
                         type: string
                     syncedLabels:
                       type: object
                       default: {}
+                      description: Default synced labels. Additive with mandatory tier.
                       additionalProperties:
                         type: string
                     syncedAnnotations:
                       type: object
                       default: {}
+                      description: Default synced annotations. Additive with mandatory tier.
                       additionalProperties:
                         type: string
             status:
               type: object
               properties:
-                observedGeneration:
-                  type: integer
-                  format: int64
-                syncedTimestamp:
-                  type: string
                 conditions:
                   type: array
+                  description: Conditions represent the latest available observations of an object state.
+                  x-kubernetes-list-type: map
+                  x-kubernetes-list-map-keys:
+                    - type
                   items:
                     type: object
                     required:
@@ -128,26 +200,30 @@ spec:
                         type: string
                       status:
                         type: string
-                      reason:
-                        type: string
-                      message:
-                        type: string
+                        enum: ["True", "False", "Unknown"]
                       observedGeneration:
                         type: integer
                         format: int64
                       lastTransitionTime:
                         type: string
                         format: date-time
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                observedGeneration:
+                  type: integer
+                  format: int64
+                  description: Generation of the spec most recently reconciled by kropath-controller.
+                syncedTimestamp:
+                  type: string
+                  description: RFC3339 timestamp of the last successful reconcile.
                 effectiveConfig:
                   type: object
+                  description: >-
+                    Pre-merged governance config written by kropath-controller. RGDs read
+                    exclusively from this field via a single externalRef lookup (ADR-010).
                   properties:
-                    aws:
-                      type: object
-                      properties:
-                        accountId:
-                          type: string
-                        region:
-                          type: string
                     mandatory:
                       type: object
                       properties:
@@ -198,3 +274,10 @@ spec:
                           type: object
                           additionalProperties:
                             type: string
+                    aws:
+                      type: object
+                      properties:
+                        accountId:
+                          type: string
+                        region:
+                          type: string
