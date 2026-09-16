@@ -24,7 +24,7 @@ spec:
     plural: organizationsconfigs
     singular: organizationsconfig
     shortNames:
-      - awsorgcfg
+      - orgcfg
   scope: Namespaced
   versions:
     - name: v1alpha1
@@ -36,6 +36,7 @@ spec:
         openAPIV3Schema:
           type: object
           x-kubernetes-validations:
+            # Mutual-exclusivity: scalar governance fields cannot be set in both tiers (ADR-015 §4.2)
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.iamUserAccessToBilling) &&
                   self.spec.mandatory.iamUserAccessToBilling != "" &&
@@ -51,12 +52,12 @@ spec:
               message: >-
                 roleName cannot be set in both mandatory and defaults
             - rule: >-
-                !(has(self.spec.mandatory) && has(self.spec.mandatory.parentId) &&
-                  self.spec.mandatory.parentId != "" &&
-                  has(self.spec.defaults) && has(self.spec.defaults.parentId) &&
-                  self.spec.defaults.parentId != "")
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.parentID) &&
+                  self.spec.mandatory.parentID != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.parentID) &&
+                  self.spec.defaults.parentID != "")
               message: >-
-                parentId cannot be set in both mandatory and defaults
+                parentID cannot be set in both mandatory and defaults
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.namingTemplate) &&
                   self.spec.mandatory.namingTemplate != "" &&
@@ -64,6 +65,47 @@ spec:
                   self.spec.defaults.namingTemplate != "")
               message: >-
                 namingTemplate cannot be set in both mandatory and defaults
+            # iamUserAccessToBilling enum validation
+            - rule: >-
+                !has(self.spec.mandatory) || !has(self.spec.mandatory.iamUserAccessToBilling) ||
+                self.spec.mandatory.iamUserAccessToBilling == "" ||
+                self.spec.mandatory.iamUserAccessToBilling == "allow" ||
+                self.spec.mandatory.iamUserAccessToBilling == "deny"
+              message: >-
+                mandatory.iamUserAccessToBilling must be '', 'allow', or 'deny'
+            - rule: >-
+                !has(self.spec.defaults) || !has(self.spec.defaults.iamUserAccessToBilling) ||
+                self.spec.defaults.iamUserAccessToBilling == "" ||
+                self.spec.defaults.iamUserAccessToBilling == "allow" ||
+                self.spec.defaults.iamUserAccessToBilling == "deny"
+              message: >-
+                defaults.iamUserAccessToBilling must be '', 'allow', or 'deny'
+            # roleName pattern validation (AWS IAM role name constraints)
+            - rule: >-
+                !has(self.spec.mandatory) || !has(self.spec.mandatory.roleName) ||
+                self.spec.mandatory.roleName == "" ||
+                self.spec.mandatory.roleName.matches('^[\\w+=,.@-]{1,64}$')
+              message: >-
+                mandatory.roleName must match AWS IAM role name constraints
+            - rule: >-
+                !has(self.spec.defaults) || !has(self.spec.defaults.roleName) ||
+                self.spec.defaults.roleName == "" ||
+                self.spec.defaults.roleName.matches('^[\\w+=,.@-]{1,64}$')
+              message: >-
+                defaults.roleName must match AWS IAM role name constraints
+            # parentID pattern validation (root or OU ID format)
+            - rule: >-
+                !has(self.spec.mandatory) || !has(self.spec.mandatory.parentID) ||
+                self.spec.mandatory.parentID == "" ||
+                self.spec.mandatory.parentID.matches('^(r-[a-z0-9]{4,32}|ou-[a-z0-9]{4,32}-[a-z0-9]{8,32})$')
+              message: >-
+                mandatory.parentID must be a valid root or OU ID
+            - rule: >-
+                !has(self.spec.defaults) || !has(self.spec.defaults.parentID) ||
+                self.spec.defaults.parentID == "" ||
+                self.spec.defaults.parentID.matches('^(r-[a-z0-9]{4,32}|ou-[a-z0-9]{4,32}-[a-z0-9]{8,32})$')
+              message: >-
+                defaults.parentID must be a valid root or OU ID
           properties:
             apiVersion:
               type: string
@@ -79,112 +121,143 @@ spec:
                   type: object
                   default: {}
                   description: >-
-                    Mandatory Organizations governance fields. Zero-value / nil means the field
-                    is not enforced at this tier.
+                    Mandatory Organizations governance fields. Non-empty values enforce
+                    governance constraints regardless of instance spec or defaults.
+                    Empty string means the field is not enforced at this tier.
                   properties:
                     iamUserAccessToBilling:
                       type: string
-                      default: ""
                       description: >-
-                        Whether IAM users can access billing information. Empty string = not enforced.
+                        Required IAM user access to billing setting. Empty string = not enforced.
+                        Must be '' (not enforced), 'allow', or 'deny'.
                     roleName:
                       type: string
-                      default: ""
                       description: >-
-                        IAM role name for cross-account access. Empty string = not enforced.
-                    parentId:
+                        Required cross-account IAM role name for account access.
+                        Empty string = not enforced. Must match AWS IAM role name pattern
+                        (alphanumeric, plus +=,.@- characters, 1-64 characters).
+                    parentID:
                       type: string
-                      default: ""
                       description: >-
-                        Parent organizational unit or root ID. Empty string = not enforced.
+                        Required parent root or OU ID for organizational unit placement.
+                        Empty string = not enforced. Must be a valid AWS Organizations root ID
+                        (r-XXXX) or OU ID (ou-XXXX-XXXXXXXX).
                     namingTemplate:
                       type: string
-                      default: ""
-                      description: Organization account naming template. Empty = not enforced.
+                      description: >-
+                        Required naming template for Organizations resources. Empty string = not enforced.
+                        Token vocabulary: {name}, {namespace}, {account_id}, {region}, {configRef}, {tag.<key>}.
                     tags:
                       type: object
                       default: {}
+                      description: >-
+                        Organizations-specific mandatory cloud tags applied to all accounts and OUs
+                        under this profile. Uses additive merge semantics with KropathConfig tags.
                       additionalProperties:
                         type: string
                     syncedLabels:
                       type: object
                       default: {}
+                      description: >-
+                        Labels synced to both metadata.labels (aws.kropath.run/ prefix) and
+                        cloud resource tags (ADR-015 section 6.1).
                       additionalProperties:
                         type: string
                     syncedAnnotations:
                       type: object
                       default: {}
+                      description: >-
+                        Annotations synced to metadata.annotations (aws.kropath.run/ prefix).
                       additionalProperties:
                         type: string
                 defaults:
                   type: object
                   default: {}
                   description: >-
-                    Default Organizations governance fields. Zero-value / nil means no default
-                    is provided at this tier.
+                    Default Organizations governance fields. Applied when no higher-priority
+                    source provides a value. Empty string means no default from this level.
                   properties:
                     iamUserAccessToBilling:
                       type: string
-                      default: ""
-                      description: Default IAM user access to billing. Empty string = no default.
+                      description: >-
+                        Default IAM user access to billing setting. Empty string = no default
+                        at this tier. Must be '' (no default), 'allow', or 'deny'.
                     roleName:
                       type: string
-                      default: ""
-                      description: Default IAM role name. Empty string = no default.
-                    parentId:
+                      description: >-
+                        Default cross-account IAM role name. Empty string = no default at this tier.
+                        Must match AWS IAM role name pattern if set.
+                    parentID:
                       type: string
-                      default: ""
-                      description: Default parent organizational unit or root ID. Empty string = no default.
+                      description: >-
+                        Default parent root or OU ID. Empty string = no default at this tier.
+                        Must be a valid AWS Organizations root ID or OU ID if set.
                     namingTemplate:
                       type: string
-                      default: ""
-                      description: Default naming template. Empty string = no default.
+                      description: >-
+                        Default naming template for Organizations resources.
+                        Empty string = not set at this tier.
                     tags:
                       type: object
                       default: {}
+                      description: Default cloud resource tags for Organizations resources.
                       additionalProperties:
                         type: string
                     syncedLabels:
                       type: object
                       default: {}
+                      description: >-
+                        Default labels synced to child resources and cloud tags.
                       additionalProperties:
                         type: string
                     syncedAnnotations:
                       type: object
                       default: {}
+                      description: Default annotations synced to child resources.
                       additionalProperties:
                         type: string
             status:
               type: object
               properties:
-                observedGeneration:
-                  type: integer
-                  format: int64
-                syncedTimestamp:
-                  type: string
                 conditions:
                   type: array
+                  description: Conditions represent the latest available observations of an object state.
+                  x-kubernetes-list-type: map
+                  x-kubernetes-list-map-keys:
+                    - type
                   items:
                     type: object
+                    required:
+                      - type
+                      - status
                     properties:
                       type:
                         type: string
                       status:
                         type: string
+                        enum: ["True", "False", "Unknown"]
+                      observedGeneration:
+                        type: integer
+                        format: int64
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
                       reason:
                         type: string
                       message:
                         type: string
-                      lastTransitionTime:
-                        type: string
-                      observedGeneration:
-                        type: integer
-                        format: int64
+                observedGeneration:
+                  type: integer
+                  format: int64
+                  description: Generation of the spec most recently reconciled by kropath-controller.
+                syncedTimestamp:
+                  type: string
+                  description: RFC3339 timestamp of the last successful reconcile.
                 effectiveConfig:
                   type: object
                   description: >-
-                    Pre-merged Organizations governance config written by kropath-controller.
-                    RGDs read exclusively from this field via a single externalRef lookup.
+                    Pre-merged governance config written by kropath-controller. RGDs read
+                    exclusively from this field via a single externalRef lookup.
                   properties:
                     mandatory:
                       type: object
@@ -193,7 +266,7 @@ spec:
                           type: string
                         roleName:
                           type: string
-                        parentId:
+                        parentID:
                           type: string
                         namingTemplate:
                           type: string
@@ -216,7 +289,7 @@ spec:
                           type: string
                         roleName:
                           type: string
-                        parentId:
+                        parentID:
                           type: string
                         namingTemplate:
                           type: string
@@ -232,3 +305,10 @@ spec:
                           type: object
                           additionalProperties:
                             type: string
+                    aws:
+                      type: object
+                      properties:
+                        region:
+                          type: string
+                        accountId:
+                          type: string

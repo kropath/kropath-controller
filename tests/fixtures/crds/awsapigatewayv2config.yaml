@@ -24,7 +24,7 @@ spec:
     plural: apigatewayv2configs
     singular: apigatewayv2config
     shortNames:
-      - awsapigwv2cfg
+      - apigwv2cfg
   scope: Namespaced
   versions:
     - name: v1alpha1
@@ -42,42 +42,56 @@ spec:
                   has(self.spec.defaults) && has(self.spec.defaults.corsEnabled) &&
                   self.spec.defaults.corsEnabled == true)
               message: >-
-                corsEnabled cannot be set to true in both mandatory and defaults
+                corsEnabled must be set in either mandatory or defaults, not both.
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.disableExecuteApiEndpoint) &&
                   self.spec.mandatory.disableExecuteApiEndpoint == true &&
                   has(self.spec.defaults) && has(self.spec.defaults.disableExecuteApiEndpoint) &&
                   self.spec.defaults.disableExecuteApiEndpoint == true)
               message: >-
-                disableExecuteApiEndpoint cannot be set to true in both mandatory and defaults
+                disableExecuteApiEndpoint must be set in either mandatory or defaults, not both.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.defaultThrottlingBurstLimit) &&
+                  self.spec.mandatory.defaultThrottlingBurstLimit != 0 &&
+                  has(self.spec.defaults) && has(self.spec.defaults.defaultThrottlingBurstLimit) &&
+                  self.spec.defaults.defaultThrottlingBurstLimit != 0)
+              message: >-
+                defaultThrottlingBurstLimit must be set in either mandatory or defaults, not both.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.defaultThrottlingRateLimit) &&
+                  self.spec.mandatory.defaultThrottlingRateLimit != 0.0 &&
+                  has(self.spec.defaults) && has(self.spec.defaults.defaultThrottlingRateLimit) &&
+                  self.spec.defaults.defaultThrottlingRateLimit != 0.0)
+              message: >-
+                defaultThrottlingRateLimit must be set in either mandatory or defaults, not both.
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.minimumTlsVersion) &&
                   self.spec.mandatory.minimumTlsVersion != "" &&
                   has(self.spec.defaults) && has(self.spec.defaults.minimumTlsVersion) &&
                   self.spec.defaults.minimumTlsVersion != "")
               message: >-
-                minimumTlsVersion cannot be set in both mandatory and defaults
+                minimumTlsVersion must be set in either mandatory or defaults, not both.
             - rule: >-
-                !(has(self.spec.mandatory) && has(self.spec.mandatory.defaultThrottlingBurstLimit) &&
-                  self.spec.mandatory.defaultThrottlingBurstLimit > 0 &&
-                  has(self.spec.defaults) && has(self.spec.defaults.defaultThrottlingBurstLimit) &&
-                  self.spec.defaults.defaultThrottlingBurstLimit > 0)
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.accessLogDestinationArn) &&
+                  self.spec.mandatory.accessLogDestinationArn != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.accessLogDestinationArn) &&
+                  self.spec.defaults.accessLogDestinationArn != "")
               message: >-
-                defaultThrottlingBurstLimit cannot be set in both mandatory and defaults
+                accessLogDestinationArn must be set in either mandatory or defaults, not both.
             - rule: >-
-                !(has(self.spec.mandatory) && has(self.spec.mandatory.defaultThrottlingRateLimit) &&
-                  self.spec.mandatory.defaultThrottlingRateLimit > 0 &&
-                  has(self.spec.defaults) && has(self.spec.defaults.defaultThrottlingRateLimit) &&
-                  self.spec.defaults.defaultThrottlingRateLimit > 0)
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.accessLogFormat) &&
+                  self.spec.mandatory.accessLogFormat != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.accessLogFormat) &&
+                  self.spec.defaults.accessLogFormat != "")
               message: >-
-                defaultThrottlingRateLimit cannot be set in both mandatory and defaults
+                accessLogFormat must be set in either mandatory or defaults, not both.
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.namingTemplate) &&
                   self.spec.mandatory.namingTemplate != "" &&
                   has(self.spec.defaults) && has(self.spec.defaults.namingTemplate) &&
                   self.spec.defaults.namingTemplate != "")
               message: >-
-                namingTemplate cannot be set in both mandatory and defaults
+                namingTemplate must be set in either mandatory or defaults, not both.
           properties:
             apiVersion:
               type: string
@@ -93,53 +107,51 @@ spec:
                   type: object
                   default: {}
                   description: >-
-                    Mandatory API Gateway V2 governance fields. Zero-value means the field
-                    is not enforced at this tier.
+                    Mandatory API Gateway V2 governance fields. Zero-value means the field is
+                    not enforced at this tier.
                   properties:
                     corsEnabled:
                       type: boolean
-                      default: false
                       description: >-
-                        Enforce CORS configuration. true = all HTTP APIs must define a corsConfiguration.
-                        false = not enforced.
+                        When true, all HTTP APIs must define a corsConfiguration. false = not enforced.
+                        Does not apply to WebSocket APIs.
                     disableExecuteApiEndpoint:
                       type: boolean
-                      default: false
                       description: >-
-                        Enforce disabling the default execute-api endpoint.
-                        true = all APIs must disable the endpoint. false = not enforced.
+                        When true, all APIs must disable the default execute-api endpoint.
+                        false = not enforced.
                     defaultThrottlingBurstLimit:
                       type: integer
                       format: int64
-                      default: 0
+                      minimum: 0
                       description: >-
-                        Burst throttle limit for all stages. 0 = not enforced.
+                        Enforced burst throttle limit on all stages. 0 = not enforced (sentinel).
                     defaultThrottlingRateLimit:
                       type: number
                       format: double
-                      default: 0
+                      minimum: 0
                       description: >-
-                        Rate throttle limit for all stages. 0 = not enforced.
+                        Enforced rate throttle limit on all stages. 0.0 = not enforced (sentinel).
                     minimumTlsVersion:
                       type: string
-                      default: ""
                       description: >-
-                        Minimum TLS version for custom domain names. Empty = not enforced.
-                        e.g. "TLS_1_2".
+                        Enforced minimum TLS version on all custom domain names.
+                        Empty string = not enforced. Valid values: TLS_1_0, TLS_1_2.
                     accessLogDestinationArn:
                       type: string
-                      default: ""
                       description: >-
-                        ARN of the CloudWatch Logs or Kinesis Firehose destination. Empty = not enforced.
+                        Mandatory access log destination ARN (CloudWatch Logs or Kinesis Firehose).
+                        Empty string = not enforced.
                     accessLogFormat:
                       type: string
-                      default: ""
                       description: >-
-                        Access log format string. Empty = not enforced.
+                        Mandatory access log format string.
+                        Empty string = not enforced.
                     namingTemplate:
                       type: string
-                      default: ""
-                      description: API Gateway V2 resource naming template. Empty = not enforced.
+                      description: >-
+                        Mandatory naming template for cloud resource names.
+                        Empty string = not enforced.
                     tags:
                       type: object
                       default: {}
@@ -159,43 +171,43 @@ spec:
                   type: object
                   default: {}
                   description: >-
-                    Default API Gateway V2 governance fields. Zero-value means no default
-                    is provided at this tier.
+                    Default API Gateway V2 governance fields. Zero-value means no default is
+                    provided at this tier.
                   properties:
                     corsEnabled:
                       type: boolean
-                      default: false
-                      description: Default CORS enabled setting. false = no default.
+                      description: Default CORS enforcement toggle.
                     disableExecuteApiEndpoint:
                       type: boolean
-                      default: false
-                      description: Default disableExecuteApiEndpoint setting. false = no default.
+                      description: Default execute-api endpoint disable toggle.
                     defaultThrottlingBurstLimit:
                       type: integer
                       format: int64
-                      default: 0
-                      description: Default burst throttle limit. 0 = no default.
+                      minimum: 0
+                      description: >-
+                        Default burst throttle limit. 0 = use account default.
                     defaultThrottlingRateLimit:
                       type: number
                       format: double
-                      default: 0
-                      description: Default rate throttle limit. 0 = no default.
+                      minimum: 0
+                      description: >-
+                        Default rate throttle limit. 0.0 = use account default.
                     minimumTlsVersion:
                       type: string
-                      default: ""
-                      description: Default minimum TLS version. Empty = no default.
+                      description: >-
+                        Default minimum TLS version. Empty string = no default.
                     accessLogDestinationArn:
                       type: string
-                      default: ""
-                      description: Default access log destination ARN. Empty = no default.
+                      description: >-
+                        Default access log destination ARN. Empty string = no default destination.
                     accessLogFormat:
                       type: string
-                      default: ""
-                      description: Default access log format. Empty = no default.
+                      description: >-
+                        Default access log format string. Empty string = no default format.
                     namingTemplate:
                       type: string
-                      default: ""
-                      description: Default naming template. Empty = no default.
+                      description: >-
+                        Default naming template for cloud resource names.
                     tags:
                       type: object
                       default: {}
@@ -214,34 +226,45 @@ spec:
             status:
               type: object
               properties:
-                observedGeneration:
-                  type: integer
-                  format: int64
-                syncedTimestamp:
-                  type: string
                 conditions:
                   type: array
+                  description: Conditions represent the latest available observations of an object state.
+                  x-kubernetes-list-type: map
+                  x-kubernetes-list-map-keys:
+                    - type
                   items:
                     type: object
+                    required:
+                      - type
+                      - status
                     properties:
                       type:
                         type: string
                       status:
                         type: string
+                        enum: ["True", "False", "Unknown"]
+                      observedGeneration:
+                        type: integer
+                        format: int64
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
                       reason:
                         type: string
                       message:
                         type: string
-                      lastTransitionTime:
-                        type: string
-                      observedGeneration:
-                        type: integer
-                        format: int64
+                observedGeneration:
+                  type: integer
+                  format: int64
+                  description: Generation of the spec most recently reconciled by kropath-controller.
+                syncedTimestamp:
+                  type: string
+                  description: RFC3339 timestamp of the last successful reconcile.
                 effectiveConfig:
                   type: object
                   description: >-
-                    Pre-merged API Gateway V2 governance config written by kropath-controller.
-                    RGDs read exclusively from this field via a single externalRef lookup.
+                    Pre-merged governance config written by kropath-controller. RGDs read
+                    exclusively from this field via a single resources.get() call.
                   properties:
                     mandatory:
                       type: object

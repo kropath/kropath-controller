@@ -24,7 +24,7 @@ spec:
     plural: ec2configs
     singular: ec2config
     shortNames:
-      - awsec2cfg
+      - ec2cfg
   scope: Namespaced
   versions:
     - name: v1alpha1
@@ -35,7 +35,84 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
+          x-kubernetes-validations:
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.flowLogsRequired) &&
+                  self.spec.mandatory.flowLogsRequired == true &&
+                  has(self.spec.defaults) && has(self.spec.defaults.flowLogsRequired) &&
+                  self.spec.defaults.flowLogsRequired == true)
+              message: >-
+                flowLogsRequired must be set in either mandatory or defaults, not both.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.flowLogTrafficType) &&
+                  self.spec.mandatory.flowLogTrafficType != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.flowLogTrafficType) &&
+                  self.spec.defaults.flowLogTrafficType != "")
+              message: >-
+                flowLogTrafficType must be set in either mandatory or defaults, not both.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.flowLogMaxAggregationInterval) &&
+                  self.spec.mandatory.flowLogMaxAggregationInterval > 0 &&
+                  has(self.spec.defaults) && has(self.spec.defaults.flowLogMaxAggregationInterval) &&
+                  self.spec.defaults.flowLogMaxAggregationInterval > 0)
+              message: >-
+                flowLogMaxAggregationInterval must be set in either mandatory or defaults, not both.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.restrictPublicIpOnLaunch) &&
+                  self.spec.mandatory.restrictPublicIpOnLaunch == true &&
+                  has(self.spec.defaults) && has(self.spec.defaults.restrictPublicIpOnLaunch) &&
+                  self.spec.defaults.restrictPublicIpOnLaunch == true)
+              message: >-
+                restrictPublicIpOnLaunch must be set in either mandatory or defaults, not both.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.imdsv2Required) &&
+                  self.spec.mandatory.imdsv2Required == true &&
+                  has(self.spec.defaults) && has(self.spec.defaults.imdsv2Required) &&
+                  self.spec.defaults.imdsv2Required == true)
+              message: >-
+                imdsv2Required must be set in either mandatory or defaults, not both.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.ebsEncryptionRequired) &&
+                  self.spec.mandatory.ebsEncryptionRequired == true &&
+                  has(self.spec.defaults) && has(self.spec.defaults.ebsEncryptionRequired) &&
+                  self.spec.defaults.ebsEncryptionRequired == true)
+              message: >-
+                ebsEncryptionRequired must be set in either mandatory or defaults, not both.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.ebsDefaultKmsKeyId) &&
+                  self.spec.mandatory.ebsDefaultKmsKeyId != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.ebsDefaultKmsKeyId) &&
+                  self.spec.defaults.ebsDefaultKmsKeyId != "")
+              message: >-
+                ebsDefaultKmsKeyId must be set in either mandatory or defaults, not both.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.publicIpRestricted) &&
+                  self.spec.mandatory.publicIpRestricted == true &&
+                  has(self.spec.defaults) && has(self.spec.defaults.publicIpRestricted) &&
+                  self.spec.defaults.publicIpRestricted == true)
+              message: >-
+                publicIpRestricted must be set in either mandatory or defaults, not both.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.allowSourceDestCheckDisable) &&
+                  self.spec.mandatory.allowSourceDestCheckDisable == true &&
+                  has(self.spec.defaults) && has(self.spec.defaults.allowSourceDestCheckDisable) &&
+                  self.spec.defaults.allowSourceDestCheckDisable == true)
+              message: >-
+                allowSourceDestCheckDisable must be set in either mandatory or defaults, not both.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.namingTemplate) &&
+                  self.spec.mandatory.namingTemplate != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.namingTemplate) &&
+                  self.spec.defaults.namingTemplate != "")
+              message: >-
+                namingTemplate must be set in either mandatory or defaults, not both.
           properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
             spec:
               type: object
               default: {}
@@ -43,113 +120,181 @@ spec:
                 mandatory:
                   type: object
                   default: {}
+                  description: >-
+                    Mandatory EC2 governance fields. Non-zero values enforce governance
+                    constraints regardless of instance spec or defaults. Zero-value means
+                    the field is not enforced.
                   properties:
                     flowLogsRequired:
                       type: boolean
                       default: false
+                      description: >-
+                        Org-wide requirement for flow logs on VPCs (advisory in Phase 1).
+                        false = not enforced.
                     flowLogTrafficType:
                       type: string
                       default: ""
+                      description: >-
+                        Forces traffic type for VPC flow logs. Empty string = not enforced.
+                        One of: "ACCEPT", "REJECT", "ALL".
                     flowLogMaxAggregationInterval:
                       type: integer
-                      format: int64
                       default: 0
+                      minimum: 0
+                      description: >-
+                        Forces aggregation interval for VPC flow logs. 0 = not enforced.
+                        One of: 60, 600.
                     restrictPublicIpOnLaunch:
                       type: boolean
                       default: false
+                      description: >-
+                        Subnets cannot enable auto-public-IP on launch.
+                        false = not enforced.
                     imdsv2Required:
                       type: boolean
                       default: false
+                      description: >-
+                        Enforces metadataHttpTokens=required on all instances/templates.
+                        false = not enforced.
                     ebsEncryptionRequired:
                       type: boolean
                       default: false
+                      description: >-
+                        All EBS volumes must be encrypted. false = not enforced.
                     ebsDefaultKmsKeyId:
                       type: string
                       default: ""
+                      description: >-
+                        Forces KMS key on block devices. Instance cannot use a different key.
+                        Empty string = not enforced (use AWS-managed key or instance key).
                     publicIpRestricted:
                       type: boolean
                       default: false
+                      description: >-
+                        Advisory block on instance public IP (Phase 1). false = not enforced.
                     allowSourceDestCheckDisable:
                       type: boolean
                       default: false
+                      description: >-
+                        When false (default), sourceDestCheck=false is blocked on instances.
+                        When true, permits sourceDestCheck=false. false = block disable.
                     namingTemplate:
                       type: string
                       default: ""
+                      description: >-
+                        Mandatory naming template for named EC2 resources (SecurityGroup,
+                        LaunchTemplate, PrefixList). Empty string = not enforced.
                     tags:
                       type: object
                       default: {}
+                      description: >-
+                        Mandatory cloud tags added to all EC2 resources under this profile.
+                        Merged across tiers — not mutually exclusive.
                       additionalProperties:
                         type: string
                     syncedLabels:
                       type: object
                       default: {}
+                      description: >-
+                        Labels synced to both metadata.labels (aws.kropath.run/ prefix) and
+                        cloud resource tags (ADR-015 section 6.1).
                       additionalProperties:
                         type: string
                     syncedAnnotations:
                       type: object
                       default: {}
+                      description: >-
+                        Annotations synced to metadata.annotations (aws.kropath.run/ prefix).
                       additionalProperties:
                         type: string
                 defaults:
                   type: object
                   default: {}
+                  description: >-
+                    Default EC2 governance fields. Applied when no higher-priority source
+                    provides a value. Zero-value means no default from this level.
                   properties:
                     flowLogsRequired:
                       type: boolean
                       default: false
+                      description: >-
+                        Baseline flow log requirement. false = not required by default.
                     flowLogTrafficType:
                       type: string
-                      default: ""
+                      description: >-
+                        Default traffic type for VPC flow logs.
+                        One of: "ACCEPT", "REJECT", "ALL". Empty string = not set at this tier.
                     flowLogMaxAggregationInterval:
                       type: integer
-                      format: int64
-                      default: 0
+                      minimum: 0
+                      description: >-
+                        Default aggregation interval for VPC flow logs in seconds.
+                        0 = not set at this tier; controller applies secure-baseline when absent.
                     restrictPublicIpOnLaunch:
                       type: boolean
                       default: false
+                      description: >-
+                        Baseline subnet public-IP restriction. false = allow by default.
                     imdsv2Required:
                       type: boolean
-                      default: false
+                      description: >-
+                        Baseline IMDSv2 enforcement. Absent = not set at this tier;
+                        controller applies secure-baseline (true) when absent.
                     ebsEncryptionRequired:
                       type: boolean
-                      default: false
+                      description: >-
+                        Baseline EBS encryption. Absent = not set at this tier;
+                        controller applies secure-baseline (true) when absent.
                     ebsDefaultKmsKeyId:
                       type: string
                       default: ""
+                      description: >-
+                        Default KMS key for EBS encryption. Empty string = use AWS-managed key
+                        or instance key.
                     publicIpRestricted:
                       type: boolean
                       default: false
+                      description: >-
+                        Baseline restriction on instance public IP. false = allow by default.
                     allowSourceDestCheckDisable:
                       type: boolean
                       default: false
+                      description: >-
+                        Baseline sourceDestCheck disable permission.
+                        false = block disable by default.
                     namingTemplate:
                       type: string
-                      default: ""
+                      description: >-
+                        Default naming template for named EC2 resources.
+                        Empty = not set at this tier; controller falls back to "{namespace}-{name}".
                     tags:
                       type: object
                       default: {}
+                      description: Default cloud resource tags.
                       additionalProperties:
                         type: string
                     syncedLabels:
                       type: object
                       default: {}
+                      description: >-
+                        Default labels synced to child resources and cloud tags.
                       additionalProperties:
                         type: string
                     syncedAnnotations:
                       type: object
                       default: {}
+                      description: Default annotations synced to child resources.
                       additionalProperties:
                         type: string
             status:
               type: object
               properties:
-                observedGeneration:
-                  type: integer
-                  format: int64
-                syncedTimestamp:
-                  type: string
                 conditions:
                   type: array
+                  description: Conditions represent the latest available observations of an object state.
+                  x-kubernetes-list-type: map
+                  x-kubernetes-list-map-keys:
+                    - type
                   items:
                     type: object
                     required:
@@ -160,26 +305,30 @@ spec:
                         type: string
                       status:
                         type: string
-                      reason:
-                        type: string
-                      message:
-                        type: string
+                        enum: ["True", "False", "Unknown"]
                       observedGeneration:
                         type: integer
                         format: int64
                       lastTransitionTime:
                         type: string
                         format: date-time
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                observedGeneration:
+                  type: integer
+                  format: int64
+                  description: Generation of the spec most recently reconciled by kropath-controller.
+                syncedTimestamp:
+                  type: string
+                  description: RFC3339 timestamp of the last successful reconcile.
                 effectiveConfig:
                   type: object
+                  description: >-
+                    Pre-merged governance config written by kropath-controller. RGDs read
+                    exclusively from this field via a single externalRef lookup.
                   properties:
-                    aws:
-                      type: object
-                      properties:
-                        accountId:
-                          type: string
-                        region:
-                          type: string
                     mandatory:
                       type: object
                       properties:
@@ -189,7 +338,6 @@ spec:
                           type: string
                         flowLogMaxAggregationInterval:
                           type: integer
-                          format: int64
                         restrictPublicIpOnLaunch:
                           type: boolean
                         imdsv2Required:
@@ -225,7 +373,6 @@ spec:
                           type: string
                         flowLogMaxAggregationInterval:
                           type: integer
-                          format: int64
                         restrictPublicIpOnLaunch:
                           type: boolean
                         imdsv2Required:
@@ -252,3 +399,10 @@ spec:
                           type: object
                           additionalProperties:
                             type: string
+                    aws:
+                      type: object
+                      properties:
+                        region:
+                          type: string
+                        accountId:
+                          type: string

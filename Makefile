@@ -160,7 +160,7 @@ crds-verify: ## CI gate: fail if a watched Kind is missing or mis-cased vs kropa
 	    done || true; \
 	  done; \
 	fi; \
-	KROPATH_AWS_CRDS_DIR="$$dir" go test ./internal/features/ -run TestWatchedKindsMatchUpstreamCRDs -v
+	KROPATH_AWS_CRDS_DIR="$$dir" go test ./internal/features/ -run 'TestWatchedKindsMatchUpstreamCRDs|TestSpecDefaultDrift|TestConfigKindSetDrift' -v
 
 # ─── Container image ────────────────────────────────────────────────────────────
 

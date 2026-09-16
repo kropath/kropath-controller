@@ -24,7 +24,7 @@ spec:
     plural: ecsconfigs
     singular: ecsconfig
     shortNames:
-      - awsecscfg
+      - ecscfg
   scope: Namespaced
   versions:
     - name: v1alpha1
@@ -38,53 +38,46 @@ spec:
           x-kubernetes-validations:
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.containerInsights) &&
-                  self.spec.mandatory.containerInsights == true &&
+                  self.spec.mandatory.containerInsights &&
                   has(self.spec.defaults) && has(self.spec.defaults.containerInsights) &&
-                  self.spec.defaults.containerInsights == true)
-              message: >-
-                containerInsights cannot be set to true in both mandatory and defaults
+                  self.spec.defaults.containerInsights)
+              message: "containerInsights cannot be set in both mandatory and defaults"
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.defaultLaunchType) &&
                   self.spec.mandatory.defaultLaunchType != "" &&
                   has(self.spec.defaults) && has(self.spec.defaults.defaultLaunchType) &&
                   self.spec.defaults.defaultLaunchType != "")
-              message: >-
-                defaultLaunchType cannot be set in both mandatory and defaults
+              message: "defaultLaunchType cannot be set in both mandatory and defaults"
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.defaultPlatformVersion) &&
                   self.spec.mandatory.defaultPlatformVersion != "" &&
                   has(self.spec.defaults) && has(self.spec.defaults.defaultPlatformVersion) &&
                   self.spec.defaults.defaultPlatformVersion != "")
-              message: >-
-                defaultPlatformVersion cannot be set in both mandatory and defaults
+              message: "defaultPlatformVersion cannot be set in both mandatory and defaults"
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.defaultNetworkMode) &&
                   self.spec.mandatory.defaultNetworkMode != "" &&
                   has(self.spec.defaults) && has(self.spec.defaults.defaultNetworkMode) &&
                   self.spec.defaults.defaultNetworkMode != "")
-              message: >-
-                defaultNetworkMode cannot be set in both mandatory and defaults
+              message: "defaultNetworkMode cannot be set in both mandatory and defaults"
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.defaultTaskCPU) &&
                   self.spec.mandatory.defaultTaskCPU != "" &&
                   has(self.spec.defaults) && has(self.spec.defaults.defaultTaskCPU) &&
                   self.spec.defaults.defaultTaskCPU != "")
-              message: >-
-                defaultTaskCPU cannot be set in both mandatory and defaults
+              message: "defaultTaskCPU cannot be set in both mandatory and defaults"
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.defaultTaskMemory) &&
                   self.spec.mandatory.defaultTaskMemory != "" &&
                   has(self.spec.defaults) && has(self.spec.defaults.defaultTaskMemory) &&
                   self.spec.defaults.defaultTaskMemory != "")
-              message: >-
-                defaultTaskMemory cannot be set in both mandatory and defaults
+              message: "defaultTaskMemory cannot be set in both mandatory and defaults"
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.namingTemplate) &&
                   self.spec.mandatory.namingTemplate != "" &&
                   has(self.spec.defaults) && has(self.spec.defaults.namingTemplate) &&
                   self.spec.defaults.namingTemplate != "")
-              message: >-
-                namingTemplate cannot be set in both mandatory and defaults
+              message: "namingTemplate cannot be set in both mandatory and defaults"
           properties:
             apiVersion:
               type: string
@@ -94,65 +87,225 @@ spec:
               type: object
             spec:
               type: object
+              default: {}
               properties:
                 mandatory:
                   type: object
+                  default: {}
+                  description: >-
+                    Mandatory ECS governance fields. Zero-value means the field is not
+                    enforced at this tier.
                   properties:
                     containerInsights:
                       type: boolean
+                      description: >-
+                        false = not enforced. Forces Container Insights enabled on all clusters.
                     defaultLaunchType:
                       type: string
+                      description: >-
+                        Empty string = not enforced. EC2 | FARGATE | EXTERNAL.
                     defaultPlatformVersion:
                       type: string
+                      description: >-
+                        Empty string = not enforced. Fargate platform version (e.g. "LATEST", "1.4.0").
                     defaultNetworkMode:
                       type: string
+                      description: >-
+                        Empty string = not enforced. none | bridge | awsvpc | host.
                     defaultTaskCPU:
                       type: string
+                      description: >-
+                        Empty string = not enforced. Fargate task-level CPU units (e.g. "256").
                     defaultTaskMemory:
                       type: string
+                      description: >-
+                        Empty string = not enforced. Fargate task-level memory in MiB (e.g. "512").
                     namingTemplate:
                       type: string
+                      description: >-
+                        Empty string = no mandatory naming template.
                     tags:
                       type: object
+                      default: {}
                       additionalProperties:
                         type: string
+                      description: >-
+                        ECS-specific mandatory cloud tags.
                     syncedLabels:
                       type: object
+                      default: {}
                       additionalProperties:
                         type: string
+                      description: >-
+                        Mandatory synced labels (ADR-015 §6.1): applied to both K8s labels and cloud tags.
                     syncedAnnotations:
                       type: object
+                      default: {}
                       additionalProperties:
                         type: string
+                      description: >-
+                        Mandatory synced annotations.
                 defaults:
                   type: object
+                  default: {}
+                  description: >-
+                    Default ECS governance fields. Zero-value means no default is provided
+                    at this tier.
                   properties:
                     containerInsights:
                       type: boolean
+                      description: >-
+                        Default Container Insights state.
                     defaultLaunchType:
                       type: string
+                      description: >-
+                        Empty string = use service/cluster default launch type.
                     defaultPlatformVersion:
                       type: string
+                      description: >-
+                        Default Fargate platform version. "LATEST" recommended.
                     defaultNetworkMode:
                       type: string
+                      description: >-
+                        Default network mode. "awsvpc" is the modern default.
                     defaultTaskCPU:
                       type: string
+                      description: >-
+                        Empty string = not set; instance must specify for Fargate tasks.
                     defaultTaskMemory:
                       type: string
+                      description: >-
+                        Empty string = not set; instance must specify for Fargate tasks.
                     namingTemplate:
                       type: string
+                      description: >-
+                        Default naming template. "{namespace}-{name}" baseline.
                     tags:
                       type: object
+                      default: {}
                       additionalProperties:
                         type: string
+                      description: >-
+                        Default ECS-specific cloud tags.
                     syncedLabels:
                       type: object
+                      default: {}
                       additionalProperties:
                         type: string
+                      description: >-
+                        Default synced labels.
                     syncedAnnotations:
                       type: object
+                      default: {}
                       additionalProperties:
                         type: string
+                      description: >-
+                        Default synced annotations.
             status:
               type: object
-              x-kubernetes-preserve-unknown-fields: true
+              properties:
+                conditions:
+                  type: array
+                  description: Conditions represent the latest available observations of an object state.
+                  x-kubernetes-list-type: map
+                  x-kubernetes-list-map-keys:
+                    - type
+                  items:
+                    type: object
+                    required:
+                      - type
+                      - status
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                        enum: ["True", "False", "Unknown"]
+                      observedGeneration:
+                        type: integer
+                        format: int64
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                observedGeneration:
+                  type: integer
+                  format: int64
+                  description: Generation of the spec most recently reconciled by kropath-controller.
+                syncedTimestamp:
+                  type: string
+                  description: RFC3339 timestamp of the last successful reconcile.
+                effectiveConfig:
+                  type: object
+                  description: >-
+                    Pre-merged governance config written by kropath-controller. RGDs read
+                    exclusively from this field via a single resources.get() call.
+                  properties:
+                    mandatory:
+                      type: object
+                      properties:
+                        containerInsights:
+                          type: boolean
+                        defaultLaunchType:
+                          type: string
+                        defaultPlatformVersion:
+                          type: string
+                        defaultNetworkMode:
+                          type: string
+                        defaultTaskCPU:
+                          type: string
+                        defaultTaskMemory:
+                          type: string
+                        namingTemplate:
+                          type: string
+                        tags:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedAnnotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                    defaults:
+                      type: object
+                      properties:
+                        containerInsights:
+                          type: boolean
+                        defaultLaunchType:
+                          type: string
+                        defaultPlatformVersion:
+                          type: string
+                        defaultNetworkMode:
+                          type: string
+                        defaultTaskCPU:
+                          type: string
+                        defaultTaskMemory:
+                          type: string
+                        namingTemplate:
+                          type: string
+                        tags:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedAnnotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                    aws:
+                      type: object
+                      properties:
+                        accountId:
+                          type: string
+                        region:
+                          type: string

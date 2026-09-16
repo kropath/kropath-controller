@@ -24,7 +24,7 @@ spec:
     plural: ramconfigs
     singular: ramconfig
     shortNames:
-      - awsramcfg
+      - ramcfg
   scope: Namespaced
   versions:
     - name: v1alpha1
@@ -32,25 +32,34 @@ spec:
       storage: true
       subresources:
         status: {}
+      additionalPrinterColumns:
+        - name: ExtPrincipals
+          type: boolean
+          jsonPath: ".status.effectiveConfig.mandatory.allowExternalPrincipals"
+        - name: Synced
+          type: string
+          jsonPath: '.status.conditions[?(@.type=="Ready")].status'
+        - name: Age
+          type: date
+          jsonPath: ".metadata.creationTimestamp"
       schema:
         openAPIV3Schema:
           type: object
           x-kubernetes-validations:
+            # allowExternalPrincipals is a nullable pointer field; has() detects explicit presence.
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.allowExternalPrincipals) &&
                   has(self.spec.defaults) && has(self.spec.defaults.allowExternalPrincipals))
               message: "allowExternalPrincipals cannot be set in both mandatory and defaults"
             - rule: >-
-                !(has(self.spec.mandatory) && has(self.spec.mandatory.allowedResourceTypes) &&
-                  size(self.spec.mandatory.allowedResourceTypes) > 0 &&
-                  has(self.spec.defaults) && has(self.spec.defaults.allowedResourceTypes) &&
-                  size(self.spec.defaults.allowedResourceTypes) > 0)
+                !(has(self.spec.mandatory) && size(self.spec.mandatory.allowedResourceTypes) > 0 &&
+                  has(self.spec.defaults) && size(self.spec.defaults.allowedResourceTypes) > 0)
               message: "allowedResourceTypes cannot be set in both mandatory and defaults"
             - rule: >-
                 !(has(self.spec.mandatory) && has(self.spec.mandatory.namingTemplate) &&
-                  self.spec.mandatory.namingTemplate != "" &&
+                  self.spec.mandatory.namingTemplate != '' &&
                   has(self.spec.defaults) && has(self.spec.defaults.namingTemplate) &&
-                  self.spec.defaults.namingTemplate != "")
+                  self.spec.defaults.namingTemplate != '')
               message: "namingTemplate cannot be set in both mandatory and defaults"
           properties:
             apiVersion:
@@ -67,130 +76,168 @@ spec:
                   type: object
                   default: {}
                   description: >-
-                    Mandatory RAM governance fields. Zero-value / nil means the field
-                    is not enforced at this tier.
+                    Mandatory RAM governance fields. Non-zero / explicitly-set values enforce
+                    governance constraints regardless of instance spec or defaults.
+                    Nil / zero-value = not enforced.
                   properties:
                     allowExternalPrincipals:
                       type: boolean
                       nullable: true
                       description: >-
-                        Controls whether external principals may be added to RAM resource shares.
-                        nil = not enforced. Cannot be set together with defaults.allowExternalPrincipals.
+                        When explicitly set, mandates whether all RAM resource shares in this
+                        profile may include external principals (accounts outside the AWS
+                        Organization). nil = not enforced; false = mandate disallow; true = mandate
+                        allow. Enforced before instance spec. Uses pointer semantics: has() is
+                        false when absent, true when set to any boolean value.
                     allowedResourceTypes:
                       type: array
                       default: []
+                      description: >-
+                        Allowlist of RAM-shareable resource types in <service>:<resourceType> format
+                        (e.g. ec2:Subnet, ec2:TransitGateway). Non-empty = only listed types may
+                        be shared; empty list = no org-wide restriction enforced at this tier.
                       items:
                         type: string
-                      description: >-
-                        Allowed shareable resource types (e.g. ["ec2:Subnet", "ec2:TransitGateway"]).
-                        Empty = not enforced. Cannot be set together with defaults.allowedResourceTypes.
                     namingTemplate:
                       type: string
+                      default: ""
                       description: >-
-                        Resource share naming template (e.g. "{namespace}-{name}").
-                        Empty = not enforced. Cannot be set together with defaults.namingTemplate.
+                        Naming template for cloud resource names ({namespace}, {name}, {kind}).
+                        Empty = not enforced; instance spec or defaults may provide a value.
                     tags:
                       type: object
                       default: {}
+                      description: >-
+                        RAM-specific mandatory cloud resource tags. Additively merged with
+                        KropathConfig.mandatory.tags; mandatory values win on key collision.
                       additionalProperties:
                         type: string
                     syncedLabels:
                       type: object
                       default: {}
+                      description: >-
+                        Labels synced to both metadata.labels (kropath.run/ prefix) and cloud
+                        resource tags on every child RAM resource.
                       additionalProperties:
                         type: string
                     syncedAnnotations:
                       type: object
                       default: {}
+                      description: >-
+                        Annotations synced to metadata.annotations (kropath.run/ prefix) on
+                        every child RAM resource.
                       additionalProperties:
                         type: string
                 defaults:
                   type: object
                   default: {}
                   description: >-
-                    Default RAM governance fields. Zero-value / nil means no default
-                    is provided at this tier.
+                    Default RAM governance fields. Applied when no higher-priority source provides
+                    a value. Zero-value / absent = no default from this tier.
                   properties:
                     allowExternalPrincipals:
                       type: boolean
                       nullable: true
                       description: >-
-                        Default external principals setting for RAM resource shares.
-                        nil = no default. Cannot be set together with mandatory.allowExternalPrincipals.
+                        Default whether RAM resource shares may include external principals.
+                        nil = no default from this tier; false = default-disallow; true =
+                        default-allow. Overridden by mandatory tier or instance spec.
                     allowedResourceTypes:
                       type: array
                       default: []
+                      description: >-
+                        Default allowlist of RAM-shareable resource types. Empty = no default
+                        restriction; instance spec may override.
                       items:
                         type: string
-                      description: >-
-                        Default allowed shareable resource types.
-                        Empty = no default. Cannot be set together with mandatory.allowedResourceTypes.
                     namingTemplate:
                       type: string
+                      default: ""
                       description: >-
-                        Default naming template (e.g. "{namespace}-{name}").
-                        Empty = no default. Cannot be set together with mandatory.namingTemplate.
+                        Default naming template. Uses {namespace}, {name}, {kind} placeholders.
+                        Empty = no default naming template from this tier.
                     tags:
                       type: object
                       default: {}
+                      description: Default RAM cloud resource tags.
                       additionalProperties:
                         type: string
                     syncedLabels:
                       type: object
                       default: {}
+                      description: Default labels synced to child RAM resources and cloud tags.
                       additionalProperties:
                         type: string
                     syncedAnnotations:
                       type: object
                       default: {}
+                      description: Default annotations synced to child RAM resources.
                       additionalProperties:
                         type: string
             status:
               type: object
               properties:
-                observedGeneration:
-                  type: integer
-                  format: int64
-                syncedTimestamp:
-                  type: string
                 conditions:
                   type: array
+                  description: Conditions represent the latest available observations of an object state.
+                  x-kubernetes-list-type: map
+                  x-kubernetes-list-map-keys:
+                    - type
                   items:
                     type: object
+                    required:
+                      - type
+                      - status
                     properties:
                       type:
                         type: string
                       status:
                         type: string
+                        enum: ["True", "False", "Unknown"]
+                      observedGeneration:
+                        type: integer
+                        format: int64
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
                       reason:
                         type: string
                       message:
                         type: string
-                      lastTransitionTime:
-                        type: string
-                      observedGeneration:
-                        type: integer
-                        format: int64
+                observedGeneration:
+                  type: integer
+                  format: int64
+                  description: Generation of the spec most recently reconciled by kropath-controller.
+                syncedTimestamp:
+                  type: string
+                  description: RFC3339 timestamp of last effectiveConfig write by the controller.
                 effectiveConfig:
                   type: object
                   description: >-
-                    Pre-merged RAM governance config written by kropath-controller.
-                    RGDs read exclusively from this field via a single externalRef lookup.
+                    Pre-merged governance config written by kropath-controller. RGDs read
+                    exclusively from this field via a single resources.get() call.
                   properties:
                     mandatory:
                       type: object
+                      description: Merged mandatory governance fields (levels 1–4 of cascade).
                       properties:
                         allowExternalPrincipals:
                           type: boolean
                           nullable: true
+                          description: Resolved mandatory allowExternalPrincipals after cascade merge.
                         allowedResourceTypes:
                           type: array
+                          description: Resolved mandatory allowedResourceTypes after cascade merge.
                           items:
                             type: string
                         namingTemplate:
                           type: string
+                          description: Resolved mandatory naming template after cascade merge.
                         tags:
                           type: object
+                          description: >-
+                            Merged mandatory tags: KropathConfig.mandatory.tags additively merged
+                            with RAMConfig.mandatory.tags; RAMConfig values win on collision.
                           additionalProperties:
                             type: string
                         syncedLabels:
@@ -203,18 +250,25 @@ spec:
                             type: string
                     defaults:
                       type: object
+                      description: Merged defaults governance fields (levels 6–9 of cascade).
                       properties:
                         allowExternalPrincipals:
                           type: boolean
                           nullable: true
+                          description: Resolved default allowExternalPrincipals after cascade merge.
                         allowedResourceTypes:
                           type: array
+                          description: Resolved default allowedResourceTypes after cascade merge.
                           items:
                             type: string
                         namingTemplate:
                           type: string
+                          description: Resolved default naming template after cascade merge.
                         tags:
                           type: object
+                          description: >-
+                            Merged default tags: KropathConfig.defaults.tags additively merged
+                            with RAMConfig.defaults.tags; RAMConfig values win on collision.
                           additionalProperties:
                             type: string
                         syncedLabels:
@@ -227,6 +281,7 @@ spec:
                             type: string
                     aws:
                       type: object
+                      description: Provider identity copied from KropathConfig.aws.
                       properties:
                         accountId:
                           type: string
