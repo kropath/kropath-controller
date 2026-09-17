@@ -1,0 +1,22 @@
+# AC-C1: S3AdvancedConfig.defaults.tableBucketEncryption.sseAlgorithm="aws:kms" (level 6).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac1-s3adv-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: S3AdvancedConfig
+metadata:
+  name: ac1-s3adv-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults:
+    tableBucketEncryption:
+      sseAlgorithm: "aws:kms"

@@ -1,0 +1,11 @@
+# Assert AC-C2: mandatory.tableBucketEncryption.sseAlgorithm from level-4 local S3AdvancedConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: S3AdvancedConfig
+metadata:
+  name: ac2-s3adv-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      tableBucketEncryption:
+        sseAlgorithm: "AES256"

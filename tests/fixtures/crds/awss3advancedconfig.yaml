@@ -1,0 +1,385 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: s3advancedconfigs.aws.kropath.run
+spec:
+  group: aws.kropath.run
+  names:
+    kind: S3AdvancedConfig
+    listKind: S3AdvancedConfigList
+    plural: s3advancedconfigs
+    singular: s3advancedconfig
+    shortNames:
+      - s3advcfg
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      schema:
+        openAPIV3Schema:
+          type: object
+          x-kubernetes-validations:
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.accessPointVpcOnly) &&
+                  self.spec.mandatory.accessPointVpcOnly == true &&
+                  has(self.spec.defaults) && has(self.spec.defaults.accessPointVpcOnly) &&
+                  self.spec.defaults.accessPointVpcOnly == true)
+              message: >-
+                accessPointVpcOnly must be set in either mandatory or defaults, not both.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.namingTemplate) &&
+                  self.spec.mandatory.namingTemplate != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.namingTemplate) &&
+                  self.spec.defaults.namingTemplate != "")
+              message: >-
+                namingTemplate must be set in either mandatory or defaults, not both.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.tableBucketEncryption) &&
+                  has(self.spec.mandatory.tableBucketEncryption.sseAlgorithm) &&
+                  self.spec.mandatory.tableBucketEncryption.sseAlgorithm != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.tableBucketEncryption) &&
+                  has(self.spec.defaults.tableBucketEncryption.sseAlgorithm) &&
+                  self.spec.defaults.tableBucketEncryption.sseAlgorithm != "")
+              message: >-
+                tableBucketEncryption.sseAlgorithm must be set in either mandatory or defaults, not both.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.vectorBucketEncryption) &&
+                  has(self.spec.mandatory.vectorBucketEncryption.sseType) &&
+                  self.spec.mandatory.vectorBucketEncryption.sseType != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.vectorBucketEncryption) &&
+                  has(self.spec.defaults.vectorBucketEncryption.sseType) &&
+                  self.spec.defaults.vectorBucketEncryption.sseType != "")
+              message: >-
+                vectorBucketEncryption.sseType must be set in either mandatory or defaults, not both.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.vectorIndexEncryption) &&
+                  has(self.spec.mandatory.vectorIndexEncryption.sseType) &&
+                  self.spec.mandatory.vectorIndexEncryption.sseType != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.vectorIndexEncryption) &&
+                  has(self.spec.defaults.vectorIndexEncryption.sseType) &&
+                  self.spec.defaults.vectorIndexEncryption.sseType != "")
+              message: >-
+                vectorIndexEncryption.sseType must be set in either mandatory or defaults, not both.
+            - rule: >-
+                !(has(self.spec.mandatory) && has(self.spec.mandatory.filesEncryption) &&
+                  has(self.spec.mandatory.filesEncryption.kmsKeyID) &&
+                  self.spec.mandatory.filesEncryption.kmsKeyID != "" &&
+                  has(self.spec.defaults) && has(self.spec.defaults.filesEncryption) &&
+                  has(self.spec.defaults.filesEncryption.kmsKeyID) &&
+                  self.spec.defaults.filesEncryption.kmsKeyID != "")
+              message: >-
+                filesEncryption.kmsKeyID must be set in either mandatory or defaults, not both.
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              default: {}
+              properties:
+                mandatory:
+                  type: object
+                  default: {}
+                  description: >-
+                    Mandatory S3 Advanced governance fields. Non-zero values enforce governance
+                    constraints regardless of instance spec or defaults. Zero-value means
+                    the field is not enforced.
+                  properties:
+                    tableBucketEncryption:
+                      type: object
+                      default: {}
+                      properties:
+                        sseAlgorithm:
+                          type: string
+                        kmsKeyARN:
+                          type: string
+                    vectorBucketEncryption:
+                      type: object
+                      default: {}
+                      properties:
+                        sseType:
+                          type: string
+                        kmsKeyARN:
+                          type: string
+                    vectorIndexEncryption:
+                      type: object
+                      default: {}
+                      properties:
+                        sseType:
+                          type: string
+                        kmsKeyARN:
+                          type: string
+                    filesEncryption:
+                      type: object
+                      default: {}
+                      properties:
+                        kmsKeyID:
+                          type: string
+                    accessPointPublicAccessBlock:
+                      type: object
+                      default: {}
+                      properties:
+                        blockPublicACLs:
+                          type: boolean
+                        blockPublicPolicy:
+                          type: boolean
+                        ignorePublicACLs:
+                          type: boolean
+                        restrictPublicBuckets:
+                          type: boolean
+                    accessPointVpcOnly:
+                      type: boolean
+                    tags:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedLabels:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    namingTemplate:
+                      type: string
+                defaults:
+                  type: object
+                  default: {}
+                  description: >-
+                    Default S3 Advanced governance fields. Values are applied when
+                    mandatory fields are absent; overridable at the instance level.
+                  properties:
+                    tableBucketEncryption:
+                      type: object
+                      default: {}
+                      properties:
+                        sseAlgorithm:
+                          type: string
+                        kmsKeyARN:
+                          type: string
+                    vectorBucketEncryption:
+                      type: object
+                      default: {}
+                      properties:
+                        sseType:
+                          type: string
+                        kmsKeyARN:
+                          type: string
+                    vectorIndexEncryption:
+                      type: object
+                      default: {}
+                      properties:
+                        sseType:
+                          type: string
+                        kmsKeyARN:
+                          type: string
+                    filesEncryption:
+                      type: object
+                      default: {}
+                      properties:
+                        kmsKeyID:
+                          type: string
+                    accessPointPublicAccessBlock:
+                      type: object
+                      default: {}
+                      properties:
+                        blockPublicACLs:
+                          type: boolean
+                        blockPublicPolicy:
+                          type: boolean
+                        ignorePublicACLs:
+                          type: boolean
+                        restrictPublicBuckets:
+                          type: boolean
+                    accessPointVpcOnly:
+                      type: boolean
+                    tags:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedLabels:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    syncedAnnotations:
+                      type: object
+                      default: {}
+                      additionalProperties:
+                        type: string
+                    namingTemplate:
+                      type: string
+            status:
+              type: object
+              properties:
+                effectiveConfig:
+                  type: object
+                  properties:
+                    aws:
+                      type: object
+                      properties:
+                        accountId:
+                          type: string
+                        region:
+                          type: string
+                    mandatory:
+                      type: object
+                      properties:
+                        tableBucketEncryption:
+                          type: object
+                          properties:
+                            sseAlgorithm:
+                              type: string
+                            kmsKeyARN:
+                              type: string
+                        vectorBucketEncryption:
+                          type: object
+                          properties:
+                            sseType:
+                              type: string
+                            kmsKeyARN:
+                              type: string
+                        vectorIndexEncryption:
+                          type: object
+                          properties:
+                            sseType:
+                              type: string
+                            kmsKeyARN:
+                              type: string
+                        filesEncryption:
+                          type: object
+                          properties:
+                            kmsKeyID:
+                              type: string
+                        accessPointPublicAccessBlock:
+                          type: object
+                          properties:
+                            blockPublicACLs:
+                              type: boolean
+                            blockPublicPolicy:
+                              type: boolean
+                            ignorePublicACLs:
+                              type: boolean
+                            restrictPublicBuckets:
+                              type: boolean
+                        accessPointVpcOnly:
+                          type: boolean
+                        tags:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedAnnotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        namingTemplate:
+                          type: string
+                    defaults:
+                      type: object
+                      properties:
+                        tableBucketEncryption:
+                          type: object
+                          properties:
+                            sseAlgorithm:
+                              type: string
+                            kmsKeyARN:
+                              type: string
+                        vectorBucketEncryption:
+                          type: object
+                          properties:
+                            sseType:
+                              type: string
+                            kmsKeyARN:
+                              type: string
+                        vectorIndexEncryption:
+                          type: object
+                          properties:
+                            sseType:
+                              type: string
+                            kmsKeyARN:
+                              type: string
+                        filesEncryption:
+                          type: object
+                          properties:
+                            kmsKeyID:
+                              type: string
+                        accessPointPublicAccessBlock:
+                          type: object
+                          properties:
+                            blockPublicACLs:
+                              type: boolean
+                            blockPublicPolicy:
+                              type: boolean
+                            ignorePublicACLs:
+                              type: boolean
+                            restrictPublicBuckets:
+                              type: boolean
+                        accessPointVpcOnly:
+                          type: boolean
+                        tags:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        syncedAnnotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        namingTemplate:
+                          type: string
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                      observedGeneration:
+                        type: integer
+                        format: int64
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                observedGeneration:
+                  type: integer
+                  format: int64
+                syncedTimestamp:
+                  type: string

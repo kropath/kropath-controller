@@ -1,0 +1,11 @@
+# Assert AC-C4: mandatory.filesEncryption.kmsKeyID from level-4 local S3AdvancedConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: S3AdvancedConfig
+metadata:
+  name: ac4-s3adv-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      filesEncryption:
+        kmsKeyID: "alias/my-key"

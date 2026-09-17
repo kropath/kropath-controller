@@ -1,0 +1,37 @@
+# AC-C9: S3AdvancedConfig mandatory.tags union-merge — global S3AdvancedConfig (level 3)
+# and local S3AdvancedConfig (level 4). Level-3 wins on key conflicts.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac9-s3adv-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+# Level-3: global S3AdvancedConfig (kro-system) — wins on "cost-centre" conflict.
+apiVersion: aws.kropath.run/v1alpha1
+kind: S3AdvancedConfig
+metadata:
+  name: ac9-s3adv-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      cost-centre: platform
+  defaults: {}
+---
+# Level-4: local S3AdvancedConfig (payments-prod).
+apiVersion: aws.kropath.run/v1alpha1
+kind: S3AdvancedConfig
+metadata:
+  name: ac9-s3adv-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    tags:
+      cost-centre: app
+      s3-tier: advanced
+  defaults: {}
