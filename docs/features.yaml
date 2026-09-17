@@ -454,3 +454,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: CloudFrontConfig
+      package: cloudfrontconfig
+      description: Reconciles CloudFrontConfig CRs and propagates effective config.
+      kinds:
+        - CloudFrontConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

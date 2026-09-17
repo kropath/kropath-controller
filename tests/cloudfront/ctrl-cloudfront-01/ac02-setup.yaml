@@ -1,0 +1,23 @@
+# AC-C2: KropathConfig mandatory cloudfront.viewerProtocolPolicy="redirect-to-https" (level 1)
+# propagates to effectiveConfig.mandatory.viewerProtocolPolicy.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac2-cfcfg-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    cloudfront:
+      viewerProtocolPolicy: "redirect-to-https"
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudFrontConfig
+metadata:
+  name: ac2-cfcfg-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

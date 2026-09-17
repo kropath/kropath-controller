@@ -1,0 +1,10 @@
+# Assert AC-C3: mandatory.priceClass from level-4 local CloudFrontConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudFrontConfig
+metadata:
+  name: ac3-cfcfg-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      priceClass: "PriceClass_100"

@@ -1,0 +1,10 @@
+# Assert AC-C1: effectiveConfig.defaults.viewerProtocolPolicy from level-6 local CloudFrontConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudFrontConfig
+metadata:
+  name: ac1-cfcfg-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    defaults:
+      viewerProtocolPolicy: "https-only"

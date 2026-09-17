@@ -1,0 +1,10 @@
+# Assert AC-C2: mandatory.viewerProtocolPolicy from level-1 global KropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudFrontConfig
+metadata:
+  name: ac2-cfcfg-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      viewerProtocolPolicy: "redirect-to-https"

@@ -1,0 +1,99 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-cloudfront-01 Chainsaw integration tests — 7 acceptance criteria.
+# Requires:
+#   - kind cluster with kropath-operator deployed
+#   - KropathConfig CRD applied (crds/awskropathconfig.yaml from kropath-aws)
+#   - CloudFrontConfig CRD applied (crds/awscloudfrontconfig.yaml)
+#
+# Test isolation — unique name per step, no inter-step deletes:
+#   Each step owns a distinct set of resource names (ac<N>-*). The controller
+#   pairs a namespaced config with its kro-system counterpart by *name*, so a
+#   per-step name isolates each step completely — no step can shadow another.
+#   See kropath-controller docs/frequent-chainsaw-errors.md §6 for the rationale.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-cloudfront-01-cascade
+spec:
+  steps:
+    # AC-C1: CloudFrontConfig with empty spec in product namespace reports platform tier
+    # in status.effectiveConfig with condition Valid=True.
+    - name: ac-c1-defaults-viewerprotocolpolicy-propagates
+      try:
+        - apply:
+            file: ac01-setup.yaml
+        - assert:
+            file: ac01-assert.yaml
+            timeout: 30s
+
+    # AC-C2: KropathConfig mandatory cloudfront.viewerProtocolPolicy (level 1)
+    # propagates to effectiveConfig.mandatory.viewerProtocolPolicy.
+    - name: ac-c2-kpc-mandatory-propagates
+      try:
+        - apply:
+            file: ac02-setup.yaml
+        - assert:
+            file: ac02-assert.yaml
+            timeout: 30s
+
+    # AC-C3: CloudFrontConfig mandatory priceClass (level 4)
+    # propagates to effectiveConfig.mandatory.priceClass.
+    - name: ac-c3-mandatory-priceclass-propagates
+      try:
+        - apply:
+            file: ac03-setup.yaml
+        - assert:
+            file: ac03-assert.yaml
+            timeout: 30s
+
+    # AC-C4: CloudFrontConfig mandatory webACLRequired=true (level 4)
+    # propagates to effectiveConfig.mandatory.webACLRequired.
+    - name: ac-c4-mandatory-wacl-propagates
+      try:
+        - apply:
+            file: ac04-setup.yaml
+        - assert:
+            file: ac04-assert.yaml
+            timeout: 30s
+
+    # AC-C5: CloudFrontConfig defaults namingTemplate (level 6)
+    # propagates to effectiveConfig.defaults.namingTemplate.
+    - name: ac-c5-defaults-naming-propagates
+      try:
+        - apply:
+            file: ac05-setup.yaml
+        - assert:
+            file: ac05-assert.yaml
+            timeout: 30s
+
+    # AC-C6: Provider identity (aws.accountId, aws.region) from KropathConfig
+    # propagates to effectiveConfig.aws.
+    - name: ac-c6-provider-identity-propagates
+      try:
+        - apply:
+            file: ac06-setup.yaml
+        - assert:
+            file: ac06-assert.yaml
+            timeout: 30s
+
+    # AC-C7: Tags union-merge across mandatory levels 3+4; level-3 wins on conflict.
+    - name: ac-c7-tag-union-merge
+      try:
+        - apply:
+            file: ac07-setup.yaml
+        - assert:
+            file: ac07-assert.yaml
+            timeout: 30s

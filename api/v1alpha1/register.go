@@ -142,6 +142,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&RecycleBinConfigList{},
 		&S3AdvancedConfig{},
 		&S3AdvancedConfigList{},
+		&CloudFrontConfig{},
+		&CloudFrontConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

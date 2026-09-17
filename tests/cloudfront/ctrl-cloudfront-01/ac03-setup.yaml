@@ -1,0 +1,22 @@
+# AC-C3: CloudFrontConfig mandatory priceClass="PriceClass_100" (level 4)
+# propagates to effectiveConfig.mandatory.priceClass.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac3-cfcfg-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudFrontConfig
+metadata:
+  name: ac3-cfcfg-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    priceClass: "PriceClass_100"
+  defaults: {}
