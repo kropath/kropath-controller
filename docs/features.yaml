@@ -462,3 +462,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: LambdaConfig
+      package: lambdaconfig
+      description: Reconciles LambdaConfig CRs and propagates effective config.
+      kinds:
+        - LambdaConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

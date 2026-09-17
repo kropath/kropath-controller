@@ -1,0 +1,14 @@
+# AC-L2: KropathConfig mandatory lambda.runtime propagates to effectiveConfig.mandatory.runtime.
+apiVersion: aws.kropath.run/v1alpha1
+kind: LambdaConfig
+metadata:
+  name: ac2-lambdacfg-policy
+  namespace: payments-prod
+status:
+  conditions:
+    - type: Valid
+      status: "True"
+      reason: ValidationPassed
+  effectiveConfig:
+    mandatory:
+      runtime: "python3.12"

@@ -1,0 +1,14 @@
+# AC-L4: LambdaConfig defaults tracingMode propagates to effectiveConfig.defaults.tracingMode.
+apiVersion: aws.kropath.run/v1alpha1
+kind: LambdaConfig
+metadata:
+  name: ac4-lambdacfg-policy
+  namespace: payments-prod
+status:
+  conditions:
+    - type: Valid
+      status: "True"
+      reason: ValidationPassed
+  effectiveConfig:
+    defaults:
+      tracingMode: "Active"

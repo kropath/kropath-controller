@@ -1,0 +1,14 @@
+# AC-L5: LambdaConfig defaults namingTemplate propagates to effectiveConfig.defaults.namingTemplate.
+apiVersion: aws.kropath.run/v1alpha1
+kind: LambdaConfig
+metadata:
+  name: ac5-lambdacfg-policy
+  namespace: payments-prod
+status:
+  conditions:
+    - type: Valid
+      status: "True"
+      reason: ValidationPassed
+  effectiveConfig:
+    defaults:
+      namingTemplate: "{namespace}-{name}"

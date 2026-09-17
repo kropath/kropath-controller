@@ -1,0 +1,15 @@
+# AC-L6: Provider identity propagates to effectiveConfig.aws.
+apiVersion: aws.kropath.run/v1alpha1
+kind: LambdaConfig
+metadata:
+  name: ac6-lambdacfg-policy
+  namespace: payments-prod
+status:
+  conditions:
+    - type: Valid
+      status: "True"
+      reason: ValidationPassed
+  effectiveConfig:
+    aws:
+      accountId: "987654321098"
+      region: "eu-west-1"

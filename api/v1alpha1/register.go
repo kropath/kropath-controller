@@ -144,6 +144,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&S3AdvancedConfigList{},
 		&CloudFrontConfig{},
 		&CloudFrontConfigList{},
+		&LambdaConfig{},
+		&LambdaConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil

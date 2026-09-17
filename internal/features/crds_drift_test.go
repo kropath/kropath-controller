@@ -24,9 +24,7 @@ const awsKropathGroup = "aws.kropath.run"
 // configKindSetAllowlist contains aws.kropath.run *Config kinds that intentionally
 // have no cascade reconciler yet. Each entry cites the ticket that will remove it.
 // When a reconciler is added for a kind, delete its line here.
-var configKindSetAllowlist = map[string]string{
-	"LambdaConfig": "KRO-1098",
-}
+var configKindSetAllowlist = map[string]string{}
 
 // extractDefaultsFromSchema recursively walks a JSON-schema node and returns a flat
 // map from dot-separated path (e.g. "mandatory.blockPublicAccess") to the value of
