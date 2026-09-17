@@ -148,7 +148,7 @@ jobs:
         if: needs.changes.outputs.code == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          KROPATH_AWS_COMPANION_REFS: ""
+          KROPATH_AWS_COMPANION_REFS: "agent/implementer/3397aff4e9a4"
         run: make crds-verify
 
   security:
