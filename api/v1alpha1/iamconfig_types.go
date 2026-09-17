@@ -99,6 +99,7 @@ type KropathConfigTier struct {
 	EBSRecycleBin      cascade.EBSRecycleBinKropathSection     `json:"ebsrecyclebin,omitempty"`
 	S3Advanced         cascade.S3AdvancedKropathSection        `json:"s3Advanced,omitempty"`
 	CloudFront         cascade.CloudFrontKropathSection        `json:"cloudfront,omitempty"`
+	Lambda             cascade.LambdaKropathSection            `json:"lambda,omitempty"`
 	Tags               map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels       map[string]string                       `json:"syncedLabels,omitempty"`
 	SyncedAnnotations  map[string]string                       `json:"syncedAnnotations,omitempty"`
@@ -868,6 +869,42 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 		out.Spec.Defaults.RAM.SyncedAnnotations = make(map[string]string, len(in.Spec.Defaults.RAM.SyncedAnnotations))
 		for k, v := range in.Spec.Defaults.RAM.SyncedAnnotations {
 			out.Spec.Defaults.RAM.SyncedAnnotations[k] = v
+		}
+	}
+	if in.Spec.Mandatory.Lambda.Tags != nil {
+		out.Spec.Mandatory.Lambda.Tags = make(map[string]string, len(in.Spec.Mandatory.Lambda.Tags))
+		for k, v := range in.Spec.Mandatory.Lambda.Tags {
+			out.Spec.Mandatory.Lambda.Tags[k] = v
+		}
+	}
+	if in.Spec.Mandatory.Lambda.SyncedLabels != nil {
+		out.Spec.Mandatory.Lambda.SyncedLabels = make(map[string]string, len(in.Spec.Mandatory.Lambda.SyncedLabels))
+		for k, v := range in.Spec.Mandatory.Lambda.SyncedLabels {
+			out.Spec.Mandatory.Lambda.SyncedLabels[k] = v
+		}
+	}
+	if in.Spec.Mandatory.Lambda.SyncedAnnotations != nil {
+		out.Spec.Mandatory.Lambda.SyncedAnnotations = make(map[string]string, len(in.Spec.Mandatory.Lambda.SyncedAnnotations))
+		for k, v := range in.Spec.Mandatory.Lambda.SyncedAnnotations {
+			out.Spec.Mandatory.Lambda.SyncedAnnotations[k] = v
+		}
+	}
+	if in.Spec.Defaults.Lambda.Tags != nil {
+		out.Spec.Defaults.Lambda.Tags = make(map[string]string, len(in.Spec.Defaults.Lambda.Tags))
+		for k, v := range in.Spec.Defaults.Lambda.Tags {
+			out.Spec.Defaults.Lambda.Tags[k] = v
+		}
+	}
+	if in.Spec.Defaults.Lambda.SyncedLabels != nil {
+		out.Spec.Defaults.Lambda.SyncedLabels = make(map[string]string, len(in.Spec.Defaults.Lambda.SyncedLabels))
+		for k, v := range in.Spec.Defaults.Lambda.SyncedLabels {
+			out.Spec.Defaults.Lambda.SyncedLabels[k] = v
+		}
+	}
+	if in.Spec.Defaults.Lambda.SyncedAnnotations != nil {
+		out.Spec.Defaults.Lambda.SyncedAnnotations = make(map[string]string, len(in.Spec.Defaults.Lambda.SyncedAnnotations))
+		for k, v := range in.Spec.Defaults.Lambda.SyncedAnnotations {
+			out.Spec.Defaults.Lambda.SyncedAnnotations[k] = v
 		}
 	}
 }

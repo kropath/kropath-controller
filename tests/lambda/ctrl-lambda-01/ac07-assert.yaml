@@ -1,0 +1,17 @@
+# AC-L7: Tags union-merge — global LambdaConfig (level 3) wins on key conflict.
+apiVersion: aws.kropath.run/v1alpha1
+kind: LambdaConfig
+metadata:
+  name: ac7-lambdacfg-policy
+  namespace: payments-prod
+status:
+  conditions:
+    - type: Valid
+      status: "True"
+      reason: ValidationPassed
+  effectiveConfig:
+    mandatory:
+      tags:
+        env: "staging"
+        team: "platform"
+        app: "api"

@@ -1,0 +1,22 @@
+# AC-L5: LambdaConfig defaults namingTemplate="{namespace}-{name}" in product namespace (level 6)
+# propagates to effectiveConfig.defaults.namingTemplate.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac5-lambdacfg-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: LambdaConfig
+metadata:
+  name: ac5-lambdacfg-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults:
+    namingTemplate: "{namespace}-{name}"

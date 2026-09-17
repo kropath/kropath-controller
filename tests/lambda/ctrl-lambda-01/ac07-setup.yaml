@@ -1,0 +1,38 @@
+# AC-L7: Tags union-merge across mandatory levels 3 (global LambdaConfig) and 4 (local LambdaConfig).
+# Global LambdaConfig (kro-system, level 3): tags env=staging, team=platform
+# Local LambdaConfig (payments-prod, level 4): tags env=prod, app=api
+# Expected effective mandatory tags: env=staging (level 3 wins), team=platform, app=api (union)
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac7-lambdacfg-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: LambdaConfig
+metadata:
+  name: ac7-lambdacfg-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      env: "staging"
+      team: "platform"
+  defaults: {}
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: LambdaConfig
+metadata:
+  name: ac7-lambdacfg-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    tags:
+      env: "prod"
+      app: "api"
+  defaults: {}

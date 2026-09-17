@@ -1,0 +1,15 @@
+# AC-L1: effectiveConfig is populated and condition Valid=True.
+apiVersion: aws.kropath.run/v1alpha1
+kind: LambdaConfig
+metadata:
+  name: ac1-lambdacfg-policy
+  namespace: payments-prod
+status:
+  conditions:
+    - type: Valid
+      status: "True"
+      reason: ValidationPassed
+  effectiveConfig:
+    aws:
+      accountId: "123456789012"
+      region: "us-east-1"

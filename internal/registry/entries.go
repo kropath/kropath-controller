@@ -29,6 +29,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/recyclebinconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/s3advancedconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/cloudfrontconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/lambdaconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/ecsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/efsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/eksconfig"
@@ -551,6 +552,13 @@ func All() []Entry {
 			return (&cloudfrontconfig.Reconciler{
 				Client: bctx.Manager.GetClient(),
 				Log:    bctx.Log.WithName("controllers").WithName("CloudFrontConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("lambdaconfig", "LambdaConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&lambdaconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("LambdaConfig"),
 				Scheme: bctx.Manager.GetScheme(),
 			}).BuildWithManager(bctx.Manager)
 		}),

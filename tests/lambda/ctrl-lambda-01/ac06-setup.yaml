@@ -1,0 +1,21 @@
+# AC-L6: Provider identity (aws.accountId, aws.region) from KropathConfig
+# propagates to effectiveConfig.aws.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac6-lambdacfg-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  aws:
+    accountId: "987654321098"
+    region: "eu-west-1"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: LambdaConfig
+metadata:
+  name: ac6-lambdacfg-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}
