@@ -55,10 +55,10 @@ spec:
               fi
               count=$(echo "$output" | grep -c 'kropath_feature_enabled{' || true)
               echo "kropath_feature_enabled series count: $count"
-              if [ "$count" -ne 56 ]; then
-                echo "FAIL: expected 56 series, got $count"
+              if [ "$count" -ne 57 ]; then
+                echo "FAIL: expected 57 series, got $count"
                 echo "Actual lines:"
                 echo "$output" | grep 'kropath_feature_enabled{' || true
                 exit 1
               fi
-              echo "PASS: 56 kropath_feature_enabled series found"
+              echo "PASS: 57 kropath_feature_enabled series found"
