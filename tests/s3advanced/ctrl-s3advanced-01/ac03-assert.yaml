@@ -1,0 +1,10 @@
+# Assert AC-C3: mandatory.accessPointVpcOnly=true from level-1 globalKropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: S3AdvancedConfig
+metadata:
+  name: ac3-s3adv-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      accessPointVpcOnly: true

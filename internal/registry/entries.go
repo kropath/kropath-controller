@@ -27,6 +27,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/ecrconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/ecrpublicconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/recyclebinconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/s3advancedconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/ecsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/efsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/eksconfig"
@@ -535,6 +536,13 @@ func All() []Entry {
 			return (&recyclebinconfig.Reconciler{
 				Client: bctx.Manager.GetClient(),
 				Log:    bctx.Log.WithName("controllers").WithName("RecycleBinConfig"),
+				Scheme: bctx.Manager.GetScheme(),
+			}).BuildWithManager(bctx.Manager)
+		}),
+		cascadeEntry("s3advancedconfig", "S3AdvancedConfig", func(bctx BuildCtx) (controller.Controller, error) {
+			return (&s3advancedconfig.Reconciler{
+				Client: bctx.Manager.GetClient(),
+				Log:    bctx.Log.WithName("controllers").WithName("S3AdvancedConfig"),
 				Scheme: bctx.Manager.GetScheme(),
 			}).BuildWithManager(bctx.Manager)
 		}),

@@ -446,3 +446,11 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: S3AdvancedConfig
+      package: s3advancedconfig
+      description: Reconciles S3AdvancedConfig CRs and propagates effective config.
+      kinds:
+        - S3AdvancedConfig
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: stable

@@ -81,6 +81,7 @@ CHAINSAW_FLAGS   := --parallel 1 --report-format JUNIT-TEST --report-path $(REPO
         test-version test-features \
         test-dyn-01 test-dyn-02 test-dyn-03 test-dyn \
         test-organizations \
+        test-s3advanced \
         test-chainsaw \
         install-tools install-kind install-chainsaw install-golangci-lint \
         install-goimports install-gosec install-govulncheck \
@@ -357,6 +358,10 @@ test-organizations: ## Run Organizations cascade Chainsaw suite (ctrl-org-01).
 	@mkdir -p $(REPORT_DIR)
 	$(CHAINSAW) test tests/organizations/controller/ctrl-org-01/ $(CHAINSAW_FLAGS)
 
+test-s3advanced: ## Run S3 Advanced cascade Chainsaw suite (ctrl-s3advanced-01).
+	@mkdir -p $(REPORT_DIR)
+	$(CHAINSAW) test tests/s3advanced/ctrl-s3advanced-01/ $(CHAINSAW_FLAGS)
+
 test-elasticache: ## Run ElastiCache cascade Chainsaw suite (ctrl-elasticache-01).
 	@mkdir -p $(REPORT_DIR)
 	$(CHAINSAW) test tests/elasticache/ctrl-elasticache-01/ $(CHAINSAW_FLAGS)
@@ -427,7 +432,7 @@ test-chainsaw: chainsaw-stop chainsaw-start chainsaw-wait ## Stop any stale cont
 		tests/ecr/ tests/ecs/ tests/efs/ tests/eks/ tests/elasticache/ \
 		tests/emr/ tests/eventbridge/ tests/features/ tests/glue/ tests/iam/ tests/kms/ \
 		tests/label-operator/ tests/memorydb/ tests/msk/ tests/policy/ \
-		tests/rds/ tests/s3/ tests/secretsmanager/ tests/sns/ tests/sqs/ \
+		tests/rds/ tests/s3/ tests/s3advanced/ tests/secretsmanager/ tests/sns/ tests/sqs/ \
 		tests/stepfunctions/ tests/version/ tests/waf/ \
 		tests/organizations/ \
 		$(CHAINSAW_FLAGS)

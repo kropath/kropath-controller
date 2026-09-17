@@ -1,0 +1,120 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-s3advanced-01 Chainsaw integration tests — all 9 acceptance criteria.
+# Requires:
+#   - kind cluster with kropath-operator deployed
+#   - KropathConfig CRD applied (crds/kropathconfig.yaml from kropath-aws)
+#   - S3AdvancedConfig CRD applied (crds/awss3advancedconfig.yaml)
+#
+# Test isolation — unique name per step, no inter-step deletes:
+#   Each step owns a distinct set of resource names (ac<N>-*). The controller
+#   pairs a namespaced config with its kro-system counterpart by *name*, so a
+#   per-step name isolates each step completely — no step can shadow another.
+#   See kropath-controller docs/frequent-chainsaw-errors.md §6 for the rationale.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-s3advanced-01-cascade
+spec:
+  steps:
+    # AC-C1: S3AdvancedConfig.defaults.tableBucketEncryption.sseAlgorithm="aws:kms"
+    # propagates to effectiveConfig.defaults.tableBucketEncryption.sseAlgorithm.
+    - name: ac-c1-defaults-table-encryption-propagates
+      try:
+        - apply:
+            file: ac01-setup.yaml
+        - assert:
+            file: ac01-assert.yaml
+            timeout: 30s
+
+    # AC-C2: S3AdvancedConfig.mandatory.tableBucketEncryption.sseAlgorithm="aws:kms"
+    # propagates to effectiveConfig.mandatory.tableBucketEncryption.sseAlgorithm.
+    - name: ac-c2-mandatory-table-encryption-propagates
+      try:
+        - apply:
+            file: ac02-setup.yaml
+        - assert:
+            file: ac02-assert.yaml
+            timeout: 30s
+
+    # AC-C3: KropathConfig.mandatory.s3Advanced.accessPointVpcOnly=true (level 1)
+    # wins over S3AdvancedConfig.defaults.accessPointVpcOnly (not enforced).
+    - name: ac-c3-kpc-mandatory-s3adv-wins-over-defaults
+      try:
+        - apply:
+            file: ac03-setup.yaml
+        - assert:
+            file: ac03-assert.yaml
+            timeout: 30s
+
+    # AC-C4: S3AdvancedConfig.mandatory.filesEncryption.kmsKeyID propagates
+    # to effectiveConfig.mandatory.filesEncryption.kmsKeyID.
+    - name: ac-c4-files-encryption-mandatory-propagates
+      try:
+        - apply:
+            file: ac04-setup.yaml
+        - assert:
+            file: ac04-assert.yaml
+            timeout: 30s
+
+    # AC-C5: S3AdvancedConfig.defaults.vectorBucketEncryption.sseType="aws:kms"
+    # propagates to effectiveConfig.defaults.vectorBucketEncryption.sseType.
+    - name: ac-c5-vector-encryption-defaults-propagate
+      try:
+        - apply:
+            file: ac05-setup.yaml
+        - assert:
+            file: ac05-assert.yaml
+            timeout: 30s
+
+    # AC-C6: S3AdvancedConfig.mandatory.namingTemplate="{namespace}-{name}"
+    # propagates to effectiveConfig.mandatory.namingTemplate.
+    - name: ac-c6-naming-template-propagates
+      try:
+        - apply:
+            file: ac06-setup.yaml
+        - assert:
+            file: ac06-assert.yaml
+            timeout: 30s
+
+    # AC-C7: KropathConfig.mandatory.s3Advanced.accessPointPublicAccessBlock.blockPublicACLs=true
+    # propagates via level-1 to effectiveConfig.mandatory.accessPointPublicAccessBlock.blockPublicACLs.
+    - name: ac-c7-public-access-block-from-kpc-mandatory
+      try:
+        - apply:
+            file: ac07-setup.yaml
+        - assert:
+            file: ac07-assert.yaml
+            timeout: 30s
+
+    # AC-C8: Provider identity (aws.accountId, aws.region) from globalKropathConfig
+    # propagates to effectiveConfig.aws.
+    - name: ac-c8-provider-identity-propagates
+      try:
+        - apply:
+            file: ac08-setup.yaml
+        - assert:
+            file: ac08-assert.yaml
+            timeout: 30s
+
+    # AC-C9: S3AdvancedConfig mandatory.tags union-merges across levels 3 and 4;
+    # level-3 (global S3AdvancedConfig) wins on key conflicts.
+    - name: ac-c9-tag-union-merge
+      try:
+        - apply:
+            file: ac09-setup.yaml
+        - assert:
+            file: ac09-assert.yaml
+            timeout: 30s

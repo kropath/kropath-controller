@@ -1,0 +1,10 @@
+# Assert AC-C6: mandatory.namingTemplate from level-4 local S3AdvancedConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: S3AdvancedConfig
+metadata:
+  name: ac6-s3adv-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      namingTemplate: "{namespace}-{name}"

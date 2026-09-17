@@ -25,7 +25,6 @@ const awsKropathGroup = "aws.kropath.run"
 // have no cascade reconciler yet. Each entry cites the ticket that will remove it.
 // When a reconciler is added for a kind, delete its line here.
 var configKindSetAllowlist = map[string]string{
-	"S3AdvancedConfig": "KRO-1096",
 	"CloudFrontConfig": "KRO-1097",
 	"LambdaConfig":     "KRO-1098",
 }

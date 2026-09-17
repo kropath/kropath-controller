@@ -1,0 +1,11 @@
+# Assert AC-C8: effectiveConfig.aws.accountId and aws.region from globalKropathConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: S3AdvancedConfig
+metadata:
+  name: ac8-s3adv-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    aws:
+      accountId: "123456789012"
+      region: "eu-west-1"
