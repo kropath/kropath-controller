@@ -1,0 +1,12 @@
+# Assert AC-C7: mandatory.tags union-merge — level-3 wins on "cost-centre"; both keys present.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudFrontConfig
+metadata:
+  name: ac7-cfcfg-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      tags:
+        cost-centre: platform
+        cf-tier: distribution

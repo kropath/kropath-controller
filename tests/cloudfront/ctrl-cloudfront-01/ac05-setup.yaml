@@ -1,0 +1,22 @@
+# AC-C5: CloudFrontConfig defaults namingTemplate="{namespace}-{name}" (level 6)
+# propagates to effectiveConfig.defaults.namingTemplate.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac5-cfcfg-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudFrontConfig
+metadata:
+  name: ac5-cfcfg-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults:
+    namingTemplate: "{namespace}-{name}"

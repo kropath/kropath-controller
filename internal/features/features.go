@@ -132,4 +132,5 @@ var All = []Reconciler{
 	cascade("ECRPublicConfig", "ecrpublicconfig"),
 	cascade("RecycleBinConfig", "recyclebinconfig"),
 	cascade("S3AdvancedConfig", "s3advancedconfig"),
+	cascade("CloudFrontConfig", "cloudfrontconfig"),
 }

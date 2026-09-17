@@ -1,0 +1,36 @@
+# AC-C7: Tags union-merge across mandatory levels 3+4; level-3 (global CloudFrontConfig) wins on conflict.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: ac7-cfcfg-policy
+  namespace: kro-system
+spec:
+  mandatory: {}
+  aws:
+    accountId: "123456789012"
+    region: "us-east-1"
+---
+# Level-3: global CloudFrontConfig (kro-system) — wins on "cost-centre" conflict.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudFrontConfig
+metadata:
+  name: ac7-cfcfg-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    tags:
+      cost-centre: platform
+  defaults: {}
+---
+# Level-4: local CloudFrontConfig (payments-prod).
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudFrontConfig
+metadata:
+  name: ac7-cfcfg-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    tags:
+      cost-centre: app
+      cf-tier: distribution
+  defaults: {}

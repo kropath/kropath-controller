@@ -25,8 +25,7 @@ const awsKropathGroup = "aws.kropath.run"
 // have no cascade reconciler yet. Each entry cites the ticket that will remove it.
 // When a reconciler is added for a kind, delete its line here.
 var configKindSetAllowlist = map[string]string{
-	"CloudFrontConfig": "KRO-1097",
-	"LambdaConfig":     "KRO-1098",
+	"LambdaConfig": "KRO-1098",
 }
 
 // extractDefaultsFromSchema recursively walks a JSON-schema node and returns a flat

@@ -98,6 +98,7 @@ type KropathConfigTier struct {
 	QuickSight         cascade.QuickSightKropathSection        `json:"quicksight,omitempty"`
 	EBSRecycleBin      cascade.EBSRecycleBinKropathSection     `json:"ebsrecyclebin,omitempty"`
 	S3Advanced         cascade.S3AdvancedKropathSection        `json:"s3Advanced,omitempty"`
+	CloudFront         cascade.CloudFrontKropathSection        `json:"cloudfront,omitempty"`
 	Tags               map[string]string                       `json:"tags,omitempty"`
 	SyncedLabels       map[string]string                       `json:"syncedLabels,omitempty"`
 	SyncedAnnotations  map[string]string                       `json:"syncedAnnotations,omitempty"`

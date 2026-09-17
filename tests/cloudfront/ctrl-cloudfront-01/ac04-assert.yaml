@@ -1,0 +1,10 @@
+# Assert AC-C4: mandatory.webACLRequired from level-4 local CloudFrontConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: CloudFrontConfig
+metadata:
+  name: ac4-cfcfg-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      webACLRequired: true
