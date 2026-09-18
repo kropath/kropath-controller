@@ -92,7 +92,8 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.IAMConfig) (bo
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
-	globalIAM, err := r.loadIAMConfig(ctx, globalNS, cfg.Name)
+	globalIAM, globalIAMFound, globalIAMViaFallthrough, err := util.LoadConfigWithFallthrough[v1alpha1.IAMConfig](
+		ctx, r.Client, v1alpha1.GroupVersion.WithKind("IAMConfig"), globalNS, cfg.Name, util.DefaultConfigProfile)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
@@ -113,9 +114,26 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.IAMConfig) (bo
 		Mandatory: eff.Mandatory,
 		Defaults:  eff.Defaults,
 	}
-	cfg.Status.SyncedTimestamp = metav1.Now().UTC().Format(time.RFC3339)
+	now := metav1.Now()
+	profileCond := util.ConfigProfileResolvedCondition(cfg.Name, globalIAMFound, globalIAMViaFallthrough, cfg.Generation, now)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
+	cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 
 	return true, ctrl.Result{}, nil
+}
+
+// setCondition upserts a condition by Type, preserving LastTransitionTime when status is unchanged.
+func setCondition(conditions []metav1.Condition, newCond metav1.Condition) []metav1.Condition {
+	for i, c := range conditions {
+		if c.Type == newCond.Type {
+			if c.Status == newCond.Status {
+				newCond.LastTransitionTime = c.LastTransitionTime
+			}
+			conditions[i] = newCond
+			return conditions
+		}
+	}
+	return append(conditions, newCond)
 }
 
 func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name string) (*v1alpha1.KropathConfig, error) {
@@ -124,18 +142,6 @@ func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name stri
 	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			return &v1alpha1.KropathConfig{}, nil
-		}
-		return nil, err
-	}
-	return cfg, nil
-}
-
-func (r *Reconciler) loadIAMConfig(ctx context.Context, namespace, name string) (*v1alpha1.IAMConfig, error) {
-	cfg := &v1alpha1.IAMConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("IAMConfig"))
-	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
-		if client.IgnoreNotFound(err) == nil {
-			return &v1alpha1.IAMConfig{}, nil
 		}
 		return nil, err
 	}

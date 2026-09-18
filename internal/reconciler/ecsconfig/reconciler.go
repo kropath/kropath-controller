@@ -93,7 +93,8 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.ECSConfig) (bo
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
-	globalECSCfg, err := r.loadECSConfig(ctx, globalNS, cfg.Name)
+	globalECSCfg, globalECSCfgFound, globalECSCfgViaFallthrough, err := util.LoadConfigWithFallthrough[v1alpha1.ECSConfig](
+		ctx, r.Client, v1alpha1.GroupVersion.WithKind("ECSConfig"), globalNS, cfg.Name, util.DefaultConfigProfile)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
@@ -132,6 +133,7 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.ECSConfig) (bo
 		ObservedGeneration: cfg.Generation,
 		LastTransitionTime: now,
 	}
+	profileCond := util.ConfigProfileResolvedCondition(cfg.Name, globalECSCfgFound, globalECSCfgViaFallthrough, cfg.Generation, now)
 	newEffConfig := v1alpha1.EffectiveECSConfig{
 		AWS:       mergeAWSIdentity(localKropath.Spec.AWS, globalKropath.Spec.AWS),
 		Mandatory: eff.Mandatory,
@@ -139,11 +141,13 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.ECSConfig) (bo
 	}
 
 	if !conditionNeedsUpdate(cfg.Status.Conditions, newCond) &&
+		!conditionNeedsUpdate(cfg.Status.Conditions, profileCond) &&
 		reflect.DeepEqual(cfg.Status.EffectiveConfig, newEffConfig) {
 		return false, ctrl.Result{}, nil
 	}
 
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, newCond)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
 	cfg.Status.EffectiveConfig = newEffConfig
 	cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 
@@ -162,17 +166,6 @@ func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name stri
 	return cfg, nil
 }
 
-func (r *Reconciler) loadECSConfig(ctx context.Context, namespace, name string) (*v1alpha1.ECSConfig, error) {
-	cfg := &v1alpha1.ECSConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("ECSConfig"))
-	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
-		if client.IgnoreNotFound(err) == nil {
-			return &v1alpha1.ECSConfig{}, nil
-		}
-		return nil, err
-	}
-	return cfg, nil
-}
 
 func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj client.Object) []ctrl.Request {
 	kpc, ok := obj.(*v1alpha1.KropathConfig)

@@ -22,6 +22,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/cascade"
+	"github.com/kropath/kropath-controller/internal/reconciler/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -87,7 +88,8 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.APIGatewayConf
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
-	globalApigw, err := r.loadApiGatewayConfig(ctx, kroSystemNamespace, cfg.Name)
+	globalApigw, globalApigwFound, globalApigwViaFallthrough, err := util.LoadConfigWithFallthrough[v1alpha1.APIGatewayConfig](
+		ctx, r.Client, v1alpha1.GroupVersion.WithKind("APIGatewayConfig"), kroSystemNamespace, cfg.Name, util.DefaultConfigProfile)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
@@ -126,6 +128,7 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.APIGatewayConf
 		ObservedGeneration: cfg.Generation,
 		LastTransitionTime: now,
 	}
+	profileCond := util.ConfigProfileResolvedCondition(cfg.Name, globalApigwFound, globalApigwViaFallthrough, cfg.Generation, now)
 	newEffConfig := v1alpha1.EffectiveAPIGatewayConfig{
 		AWS:       mergeAWSIdentity(localKropath.Spec.AWS, globalKropath.Spec.AWS),
 		Mandatory: eff.Mandatory,
@@ -133,11 +136,13 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.APIGatewayConf
 	}
 
 	if !conditionNeedsUpdate(cfg.Status.Conditions, newCond) &&
+		!conditionNeedsUpdate(cfg.Status.Conditions, profileCond) &&
 		reflect.DeepEqual(cfg.Status.EffectiveConfig, newEffConfig) {
 		return false, ctrl.Result{}, nil
 	}
 
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, newCond)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
 	cfg.Status.EffectiveConfig = newEffConfig
 	cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 
@@ -150,18 +155,6 @@ func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name stri
 	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			return &v1alpha1.KropathConfig{}, nil
-		}
-		return nil, err
-	}
-	return cfg, nil
-}
-
-func (r *Reconciler) loadApiGatewayConfig(ctx context.Context, namespace, name string) (*v1alpha1.APIGatewayConfig, error) {
-	cfg := &v1alpha1.APIGatewayConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("APIGatewayConfig"))
-	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
-		if client.IgnoreNotFound(err) == nil {
-			return &v1alpha1.APIGatewayConfig{}, nil
 		}
 		return nil, err
 	}

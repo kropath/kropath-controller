@@ -377,3 +377,150 @@ func TestRequestsForS3ConfigChangeQueuesNamespaceMatchesForGlobalSource(t *testi
 		t.Fatalf("requests len = %d, want 2; got %#v", len(requests), requests)
 	}
 }
+
+// --- ADR-015 §5.9 profile fallthrough tests ---
+
+func findCondition(conditions []metav1.Condition, condType string) *metav1.Condition {
+	for i := range conditions {
+		if conditions[i].Type == condType {
+			return &conditions[i]
+		}
+	}
+	return nil
+}
+
+// Unit: configRef "pci" with no global S3Config/pci merges S3Config/general-policy (ADR-015 §5.9).
+func TestGlobalProfileFallthroughWhenRequestedProfileMissing(t *testing.T) {
+	rec, c := testReconciler(t,
+		namespace("payments-prod"),
+		localKropathConfig("payments-prod", "default", cascade.S3Section{}),
+		// Only the fallthrough target exists globally — no S3Config/pci in kro-system.
+		globalS3Config("general-policy",
+			cascade.S3ConfigSection{KmsKeyArn: "arn:general-policy"},
+			cascade.S3ConfigSection{},
+		),
+		// Local S3Config/pci — this is the object being reconciled.
+		localS3Config("payments-prod", "pci", cascade.S3ConfigSection{}, cascade.S3ConfigSection{}),
+	)
+
+	_, err := rec.Reconcile(context.Background(), ctrl.Request{
+		NamespacedName: types.NamespacedName{Namespace: "payments-prod", Name: "pci"},
+	})
+	if err != nil {
+		t.Fatalf("Reconcile: %v", err)
+	}
+
+	got := getS3Config(t, c, "payments-prod", "pci")
+	if got.Status.EffectiveConfig.Mandatory.KmsKeyArn != "arn:general-policy" {
+		t.Fatalf("mandatory.kmsKeyArn = %q, want arn:general-policy (fallthrough was not applied)", got.Status.EffectiveConfig.Mandatory.KmsKeyArn)
+	}
+
+	cond := findCondition(got.Status.Conditions, util.ConfigProfileResolvedConditionType)
+	if cond == nil {
+		t.Fatalf("expected a %s condition", util.ConfigProfileResolvedConditionType)
+	}
+	if cond.Status != metav1.ConditionTrue || cond.Reason != "ProfileFallthrough" {
+		t.Fatalf("condition = %+v, want Status=True Reason=ProfileFallthrough", cond)
+	}
+}
+
+// Unit: configRef "pci" with S3Config/pci present globally merges that config, not the
+// fallthrough target (ADR-015 §5.9 — the fallthrough hop only fires on NotFound).
+func TestGlobalProfileNoFallthroughWhenRequestedProfileExists(t *testing.T) {
+	rec, c := testReconciler(t,
+		namespace("payments-prod"),
+		localKropathConfig("payments-prod", "default", cascade.S3Section{}),
+		globalS3Config("pci",
+			cascade.S3ConfigSection{KmsKeyArn: "arn:pci"},
+			cascade.S3ConfigSection{},
+		),
+		globalS3Config("general-policy",
+			cascade.S3ConfigSection{KmsKeyArn: "arn:general-policy"},
+			cascade.S3ConfigSection{},
+		),
+		localS3Config("payments-prod", "pci", cascade.S3ConfigSection{}, cascade.S3ConfigSection{}),
+	)
+
+	_, err := rec.Reconcile(context.Background(), ctrl.Request{
+		NamespacedName: types.NamespacedName{Namespace: "payments-prod", Name: "pci"},
+	})
+	if err != nil {
+		t.Fatalf("Reconcile: %v", err)
+	}
+
+	got := getS3Config(t, c, "payments-prod", "pci")
+	if got.Status.EffectiveConfig.Mandatory.KmsKeyArn != "arn:pci" {
+		t.Fatalf("mandatory.kmsKeyArn = %q, want arn:pci (fallthrough must not override an existing profile)", got.Status.EffectiveConfig.Mandatory.KmsKeyArn)
+	}
+
+	cond := findCondition(got.Status.Conditions, util.ConfigProfileResolvedConditionType)
+	if cond == nil {
+		t.Fatalf("expected a %s condition", util.ConfigProfileResolvedConditionType)
+	}
+	if cond.Status != metav1.ConditionTrue || cond.Reason != "ProfileFound" {
+		t.Fatalf("condition = %+v, want Status=True Reason=ProfileFound", cond)
+	}
+}
+
+// Unit: a nonexistent profile at the global tier — neither the requested profile nor the
+// fallthrough target exists — merges an empty global tier (ADR-002 D-1: absence is silently
+// skipped, not an error) but is observable via the ProfileUnresolved condition (ADR-015 §5.9).
+func TestGlobalProfileUnresolvedIsObservable(t *testing.T) {
+	rec, c := testReconciler(t,
+		namespace("payments-prod"),
+		localKropathConfig("payments-prod", "default", cascade.S3Section{}),
+		// No global S3Config at all — neither "pci" nor "general-policy".
+		localS3Config("payments-prod", "pci", cascade.S3ConfigSection{KmsKeyArn: "arn:local-pci"}, cascade.S3ConfigSection{}),
+	)
+
+	_, err := rec.Reconcile(context.Background(), ctrl.Request{
+		NamespacedName: types.NamespacedName{Namespace: "payments-prod", Name: "pci"},
+	})
+	if err != nil {
+		t.Fatalf("Reconcile: %v", err)
+	}
+
+	got := getS3Config(t, c, "payments-prod", "pci")
+	// The global tier is empty, but the local tier (level 4) still merges — confirms this
+	// is a skipped tier, not a reconcile failure.
+	if got.Status.EffectiveConfig.Mandatory.KmsKeyArn != "arn:local-pci" {
+		t.Fatalf("mandatory.kmsKeyArn = %q, want arn:local-pci (local tier must still merge)", got.Status.EffectiveConfig.Mandatory.KmsKeyArn)
+	}
+
+	cond := findCondition(got.Status.Conditions, util.ConfigProfileResolvedConditionType)
+	if cond == nil {
+		t.Fatalf("expected a %s condition", util.ConfigProfileResolvedConditionType)
+	}
+	if cond.Status != metav1.ConditionFalse || cond.Reason != "ProfileUnresolved" {
+		t.Fatalf("condition = %+v, want Status=False Reason=ProfileUnresolved", cond)
+	}
+}
+
+// Integration-style: a tenant namespace on a non-default profile still receives the
+// org-wide guardrails via the global fallthrough (ADR-015 §5.9).
+func TestNonDefaultProfileReceivesOrgWideGuardrailsViaFallthrough(t *testing.T) {
+	rec, c := testReconciler(t,
+		namespace("payments-prod"),
+		localKropathConfig("payments-prod", "default", cascade.S3Section{}),
+		globalS3Config("general-policy",
+			cascade.S3ConfigSection{BlockPublicAccess: true, EncryptionAlgorithm: "aws:kms"},
+			cascade.S3ConfigSection{},
+		),
+		localS3Config("payments-prod", "pci", cascade.S3ConfigSection{}, cascade.S3ConfigSection{}),
+	)
+
+	_, err := rec.Reconcile(context.Background(), ctrl.Request{
+		NamespacedName: types.NamespacedName{Namespace: "payments-prod", Name: "pci"},
+	})
+	if err != nil {
+		t.Fatalf("Reconcile: %v", err)
+	}
+
+	got := getS3Config(t, c, "payments-prod", "pci")
+	if !got.Status.EffectiveConfig.Mandatory.BlockPublicAccess {
+		t.Error("mandatory.blockPublicAccess should be true — org-wide guardrail lost on a non-default profile")
+	}
+	if got.Status.EffectiveConfig.Mandatory.EncryptionAlgorithm != "aws:kms" {
+		t.Errorf("mandatory.encryptionAlgorithm = %q, want aws:kms — org-wide guardrail lost on a non-default profile", got.Status.EffectiveConfig.Mandatory.EncryptionAlgorithm)
+	}
+}

@@ -92,7 +92,8 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.CloudTrailConf
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
-	globalCT, err := r.loadCloudTrailConfig(ctx, globalNS, cfg.Name)
+	globalCT, globalCTFound, globalCTViaFallthrough, err := util.LoadConfigWithFallthrough[v1alpha1.CloudTrailConfig](
+		ctx, r.Client, v1alpha1.GroupVersion.WithKind("CloudTrailConfig"), globalNS, cfg.Name, util.DefaultConfigProfile)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
@@ -131,6 +132,7 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.CloudTrailConf
 		ObservedGeneration: cfg.Generation,
 		LastTransitionTime: now,
 	}
+	profileCond := util.ConfigProfileResolvedCondition(cfg.Name, globalCTFound, globalCTViaFallthrough, cfg.Generation, now)
 	newEffConfig := v1alpha1.EffectiveCloudTrailConfig{
 		AWS:       mergeAWSIdentity(localKropath.Spec.AWS, globalKropath.Spec.AWS),
 		Mandatory: eff.Mandatory,
@@ -138,11 +140,13 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.CloudTrailConf
 	}
 
 	if !conditionNeedsUpdate(cfg.Status.Conditions, newCond) &&
+		!conditionNeedsUpdate(cfg.Status.Conditions, profileCond) &&
 		reflect.DeepEqual(cfg.Status.EffectiveConfig, newEffConfig) {
 		return false, ctrl.Result{}, nil
 	}
 
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, newCond)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
 	cfg.Status.EffectiveConfig = newEffConfig
 	cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 
@@ -161,17 +165,6 @@ func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name stri
 	return cfg, nil
 }
 
-func (r *Reconciler) loadCloudTrailConfig(ctx context.Context, namespace, name string) (*v1alpha1.CloudTrailConfig, error) {
-	cfg := &v1alpha1.CloudTrailConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("CloudTrailConfig"))
-	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
-		if client.IgnoreNotFound(err) == nil {
-			return &v1alpha1.CloudTrailConfig{}, nil
-		}
-		return nil, err
-	}
-	return cfg, nil
-}
 
 func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj client.Object) []ctrl.Request {
 	kpc, ok := obj.(*v1alpha1.KropathConfig)

@@ -93,7 +93,8 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.KMSConfig) (bo
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
-	globalKMS, err := r.loadKMSConfig(ctx, globalNS, cfg.Name)
+	globalKMS, globalKMSFound, globalKMSViaFallthrough, err := util.LoadConfigWithFallthrough[v1alpha1.KMSConfig](
+		ctx, r.Client, v1alpha1.GroupVersion.WithKind("KMSConfig"), globalNS, cfg.Name, util.DefaultConfigProfile)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
@@ -124,6 +125,7 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.KMSConfig) (bo
 	)
 
 	now := metav1.Now()
+	profileCond := util.ConfigProfileResolvedCondition(cfg.Name, globalKMSFound, globalKMSViaFallthrough, cfg.Generation, now)
 
 	valid, reason, message := cascade.ValidateKMSKeySpec(eff.Mandatory)
 	if !valid {
@@ -135,10 +137,12 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.KMSConfig) (bo
 			ObservedGeneration: cfg.Generation,
 			LastTransitionTime: now,
 		}
-		if !conditionNeedsUpdate(cfg.Status.Conditions, newCond) {
+		if !conditionNeedsUpdate(cfg.Status.Conditions, newCond) &&
+			!conditionNeedsUpdate(cfg.Status.Conditions, profileCond) {
 			return false, ctrl.Result{}, nil
 		}
 		cfg.Status.Conditions = setCondition(cfg.Status.Conditions, newCond)
+		cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
 		cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 		return true, ctrl.Result{}, nil
 	}
@@ -158,11 +162,13 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.KMSConfig) (bo
 	}
 
 	if !conditionNeedsUpdate(cfg.Status.Conditions, newCond) &&
+		!conditionNeedsUpdate(cfg.Status.Conditions, profileCond) &&
 		reflect.DeepEqual(cfg.Status.EffectiveConfig, newEffConfig) {
 		return false, ctrl.Result{}, nil
 	}
 
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, newCond)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
 	cfg.Status.EffectiveConfig = newEffConfig
 	cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 
@@ -175,18 +181,6 @@ func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name stri
 	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			return &v1alpha1.KropathConfig{}, nil
-		}
-		return nil, err
-	}
-	return cfg, nil
-}
-
-func (r *Reconciler) loadKMSConfig(ctx context.Context, namespace, name string) (*v1alpha1.KMSConfig, error) {
-	cfg := &v1alpha1.KMSConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("KMSConfig"))
-	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
-		if client.IgnoreNotFound(err) == nil {
-			return &v1alpha1.KMSConfig{}, nil
 		}
 		return nil, err
 	}

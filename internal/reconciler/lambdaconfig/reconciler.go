@@ -92,7 +92,8 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.LambdaConfig) 
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
-	globalLambdaCfg, err := r.loadLambdaConfig(ctx, globalNS, cfg.Name)
+	globalLambdaCfg, globalLambdaCfgFound, globalLambdaCfgViaFallthrough, err := util.LoadConfigWithFallthrough[v1alpha1.LambdaConfig](
+		ctx, r.Client, v1alpha1.GroupVersion.WithKind("LambdaConfig"), globalNS, cfg.Name, util.DefaultConfigProfile)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
@@ -139,6 +140,7 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.LambdaConfig) 
 		ObservedGeneration: cfg.Generation,
 		LastTransitionTime: now,
 	}
+	profileCond := util.ConfigProfileResolvedCondition(cfg.Name, globalLambdaCfgFound, globalLambdaCfgViaFallthrough, cfg.Generation, now)
 	newEffConfig := v1alpha1.EffectiveLambdaConfig{
 		AWS:       mergeAWSIdentity(localKropath.Spec.AWS, globalKropath.Spec.AWS),
 		Mandatory: eff.Mandatory,
@@ -146,11 +148,13 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.LambdaConfig) 
 	}
 
 	if !conditionNeedsUpdate(cfg.Status.Conditions, newCond) &&
+		!conditionNeedsUpdate(cfg.Status.Conditions, profileCond) &&
 		reflect.DeepEqual(cfg.Status.EffectiveConfig, newEffConfig) {
 		return false, ctrl.Result{}, nil
 	}
 
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, newCond)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
 	cfg.Status.EffectiveConfig = newEffConfig
 	cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 
@@ -169,17 +173,6 @@ func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name stri
 	return cfg, nil
 }
 
-func (r *Reconciler) loadLambdaConfig(ctx context.Context, namespace, name string) (*v1alpha1.LambdaConfig, error) {
-	cfg := &v1alpha1.LambdaConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("LambdaConfig"))
-	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
-		if client.IgnoreNotFound(err) == nil {
-			return &v1alpha1.LambdaConfig{}, nil
-		}
-		return nil, err
-	}
-	return cfg, nil
-}
 
 func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj client.Object) []ctrl.Request {
 	kpc, ok := obj.(*v1alpha1.KropathConfig)

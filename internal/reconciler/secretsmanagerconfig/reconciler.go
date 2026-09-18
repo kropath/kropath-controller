@@ -93,7 +93,8 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.SecretsManager
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
-	globalSM, err := r.loadSMConfig(ctx, globalNS, cfg.Name)
+	globalSM, globalSMFound, globalSMViaFallthrough, err := util.LoadConfigWithFallthrough[v1alpha1.SecretsManagerConfig](
+		ctx, r.Client, v1alpha1.GroupVersion.WithKind("SecretsManagerConfig"), globalNS, cfg.Name, util.DefaultConfigProfile)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
@@ -132,6 +133,7 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.SecretsManager
 		ObservedGeneration: cfg.Generation,
 		LastTransitionTime: now,
 	}
+	profileCond := util.ConfigProfileResolvedCondition(cfg.Name, globalSMFound, globalSMViaFallthrough, cfg.Generation, now)
 	newEffConfig := v1alpha1.EffectiveSecretsManagerConfig{
 		AWS:       mergeAWSIdentity(localKropath.Spec.AWS, globalKropath.Spec.AWS),
 		Mandatory: eff.Mandatory,
@@ -139,11 +141,13 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.SecretsManager
 	}
 
 	if !conditionNeedsUpdate(cfg.Status.Conditions, newCond) &&
+		!conditionNeedsUpdate(cfg.Status.Conditions, profileCond) &&
 		reflect.DeepEqual(cfg.Status.EffectiveConfig, newEffConfig) {
 		return false, ctrl.Result{}, nil
 	}
 
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, newCond)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
 	cfg.Status.EffectiveConfig = newEffConfig
 	cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 
@@ -156,18 +160,6 @@ func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name stri
 	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			return &v1alpha1.KropathConfig{}, nil
-		}
-		return nil, err
-	}
-	return cfg, nil
-}
-
-func (r *Reconciler) loadSMConfig(ctx context.Context, namespace, name string) (*v1alpha1.SecretsManagerConfig, error) {
-	cfg := &v1alpha1.SecretsManagerConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("SecretsManagerConfig"))
-	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
-		if client.IgnoreNotFound(err) == nil {
-			return &v1alpha1.SecretsManagerConfig{}, nil
 		}
 		return nil, err
 	}
