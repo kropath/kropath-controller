@@ -21,6 +21,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/cascade"
+	"github.com/kropath/kropath-controller/internal/reconciler/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -30,7 +31,7 @@ import (
 
 func TestReconcileAC1GlobalMandatoryBoundaryWins(t *testing.T) {
 	rec, cfg := testReconciler(t,
-		globalKropathConfig("general-policy", cascade.IAMSection{PermissionsBoundaryArn: "arn:aws:iam::123:policy/GlobalBlanket"}),
+		globalKropathConfig(cascade.IAMSection{PermissionsBoundaryArn: "arn:aws:iam::123:policy/GlobalBlanket"}),
 		localIAMConfig("payments-prod", "general-policy"),
 	)
 
@@ -49,7 +50,7 @@ func TestReconcileAC1GlobalMandatoryBoundaryWins(t *testing.T) {
 
 func TestReconcileAC2Level1WinsOverLevel3(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", cascade.IAMSection{PermissionsBoundaryArn: "arn:aws:iam::123:policy/GlobalBlanket"}),
+		globalKropathConfig(cascade.IAMSection{PermissionsBoundaryArn: "arn:aws:iam::123:policy/GlobalBlanket"}),
 		globalIAMConfig("general-policy", cascade.IAMSection{PermissionsBoundaryArn: "arn:aws:iam::123:policy/IAMCfgBoundary"}),
 		localIAMConfig("payments-prod", "general-policy"),
 	)
@@ -66,7 +67,7 @@ func TestReconcileAC2Level1WinsOverLevel3(t *testing.T) {
 
 func TestReconcileAC3BlockIamUserAccessKeys(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", cascade.IAMSection{BlockIamUserAccessKeys: true}),
+		globalKropathConfig(cascade.IAMSection{BlockIamUserAccessKeys: true}),
 		localIAMConfig("payments-prod", "general-policy"),
 	)
 
@@ -82,7 +83,7 @@ func TestReconcileAC3BlockIamUserAccessKeys(t *testing.T) {
 
 func TestReconcileAC4Level1MaxSessionWins(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", cascade.IAMSection{MaxSessionDurationSeconds: 3600}),
+		globalKropathConfig(cascade.IAMSection{MaxSessionDurationSeconds: 3600}),
 		globalIAMConfig("general-policy", cascade.IAMSection{MaxSessionDurationSeconds: 7200}),
 		localIAMConfig("payments-prod", "general-policy"),
 	)
@@ -118,8 +119,8 @@ func TestReconcileAC5DefaultsOnly(t *testing.T) {
 
 func TestReconcileAC6GlobalMandatoryWinsOverLocal(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", cascade.IAMSection{PermissionsBoundaryArn: "arn:aws:iam::123:policy/GlobalBlanket"}),
-		localKropathConfig("payments-prod", "general-policy", cascade.IAMSection{PermissionsBoundaryArn: "arn:aws:iam::123:policy/NsBlanket"}),
+		globalKropathConfig(cascade.IAMSection{PermissionsBoundaryArn: "arn:aws:iam::123:policy/GlobalBlanket"}),
+		localKropathConfig("payments-prod", cascade.IAMSection{PermissionsBoundaryArn: "arn:aws:iam::123:policy/NsBlanket"}),
 		localIAMConfig("payments-prod", "general-policy"),
 	)
 
@@ -135,7 +136,7 @@ func TestReconcileAC6GlobalMandatoryWinsOverLocal(t *testing.T) {
 
 func TestReconcileCopiesAWSIdentity(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfigWithAWS("general-policy", AWSIdentity("123456789012", "us-east-1")),
+		globalKropathConfigWithAWS(AWSIdentity("123456789012", "us-east-1")),
 		localIAMConfig("payments-prod", "general-policy"),
 	)
 
@@ -223,11 +224,11 @@ func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, *v1alpha
 	return &Reconciler{Client: cl, Log: logr.Discard(), Scheme: scheme}, cfg
 }
 
-func globalKropathConfig(name string, iam cascade.IAMSection) *v1alpha1.KropathConfig {
+func globalKropathConfig(iam cascade.IAMSection) *v1alpha1.KropathConfig {
 	return &v1alpha1.KropathConfig{
 		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "KropathConfig"},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
+			Name:      util.KropathConfigName,
 			Namespace: "kro-system",
 		},
 		Spec: v1alpha1.KropathConfigSpec{
@@ -236,15 +237,15 @@ func globalKropathConfig(name string, iam cascade.IAMSection) *v1alpha1.KropathC
 	}
 }
 
-func localKropathConfig(namespace, name string, iam cascade.IAMSection) *v1alpha1.KropathConfig {
-	cfg := globalKropathConfig(name, cascade.IAMSection{})
+func localKropathConfig(namespace string, iam cascade.IAMSection) *v1alpha1.KropathConfig {
+	cfg := globalKropathConfig(cascade.IAMSection{})
 	cfg.Namespace = namespace
 	cfg.Spec.Mandatory.IAM = iam
 	return cfg
 }
 
-func globalKropathConfigWithAWS(name string, aws v1alpha1.ProviderIdentity) *v1alpha1.KropathConfig {
-	cfg := globalKropathConfig(name, cascade.IAMSection{})
+func globalKropathConfigWithAWS(aws v1alpha1.ProviderIdentity) *v1alpha1.KropathConfig {
+	cfg := globalKropathConfig(cascade.IAMSection{})
 	cfg.Spec.AWS = aws
 	return cfg
 }

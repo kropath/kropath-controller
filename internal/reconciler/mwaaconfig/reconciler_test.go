@@ -21,6 +21,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/cascade"
+	"github.com/kropath/kropath-controller/internal/reconciler/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -31,7 +32,7 @@ import (
 // AC-1: globalKropathConfig.mandatory.mwaa.webserverAccessMode="PRIVATE_ONLY" propagates (level 1 wins).
 func TestReconcileAC1GlobalKropathWebserverAccessModeLevel1(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", v1alpha1.KropathConfigTier{
+		globalKropathConfig(v1alpha1.KropathConfigTier{
 			MWAA: cascade.MWAAKropathSection{WebserverAccessMode: "PRIVATE_ONLY"},
 		}),
 		localMWAAConfig("payments-prod", "general-policy", cascade.MWAAConfigSection{}, cascade.MWAAConfigSection{}),
@@ -84,7 +85,7 @@ func TestReconcileAC1cLocalMWAAConfigDefaultsAirflowVersion(t *testing.T) {
 // AC-5: globalKropathConfig.mandatory.mwaa.maxWorkers=5 propagates (level 1 wins).
 func TestReconcileAC5GlobalKropathMaxWorkersLevel1(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", v1alpha1.KropathConfigTier{
+		globalKropathConfig(v1alpha1.KropathConfigTier{
 			MWAA: cascade.MWAAKropathSection{MaxWorkers: 5},
 		}),
 		localMWAAConfig("payments-prod", "general-policy", cascade.MWAAConfigSection{}, cascade.MWAAConfigSection{}),
@@ -104,7 +105,7 @@ func TestReconcileAC5GlobalKropathMaxWorkersLevel1(t *testing.T) {
 func TestReconcileAC6GlobalKropathDagProcessingLogsEnabledLevel1(t *testing.T) {
 	trueVal := true
 	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", v1alpha1.KropathConfigTier{
+		globalKropathConfig(v1alpha1.KropathConfigTier{
 			MWAA: cascade.MWAAKropathSection{DagProcessingLogsEnabled: &trueVal},
 		}),
 		localMWAAConfig("payments-prod", "general-policy", cascade.MWAAConfigSection{}, cascade.MWAAConfigSection{}),
@@ -128,7 +129,7 @@ func TestReconcileAC6bLocalDefaultsBoolPtrBeatsGlobalKropathDefaults(t *testing.
 	falseVal := false
 	trueVal := true
 	rec, _ := testReconciler(t,
-		globalKropathConfigWithDefaults("general-policy",
+		globalKropathConfigWithDefaults(
 			v1alpha1.KropathConfigTier{},
 			v1alpha1.KropathConfigTier{MWAA: cascade.MWAAKropathSection{DagProcessingLogsEnabled: &trueVal}},
 		),
@@ -182,7 +183,7 @@ func TestReconcileAC7AirflowConfigurationOptionsMerge(t *testing.T) {
 // AC-8: Tags from KropathConfig tier-level and MWAAConfig are union-merged.
 func TestReconcileAC8TagUnionMerge(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", v1alpha1.KropathConfigTier{
+		globalKropathConfig(v1alpha1.KropathConfigTier{
 			Tags: map[string]string{"cost-centre": "infra", "shared-key": "from-global-kropath"},
 		}),
 		localMWAAConfig("payments-prod", "general-policy",
@@ -296,12 +297,13 @@ func TestRequestsForKropathConfigChangeGlobal(t *testing.T) {
 	)
 
 	got := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.KropathConfig{
-		ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: "kro-system"},
+		ObjectMeta: metav1.ObjectMeta{Name: util.KropathConfigName, Namespace: "kro-system"},
 	})
 
 	want := map[string]bool{
 		"payments-prod/general-policy": false,
 		"sandbox/general-policy":       false,
+		"payments-prod/other-policy":   false,
 	}
 	if len(got) != len(want) {
 		t.Fatalf("requests len = %d, want %d (%#v)", len(got), len(want), got)
@@ -320,7 +322,7 @@ func TestRequestsForKropathConfigChangeGlobal(t *testing.T) {
 	}
 }
 
-func TestRequestsForKropathConfigChangeLocalDefaultEnqueuesNamespace(t *testing.T) {
+func TestRequestsForKropathConfigChangeLocalNamespaceEnqueuesAllConfigsInNamespace(t *testing.T) {
 	rec, _ := testReconciler(t,
 		localMWAAConfig("payments-prod", "general-policy", cascade.MWAAConfigSection{}, cascade.MWAAConfigSection{}),
 		localMWAAConfig("payments-prod", "other-policy", cascade.MWAAConfigSection{}, cascade.MWAAConfigSection{}),
@@ -328,7 +330,7 @@ func TestRequestsForKropathConfigChangeLocalDefaultEnqueuesNamespace(t *testing.
 	)
 
 	got := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.KropathConfig{
-		ObjectMeta: metav1.ObjectMeta{Name: "default", Namespace: "payments-prod"},
+		ObjectMeta: metav1.ObjectMeta{Name: util.KropathConfigName, Namespace: "payments-prod"},
 	})
 
 	if len(got) != 2 {
@@ -367,7 +369,7 @@ func TestRequestsForMWAAConfigChangeNonGlobalIgnored(t *testing.T) {
 
 func TestProviderIdentityPropagates(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfigWithAWS("general-policy", v1alpha1.ProviderIdentity{AccountID: "123456789012", Region: "ap-southeast-2"}),
+		globalKropathConfigWithAWS(v1alpha1.ProviderIdentity{AccountID: "123456789012", Region: "ap-southeast-2"}),
 		localMWAAConfig("payments-prod", "general-policy", cascade.MWAAConfigSection{}, cascade.MWAAConfigSection{}),
 	)
 
@@ -406,11 +408,11 @@ func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, *v1alpha
 	return &Reconciler{Client: cl, Log: logr.Discard(), Scheme: scheme}, cfg
 }
 
-func globalKropathConfig(name string, tier v1alpha1.KropathConfigTier) *v1alpha1.KropathConfig {
+func globalKropathConfig(tier v1alpha1.KropathConfigTier) *v1alpha1.KropathConfig {
 	return &v1alpha1.KropathConfig{
 		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "KropathConfig"},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
+			Name:      util.KropathConfigName,
 			Namespace: "kro-system",
 		},
 		Spec: v1alpha1.KropathConfigSpec{
@@ -419,11 +421,11 @@ func globalKropathConfig(name string, tier v1alpha1.KropathConfigTier) *v1alpha1
 	}
 }
 
-func globalKropathConfigWithDefaults(name string, mandatory, defaults v1alpha1.KropathConfigTier) *v1alpha1.KropathConfig {
+func globalKropathConfigWithDefaults(mandatory, defaults v1alpha1.KropathConfigTier) *v1alpha1.KropathConfig {
 	return &v1alpha1.KropathConfig{
 		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "KropathConfig"},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
+			Name:      util.KropathConfigName,
 			Namespace: "kro-system",
 		},
 		Spec: v1alpha1.KropathConfigSpec{
@@ -433,8 +435,8 @@ func globalKropathConfigWithDefaults(name string, mandatory, defaults v1alpha1.K
 	}
 }
 
-func globalKropathConfigWithAWS(name string, aws v1alpha1.ProviderIdentity) *v1alpha1.KropathConfig {
-	cfg := globalKropathConfig(name, v1alpha1.KropathConfigTier{})
+func globalKropathConfigWithAWS(aws v1alpha1.ProviderIdentity) *v1alpha1.KropathConfig {
+	cfg := globalKropathConfig(v1alpha1.KropathConfigTier{})
 	cfg.Spec.AWS = aws
 	return cfg
 }

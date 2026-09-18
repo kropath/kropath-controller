@@ -21,6 +21,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/cascade"
+	"github.com/kropath/kropath-controller/internal/reconciler/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -31,7 +32,7 @@ import (
 // AC-1: globalKropathConfig.mandatory.apigateway.endpointType="REGIONAL" propagates (level 1 wins).
 func TestReconcileAC1GlobalKropathEndpointTypeLevel1(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", v1alpha1.KropathConfigTier{
+		globalKropathConfig(v1alpha1.KropathConfigTier{
 			ApiGateway: cascade.ApiGatewayKropathSection{EndpointType: "REGIONAL"},
 		}),
 		localApiGatewayConfig("payments-prod", "general-policy", cascade.ApiGatewayConfigSection{}, cascade.ApiGatewayConfigSection{}),
@@ -89,7 +90,7 @@ func TestReconcileAC3LocalApiGatewayConfigDefaultsNamingTemplate(t *testing.T) {
 // AC-4: globalKropathConfig.mandatory.tags augmented into KropathSection tags cascade.
 func TestReconcileAC4GlobalKropathTagsAugmented(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", v1alpha1.KropathConfigTier{
+		globalKropathConfig(v1alpha1.KropathConfigTier{
 			Tags: map[string]string{"cost-centre": "infra"},
 		}),
 		localApiGatewayConfig("payments-prod", "general-policy",
@@ -115,7 +116,7 @@ func TestReconcileAC4GlobalKropathTagsAugmented(t *testing.T) {
 // AC-5: Provider identity from globalKropathConfig propagates to effCfg.aws.*.
 func TestReconcileAC5ProviderIdentityPropagates(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfigWithAWS("general-policy", v1alpha1.ProviderIdentity{AccountID: "123456789012", Region: "ap-southeast-2"}),
+		globalKropathConfigWithAWS(v1alpha1.ProviderIdentity{AccountID: "123456789012", Region: "ap-southeast-2"}),
 		localApiGatewayConfig("payments-prod", "general-policy", cascade.ApiGatewayConfigSection{}, cascade.ApiGatewayConfigSection{}),
 	)
 
@@ -160,13 +161,29 @@ func TestRequestsForKropathConfigChangeGlobal(t *testing.T) {
 	)
 
 	got := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.KropathConfig{
-		ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: kroSystemNamespace},
+		ObjectMeta: metav1.ObjectMeta{Name: util.KropathConfigName, Namespace: kroSystemNamespace},
 	})
 
-	// Global change should enqueue all non-kro-system configs with any name (list all).
-	// Filter: only configs whose name matches cfg.Name.
+	// Classified by namespace, not name (ADR-018 D-1): a global-tier change
+	// enqueues every non-kro-system config, regardless of name.
+	if len(got) != 3 {
+		t.Fatalf("requests len = %d, want 3 (%#v)", len(got), got)
+	}
+}
+
+func TestRequestsForKropathConfigChangeLocalNamespaceEnqueuesAllConfigsInNamespace(t *testing.T) {
+	rec, _ := testReconciler(t,
+		localApiGatewayConfig("payments-prod", "general-policy", cascade.ApiGatewayConfigSection{}, cascade.ApiGatewayConfigSection{}),
+		localApiGatewayConfig("payments-prod", "other-policy", cascade.ApiGatewayConfigSection{}, cascade.ApiGatewayConfigSection{}),
+		localApiGatewayConfig("sandbox", "general-policy", cascade.ApiGatewayConfigSection{}, cascade.ApiGatewayConfigSection{}),
+	)
+
+	got := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.KropathConfig{
+		ObjectMeta: metav1.ObjectMeta{Name: util.KropathConfigName, Namespace: "payments-prod"},
+	})
+
 	if len(got) != 2 {
-		t.Fatalf("requests len = %d, want 2 (%#v)", len(got), got)
+		t.Fatalf("requests len = %d, want 2 — local KPC triggers all configs in its namespace (%#v)", len(got), got)
 	}
 }
 
@@ -206,11 +223,11 @@ func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, *v1alpha
 	return &Reconciler{Client: cl, Log: logr.Discard(), Scheme: scheme}, cfg
 }
 
-func globalKropathConfig(name string, tier v1alpha1.KropathConfigTier) *v1alpha1.KropathConfig {
+func globalKropathConfig(tier v1alpha1.KropathConfigTier) *v1alpha1.KropathConfig {
 	return &v1alpha1.KropathConfig{
 		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "KropathConfig"},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
+			Name:      util.KropathConfigName,
 			Namespace: kroSystemNamespace,
 		},
 		Spec: v1alpha1.KropathConfigSpec{
@@ -219,8 +236,8 @@ func globalKropathConfig(name string, tier v1alpha1.KropathConfigTier) *v1alpha1
 	}
 }
 
-func globalKropathConfigWithAWS(name string, aws v1alpha1.ProviderIdentity) *v1alpha1.KropathConfig {
-	cfg := globalKropathConfig(name, v1alpha1.KropathConfigTier{})
+func globalKropathConfigWithAWS(aws v1alpha1.ProviderIdentity) *v1alpha1.KropathConfig {
+	cfg := globalKropathConfig(v1alpha1.KropathConfigTier{})
 	cfg.Spec.AWS = aws
 	return cfg
 }
