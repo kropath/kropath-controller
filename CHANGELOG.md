@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.11.0](https://github.com/kropath/kropath-controller/compare/v0.10.0...v0.11.0) (2026-09-17)
+
+
+### Features
+
+* **KRO-1096:** wire S3AdvancedConfig cascade reconciler and controller-origin CRD ([b9a3149](https://github.com/kropath/kropath-controller/commit/b9a31490e9089f81a2e4ed595cc22c458e389eae))
+* **KRO-1097:** add CloudFrontConfig cascade reconciler and controller-origin CRD ([62b5b34](https://github.com/kropath/kropath-controller/commit/62b5b34a30376ab59135970e311acaa323fbbaad))
+* **KRO-1098:** add LambdaConfig effectiveConfig cascade reconciler ([#120](https://github.com/kropath/kropath-controller/issues/120)) ([145ec07](https://github.com/kropath/kropath-controller/commit/145ec073303cb61b348b83d8444376e0ee640d7b))
+* **KRO-1100:** extend crds-verify with spec-default drift and kind-set drift checks ([#116](https://github.com/kropath/kropath-controller/issues/116)) ([927aaaf](https://github.com/kropath/kropath-controller/commit/927aaafe94e0490b361ccdbb0dc48352eb59795f))
+
 ## [0.10.0](https://github.com/kropath/kropath-controller/compare/v0.9.2...v0.10.0) (2026-09-14)
 
 
