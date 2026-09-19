@@ -1,10 +1,22 @@
 # AC-8: globalCWConfig.mandatory.namingTemplate="corp-{namespace}-{name}" (level 3).
 # KropathConfig.cloudwatch has NO namingTemplate field — only CWConfig levels participate.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac08-cloudwatch-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac08-cloudwatch-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac08-cloudwatch-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac8-cw-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac08-cloudwatch-global-ns
 spec:
   mandatory:
     cloudwatch: {}
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudWatchConfig
 metadata:
   name: ac8-cw-policy
-  namespace: kro-system
+  namespace: ac08-cloudwatch-global-ns
   labels:
     aws.kropath.run/resource-name: ac8-cw-policy
 spec:
@@ -30,7 +42,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudWatchConfig
 metadata:
   name: ac8-cw-policy
-  namespace: monitoring-prod
+  namespace: ac08-cloudwatch-app-ns
   labels:
     aws.kropath.run/resource-name: ac8-cw-policy
 spec:

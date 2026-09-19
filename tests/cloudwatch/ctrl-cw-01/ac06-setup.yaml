@@ -1,9 +1,21 @@
 # AC-6: localCWConfig.mandatory.outputFormat="opentelemetry1.0" (level 4). KC is empty.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac06-cloudwatch-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac06-cloudwatch-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac06-cloudwatch-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac6-cw-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac06-cloudwatch-global-ns
 spec:
   mandatory:
     cloudwatch: {}
@@ -15,7 +27,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudWatchConfig
 metadata:
   name: ac6-cw-policy
-  namespace: monitoring-prod
+  namespace: ac06-cloudwatch-app-ns
   labels:
     aws.kropath.run/resource-name: ac6-cw-policy
 spec:

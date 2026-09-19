@@ -1,8 +1,17 @@
+# AC-2: both the global KropathConfig and the global-tier S3Config it overrides
+# live in the same isolated namespace (no separate local/app tier for this AC) --
+# renamed out of kro-system to avoid colliding with every other AC's singleton
+# baseline KropathConfig once every suite shares the cluster.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac02-s3-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac2-ac2-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac02-s3-global-ns
 spec:
   mandatory:
     s3:
@@ -12,7 +21,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: S3Config
 metadata:
   name: ac2-ac2-general-policy
-  namespace: kro-system
+  namespace: ac02-s3-global-ns
 spec:
   mandatory:
     encryptionAlgorithm: AES256

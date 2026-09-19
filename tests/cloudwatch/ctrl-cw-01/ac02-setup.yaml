@@ -1,10 +1,22 @@
 # AC-2: globalCWConfig.mandatory.actionsEnabled=false (level 3). KC levels are absent.
 # Verifies boolean false is a valid enforced value; nil (KC absent) is the skip sentinel.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac02-cloudwatch-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac02-cloudwatch-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac02-cloudwatch-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac2-cw-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac02-cloudwatch-global-ns
 spec:
   mandatory:
     cloudwatch: {}
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudWatchConfig
 metadata:
   name: ac2-cw-policy
-  namespace: kro-system
+  namespace: ac02-cloudwatch-global-ns
   labels:
     aws.kropath.run/resource-name: ac2-cw-policy
 spec:
@@ -30,7 +42,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudWatchConfig
 metadata:
   name: ac2-cw-policy
-  namespace: monitoring-prod
+  namespace: ac02-cloudwatch-app-ns
   labels:
     aws.kropath.run/resource-name: ac2-cw-policy
 spec:

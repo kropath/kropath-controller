@@ -2,7 +2,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: S3Config
 metadata:
   name: ac1-ac1-general-policy
-  namespace: payments-prod
+  namespace: ac01-s3-app-ns
 status:
   effectiveConfig:
     mandatory:

@@ -14,11 +14,23 @@
 #
 # AC-2: global QuickSightConfig.mandatory.importMode (level 3) flows to
 #        effCfg.mandatory.importMode when KropathConfig levels 1-2 are empty.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac02-quicksight-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac02-quicksight-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac02-quicksight-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac2-qs-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac02-quicksight-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -28,7 +40,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: QuickSightConfig
 metadata:
   name: ac2-qs-policy
-  namespace: kro-system
+  namespace: ac02-quicksight-global-ns
 spec:
   mandatory:
     importMode: "DIRECT_QUERY"
@@ -37,5 +49,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: QuickSightConfig
 metadata:
   name: ac2-qs-policy
-  namespace: payments-prod
+  namespace: ac02-quicksight-app-ns
 spec: {}

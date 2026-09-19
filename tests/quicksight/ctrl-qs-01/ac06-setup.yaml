@@ -14,11 +14,23 @@
 #
 # AC-6: KropathConfig.mandatory.tags and QuickSightConfig.mandatory.tags union-merge;
 #        KropathConfig (level 1) wins on key conflict.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac06-quicksight-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac06-quicksight-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac06-quicksight-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac6-qs-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac06-quicksight-global-ns
 spec:
   mandatory:
     tags:
@@ -31,7 +43,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: QuickSightConfig
 metadata:
   name: ac6-qs-policy
-  namespace: payments-prod
+  namespace: ac06-quicksight-app-ns
 spec:
   mandatory:
     tags:

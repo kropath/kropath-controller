@@ -4,7 +4,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudWatchConfig
 metadata:
   name: ac9-cw-policy
-  namespace: monitoring-prod
+  namespace: ac09-cloudwatch-app-ns
 status:
   effectiveConfig:
     defaults:

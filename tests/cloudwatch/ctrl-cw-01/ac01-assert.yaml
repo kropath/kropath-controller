@@ -3,7 +3,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudWatchConfig
 metadata:
   name: ac1-cw-policy
-  namespace: monitoring-prod
+  namespace: ac01-cloudwatch-app-ns
 status:
   effectiveConfig:
     mandatory:

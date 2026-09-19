@@ -13,11 +13,23 @@
 # limitations under the License.
 #
 # AC-7: QuickSightConfig.mandatory.syncedLabels flows to effCfg.mandatory.syncedLabels.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac07-quicksight-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac07-quicksight-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac07-quicksight-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac7-qs-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac07-quicksight-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -27,7 +39,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: QuickSightConfig
 metadata:
   name: ac7-qs-policy
-  namespace: payments-prod
+  namespace: ac07-quicksight-app-ns
 spec:
   mandatory:
     syncedLabels:

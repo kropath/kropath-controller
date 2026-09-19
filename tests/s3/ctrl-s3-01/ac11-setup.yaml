@@ -4,7 +4,7 @@
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: default
+  name: baseline
   namespace: payments-prod
 spec:
   mandatory:

@@ -14,11 +14,23 @@
 #
 # AC-5: global QuickSightConfig.defaults.namingTemplate (level 7) flows to
 #        effCfg.defaults.namingTemplate when no local defaults override is set.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac05-quicksight-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac05-quicksight-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac05-quicksight-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac5-qs-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac05-quicksight-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -28,7 +40,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: QuickSightConfig
 metadata:
   name: ac5-qs-policy
-  namespace: kro-system
+  namespace: ac05-quicksight-global-ns
 spec:
   defaults:
     namingTemplate: "{namespace}-{name}"
@@ -37,5 +49,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: QuickSightConfig
 metadata:
   name: ac5-qs-policy
-  namespace: payments-prod
+  namespace: ac05-quicksight-app-ns
 spec: {}

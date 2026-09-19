@@ -17,7 +17,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: QuickSightConfig
 metadata:
   name: ac2-qs-policy
-  namespace: payments-prod
+  namespace: ac02-quicksight-app-ns
 status:
   effectiveConfig:
     mandatory:
