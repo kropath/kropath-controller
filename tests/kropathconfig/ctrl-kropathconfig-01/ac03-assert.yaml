@@ -1,0 +1,10 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: baseline
+  namespace: ac3-orphan-ns
+status:
+  conditions:
+    - type: Reconciled
+      status: "False"
+      reason: Unreferenced

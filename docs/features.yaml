@@ -470,3 +470,10 @@ reconcilers:
         - KropathConfig
       sinceVersion: v0.0.1
       stability: stable
+    - name: KropathConfigStatus
+      package: kropathconfigstatus
+      description: Publishes a Reconciled condition on KropathConfig naming its tier and consumer count.
+      kinds:
+        - KropathConfig
+      sinceVersion: v0.0.1
+      stability: alpha

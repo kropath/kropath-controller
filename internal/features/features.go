@@ -134,4 +134,12 @@ var All = []Reconciler{
 	cascade("S3AdvancedConfig", "s3advancedconfig"),
 	cascade("CloudFrontConfig", "cloudfrontconfig"),
 	cascade("LambdaConfig", "lambdaconfig"),
+	{
+		Name:         "KropathConfigStatus",
+		Package:      "kropathconfigstatus",
+		Description:  "Publishes a Reconciled condition on KropathConfig naming its tier and consumer count.",
+		Kinds:        []string{"KropathConfig"},
+		SinceVersion: seedVersion,
+		Stability:    "alpha",
+	},
 }
