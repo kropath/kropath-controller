@@ -1,9 +1,21 @@
 # AC-2: globalKropathConfig mandatory.kms.enableKeyRotation=true (level 1).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac02-kms-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac02-kms-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac02-kms-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac2-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac02-kms-global-ns
 spec:
   mandatory:
     kms:
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: KMSConfig
 metadata:
   name: ac2-general-policy
-  namespace: kro-system
+  namespace: ac02-kms-global-ns
 spec:
   mandatory:
     enableKeyRotation: false
@@ -29,7 +41,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: KMSConfig
 metadata:
   name: ac2-general-policy
-  namespace: payments-prod
+  namespace: ac02-kms-app-ns
 spec:
   mandatory: {}
   defaults: {}

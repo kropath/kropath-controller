@@ -13,11 +13,23 @@
 # limitations under the License.
 #
 # AC-12: KropathConfig.mandatory.tags (level 1) and EKSConfig.mandatory.tags (level 4) union-merge.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac12-eks-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac12-eks-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac12-eks-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac12-eks-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac12-eks-global-ns
 spec:
   mandatory:
     tags:
@@ -27,7 +39,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: EKSConfig
 metadata:
   name: ac12-eks-policy
-  namespace: payments-prod
+  namespace: ac12-eks-app-ns
 spec:
   mandatory:
     tags:

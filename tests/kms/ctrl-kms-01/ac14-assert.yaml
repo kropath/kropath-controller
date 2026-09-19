@@ -3,7 +3,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: KMSConfig
 metadata:
   name: ac14-general-policy
-  namespace: payments-prod
+  namespace: ac14-kms-app-ns
 status:
   effectiveConfig:
     aws:

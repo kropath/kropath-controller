@@ -17,10 +17,10 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: EKSConfig
 metadata:
   name: ac6-eks-policy
-  namespace: payments-prod
+  namespace: ac06-eks-app-ns
 status:
   effectiveConfig:
     mandatory:
       loggingTypes:
-        - api
-        - audit
+      - api
+      - audit

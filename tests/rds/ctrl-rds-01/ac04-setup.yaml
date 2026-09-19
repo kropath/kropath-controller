@@ -1,9 +1,21 @@
 # AC-4: globalKropathConfig.mandatory.rds.deletionProtection: true (level 1).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-rds-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-rds-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac04-rds-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac4-general-instance
-  namespace: kro-system
+  name: baseline
+  namespace: ac04-rds-global-ns
 spec:
   mandatory:
     rds:
@@ -13,7 +25,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: RDSConfig
 metadata:
   name: ac4-general-instance
-  namespace: rds
+  namespace: ac04-rds-app-ns
   labels:
     aws.kropath.run/resource-name: ac4-general-instance
 spec: {}

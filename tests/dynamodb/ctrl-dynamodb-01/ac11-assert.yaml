@@ -2,7 +2,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: DynamoDBConfig
 metadata:
   name: ac11-general-table
-  namespace: dynamodb
+  namespace: ac11-dynamodb-app-ns
 status:
   effectiveConfig:
     mandatory:

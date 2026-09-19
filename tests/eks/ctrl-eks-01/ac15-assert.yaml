@@ -17,7 +17,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: EKSConfig
 metadata:
   name: ac15-eks-policy
-  namespace: payments-prod
+  namespace: ac15-eks-app-ns
 status:
   effectiveConfig:
     mandatory:

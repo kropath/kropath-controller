@@ -1,15 +1,27 @@
 # AC-7: globalKropathConfig mandatory.kms.allowedKeySpecs (level 1).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac07-kms-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac07-kms-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac07-kms-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac7-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac07-kms-global-ns
 spec:
   mandatory:
     kms:
       allowedKeySpecs:
-        - "SYMMETRIC_DEFAULT"
-        - "RSA_4096"
+      - "SYMMETRIC_DEFAULT"
+      - "RSA_4096"
   aws:
     accountId: "123456789012"
     region: "us-east-1"
@@ -19,7 +31,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: KMSConfig
 metadata:
   name: ac7-general-policy
-  namespace: payments-prod
+  namespace: ac07-kms-app-ns
 spec:
   mandatory: {}
   defaults: {}

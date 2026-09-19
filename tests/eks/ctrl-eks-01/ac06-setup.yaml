@@ -13,21 +13,33 @@
 # limitations under the License.
 #
 # AC-6: globalKropathConfig.mandatory.eks.loggingTypes (level 1) flows to effCfg.mandatory.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac06-eks-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac06-eks-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac06-eks-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac6-eks-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac06-eks-global-ns
 spec:
   mandatory:
     eks:
       loggingTypes:
-        - api
-        - audit
+      - api
+      - audit
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: EKSConfig
 metadata:
   name: ac6-eks-policy
-  namespace: payments-prod
+  namespace: ac06-eks-app-ns
 spec: {}

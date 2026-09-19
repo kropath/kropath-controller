@@ -13,11 +13,23 @@
 # limitations under the License.
 #
 # AC-15: KropathConfig.mandatory (level 1) wins over global EKSConfig.mandatory (level 3).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac15-eks-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac15-eks-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac15-eks-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac15-eks-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac15-eks-global-ns
 spec:
   mandatory:
     eks:
@@ -27,7 +39,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: EKSConfig
 metadata:
   name: ac15-eks-policy
-  namespace: kro-system
+  namespace: ac15-eks-global-ns
 spec:
   mandatory:
     version: "1.30"
@@ -36,5 +48,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: EKSConfig
 metadata:
   name: ac15-eks-policy
-  namespace: payments-prod
+  namespace: ac15-eks-app-ns
 spec: {}

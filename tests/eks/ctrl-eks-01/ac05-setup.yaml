@@ -13,11 +13,23 @@
 # limitations under the License.
 #
 # AC-5: global EKSConfig.defaults (level 7) wins over globalKropathConfig.defaults (level 9).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac05-eks-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac05-eks-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac05-eks-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: EKSConfig
 metadata:
   name: ac5-eks-policy
-  namespace: kro-system
+  namespace: ac05-eks-global-ns
 spec:
   defaults:
     authenticationMode: "API"
@@ -25,8 +37,8 @@ spec:
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac5-eks-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac05-eks-global-ns
 spec:
   defaults:
     eks:
@@ -36,5 +48,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: EKSConfig
 metadata:
   name: ac5-eks-policy
-  namespace: payments-prod
+  namespace: ac05-eks-app-ns
 spec: {}

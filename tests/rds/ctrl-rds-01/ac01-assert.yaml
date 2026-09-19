@@ -2,7 +2,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: RDSConfig
 metadata:
   name: ac1-general-instance
-  namespace: rds
+  namespace: ac01-rds-app-ns
 status:
   effectiveConfig:
     mandatory:

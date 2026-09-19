@@ -1,8 +1,20 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac05-dynamodb-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac05-dynamodb-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac05-dynamodb-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: DynamoDBConfig
 metadata:
   name: ac5-general-table
-  namespace: kro-system
+  namespace: ac05-dynamodb-global-ns
 spec:
   defaults:
     billingMode: "PAY_PER_REQUEST"
@@ -10,8 +22,8 @@ spec:
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac5-general-table
-  namespace: kro-system
+  name: baseline
+  namespace: ac05-dynamodb-global-ns
 spec:
   defaults:
     dynamodb:
@@ -21,5 +33,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: DynamoDBConfig
 metadata:
   name: ac5-general-table
-  namespace: dynamodb
+  namespace: ac05-dynamodb-app-ns
 spec: {}
