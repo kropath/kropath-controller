@@ -3,7 +3,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudWatchLogsConfig
 metadata:
   name: ac1-ac1-cwl-policy
-  namespace: logging-prod
+  namespace: ac01-cloudwatchlogs-app-ns
 status:
   effectiveConfig:
     mandatory:

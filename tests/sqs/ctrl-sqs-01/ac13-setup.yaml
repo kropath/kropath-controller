@@ -1,9 +1,21 @@
 # AC-13: globalKropathConfig with aws.region and aws.accountId set.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac13-sqs-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac13-sqs-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac13-sqs-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac13-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac13-sqs-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -14,7 +26,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SQSConfig
 metadata:
   name: ac13-general-policy
-  namespace: payments-prod
+  namespace: ac13-sqs-app-ns
 spec:
   mandatory: {}
   defaults: {}

@@ -1,9 +1,21 @@
 # AC-11: globalKropathConfig with aws.region and aws.accountId set.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac11-cloudwatchlogs-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac11-cloudwatchlogs-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac11-cloudwatchlogs-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac11-ac11-cwl-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac11-cloudwatchlogs-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -14,7 +26,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudWatchLogsConfig
 metadata:
   name: ac11-ac11-cwl-policy
-  namespace: logging-prod
+  namespace: ac11-cloudwatchlogs-app-ns
   labels:
     aws.kropath.run/resource-name: ac11-ac11-cwl-policy
 spec:

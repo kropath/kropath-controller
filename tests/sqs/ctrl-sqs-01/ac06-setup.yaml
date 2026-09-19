@@ -1,9 +1,21 @@
 # AC-6: globalKropathConfig with mandatory.sqs.messageRetentionPeriod=604800 (level 1).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac06-sqs-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac06-sqs-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac06-sqs-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac6-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac06-sqs-global-ns
 spec:
   mandatory:
     sqs:
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SQSConfig
 metadata:
   name: ac6-general-policy
-  namespace: payments-prod
+  namespace: ac06-sqs-app-ns
 spec:
   mandatory: {}
   defaults: {}

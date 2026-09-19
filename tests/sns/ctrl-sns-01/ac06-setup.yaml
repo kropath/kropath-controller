@@ -1,9 +1,21 @@
 # AC-6: globalKropathConfig with mandatory.sns.tracingConfig="Active" (level 1).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac06-sns-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac06-sns-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac06-sns-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac6-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac06-sns-global-ns
 spec:
   mandatory:
     sns:
@@ -18,7 +30,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SNSConfig
 metadata:
   name: ac6-general-policy
-  namespace: events-prod
+  namespace: ac06-sns-app-ns
 spec:
   mandatory: {}
   defaults: {}

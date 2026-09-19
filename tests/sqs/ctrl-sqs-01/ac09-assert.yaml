@@ -4,7 +4,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SQSConfig
 metadata:
   name: ac9-general-policy
-  namespace: payments-prod
+  namespace: ac09-sqs-app-ns
 status:
   effectiveConfig:
     mandatory:

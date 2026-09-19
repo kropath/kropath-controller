@@ -3,7 +3,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SNSConfig
 metadata:
   name: ac4-general-policy
-  namespace: events-prod
+  namespace: ac04-sns-app-ns
 status:
   effectiveConfig:
     mandatory:
