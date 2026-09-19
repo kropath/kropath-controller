@@ -92,7 +92,8 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.CloudWatchConf
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
-	globalCW, err := r.loadCloudWatchConfig(ctx, globalNS, cfg.Name)
+	globalCW, globalCWFound, globalCWViaFallthrough, err := util.LoadConfigWithFallthrough[v1alpha1.CloudWatchConfig](
+		ctx, r.Client, v1alpha1.GroupVersion.WithKind("CloudWatchConfig"), globalNS, cfg.Name, util.DefaultConfigProfile)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
@@ -131,6 +132,7 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.CloudWatchConf
 		ObservedGeneration: cfg.Generation,
 		LastTransitionTime: now,
 	}
+	profileCond := util.ConfigProfileResolvedCondition(cfg.Name, globalCWFound, globalCWViaFallthrough, cfg.Generation, now)
 	newEffConfig := v1alpha1.EffectiveCloudWatchConfig{
 		AWS:       mergeAWSIdentity(localKropath.Spec.AWS, globalKropath.Spec.AWS),
 		Mandatory: eff.Mandatory,
@@ -138,11 +140,13 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.CloudWatchConf
 	}
 
 	if !conditionNeedsUpdate(cfg.Status.Conditions, newCond) &&
+		!conditionNeedsUpdate(cfg.Status.Conditions, profileCond) &&
 		reflect.DeepEqual(cfg.Status.EffectiveConfig, newEffConfig) {
 		return false, ctrl.Result{}, nil
 	}
 
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, newCond)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
 	cfg.Status.EffectiveConfig = newEffConfig
 	cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 
@@ -161,17 +165,6 @@ func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name stri
 	return cfg, nil
 }
 
-func (r *Reconciler) loadCloudWatchConfig(ctx context.Context, namespace, name string) (*v1alpha1.CloudWatchConfig, error) {
-	cfg := &v1alpha1.CloudWatchConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("CloudWatchConfig"))
-	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
-		if client.IgnoreNotFound(err) == nil {
-			return &v1alpha1.CloudWatchConfig{}, nil
-		}
-		return nil, err
-	}
-	return cfg, nil
-}
 
 func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj client.Object) []ctrl.Request {
 	kpc, ok := obj.(*v1alpha1.KropathConfig)

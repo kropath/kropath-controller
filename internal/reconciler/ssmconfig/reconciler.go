@@ -92,7 +92,8 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.SSMConfig) (bo
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
-	globalSSM, err := r.loadSSMConfig(ctx, globalNS, cfg.Name)
+	globalSSM, globalSSMFound, globalSSMViaFallthrough, err := util.LoadConfigWithFallthrough[v1alpha1.SSMConfig](
+		ctx, r.Client, v1alpha1.GroupVersion.WithKind("SSMConfig"), globalNS, cfg.Name, util.DefaultConfigProfile)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
@@ -122,6 +123,7 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.SSMConfig) (bo
 	)
 
 	now := metav1.Now()
+	profileCond := util.ConfigProfileResolvedCondition(cfg.Name, globalSSMFound, globalSSMViaFallthrough, cfg.Generation, now)
 
 	// Cross-field validation: documentType must be in allowedDocumentTypes when both are set.
 	valid, validMsg := cascade.ValidateSSMDocumentType(eff.Mandatory)
@@ -157,11 +159,13 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.SSMConfig) (bo
 		}
 		if !conditionNeedsUpdate(cfg.Status.Conditions, reconciledCond) &&
 			!conditionNeedsUpdate(cfg.Status.Conditions, validCond) &&
+			!conditionNeedsUpdate(cfg.Status.Conditions, profileCond) &&
 			reflect.DeepEqual(cfg.Status.EffectiveConfig, emptyEffConfig) {
 			return false, ctrl.Result{}, nil
 		}
 		cfg.Status.Conditions = setCondition(cfg.Status.Conditions, reconciledCond)
 		cfg.Status.Conditions = setCondition(cfg.Status.Conditions, validCond)
+		cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
 		cfg.Status.EffectiveConfig = emptyEffConfig
 		cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 		return true, ctrl.Result{}, nil
@@ -175,12 +179,14 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.SSMConfig) (bo
 
 	if !conditionNeedsUpdate(cfg.Status.Conditions, reconciledCond) &&
 		!conditionNeedsUpdate(cfg.Status.Conditions, validCond) &&
+		!conditionNeedsUpdate(cfg.Status.Conditions, profileCond) &&
 		reflect.DeepEqual(cfg.Status.EffectiveConfig, newEffConfig) {
 		return false, ctrl.Result{}, nil
 	}
 
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, reconciledCond)
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, validCond)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
 	cfg.Status.EffectiveConfig = newEffConfig
 	cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 
@@ -199,17 +205,6 @@ func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name stri
 	return cfg, nil
 }
 
-func (r *Reconciler) loadSSMConfig(ctx context.Context, namespace, name string) (*v1alpha1.SSMConfig, error) {
-	cfg := &v1alpha1.SSMConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("SSMConfig"))
-	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
-		if client.IgnoreNotFound(err) == nil {
-			return &v1alpha1.SSMConfig{}, nil
-		}
-		return nil, err
-	}
-	return cfg, nil
-}
 
 func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj client.Object) []ctrl.Request {
 	kpc, ok := obj.(*v1alpha1.KropathConfig)

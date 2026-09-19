@@ -92,7 +92,8 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.BedrockConfig)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
-	globalBedrock, err := r.loadBedrockConfig(ctx, globalNS, cfg.Name)
+	globalBedrock, globalBedrockFound, globalBedrockViaFallthrough, err := util.LoadConfigWithFallthrough[v1alpha1.BedrockConfig](
+		ctx, r.Client, v1alpha1.GroupVersion.WithKind("BedrockConfig"), globalNS, cfg.Name, util.DefaultConfigProfile)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
@@ -122,6 +123,7 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.BedrockConfig)
 	)
 
 	now := metav1.Now()
+	profileCond := util.ConfigProfileResolvedCondition(cfg.Name, globalBedrockFound, globalBedrockViaFallthrough, cfg.Generation, now)
 
 	valid, reason, message := cascade.ValidateBedrockConfig(eff)
 	if !valid {
@@ -133,10 +135,12 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.BedrockConfig)
 			ObservedGeneration: cfg.Generation,
 			LastTransitionTime: now,
 		}
-		if !conditionNeedsUpdate(cfg.Status.Conditions, newCond) {
+		if !conditionNeedsUpdate(cfg.Status.Conditions, newCond) &&
+			!conditionNeedsUpdate(cfg.Status.Conditions, profileCond) {
 			return false, ctrl.Result{}, nil
 		}
 		cfg.Status.Conditions = setCondition(cfg.Status.Conditions, newCond)
+		cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
 		cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 		return true, ctrl.Result{}, nil
 	}
@@ -156,11 +160,13 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.BedrockConfig)
 	}
 
 	if !conditionNeedsUpdate(cfg.Status.Conditions, newCond) &&
+		!conditionNeedsUpdate(cfg.Status.Conditions, profileCond) &&
 		reflect.DeepEqual(cfg.Status.EffectiveConfig, newEffConfig) {
 		return false, ctrl.Result{}, nil
 	}
 
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, newCond)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
 	cfg.Status.EffectiveConfig = newEffConfig
 	cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 
@@ -173,18 +179,6 @@ func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name stri
 	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			return &v1alpha1.KropathConfig{}, nil
-		}
-		return nil, err
-	}
-	return cfg, nil
-}
-
-func (r *Reconciler) loadBedrockConfig(ctx context.Context, namespace, name string) (*v1alpha1.BedrockConfig, error) {
-	cfg := &v1alpha1.BedrockConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("BedrockConfig"))
-	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
-		if client.IgnoreNotFound(err) == nil {
-			return &v1alpha1.BedrockConfig{}, nil
 		}
 		return nil, err
 	}

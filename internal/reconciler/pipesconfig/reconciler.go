@@ -92,7 +92,8 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.PipesConfig) (
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
-	globalPipes, err := r.loadPipesConfig(ctx, globalNS, cfg.Name)
+	globalPipes, globalPipesFound, globalPipesViaFallthrough, err := util.LoadConfigWithFallthrough[v1alpha1.PipesConfig](
+		ctx, r.Client, v1alpha1.GroupVersion.WithKind("PipesConfig"), globalNS, cfg.Name, util.DefaultConfigProfile)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
@@ -139,6 +140,7 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.PipesConfig) (
 		ObservedGeneration: cfg.Generation,
 		LastTransitionTime: now,
 	}
+	profileCond := util.ConfigProfileResolvedCondition(cfg.Name, globalPipesFound, globalPipesViaFallthrough, cfg.Generation, now)
 	newEffConfig := v1alpha1.EffectivePipesConfig{
 		AWS:       mergeAWSIdentity(localKropath.Spec.AWS, globalKropath.Spec.AWS),
 		Mandatory: eff.Mandatory,
@@ -146,11 +148,13 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.PipesConfig) (
 	}
 
 	if !conditionNeedsUpdate(cfg.Status.Conditions, newCond) &&
+		!conditionNeedsUpdate(cfg.Status.Conditions, profileCond) &&
 		reflect.DeepEqual(cfg.Status.EffectiveConfig, newEffConfig) {
 		return false, ctrl.Result{}, nil
 	}
 
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, newCond)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
 	cfg.Status.EffectiveConfig = newEffConfig
 	cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 
@@ -169,17 +173,6 @@ func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name stri
 	return cfg, nil
 }
 
-func (r *Reconciler) loadPipesConfig(ctx context.Context, namespace, name string) (*v1alpha1.PipesConfig, error) {
-	cfg := &v1alpha1.PipesConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("PipesConfig"))
-	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
-		if client.IgnoreNotFound(err) == nil {
-			return &v1alpha1.PipesConfig{}, nil
-		}
-		return nil, err
-	}
-	return cfg, nil
-}
 
 func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj client.Object) []ctrl.Request {
 	kpc, ok := obj.(*v1alpha1.KropathConfig)

@@ -13,3 +13,6 @@ status:
     - type: Valid
       status: "False"
       reason: InvalidNodeTypeNotInAllowedList
+    - type: GlobalProfileResolved
+      status: "False"
+      reason: ProfileUnresolved

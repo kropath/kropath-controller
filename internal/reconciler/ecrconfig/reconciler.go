@@ -93,7 +93,8 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.ECRConfig) (bo
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
-	globalECR, err := r.loadECRConfig(ctx, globalNS, cfg.Name)
+	globalECR, globalECRFound, globalECRViaFallthrough, err := util.LoadConfigWithFallthrough[v1alpha1.ECRConfig](
+		ctx, r.Client, v1alpha1.GroupVersion.WithKind("ECRConfig"), globalNS, cfg.Name, util.DefaultConfigProfile)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
@@ -123,6 +124,7 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.ECRConfig) (bo
 	)
 
 	now := metav1.Now()
+	profileCond := util.ConfigProfileResolvedCondition(cfg.Name, globalECRFound, globalECRViaFallthrough, cfg.Generation, now)
 
 	// AC-17: cross-field validation — AES256 + kmsKeyID in same mandatory tier is invalid.
 	valid, reason, message := cascade.ValidateECREncryption(eff.Mandatory)
@@ -159,7 +161,8 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.ECRConfig) (bo
 		}
 	}
 
-	condChanged := conditionNeedsUpdate(cfg.Status.Conditions, newCond)
+	condChanged := conditionNeedsUpdate(cfg.Status.Conditions, newCond) ||
+		conditionNeedsUpdate(cfg.Status.Conditions, profileCond)
 	var effChanged bool
 	if newEffConfig != nil {
 		effChanged = !reflect.DeepEqual(cfg.Status.EffectiveConfig, *newEffConfig)
@@ -170,6 +173,7 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.ECRConfig) (bo
 	}
 
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, newCond)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
 	if newEffConfig != nil {
 		cfg.Status.EffectiveConfig = *newEffConfig
 	}
@@ -190,17 +194,6 @@ func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name stri
 	return cfg, nil
 }
 
-func (r *Reconciler) loadECRConfig(ctx context.Context, namespace, name string) (*v1alpha1.ECRConfig, error) {
-	cfg := &v1alpha1.ECRConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("ECRConfig"))
-	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
-		if client.IgnoreNotFound(err) == nil {
-			return &v1alpha1.ECRConfig{}, nil
-		}
-		return nil, err
-	}
-	return cfg, nil
-}
 
 func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj client.Object) []ctrl.Request {
 	kpc, ok := obj.(*v1alpha1.KropathConfig)

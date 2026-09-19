@@ -8,3 +8,6 @@ status:
     - type: Valid
       status: "False"
       reason: InvalidEncryptionConfiguration
+    - type: GlobalProfileResolved
+      status: "True"
+      reason: ProfileFound

@@ -132,3 +132,11 @@ spec:
         - assert:
             file: ac12-assert.yaml
             timeout: 30s
+
+    - name: ac13-nondefault-profile-fallthrough-guardrails
+      try:
+        - apply:
+            file: ac13-setup.yaml
+        - assert:
+            file: ac13-assert.yaml
+            timeout: 30s

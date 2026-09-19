@@ -129,6 +129,7 @@ type IAMConfigStatus struct {
 	EffectiveConfig    EffectiveIAMConfig `json:"effectiveConfig,omitempty"`
 	ObservedGeneration int64              `json:"observedGeneration,omitempty"`
 	SyncedTimestamp    string             `json:"syncedTimestamp,omitempty"`
+	Conditions         []metav1.Condition `json:"conditions,omitempty"`
 }
 
 type EffectiveIAMConfig struct {
@@ -959,6 +960,10 @@ func (in *IAMConfig) DeepCopyInto(out *IAMConfig) {
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
 	out.Spec = in.Spec
 	out.Status = in.Status
+	if in.Status.Conditions != nil {
+		out.Status.Conditions = make([]metav1.Condition, len(in.Status.Conditions))
+		copy(out.Status.Conditions, in.Status.Conditions)
+	}
 }
 
 func (in *IAMConfig) DeepCopy() *IAMConfig {

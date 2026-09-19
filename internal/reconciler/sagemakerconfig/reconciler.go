@@ -93,7 +93,8 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.SageMakerConfi
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
-	globalSM, err := r.loadSageMakerConfig(ctx, globalNS, cfg.Name)
+	globalSM, globalSMFound, globalSMViaFallthrough, err := util.LoadConfigWithFallthrough[v1alpha1.SageMakerConfig](
+		ctx, r.Client, v1alpha1.GroupVersion.WithKind("SageMakerConfig"), globalNS, cfg.Name, util.DefaultConfigProfile)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
@@ -139,8 +140,10 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.SageMakerConfi
 		Mandatory: eff.Mandatory,
 		Defaults:  eff.Defaults,
 	}
+	profileCond := util.ConfigProfileResolvedCondition(cfg.Name, globalSMFound, globalSMViaFallthrough, cfg.Generation, now)
 
-	condChanged := conditionNeedsUpdate(cfg.Status.Conditions, newCond)
+	condChanged := conditionNeedsUpdate(cfg.Status.Conditions, newCond) ||
+		conditionNeedsUpdate(cfg.Status.Conditions, profileCond)
 	effChanged := !reflect.DeepEqual(cfg.Status.EffectiveConfig, newEffConfig)
 
 	if !condChanged && !effChanged {
@@ -148,6 +151,7 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.SageMakerConfi
 	}
 
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, newCond)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
 	cfg.Status.EffectiveConfig = newEffConfig
 	cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 
@@ -160,18 +164,6 @@ func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name stri
 	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			return &v1alpha1.KropathConfig{}, nil
-		}
-		return nil, err
-	}
-	return cfg, nil
-}
-
-func (r *Reconciler) loadSageMakerConfig(ctx context.Context, namespace, name string) (*v1alpha1.SageMakerConfig, error) {
-	cfg := &v1alpha1.SageMakerConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("SageMakerConfig"))
-	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
-		if client.IgnoreNotFound(err) == nil {
-			return &v1alpha1.SageMakerConfig{}, nil
 		}
 		return nil, err
 	}

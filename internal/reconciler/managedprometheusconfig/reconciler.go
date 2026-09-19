@@ -92,7 +92,8 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.ManagedPrometh
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
-	globalMP, err := r.loadManagedPrometheusConfig(ctx, globalNS, cfg.Name)
+	globalMP, globalMPFound, globalMPViaFallthrough, err := util.LoadConfigWithFallthrough[v1alpha1.ManagedPrometheusConfig](
+		ctx, r.Client, v1alpha1.GroupVersion.WithKind("ManagedPrometheusConfig"), globalNS, cfg.Name, util.DefaultConfigProfile)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
@@ -131,6 +132,7 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.ManagedPrometh
 		ObservedGeneration: cfg.Generation,
 		LastTransitionTime: now,
 	}
+	profileCond := util.ConfigProfileResolvedCondition(cfg.Name, globalMPFound, globalMPViaFallthrough, cfg.Generation, now)
 	newEffConfig := v1alpha1.EffectiveManagedPrometheusConfig{
 		AWS:       mergeAWSIdentity(localKropath.Spec.AWS, globalKropath.Spec.AWS),
 		Mandatory: eff.Mandatory,
@@ -138,11 +140,13 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.ManagedPrometh
 	}
 
 	if !conditionNeedsUpdate(cfg.Status.Conditions, newCond) &&
+		!conditionNeedsUpdate(cfg.Status.Conditions, profileCond) &&
 		reflect.DeepEqual(cfg.Status.EffectiveConfig, newEffConfig) {
 		return false, ctrl.Result{}, nil
 	}
 
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, newCond)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
 	cfg.Status.EffectiveConfig = newEffConfig
 	cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 
@@ -161,17 +165,6 @@ func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name stri
 	return cfg, nil
 }
 
-func (r *Reconciler) loadManagedPrometheusConfig(ctx context.Context, namespace, name string) (*v1alpha1.ManagedPrometheusConfig, error) {
-	cfg := &v1alpha1.ManagedPrometheusConfig{}
-	cfg.SetGroupVersionKind(v1alpha1.GroupVersion.WithKind("ManagedPrometheusConfig"))
-	if err := r.Client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, cfg); err != nil {
-		if client.IgnoreNotFound(err) == nil {
-			return &v1alpha1.ManagedPrometheusConfig{}, nil
-		}
-		return nil, err
-	}
-	return cfg, nil
-}
 
 func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj client.Object) []ctrl.Request {
 	kpc, ok := obj.(*v1alpha1.KropathConfig)

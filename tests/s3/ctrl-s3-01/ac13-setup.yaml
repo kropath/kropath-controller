@@ -1,0 +1,30 @@
+# AC-13: a tenant namespace on a non-default profile (configRef="pci", which has no
+# S3Config/pci at the global tier) still receives the org-wide guardrails via the
+# ADR-015 §5.9 global-tier fallthrough hop to S3Config/general-policy. Real Chainsaw
+# coverage for util.LoadConfigWithFallthrough end-to-end — mirrors the fake-client unit
+# test TestNonDefaultProfileReceivesOrgWideGuardrailsViaFallthrough, which does not
+# exercise the actual controller reconcile path.
+#
+# NOTE: unlike every other AC in this suite, the global S3Config below is intentionally
+# named the literal fallthrough target "general-policy" (util.DefaultConfigProfile), not
+# ac13-general-policy — the fallthrough hop only fires for that exact name. Do not give
+# another AC in this suite a global S3Config named "general-policy".
+apiVersion: aws.kropath.run/v1alpha1
+kind: S3Config
+metadata:
+  name: general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    blockPublicAccess: true
+    encryptionAlgorithm: aws:kms
+  defaults: {}
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: S3Config
+metadata:
+  name: ac13-pci
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}
