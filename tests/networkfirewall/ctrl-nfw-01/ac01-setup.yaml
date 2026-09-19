@@ -14,11 +14,23 @@
 #
 # AC-1: globalKropathConfig.mandatory.networkfirewall.encryptionType (level 1)
 # flows to effCfg.mandatory.encryptionType.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac1-nfw-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac1-nfw-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac1-nfw-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac1-nfw-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac1-nfw-global-ns
 spec:
   mandatory:
     networkfirewall:
@@ -31,5 +43,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: NetworkFirewallConfig
 metadata:
   name: ac1-nfw-policy
-  namespace: networkfirewall
+  namespace: ac1-nfw-app-ns
 spec: {}

@@ -14,11 +14,23 @@
 #
 # AC-8: globalNFWConfig.mandatory.namingTemplate (level 3) flows to effCfg.mandatory.namingTemplate.
 # KropathConfig levels do NOT carry namingTemplate.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac8-nfw-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac8-nfw-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac8-nfw-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac8-nfw-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac8-nfw-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -28,7 +40,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: NetworkFirewallConfig
 metadata:
   name: ac8-nfw-policy
-  namespace: kro-system
+  namespace: ac8-nfw-global-ns
 spec:
   mandatory:
     namingTemplate: "{namespace}-{name}-fw"
@@ -37,5 +49,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: NetworkFirewallConfig
 metadata:
   name: ac8-nfw-policy
-  namespace: networkfirewall
+  namespace: ac8-nfw-app-ns
 spec: {}

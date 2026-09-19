@@ -17,7 +17,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: NetworkFirewallConfig
 metadata:
   name: ac4-nfw-policy
-  namespace: networkfirewall
+  namespace: ac4-nfw-app-ns
 status:
   effectiveConfig:
     mandatory:

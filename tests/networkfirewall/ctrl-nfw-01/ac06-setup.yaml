@@ -14,11 +14,23 @@
 #
 # AC-6: KropathConfig.mandatory.networkfirewall.streamExceptionPolicy (level 1)
 # flows to effCfg.mandatory.streamExceptionPolicy.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac6-nfw-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac6-nfw-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac6-nfw-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac6-nfw-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac6-nfw-global-ns
 spec:
   mandatory:
     networkfirewall:
@@ -31,5 +43,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: NetworkFirewallConfig
 metadata:
   name: ac6-nfw-policy
-  namespace: networkfirewall
+  namespace: ac6-nfw-app-ns
 spec: {}

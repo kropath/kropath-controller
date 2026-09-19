@@ -13,11 +13,23 @@
 # limitations under the License.
 #
 # AC-11: KropathConfig.spec.aws.accountId and region flow into effCfg.aws.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac11-nfw-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac11-nfw-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac11-nfw-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac11-nfw-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac11-nfw-global-ns
 spec:
   aws:
     accountId: "999888777666"
@@ -27,5 +39,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: NetworkFirewallConfig
 metadata:
   name: ac11-nfw-policy
-  namespace: networkfirewall
+  namespace: ac11-nfw-app-ns
 spec: {}

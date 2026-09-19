@@ -19,18 +19,20 @@
 # against an already-running controller).
 #
 # Test isolation — unique-name-per-step, no inter-step deletes:
-#   Each AC owns a distinct resource name (acN-nfw-policy). The controller
-#   resolves a config's global counterpart by *name* — a local NetworkFirewallConfig
-#   networkfirewall/acN-nfw-policy merges only kro-system/acN-nfw-policy — so a
-#   per-AC name isolates each AC completely. Nothing an AC applies can shadow
-#   another AC, in either direction, regardless of step order.
+#   Each AC owns a distinct resource name (acN-nfw-policy) AND its own
+#   ac<N>-nfw-global-ns/ac<N>-nfw-app-ns namespace pair. KropathConfig is a
+#   per-namespace singleton named "baseline" (ADR-018 D-1/D-2, ADR-015 §5.7),
+#   so a shared "kro-system"/"networkfirewall" namespace pair across all 11
+#   steps would collide; the per-AC global-ns/app-ns pair (annotated with
+#   aws.kropath.run/global-config-namespace) isolates each AC completely.
+#   Nothing an AC applies can shadow another AC, in either direction,
+#   regardless of step order.
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
   name: ctrl-nfw-01
 spec:
   description: "Network Firewall effectiveConfig cascade — all 11 acceptance criteria (ctrl-nfw-01)"
-  namespace: networkfirewall
   steps:
     # AC-1: KropathConfig.mandatory.networkfirewall.encryptionType (level 1) → effCfg.mandatory.encryptionType
     - name: ac1-global-kpc-mandatory-encryption

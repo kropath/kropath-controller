@@ -13,11 +13,23 @@
 # limitations under the License.
 #
 # AC-7: globalNFWConfig.defaults.encryptionType (level 7) flows to effCfg.defaults.encryptionType.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac7-nfw-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac7-nfw-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac7-nfw-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac7-nfw-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac7-nfw-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -27,7 +39,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: NetworkFirewallConfig
 metadata:
   name: ac7-nfw-policy
-  namespace: kro-system
+  namespace: ac7-nfw-global-ns
 spec:
   defaults:
     encryptionType: "AWS_OWNED_KMS"
@@ -37,5 +49,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: NetworkFirewallConfig
 metadata:
   name: ac7-nfw-policy
-  namespace: networkfirewall
+  namespace: ac7-nfw-app-ns
 spec: {}
