@@ -4,7 +4,7 @@
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac10-ct-kpc
+  name: baseline
   namespace: kro-system
   labels:
     aws.kropath.run/resource-name: ac10-ct-kpc
