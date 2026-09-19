@@ -17,7 +17,7 @@
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac9-invalid-both-deletion-protection
+  name: baseline
   namespace: kro-system
 spec:
   mandatory:

@@ -1,3 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-acm-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-acm-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac09-acm-global-ns
+---
 # Copyright 2026 kropath Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +31,8 @@
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac9-acm-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac09-acm-global-ns
 spec:
   mandatory:
     tags:
@@ -31,7 +43,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: ACMConfig
 metadata:
   name: ac9-acm-policy
-  namespace: kro-system
+  namespace: ac09-acm-global-ns
 spec:
   mandatory:
     tags:
@@ -41,5 +53,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: ACMConfig
 metadata:
   name: ac9-acm-policy
-  namespace: payments-prod
+  namespace: ac09-acm-app-ns
 spec: {}

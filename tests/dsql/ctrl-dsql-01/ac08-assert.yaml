@@ -17,7 +17,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: DSQLConfig
 metadata:
   name: ac8-dsql-policy
-  namespace: payments-prod
+  namespace: ac08-dsql-app-ns
 status:
   effectiveConfig:
     mandatory:

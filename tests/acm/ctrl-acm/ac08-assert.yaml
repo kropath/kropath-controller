@@ -17,7 +17,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: ACMConfig
 metadata:
   name: ac8-acm-policy
-  namespace: payments-prod
+  namespace: ac08-acm-app-ns
 status:
   effectiveConfig:
     mandatory:
