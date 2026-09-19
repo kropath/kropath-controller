@@ -1,10 +1,22 @@
 # AC-C3: CloudFrontConfig mandatory priceClass="PriceClass_100" (level 4)
 # propagates to effectiveConfig.mandatory.priceClass.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac03-cloudfront-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac03-cloudfront-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac03-cloudfront-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac3-cfcfg-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac03-cloudfront-global-ns
 spec:
   mandatory: {}
   aws:
@@ -15,7 +27,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudFrontConfig
 metadata:
   name: ac3-cfcfg-policy
-  namespace: payments-prod
+  namespace: ac03-cloudfront-app-ns
 spec:
   mandatory:
     priceClass: "PriceClass_100"

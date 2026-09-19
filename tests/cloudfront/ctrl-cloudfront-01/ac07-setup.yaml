@@ -1,9 +1,21 @@
 # AC-C7: Tags union-merge across mandatory levels 3+4; level-3 (global CloudFrontConfig) wins on conflict.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac07-cloudfront-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac07-cloudfront-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac07-cloudfront-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac7-cfcfg-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac07-cloudfront-global-ns
 spec:
   mandatory: {}
   aws:
@@ -15,7 +27,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudFrontConfig
 metadata:
   name: ac7-cfcfg-policy
-  namespace: kro-system
+  namespace: ac07-cloudfront-global-ns
 spec:
   mandatory:
     tags:
@@ -27,7 +39,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudFrontConfig
 metadata:
   name: ac7-cfcfg-policy
-  namespace: payments-prod
+  namespace: ac07-cloudfront-app-ns
 spec:
   mandatory:
     tags:

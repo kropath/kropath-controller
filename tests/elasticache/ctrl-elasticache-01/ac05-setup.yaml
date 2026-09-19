@@ -1,10 +1,22 @@
 # AC-5: globalKropathConfig with defaults.elasticache.transitEncryptionEnabled=false (level 9).
 # Level 7 (ECConfig defaults) must win over this level 9 value.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac05-elasticache-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac05-elasticache-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac05-elasticache-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac5-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac05-elasticache-global-ns
 spec:
   defaults:
     elasticache:
@@ -18,7 +30,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: ElastiCacheConfig
 metadata:
   name: ac5-general-policy
-  namespace: kro-system
+  namespace: ac05-elasticache-global-ns
 spec:
   mandatory: {}
   defaults:
@@ -29,7 +41,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: ElastiCacheConfig
 metadata:
   name: ac5-general-policy
-  namespace: payments-prod
+  namespace: ac05-elasticache-app-ns
 spec:
   mandatory: {}
   defaults: {}

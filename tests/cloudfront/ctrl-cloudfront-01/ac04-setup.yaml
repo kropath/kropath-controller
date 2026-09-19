@@ -1,10 +1,22 @@
 # AC-C4: CloudFrontConfig mandatory webACLRequired=true (level 4)
 # propagates to effectiveConfig.mandatory.webACLRequired.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-cloudfront-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-cloudfront-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac04-cloudfront-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac4-cfcfg-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac04-cloudfront-global-ns
 spec:
   mandatory: {}
   aws:
@@ -15,7 +27,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudFrontConfig
 metadata:
   name: ac4-cfcfg-policy
-  namespace: payments-prod
+  namespace: ac04-cloudfront-app-ns
 spec:
   mandatory:
     webACLRequired: true

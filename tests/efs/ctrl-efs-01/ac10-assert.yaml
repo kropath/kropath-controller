@@ -3,7 +3,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: EFSConfig
 metadata:
   name: ac10-general-storage
-  namespace: efs
+  namespace: ac10-efs-app-ns
 status:
   effectiveConfig:
     aws:

@@ -1,10 +1,22 @@
 # AC-C5: CloudFrontConfig defaults namingTemplate="{namespace}-{name}" (level 6)
 # propagates to effectiveConfig.defaults.namingTemplate.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac05-cloudfront-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac05-cloudfront-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac05-cloudfront-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac5-cfcfg-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac05-cloudfront-global-ns
 spec:
   mandatory: {}
   aws:
@@ -15,7 +27,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudFrontConfig
 metadata:
   name: ac5-cfcfg-policy
-  namespace: payments-prod
+  namespace: ac05-cloudfront-app-ns
 spec:
   mandatory: {}
   defaults:

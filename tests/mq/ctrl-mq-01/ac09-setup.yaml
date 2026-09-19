@@ -1,10 +1,22 @@
 # CC-9: globalKropathDefaults.mq.encryptionUseAWSOwnedKey=false (level 9) propagates
 # when no MQConfig defaults are set.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-mq-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-mq-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac09-mq-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac9-mq-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac09-mq-global-ns
 spec:
   mandatory: {}
   defaults:
@@ -18,7 +30,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MQConfig
 metadata:
   name: ac9-mq-policy
-  namespace: mq-prod
+  namespace: ac09-mq-app-ns
   labels:
     aws.kropath.run/resource-name: ac9-mq-policy
 spec:

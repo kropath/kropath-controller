@@ -2,11 +2,23 @@
 # KropathConfig.mq has no syncedLabels/syncedAnnotations fields.
 # Mandatory: level 3 wins over level 4 on key conflict.
 # Defaults: level 6 wins over level 7 on key conflict.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac12-mq-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac12-mq-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac12-mq-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac12-mq-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac12-mq-global-ns
 spec:
   mandatory: {}
   aws:
@@ -18,7 +30,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MQConfig
 metadata:
   name: ac12-mq-policy
-  namespace: kro-system
+  namespace: ac12-mq-global-ns
 spec:
   mandatory:
     syncedLabels:
@@ -38,7 +50,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MQConfig
 metadata:
   name: ac12-mq-policy
-  namespace: mq-prod
+  namespace: ac12-mq-app-ns
   labels:
     aws.kropath.run/resource-name: ac12-mq-policy
 spec:

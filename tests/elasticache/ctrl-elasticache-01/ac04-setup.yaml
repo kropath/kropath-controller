@@ -1,9 +1,21 @@
 # AC-4: globalKropathConfig with mandatory.elasticache.transitEncryptionEnabled=true (level 1).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-elasticache-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-elasticache-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac04-elasticache-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac4-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac04-elasticache-global-ns
 spec:
   mandatory:
     elasticache:
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: ElastiCacheConfig
 metadata:
   name: ac4-general-policy
-  namespace: payments-prod
+  namespace: ac04-elasticache-app-ns
 spec:
   mandatory: {}
   defaults: {}

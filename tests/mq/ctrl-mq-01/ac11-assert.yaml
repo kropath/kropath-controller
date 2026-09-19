@@ -4,7 +4,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MQConfig
 metadata:
   name: ac11-mq-policy
-  namespace: mq-prod
+  namespace: ac11-mq-app-ns
 status:
   effectiveConfig:
     mandatory:

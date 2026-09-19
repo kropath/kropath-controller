@@ -3,7 +3,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudFrontConfig
 metadata:
   name: ac5-cfcfg-policy
-  namespace: payments-prod
+  namespace: ac05-cloudfront-app-ns
 status:
   effectiveConfig:
     defaults:
