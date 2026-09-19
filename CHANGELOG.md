@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.12.0](https://github.com/kropath/kropath-controller/compare/v0.11.0...v0.12.0) (2026-09-19)
+
+
+### Features
+
+* **KRO-1119:** enforce singleton KropathConfig name and fixed global lookup ([#122](https://github.com/kropath/kropath-controller/issues/122)) ([096076b](https://github.com/kropath/kropath-controller/commit/096076b4190bbca19382ce7aab0217daf4aa4200))
+* **KRO-1120:** implement ADR-015 §5.9 global-tier profile fallthrough ([#121](https://github.com/kropath/kropath-controller/issues/121)) ([7e08756](https://github.com/kropath/kropath-controller/commit/7e0875690ea51f6da62fc154b904d36fa59a4a0b))
+* **KRO-1121:** publish Reconciled status condition on KropathConfig ([#126](https://github.com/kropath/kropath-controller/issues/126)) ([fe6b602](https://github.com/kropath/kropath-controller/commit/fe6b6028fdddc4965b1053415764dce90e872d80))
+
+
+### Bug Fixes
+
+* **KRO-1137:** apply Option A namespace-pair migration to 3 more suites ([#130](https://github.com/kropath/kropath-controller/issues/130)) ([bcbd6c2](https://github.com/kropath/kropath-controller/commit/bcbd6c2e3c98584fc3354dceb20aaee5bdc75bd1))
+* **KRO-1137:** apply Option A namespace-pair migration to 4 more suites ([#134](https://github.com/kropath/kropath-controller/issues/134)) ([a8ec2d5](https://github.com/kropath/kropath-controller/commit/a8ec2d532a39f218f6407ba6fe22387b3d419f98))
+* **KRO-1137:** apply Option A namespace-pair migration to 5 more suites ([#132](https://github.com/kropath/kropath-controller/issues/132)) ([04d31c0](https://github.com/kropath/kropath-controller/commit/04d31c0327d52037a3e7e3ab2bd5bb1975069e23))
+* **KRO-1137:** apply Option A namespace-pair migration to 5 more suites ([#133](https://github.com/kropath/kropath-controller/issues/133)) ([45be7fe](https://github.com/kropath/kropath-controller/commit/45be7fef2b63753b392536e65dea4ece20bfa0ab))
+* **KRO-1137:** apply Option A namespace-pair migration to 6 more suites ([#128](https://github.com/kropath/kropath-controller/issues/128)) ([282fdd2](https://github.com/kropath/kropath-controller/commit/282fdd29707d51f767e4824382ac365e1dc7667c))
+* **KRO-1137:** apply Option A namespace-pair migration to 6 more suites ([#129](https://github.com/kropath/kropath-controller/issues/129)) ([bea1cd5](https://github.com/kropath/kropath-controller/commit/bea1cd54f0798f6372bc7904861b7a18bda26c83))
+* **KRO-1137:** apply Option A namespace-pair migration to ctrl-acm, ctrl-dsql-01 ([#127](https://github.com/kropath/kropath-controller/issues/127)) ([3831558](https://github.com/kropath/kropath-controller/commit/38315584a61c2a90d9022d7c3353ca772066c321))
+* **KRO-1137:** apply suite-wide namespace-pair migration to the last 5 numbered-file suites ([#135](https://github.com/kropath/kropath-controller/issues/135)) ([42a7f72](https://github.com/kropath/kropath-controller/commit/42a7f724808acf060ba9bb4502d7c969e46dec15))
+* **KRO-1137:** fix migration script header bug + apply namespace-pair migration to 4 more suites ([#131](https://github.com/kropath/kropath-controller/issues/131)) ([30b4b4b](https://github.com/kropath/kropath-controller/commit/30b4b4bc619d80b050726cb376a028b6ca6768e9))
+* **KRO-1137:** rename KropathConfig fixtures to baseline in 7 verified-safe suites ([#125](https://github.com/kropath/kropath-controller/issues/125)) ([5b1d2cd](https://github.com/kropath/kropath-controller/commit/5b1d2cdc75afb863c6ac6a6c3222bd05b18b9191))
+* **KRO-1149:** sync KropathConfig test fixture, rename singletons, set companion CRD ref ([#137](https://github.com/kropath/kropath-controller/issues/137)) ([b0ada80](https://github.com/kropath/kropath-controller/commit/b0ada804134830660409b3833cb208723cf2b982))
+* **KRO-1150:** add GlobalProfileResolved condition and baseline singleton naming to bedrock/sagemaker/lambda asserts ([#136](https://github.com/kropath/kropath-controller/issues/136)) ([6fd1e53](https://github.com/kropath/kropath-controller/commit/6fd1e537502066ac713a3705e110a40275582323))
+
 ## [0.11.0](https://github.com/kropath/kropath-controller/compare/v0.10.0...v0.11.0) (2026-09-17)
 
 
