@@ -80,11 +80,11 @@ func (r *Reconciler) BuildWithManager(mgr ctrl.Manager) (controller.Controller, 
 }
 
 func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.APIGatewayConfig) (bool, ctrl.Result, error) {
-	globalKropath, err := r.loadKropathConfig(ctx, kroSystemNamespace, cfg.Name)
+	globalKropath, err := r.loadKropathConfig(ctx, kroSystemNamespace, util.KropathConfigName)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
-	localKropath, err := r.loadKropathConfig(ctx, cfg.Namespace, cfg.Name)
+	localKropath, err := r.loadKropathConfig(ctx, cfg.Namespace, util.KropathConfigName)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
@@ -180,12 +180,18 @@ func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj cli
 		}
 	}
 
+	// Classified by namespace, not name -- the name is a fixed singleton
+	// (ADR-018 D-1). A KropathConfig in kroSystemNamespace is the global tier
+	// for every item; a KropathConfig in an item's own namespace is its local
+	// tier.
 	requests := make([]ctrl.Request, 0, len(list.Items))
 	for _, item := range list.Items {
-		if item.Namespace == kroSystemNamespace || item.Name != cfg.Name {
+		if item.Namespace == kroSystemNamespace {
 			continue
 		}
-		requests = append(requests, ctrl.Request{NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name}})
+		if cfg.Namespace == kroSystemNamespace || cfg.Namespace == item.Namespace {
+			requests = append(requests, ctrl.Request{NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name}})
+		}
 	}
 	return requests
 }

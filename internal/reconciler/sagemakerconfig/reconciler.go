@@ -85,11 +85,11 @@ func (r *Reconciler) BuildWithManager(mgr ctrl.Manager) (controller.Controller, 
 
 func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.SageMakerConfig) (bool, ctrl.Result, error) {
 	globalNS := util.ResolveGlobalNamespace(ctx, r.Client, cfg.Namespace)
-	globalKropath, err := r.loadKropathConfig(ctx, globalNS, cfg.Name)
+	globalKropath, err := r.loadKropathConfig(ctx, globalNS, util.KropathConfigName)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
-	localKropath, err := r.loadKropathConfig(ctx, cfg.Namespace, "default")
+	localKropath, err := r.loadKropathConfig(ctx, cfg.Namespace, util.KropathConfigName)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
@@ -184,14 +184,17 @@ func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj cli
 
 	requests := make([]ctrl.Request, 0, len(list.Items))
 	for _, item := range list.Items {
-		if kpc.Name == "default" && kpc.Namespace == item.Namespace {
+		// Local tier: KropathConfig lives in the item's own namespace. Classified
+		// by namespace, not name -- the name is a fixed singleton (ADR-018 D-1).
+		if kpc.Namespace == item.Namespace {
 			requests = append(requests, ctrl.Request{
 				NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name},
 			})
 			continue
 		}
+		// Global tier: KropathConfig lives in the item's resolved global namespace.
 		globalNS := util.ResolveGlobalNamespace(ctx, r.Client, item.Namespace)
-		if kpc.Namespace == globalNS && kpc.Name == item.Name {
+		if kpc.Namespace == globalNS {
 			requests = append(requests, ctrl.Request{
 				NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name},
 			})

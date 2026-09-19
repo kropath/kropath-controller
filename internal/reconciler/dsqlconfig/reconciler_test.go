@@ -21,6 +21,8 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/cascade"
+	"github.com/kropath/kropath-controller/internal/reconciler/util"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -30,7 +32,7 @@ import (
 
 func TestReconcileC1GlobalMandatoryDeleteProtectionPropagates(t *testing.T) {
 	rec, cfg := testReconciler(t,
-		globalKropathConfig("general-policy", v1alpha1.KropathConfigTier{
+		globalKropathConfig(v1alpha1.KropathConfigTier{
 			DSQL: cascade.DSQLKropathSection{DeletionProtectionEnabled: true},
 		}),
 		localDSQLConfig("payments-prod", "general-policy", cascade.DSQLConfigSection{}, cascade.DSQLConfigSection{}),
@@ -51,7 +53,7 @@ func TestReconcileC1GlobalMandatoryDeleteProtectionPropagates(t *testing.T) {
 
 func TestReconcileC1Level1MandatoryWinsOverLevel4(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", v1alpha1.KropathConfigTier{
+		globalKropathConfig(v1alpha1.KropathConfigTier{
 			DSQL: cascade.DSQLKropathSection{DeletionProtectionEnabled: true},
 		}),
 		localDSQLConfig("payments-prod", "general-policy",
@@ -67,6 +69,30 @@ func TestReconcileC1Level1MandatoryWinsOverLevel4(t *testing.T) {
 	updated := getDSQLConfig(t, rec.Client, "payments-prod", "general-policy")
 	if !updated.Status.EffectiveConfig.Mandatory.DeletionProtectionEnabled {
 		t.Fatal("mandatory.deletionProtectionEnabled = false, want true (level-1 wins)")
+	}
+}
+
+// TestReconcileGlobalKropathResolvesByBaselineNameNotProfile is AC-2: a
+// DSQLConfig named after a non-default profile ("pci") must still merge the
+// global KropathConfig/baseline mandatory guardrails. Before ADR-018, the
+// global lookup used cfg.Name (the profile), so this instance would have
+// looked for KropathConfig/pci in kro-system, found nothing, and silently
+// merged an empty tier.
+func TestReconcileGlobalKropathResolvesByBaselineNameNotProfile(t *testing.T) {
+	rec, _ := testReconciler(t,
+		globalKropathConfig(v1alpha1.KropathConfigTier{
+			DSQL: cascade.DSQLKropathSection{DeletionProtectionEnabled: true},
+		}),
+		localDSQLConfig("payments-prod", "pci", cascade.DSQLConfigSection{}, cascade.DSQLConfigSection{}),
+	)
+
+	if _, err := rec.Reconcile(context.Background(), req("payments-prod", "pci")); err != nil {
+		t.Fatalf("reconcile: %v", err)
+	}
+
+	updated := getDSQLConfig(t, rec.Client, "payments-prod", "pci")
+	if !updated.Status.EffectiveConfig.Mandatory.DeletionProtectionEnabled {
+		t.Fatal("mandatory.deletionProtectionEnabled = false, want true (global baseline must apply regardless of profile)")
 	}
 }
 
@@ -113,7 +139,7 @@ func TestReconcileC5DefaultsKmsKeyFromGlobalDSQLConfig(t *testing.T) {
 
 func TestReconcileC8TagUnionMerge(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", v1alpha1.KropathConfigTier{
+		globalKropathConfig(v1alpha1.KropathConfigTier{
 			Tags: map[string]string{"owner": "platform-team", "shared-key": "from-global-kropath"},
 		}),
 		localDSQLConfig("payments-prod", "general-policy",
@@ -164,7 +190,7 @@ func TestReconcileC9ValidConditionSetOnSuccess(t *testing.T) {
 
 func TestReconcileCopiesAWSIdentity(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfigWithAWS("general-policy", v1alpha1.ProviderIdentity{AccountID: "123456789012", Region: "us-east-1"}),
+		globalKropathConfigWithAWS(v1alpha1.ProviderIdentity{AccountID: "123456789012", Region: "us-east-1"}),
 		localDSQLConfig("payments-prod", "general-policy", cascade.DSQLConfigSection{}, cascade.DSQLConfigSection{}),
 	)
 
@@ -181,7 +207,12 @@ func TestReconcileCopiesAWSIdentity(t *testing.T) {
 	}
 }
 
-func TestRequestsForKropathConfigChangeGlobal(t *testing.T) {
+// TestRequestsForKropathConfigChangeClassifiesByNamespace is AC-3: the mapper
+// enqueues every family config in a namespace touched by a KropathConfig
+// change, classified purely by namespace (ADR-018 D-1) -- not filtered by
+// name equality against the trigger KropathConfig's name, since the name is
+// now a fixed singleton and carries no profile information.
+func TestRequestsForKropathConfigChangeClassifiesByNamespace(t *testing.T) {
 	rec, _ := testReconciler(t,
 		localDSQLConfig("payments-prod", "general-policy", cascade.DSQLConfigSection{}, cascade.DSQLConfigSection{}),
 		localDSQLConfig("sandbox", "general-policy", cascade.DSQLConfigSection{}, cascade.DSQLConfigSection{}),
@@ -189,12 +220,13 @@ func TestRequestsForKropathConfigChangeGlobal(t *testing.T) {
 	)
 
 	got := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.KropathConfig{
-		ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: "kro-system"},
+		ObjectMeta: metav1.ObjectMeta{Name: util.KropathConfigName, Namespace: "kro-system"},
 	})
 
 	want := map[string]bool{
 		"payments-prod/general-policy": false,
 		"sandbox/general-policy":       false,
+		"payments-prod/other-policy":   false,
 	}
 	if len(got) != len(want) {
 		t.Fatalf("requests len = %d, want %d (%#v)", len(got), len(want), got)
@@ -210,6 +242,27 @@ func TestRequestsForKropathConfigChangeGlobal(t *testing.T) {
 		if !seen {
 			t.Fatalf("missing request %q", key)
 		}
+	}
+}
+
+// TestRequestsForKropathConfigChangeSelfReferentialNamespace covers the
+// ADR-015 §5.7 edge case where a KropathConfig's namespace is both the
+// resolved global namespace and a resource's own namespace: the item must be
+// enqueued exactly once, via the local-tier branch.
+func TestRequestsForKropathConfigChangeSelfReferentialNamespace(t *testing.T) {
+	rec, _ := testReconciler(t,
+		localDSQLConfig("kro-system", "general-policy", cascade.DSQLConfigSection{}, cascade.DSQLConfigSection{}),
+	)
+
+	got := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.KropathConfig{
+		ObjectMeta: metav1.ObjectMeta{Name: util.KropathConfigName, Namespace: "kro-system"},
+	})
+
+	if len(got) != 1 {
+		t.Fatalf("requests len = %d, want 1 (%#v)", len(got), got)
+	}
+	if got[0].Namespace != "kro-system" || got[0].Name != "general-policy" {
+		t.Fatalf("unexpected request %#v", got[0])
 	}
 }
 
@@ -258,17 +311,17 @@ func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, *v1alpha
 	}
 	cl := builder.Build()
 	cfg := &v1alpha1.DSQLConfig{}
-	if err := cl.Get(context.Background(), client.ObjectKey{Namespace: "payments-prod", Name: "general-policy"}, cfg); err != nil {
+	if err := cl.Get(context.Background(), client.ObjectKey{Namespace: "payments-prod", Name: "general-policy"}, cfg); err != nil && !apierrors.IsNotFound(err) {
 		t.Fatalf("seed local DSQLConfig: %v", err)
 	}
 	return &Reconciler{Client: cl, Log: logr.Discard(), Scheme: scheme}, cfg
 }
 
-func globalKropathConfig(name string, tier v1alpha1.KropathConfigTier) *v1alpha1.KropathConfig {
+func globalKropathConfig(tier v1alpha1.KropathConfigTier) *v1alpha1.KropathConfig {
 	return &v1alpha1.KropathConfig{
 		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "KropathConfig"},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
+			Name:      util.KropathConfigName,
 			Namespace: "kro-system",
 		},
 		Spec: v1alpha1.KropathConfigSpec{
@@ -277,8 +330,8 @@ func globalKropathConfig(name string, tier v1alpha1.KropathConfigTier) *v1alpha1
 	}
 }
 
-func globalKropathConfigWithAWS(name string, aws v1alpha1.ProviderIdentity) *v1alpha1.KropathConfig {
-	cfg := globalKropathConfig(name, v1alpha1.KropathConfigTier{})
+func globalKropathConfigWithAWS(aws v1alpha1.ProviderIdentity) *v1alpha1.KropathConfig {
+	cfg := globalKropathConfig(v1alpha1.KropathConfigTier{})
 	cfg.Spec.AWS = aws
 	return cfg
 }

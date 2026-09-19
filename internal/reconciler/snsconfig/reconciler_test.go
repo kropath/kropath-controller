@@ -21,6 +21,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/cascade"
+	"github.com/kropath/kropath-controller/internal/reconciler/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -31,7 +32,7 @@ import (
 // AC-1: globalKropathConfig.mandatory.sns.kmsMasterKeyId propagates (level 1 wins).
 func TestReconcileAC1GlobalKropathKmsMasterKeyIdLevel1(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", v1alpha1.KropathConfigTier{
+		globalKropathConfig(v1alpha1.KropathConfigTier{
 			SNS: cascade.SNSKropathSection{KmsMasterKeyId: "arn:aws:kms:ap-southeast-2:123456789012:key/org-key"},
 		}),
 		localSNSConfig("events-prod", "general-policy", cascade.SNSConfigSection{}, cascade.SNSConfigSection{}),
@@ -92,7 +93,7 @@ func TestReconcileAC3LocalSNSConfigDefaultsKmsMasterKeyId(t *testing.T) {
 // AC-4: globalKropathConfig.mandatory.sns.signatureVersion="2" propagates (level 1 wins).
 func TestReconcileAC4GlobalKropathSignatureVersionLevel1(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", v1alpha1.KropathConfigTier{
+		globalKropathConfig(v1alpha1.KropathConfigTier{
 			SNS: cascade.SNSKropathSection{SignatureVersion: "2"},
 		}),
 		localSNSConfig("events-prod", "general-policy", cascade.SNSConfigSection{}, cascade.SNSConfigSection{}),
@@ -112,7 +113,7 @@ func TestReconcileAC4GlobalKropathSignatureVersionLevel1(t *testing.T) {
 // globalKropathConfig.defaults.sns.signatureVersion="1" (level 9).
 func TestReconcileAC5GlobalSNSConfigDefaultsWinsOverKropathDefaults(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfigWithDefaults("general-policy",
+		globalKropathConfigWithDefaults(
 			v1alpha1.KropathConfigTier{},
 			v1alpha1.KropathConfigTier{SNS: cascade.SNSKropathSection{SignatureVersion: "1"}},
 		),
@@ -136,7 +137,7 @@ func TestReconcileAC5GlobalSNSConfigDefaultsWinsOverKropathDefaults(t *testing.T
 // AC-6: globalKropathConfig.mandatory.sns.tracingConfig="Active" propagates (level 1 wins).
 func TestReconcileAC6GlobalKropathTracingConfigLevel1(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", v1alpha1.KropathConfigTier{
+		globalKropathConfig(v1alpha1.KropathConfigTier{
 			SNS: cascade.SNSKropathSection{TracingConfig: "Active"},
 		}),
 		localSNSConfig("events-prod", "general-policy", cascade.SNSConfigSection{}, cascade.SNSConfigSection{}),
@@ -262,7 +263,7 @@ func TestReconcileAC10GlobalSNSConfigDefaultsNamingTemplateLevel7(t *testing.T) 
 // AC-11: KropathConfig.mandatory.tags and SNSConfig.mandatory.tags are union-merged.
 func TestReconcileAC11TagUnionMerge(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfig("general-policy", v1alpha1.KropathConfigTier{
+		globalKropathConfig(v1alpha1.KropathConfigTier{
 			Tags: map[string]string{"cost-centre": "infra", "shared-key": "from-global-kropath"},
 		}),
 		localSNSConfig("events-prod", "general-policy",
@@ -313,7 +314,7 @@ func TestReconcileAC12GlobalSNSConfigSyncedLabels(t *testing.T) {
 // AC-13: Provider identity from globalKropathConfig propagates to effCfg.aws.*.
 func TestReconcileAC13ProviderIdentityPropagates(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfigWithAWS("general-policy", v1alpha1.ProviderIdentity{AccountID: "123456789012", Region: "ap-southeast-2"}),
+		globalKropathConfigWithAWS(v1alpha1.ProviderIdentity{AccountID: "123456789012", Region: "ap-southeast-2"}),
 		localSNSConfig("events-prod", "general-policy", cascade.SNSConfigSection{}, cascade.SNSConfigSection{}),
 	)
 
@@ -338,12 +339,13 @@ func TestRequestsForKropathConfigChangeGlobal(t *testing.T) {
 	)
 
 	got := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.KropathConfig{
-		ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: "kro-system"},
+		ObjectMeta: metav1.ObjectMeta{Name: util.KropathConfigName, Namespace: "kro-system"},
 	})
 
 	want := map[string]bool{
 		"events-prod/general-policy": false,
 		"sandbox/general-policy":     false,
+		"events-prod/other-policy":   false,
 	}
 	if len(got) != len(want) {
 		t.Fatalf("requests len = %d, want %d (%#v)", len(got), len(want), got)
@@ -362,42 +364,39 @@ func TestRequestsForKropathConfigChangeGlobal(t *testing.T) {
 	}
 }
 
-func TestRequestsForKropathConfigChangeNonGlobalScopedToNamespace(t *testing.T) {
-	// After Gap 2: only KPC named "default" is a local KPC.
-	// A KPC with any other name in a non-global namespace triggers 0 requests.
+func TestRequestsForKropathConfigChangeUnrelatedNamespaceIgnored(t *testing.T) {
+	// Classification is by namespace only (ADR-018 D-1): a KropathConfig in a
+	// namespace that is neither an item's own namespace nor the resolved
+	// global namespace for any item triggers 0 requests.
 	rec, _ := testReconciler(t,
 		localSNSConfig("events-prod", "general-policy", cascade.SNSConfigSection{}, cascade.SNSConfigSection{}),
-		localSNSConfig("payments-prod", "general-policy", cascade.SNSConfigSection{}, cascade.SNSConfigSection{}),
 		localSNSConfig("sandbox", "general-policy", cascade.SNSConfigSection{}, cascade.SNSConfigSection{}),
 	)
 
 	got := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.KropathConfig{
-		ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: "payments-prod"},
+		ObjectMeta: metav1.ObjectMeta{Name: util.KropathConfigName, Namespace: "unrelated-ns"},
 	})
 
-	// "general-policy" KPC in "payments-prod" is not the local KPC (name != "default"),
-	// and "payments-prod" is not the resolved global namespace for any item. Expect 0 requests.
 	if len(got) != 0 {
-		t.Fatalf("requests len = %d, want 0 — non-default KPC name in non-global namespace triggers nothing (%#v)", len(got), got)
+		t.Fatalf("requests len = %d, want 0 — unrelated namespace triggers nothing (%#v)", len(got), got)
 	}
 }
 
-func TestRequestsForKropathConfigChangeLocalDefaultEnqueuesNamespace(t *testing.T) {
-	// After Gap 2: KPC named "default" in namespace X triggers all configs in X.
+func TestRequestsForKropathConfigChangeLocalNamespaceEnqueuesAllConfigsInNamespace(t *testing.T) {
+	// A KropathConfig in namespace X is the local tier for every config in X,
+	// regardless of its name (the name is now a fixed singleton).
 	rec, _ := testReconciler(t,
 		localSNSConfig("events-prod", "general-policy", cascade.SNSConfigSection{}, cascade.SNSConfigSection{}),
-		localSNSConfig("payments-prod", "general-policy", cascade.SNSConfigSection{}, cascade.SNSConfigSection{}),
-		localSNSConfig("payments-prod", "other-policy", cascade.SNSConfigSection{}, cascade.SNSConfigSection{}),
+		localSNSConfig("events-prod", "other-policy", cascade.SNSConfigSection{}, cascade.SNSConfigSection{}),
 		localSNSConfig("sandbox", "general-policy", cascade.SNSConfigSection{}, cascade.SNSConfigSection{}),
 	)
 
 	got := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.KropathConfig{
-		ObjectMeta: metav1.ObjectMeta{Name: "default", Namespace: "payments-prod"},
+		ObjectMeta: metav1.ObjectMeta{Name: util.KropathConfigName, Namespace: "events-prod"},
 	})
 
-	// "default" KPC in "payments-prod" → enqueue all configs in "payments-prod" (2 items).
 	if len(got) != 2 {
-		t.Fatalf("requests len = %d, want 2 — default KPC triggers all configs in its namespace (%#v)", len(got), got)
+		t.Fatalf("requests len = %d, want 2 — local KPC triggers all configs in its namespace (%#v)", len(got), got)
 	}
 }
 
@@ -452,11 +451,11 @@ func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, *v1alpha
 	return &Reconciler{Client: cl, Log: logr.Discard(), Scheme: scheme}, cfg
 }
 
-func globalKropathConfig(name string, tier v1alpha1.KropathConfigTier) *v1alpha1.KropathConfig {
+func globalKropathConfig(tier v1alpha1.KropathConfigTier) *v1alpha1.KropathConfig {
 	return &v1alpha1.KropathConfig{
 		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "KropathConfig"},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
+			Name:      util.KropathConfigName,
 			Namespace: "kro-system",
 		},
 		Spec: v1alpha1.KropathConfigSpec{
@@ -465,11 +464,11 @@ func globalKropathConfig(name string, tier v1alpha1.KropathConfigTier) *v1alpha1
 	}
 }
 
-func globalKropathConfigWithDefaults(name string, mandatory, defaults v1alpha1.KropathConfigTier) *v1alpha1.KropathConfig {
+func globalKropathConfigWithDefaults(mandatory, defaults v1alpha1.KropathConfigTier) *v1alpha1.KropathConfig {
 	return &v1alpha1.KropathConfig{
 		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "KropathConfig"},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
+			Name:      util.KropathConfigName,
 			Namespace: "kro-system",
 		},
 		Spec: v1alpha1.KropathConfigSpec{
@@ -479,8 +478,8 @@ func globalKropathConfigWithDefaults(name string, mandatory, defaults v1alpha1.K
 	}
 }
 
-func globalKropathConfigWithAWS(name string, aws v1alpha1.ProviderIdentity) *v1alpha1.KropathConfig {
-	cfg := globalKropathConfig(name, v1alpha1.KropathConfigTier{})
+func globalKropathConfigWithAWS(aws v1alpha1.ProviderIdentity) *v1alpha1.KropathConfig {
+	cfg := globalKropathConfig(v1alpha1.KropathConfigTier{})
 	cfg.Spec.AWS = aws
 	return cfg
 }

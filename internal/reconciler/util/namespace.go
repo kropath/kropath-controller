@@ -32,6 +32,12 @@ const (
 	// DefaultGlobalNamespace is the fallback global config namespace when
 	// the annotation is absent or the namespace object cannot be read.
 	DefaultGlobalNamespace = "kro-system"
+
+	// KropathConfigName is the enforced singleton name for KropathConfig objects,
+	// in both the global and the local tier (ADR-018 D-1, ADR-015 §5.7). The CRD
+	// rejects any other name via x-kubernetes-validations. Role is determined by
+	// namespace, never by this name.
+	KropathConfigName = "baseline"
 )
 
 // ResolveGlobalNamespace returns the effective global-tier config namespace for

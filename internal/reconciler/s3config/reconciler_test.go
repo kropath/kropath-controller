@@ -74,11 +74,11 @@ func namespaceWithAnnotation(name, globalConfigNS string) *corev1.Namespace {
 	}
 }
 
-func globalKropathConfig(name string, s3 cascade.S3Section) *v1alpha1.KropathConfig {
+func globalKropathConfig(s3 cascade.S3Section) *v1alpha1.KropathConfig {
 	return &v1alpha1.KropathConfig{
 		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "KropathConfig"},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
+			Name:      util.KropathConfigName,
 			Namespace: globalNS,
 		},
 		Spec: v1alpha1.KropathConfigSpec{
@@ -87,13 +87,13 @@ func globalKropathConfig(name string, s3 cascade.S3Section) *v1alpha1.KropathCon
 	}
 }
 
-// localKropathConfig creates a KropathConfig in a namespace.
-// After Gap 2, the local KPC is always named "default"; callers must pass "default".
-func localKropathConfig(ns, name string, s3 cascade.S3Section) *v1alpha1.KropathConfig {
+// localKropathConfig creates the local-tier KropathConfig in a namespace,
+// always named util.KropathConfigName (ADR-018 D-1).
+func localKropathConfig(ns string, s3 cascade.S3Section) *v1alpha1.KropathConfig {
 	return &v1alpha1.KropathConfig{
 		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "KropathConfig"},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
+			Name:      util.KropathConfigName,
 			Namespace: ns,
 		},
 		Spec: v1alpha1.KropathConfigSpec{
@@ -145,9 +145,8 @@ func getS3Config(t *testing.T, c client.Client, ns, name string) *v1alpha1.S3Con
 func TestReconcilerReconcile(t *testing.T) {
 	rec, c := testReconciler(t,
 		namespace("payments-prod"),
-		globalKropathConfig("general-policy", cascade.S3Section{EncryptionAlgorithm: "aws:kms"}),
-		// Gap 2: local KPC must be named "default"
-		localKropathConfig("payments-prod", "default", cascade.S3Section{BlockPublicAccess: true}),
+		globalKropathConfig(cascade.S3Section{EncryptionAlgorithm: "aws:kms"}),
+		localKropathConfig("payments-prod", cascade.S3Section{BlockPublicAccess: true}),
 		globalS3Config("general-policy",
 			cascade.S3ConfigSection{KmsKeyArn: "arn:global-s3"},
 			cascade.S3ConfigSection{Versioning: "Enabled"},
@@ -183,14 +182,22 @@ func TestReconcilerReconcile(t *testing.T) {
 	}
 }
 
-// Gap 2: reconciler resolves local KropathConfig by name "default", not by cfg.Name.
-func TestLocalKropathConfigLooksUpDefault(t *testing.T) {
+// The reconciler resolves the local KropathConfig by the fixed singleton name
+// (ADR-018 D-1), not by cfg.Name. A leftover object under the old profile-name
+// convention (e.g. from before the singleton migration) must be ignored.
+func TestLocalKropathConfigLooksUpSingletonName(t *testing.T) {
 	rec, c := testReconciler(t,
 		namespace("payments-prod"),
-		// KPC named "default" (local) — the one the reconciler should pick up
-		localKropathConfig("payments-prod", "default", cascade.S3Section{BlockPublicAccess: true}),
-		// KPC named "general-policy" — the reconciler should NOT pick this up as local KPC
-		localKropathConfig("payments-prod", "general-policy", cascade.S3Section{EnforceHttpsOnly: true}),
+		// KPC named util.KropathConfigName (local) — the one the reconciler should pick up
+		localKropathConfig("payments-prod", cascade.S3Section{BlockPublicAccess: true}),
+		// KPC named "general-policy" — a pre-migration leftover; must NOT be picked up
+		&v1alpha1.KropathConfig{
+			TypeMeta:   metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "KropathConfig"},
+			ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: "payments-prod"},
+			Spec: v1alpha1.KropathConfigSpec{
+				Mandatory: v1alpha1.KropathConfigTier{S3: cascade.S3Section{EnforceHttpsOnly: true}},
+			},
+		},
 		localS3Config("payments-prod", "general-policy",
 			cascade.S3ConfigSection{}, cascade.S3ConfigSection{},
 		),
@@ -205,11 +212,11 @@ func TestLocalKropathConfigLooksUpDefault(t *testing.T) {
 
 	got := getS3Config(t, c, "payments-prod", "general-policy")
 	if !got.Status.EffectiveConfig.Mandatory.BlockPublicAccess {
-		t.Error("mandatory.blockPublicAccess should be true — set only on KPC/default")
+		t.Errorf("mandatory.blockPublicAccess should be true — set only on KPC/%s", util.KropathConfigName)
 	}
-	// EnforceHttpsOnly is from KPC/"general-policy" which is NOT used as local KPC
+	// EnforceHttpsOnly is from the pre-migration "general-policy" object, which is NOT the singleton.
 	if got.Status.EffectiveConfig.Mandatory.EnforceHttpsOnly {
-		t.Error("mandatory.enforceHttpsOnly should be false — KPC/'general-policy' is not used as local KPC")
+		t.Error("mandatory.enforceHttpsOnly should be false — KPC/'general-policy' is not the local singleton")
 	}
 }
 
@@ -226,14 +233,14 @@ func TestResolveGlobalNamespaceFromAnnotation(t *testing.T) {
 		&v1alpha1.KropathConfig{
 			TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "KropathConfig"},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "general-policy",
+				Name:      util.KropathConfigName,
 				Namespace: customGlobalNS,
 			},
 			Spec: v1alpha1.KropathConfigSpec{
 				Mandatory: v1alpha1.KropathConfigTier{S3: cascade.S3Section{EncryptionAlgorithm: "aws:kms"}},
 			},
 		},
-		localKropathConfig("payments-prod", "default", cascade.S3Section{}),
+		localKropathConfig("payments-prod", cascade.S3Section{}),
 		localS3Config("payments-prod", "general-policy",
 			cascade.S3ConfigSection{}, cascade.S3ConfigSection{},
 		),
@@ -258,8 +265,8 @@ func TestGlobalNamespaceDefaultsToKroSystem(t *testing.T) {
 	rec, c := testReconciler(t,
 		namespace("payments-prod"),
 		// KPC in kro-system (default global namespace)
-		globalKropathConfig("general-policy", cascade.S3Section{EncryptionAlgorithm: "aws:kms"}),
-		localKropathConfig("payments-prod", "default", cascade.S3Section{}),
+		globalKropathConfig(cascade.S3Section{EncryptionAlgorithm: "aws:kms"}),
+		localKropathConfig("payments-prod", cascade.S3Section{}),
 		localS3Config("payments-prod", "general-policy",
 			cascade.S3ConfigSection{}, cascade.S3ConfigSection{},
 		),
@@ -283,7 +290,7 @@ func TestGlobalNamespaceDefaultsToKroSystem(t *testing.T) {
 func TestNamingTemplateFromS3ConfigApplied(t *testing.T) {
 	rec, c := testReconciler(t,
 		namespace("payments-prod"),
-		localKropathConfig("payments-prod", "default", cascade.S3Section{}),
+		localKropathConfig("payments-prod", cascade.S3Section{}),
 		localS3Config("payments-prod", "general-policy",
 			cascade.S3ConfigSection{NamingTemplate: "{account_id}-{namespace}-{name}"},
 			cascade.S3ConfigSection{},
@@ -316,15 +323,16 @@ func TestRequestsForKropathConfigChangeIncludesGlobalAndLocalMatches(t *testing.
 		localS3Config("payments-prod", "other-policy", cascade.S3ConfigSection{}, cascade.S3ConfigSection{}),
 	)
 
-	// A global KPC (named "general-policy", in kro-system) should enqueue all S3Configs
-	// whose resolved global namespace is kro-system AND whose name matches.
+	// A global KPC (in kro-system) enqueues every S3Config whose resolved
+	// global namespace is kro-system, classified by namespace only (ADR-018
+	// D-1) -- not filtered by name, since the name is now a fixed singleton.
 	requests := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.KropathConfig{
-		ObjectMeta: metav1.ObjectMeta{Name: "general-policy", Namespace: globalNS},
+		ObjectMeta: metav1.ObjectMeta{Name: util.KropathConfigName, Namespace: globalNS},
 	})
 
-	// kro-system/general-policy, payments-prod/general-policy, other-ns/general-policy
-	if len(requests) != 3 {
-		t.Fatalf("requests len = %d, want 3; got %#v", len(requests), requests)
+	// kro-system/general-policy, payments-prod/general-policy, payments-prod/other-policy, other-ns/general-policy
+	if len(requests) != 4 {
+		t.Fatalf("requests len = %d, want 4; got %#v", len(requests), requests)
 	}
 	got := map[string]bool{}
 	for _, req := range requests {
@@ -333,6 +341,7 @@ func TestRequestsForKropathConfigChangeIncludesGlobalAndLocalMatches(t *testing.
 	for _, want := range []string{
 		globalNS + "/general-policy",
 		"payments-prod/general-policy",
+		"payments-prod/other-policy",
 		"other-ns/general-policy",
 	} {
 		if !got[want] {
@@ -341,7 +350,7 @@ func TestRequestsForKropathConfigChangeIncludesGlobalAndLocalMatches(t *testing.
 	}
 }
 
-func TestRequestsForKropathConfigChangeLocalDefaultEnqueuesNamespace(t *testing.T) {
+func TestRequestsForKropathConfigChangeLocalNamespaceEnqueuesAllConfigsInNamespace(t *testing.T) {
 	rec, _ := testReconciler(t,
 		namespace("payments-prod"),
 		localS3Config("payments-prod", "general-policy", cascade.S3ConfigSection{}, cascade.S3ConfigSection{}),
@@ -350,9 +359,9 @@ func TestRequestsForKropathConfigChangeLocalDefaultEnqueuesNamespace(t *testing.
 		localS3Config("other-ns", "general-policy", cascade.S3ConfigSection{}, cascade.S3ConfigSection{}),
 	)
 
-	// Local KPC named "default" in "payments-prod" — should enqueue all S3Configs in that namespace
+	// Local KPC in "payments-prod" — should enqueue all S3Configs in that namespace
 	requests := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.KropathConfig{
-		ObjectMeta: metav1.ObjectMeta{Name: "default", Namespace: "payments-prod"},
+		ObjectMeta: metav1.ObjectMeta{Name: util.KropathConfigName, Namespace: "payments-prod"},
 	})
 
 	if len(requests) != 2 {
@@ -393,7 +402,7 @@ func findCondition(conditions []metav1.Condition, condType string) *metav1.Condi
 func TestGlobalProfileFallthroughWhenRequestedProfileMissing(t *testing.T) {
 	rec, c := testReconciler(t,
 		namespace("payments-prod"),
-		localKropathConfig("payments-prod", "default", cascade.S3Section{}),
+		localKropathConfig("payments-prod", cascade.S3Section{}),
 		// Only the fallthrough target exists globally — no S3Config/pci in kro-system.
 		globalS3Config("general-policy",
 			cascade.S3ConfigSection{KmsKeyArn: "arn:general-policy"},
@@ -429,7 +438,7 @@ func TestGlobalProfileFallthroughWhenRequestedProfileMissing(t *testing.T) {
 func TestGlobalProfileNoFallthroughWhenRequestedProfileExists(t *testing.T) {
 	rec, c := testReconciler(t,
 		namespace("payments-prod"),
-		localKropathConfig("payments-prod", "default", cascade.S3Section{}),
+		localKropathConfig("payments-prod", cascade.S3Section{}),
 		globalS3Config("pci",
 			cascade.S3ConfigSection{KmsKeyArn: "arn:pci"},
 			cascade.S3ConfigSection{},
@@ -468,7 +477,7 @@ func TestGlobalProfileNoFallthroughWhenRequestedProfileExists(t *testing.T) {
 func TestGlobalProfileUnresolvedIsObservable(t *testing.T) {
 	rec, c := testReconciler(t,
 		namespace("payments-prod"),
-		localKropathConfig("payments-prod", "default", cascade.S3Section{}),
+		localKropathConfig("payments-prod", cascade.S3Section{}),
 		// No global S3Config at all — neither "pci" nor "general-policy".
 		localS3Config("payments-prod", "pci", cascade.S3ConfigSection{KmsKeyArn: "arn:local-pci"}, cascade.S3ConfigSection{}),
 	)
@@ -501,7 +510,7 @@ func TestGlobalProfileUnresolvedIsObservable(t *testing.T) {
 func TestNonDefaultProfileReceivesOrgWideGuardrailsViaFallthrough(t *testing.T) {
 	rec, c := testReconciler(t,
 		namespace("payments-prod"),
-		localKropathConfig("payments-prod", "default", cascade.S3Section{}),
+		localKropathConfig("payments-prod", cascade.S3Section{}),
 		globalS3Config("general-policy",
 			cascade.S3ConfigSection{BlockPublicAccess: true, EncryptionAlgorithm: "aws:kms"},
 			cascade.S3ConfigSection{},
