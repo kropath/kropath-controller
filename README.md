@@ -286,6 +286,28 @@ or locally:
 ./bin/kropath-operator features | jq '.features | length'
 ```
 
+## ACK install conformance check
+
+kropath resolves `effectiveConfig.aws.accountId`/`.region` by reading the namespace annotations
+ACK's own CARM feature already honours (ADR-015 §5.8). kropath and ACK are two independent
+resolvers of the same placement question, and they agree only when the ACK install satisfies five
+preconditions (ADR-015 §5.8.4) — kropath has no way to verify any of them from inside a reconcile
+loop. `cmd/conformance-check` is a standalone, read-only CLI that inspects an existing install and
+reports which preconditions hold:
+
+```bash
+go run ./cmd/conformance-check --ack-namespace ack-system
+go run ./cmd/conformance-check --ack-namespace ack-system --namespaces payments-prod,data-prod
+go run ./cmd/conformance-check --ack-namespace ack-system --output json
+```
+
+Exit codes: `0` — no blocking findings; `1` — at least one confirmed violation (or, with `--strict`,
+at least one precondition the checker could not verify); `2` — the checker could not run at all.
+
+This tool is not part of the `kropath-operator` image and is never invoked from the reconcile path —
+it is a best-effort diagnostic for an operator to run before or after onboarding an account, not a
+runtime gate (KRO-1141).
+
 ## Testing
 
 ```bash
@@ -409,8 +431,10 @@ Keep the type list in `pr-title.yaml` in sync with `changelog-sections` in
 | `api/v1alpha1/` | CRD Go types (23 kinds) + scheme registration — group `aws.kropath.run` |
 | `cmd/manager/` | `main.go` — flag parsing, manager wiring, `features` subcommand |
 | `cmd/gen-features/` | generates `docs/features.yaml` from the reconciler registry |
+| `cmd/conformance-check/` | standalone CLI: checks an ACK/kro install against the CARM preconditions in ADR-015 §5.8.4 (KRO-1141) — not part of the `kropath-operator` image |
 | `internal/reconciler/` | one package per reconciler (23 packages + `util`) |
 | `internal/cascade/` | shared config-merge helpers, one file per service |
+| `internal/carmcheck/` | ACK install conformance checks used by `cmd/conformance-check` |
 | `internal/features/` | the feature registry and the `/features` HTTP handler |
 | `internal/version/` | build-info and feature-enabled Prometheus metrics |
 | `config/rbac/` | ClusterRole manifests for the manager, PolicyDocument, and LabelOperator |
