@@ -1,9 +1,21 @@
 # AC-15: globalKropathConfig.mandatory.tags (level 1) contributes to tag union.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac15-rds-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac15-rds-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac15-rds-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac15-general-instance
-  namespace: kro-system
+  name: baseline
+  namespace: ac15-rds-global-ns
 spec:
   mandatory:
     tags:
@@ -15,7 +27,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: RDSConfig
 metadata:
   name: ac15-general-instance
-  namespace: kro-system
+  namespace: ac15-rds-global-ns
   labels:
     aws.kropath.run/resource-name: ac15-general-instance
 spec:
@@ -29,7 +41,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: RDSConfig
 metadata:
   name: ac15-general-instance
-  namespace: rds
+  namespace: ac15-rds-app-ns
   labels:
     aws.kropath.run/resource-name: ac15-general-instance
 spec: {}

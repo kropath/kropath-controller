@@ -13,11 +13,23 @@
 # limitations under the License.
 #
 # AC-16: the eks section of the fixture KropathConfig CRD is installed and read by the reconciler.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac16-eks-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac16-eks-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac16-eks-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac16-eks-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac16-eks-global-ns
 spec:
   mandatory:
     eks:
@@ -30,5 +42,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: EKSConfig
 metadata:
   name: ac16-eks-policy
-  namespace: payments-prod
+  namespace: ac16-eks-app-ns
 spec: {}

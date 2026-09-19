@@ -1,9 +1,21 @@
 # AC-14: globalKropathConfig with aws.region and aws.accountId set.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac14-dynamodb-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac14-dynamodb-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac14-dynamodb-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac14-general-table
-  namespace: kro-system
+  name: baseline
+  namespace: ac14-dynamodb-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -13,5 +25,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: DynamoDBConfig
 metadata:
   name: ac14-general-table
-  namespace: dynamodb
+  namespace: ac14-dynamodb-app-ns
 spec: {}

@@ -1,10 +1,22 @@
 # AC-8: globalKropathConfig.mandatory.rds.publiclyAccessible: false (pointer sentinel,
 # forces private-only across all instances — OD-2 resolution).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac08-rds-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac08-rds-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac08-rds-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac8-general-instance
-  namespace: kro-system
+  name: baseline
+  namespace: ac08-rds-global-ns
 spec:
   mandatory:
     rds:
@@ -14,7 +26,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: RDSConfig
 metadata:
   name: ac8-general-instance
-  namespace: rds
+  namespace: ac08-rds-app-ns
   labels:
     aws.kropath.run/resource-name: ac8-general-instance
 spec: {}

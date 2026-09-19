@@ -1,9 +1,21 @@
 # AC-6: globalKropathConfig.mandatory.rds.backupRetentionPeriod: 7 (level 1 floor).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac06-rds-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac06-rds-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac06-rds-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac6-general-instance
-  namespace: kro-system
+  name: baseline
+  namespace: ac06-rds-global-ns
 spec:
   mandatory:
     rds:
@@ -13,7 +25,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: RDSConfig
 metadata:
   name: ac6-general-instance
-  namespace: rds
+  namespace: ac06-rds-app-ns
   labels:
     aws.kropath.run/resource-name: ac6-general-instance
 spec: {}

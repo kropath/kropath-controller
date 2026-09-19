@@ -13,11 +13,23 @@
 # limitations under the License.
 #
 # AC-4: globalKropathConfig.mandatory.eks.authenticationMode (level 1) flows to effCfg.mandatory.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-eks-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-eks-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac04-eks-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac4-eks-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac04-eks-global-ns
 spec:
   mandatory:
     eks:
@@ -27,5 +39,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: EKSConfig
 metadata:
   name: ac4-eks-policy
-  namespace: payments-prod
+  namespace: ac04-eks-app-ns
 spec: {}

@@ -1,9 +1,21 @@
 # AC-C6: S3AdvancedConfig.mandatory.namingTemplate="{namespace}-{name}" (level 4).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac06-s3advanced-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac06-s3advanced-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac06-s3advanced-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac6-s3adv-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac06-s3advanced-global-ns
 spec:
   mandatory: {}
   aws:
@@ -14,7 +26,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: S3AdvancedConfig
 metadata:
   name: ac6-s3adv-policy
-  namespace: payments-prod
+  namespace: ac06-s3advanced-app-ns
 spec:
   mandatory:
     namingTemplate: "{namespace}-{name}"

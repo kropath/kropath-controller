@@ -1,14 +1,26 @@
 # AC-8: globalKropathConfig mandatory.kms.allowedKeySpecs=["SYMMETRIC_DEFAULT"] (level 1).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac08-kms-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac08-kms-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac08-kms-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac8-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac08-kms-global-ns
 spec:
   mandatory:
     kms:
       allowedKeySpecs:
-        - "SYMMETRIC_DEFAULT"
+      - "SYMMETRIC_DEFAULT"
   aws:
     accountId: "123456789012"
     region: "us-east-1"
@@ -18,7 +30,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: KMSConfig
 metadata:
   name: ac8-general-policy
-  namespace: payments-prod
+  namespace: ac08-kms-app-ns
 spec:
   mandatory: {}
   defaults: {}
@@ -28,10 +40,10 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: KMSConfig
 metadata:
   name: ac8-general-policy
-  namespace: kro-system
+  namespace: ac08-kms-global-ns
 spec:
   mandatory:
     allowedKeySpecs:
-      - "RSA_4096"
-      - "ECC_NIST_P256"
+    - "RSA_4096"
+    - "ECC_NIST_P256"
   defaults: {}

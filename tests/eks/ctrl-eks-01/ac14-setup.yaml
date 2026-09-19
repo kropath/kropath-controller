@@ -13,11 +13,23 @@
 # limitations under the License.
 #
 # AC-14: globalKropathConfig.spec.aws identity propagates to effCfg.aws.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac14-eks-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac14-eks-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac14-eks-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac14-eks-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac14-eks-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -27,5 +39,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: EKSConfig
 metadata:
   name: ac14-eks-policy
-  namespace: payments-prod
+  namespace: ac14-eks-app-ns
 spec: {}

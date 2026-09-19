@@ -3,7 +3,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: S3AdvancedConfig
 metadata:
   name: ac4-s3adv-policy
-  namespace: payments-prod
+  namespace: ac04-s3advanced-app-ns
 status:
   effectiveConfig:
     mandatory:
