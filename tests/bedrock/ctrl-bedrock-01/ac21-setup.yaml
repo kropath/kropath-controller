@@ -2,7 +2,7 @@
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: baseline
+  name: ac21-bedrock-policy
   namespace: kro-system
 spec:
   mandatory:

@@ -1,26 +1,14 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ac07-bedrock-global-ns
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ac07-bedrock-app-ns
-  annotations:
-    aws.kropath.run/global-config-namespace: ac07-bedrock-global-ns
----
 # AC-7: level 1 KPC.allowedModels wins over level 3 BedrockConfig.
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: baseline
-  namespace: ac07-bedrock-global-ns
+  name: ac7-bedrock-policy
+  namespace: kro-system
 spec:
   mandatory:
     bedrock:
       allowedModels:
-      - "model-a"
+        - "model-a"
   aws:
     accountId: "123456789012"
     region: "us-east-1"
@@ -29,16 +17,16 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: BedrockConfig
 metadata:
   name: ac7-bedrock-policy
-  namespace: ac07-bedrock-global-ns
+  namespace: kro-system
 spec:
   mandatory:
     allowedModels:
-    - "model-b"
-    - "model-c"
+      - "model-b"
+      - "model-c"
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: BedrockConfig
 metadata:
   name: ac7-bedrock-policy
-  namespace: ac07-bedrock-app-ns
+  namespace: payments-prod
 spec: {}

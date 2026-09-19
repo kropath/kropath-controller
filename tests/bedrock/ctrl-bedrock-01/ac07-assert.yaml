@@ -2,13 +2,13 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: BedrockConfig
 metadata:
   name: ac7-bedrock-policy
-  namespace: ac07-bedrock-app-ns
+  namespace: payments-prod
 status:
   effectiveConfig:
     mandatory:
       allowedModels:
-      - "model-a"
+        - "model-a"
   conditions:
-  - type: Valid
-    status: "True"
-    reason: ValidationPassed
+    - type: Valid
+      status: "True"
+      reason: ValidationPassed

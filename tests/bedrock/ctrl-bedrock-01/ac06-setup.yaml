@@ -1,27 +1,15 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ac06-bedrock-global-ns
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ac06-bedrock-app-ns
-  annotations:
-    aws.kropath.run/global-config-namespace: ac06-bedrock-global-ns
----
 # AC-6: globalKropathConfig.mandatory.bedrock.allowedModels (level 1).
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: baseline
-  namespace: ac06-bedrock-global-ns
+  name: ac6-bedrock-policy
+  namespace: kro-system
 spec:
   mandatory:
     bedrock:
       allowedModels:
-      - "anthropic.claude-3-5-sonnet-20241022-v2:0"
-      - "anthropic.claude-3-haiku-20240307-v1:0"
+        - "anthropic.claude-3-5-sonnet-20241022-v2:0"
+        - "anthropic.claude-3-haiku-20240307-v1:0"
   aws:
     accountId: "123456789012"
     region: "us-east-1"
@@ -30,5 +18,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: BedrockConfig
 metadata:
   name: ac6-bedrock-policy
-  namespace: ac06-bedrock-app-ns
+  namespace: payments-prod
 spec: {}

@@ -3,7 +3,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SageMakerConfig
 metadata:
   name: ac11-sm-policy
-  namespace: ac11-sagemaker-app-ns
+  namespace: payments-prod
 status:
   effectiveConfig:
     aws:

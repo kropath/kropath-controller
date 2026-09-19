@@ -1,21 +1,9 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ac23-bedrock-global-ns
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ac23-bedrock-app-ns
-  annotations:
-    aws.kropath.run/global-config-namespace: ac23-bedrock-global-ns
----
 # AC-23: tags union-merge — KropathConfig.mandatory + BedrockConfig.mandatory.
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: baseline
-  namespace: ac23-bedrock-global-ns
+  name: ac23-bedrock-policy
+  namespace: kro-system
 spec:
   mandatory:
     bedrock:
@@ -29,7 +17,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: BedrockConfig
 metadata:
   name: ac23-bedrock-policy
-  namespace: ac23-bedrock-global-ns
+  namespace: kro-system
 spec:
   mandatory:
     tags:
@@ -39,5 +27,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: BedrockConfig
 metadata:
   name: ac23-bedrock-policy
-  namespace: ac23-bedrock-app-ns
+  namespace: payments-prod
 spec: {}

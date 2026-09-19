@@ -1,21 +1,9 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ac22-bedrock-global-ns
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ac22-bedrock-app-ns
-  annotations:
-    aws.kropath.run/global-config-namespace: ac22-bedrock-global-ns
----
 # AC-22: globalKropathConfig.spec.aws identity → effCfg.aws.
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: baseline
-  namespace: ac22-bedrock-global-ns
+  name: ac22-bedrock-policy
+  namespace: kro-system
 spec:
   aws:
     accountId: "999888777666"
@@ -25,5 +13,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: BedrockConfig
 metadata:
   name: ac22-bedrock-policy
-  namespace: ac22-bedrock-app-ns
+  namespace: payments-prod
 spec: {}

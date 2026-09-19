@@ -3,13 +3,13 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: BedrockConfig
 metadata:
   name: ac1-bedrock-policy
-  namespace: ac01-bedrock-app-ns
+  namespace: payments-prod
 status:
   effectiveConfig:
     mandatory:
       guardrailIdentifier: "abc123"
       guardrailVersion: "1"
   conditions:
-  - type: Valid
-    status: "True"
-    reason: ValidationPassed
+    - type: Valid
+      status: "True"
+      reason: ValidationPassed
