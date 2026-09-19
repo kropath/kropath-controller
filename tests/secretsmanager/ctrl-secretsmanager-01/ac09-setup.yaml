@@ -1,9 +1,21 @@
 # AC-9: globalKropathConfig.defaults.secretsManager.kmsKeyID (level 9) propagates.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-secretsmanager-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-secretsmanager-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac09-secretsmanager-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac9-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac09-secretsmanager-global-ns
 spec:
   defaults:
     secretsManager:
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SecretsManagerConfig
 metadata:
   name: ac9-general-policy
-  namespace: secrets-prod
+  namespace: ac09-secretsmanager-app-ns
 spec:
   mandatory: {}
   defaults: {}

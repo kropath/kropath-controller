@@ -1,10 +1,22 @@
 # AC-5: globalKropathConfig with defaults.sqs.visibilityTimeout=60 (level 9).
 # Level 7 (globalSQSConfig.defaults) should win over level 9.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac05-sqs-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac05-sqs-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac05-sqs-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac5-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac05-sqs-global-ns
 spec:
   defaults:
     sqs:
@@ -18,7 +30,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SQSConfig
 metadata:
   name: ac5-general-policy
-  namespace: kro-system
+  namespace: ac05-sqs-global-ns
 spec:
   mandatory: {}
   defaults:
@@ -29,7 +41,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SQSConfig
 metadata:
   name: ac5-general-policy
-  namespace: payments-prod
+  namespace: ac05-sqs-app-ns
 spec:
   mandatory: {}
   defaults: {}

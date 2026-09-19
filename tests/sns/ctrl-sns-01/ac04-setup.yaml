@@ -1,9 +1,21 @@
 # AC-4: globalKropathConfig with mandatory.sns.signatureVersion="2" (level 1).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-sns-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-sns-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac04-sns-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac4-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac04-sns-global-ns
 spec:
   mandatory:
     sns:
@@ -18,7 +30,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SNSConfig
 metadata:
   name: ac4-general-policy
-  namespace: events-prod
+  namespace: ac04-sns-app-ns
 spec:
   mandatory: {}
   defaults: {}

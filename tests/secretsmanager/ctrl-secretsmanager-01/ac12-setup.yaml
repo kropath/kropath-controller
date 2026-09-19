@@ -1,9 +1,21 @@
 # AC-12 (KPC tags): globalKropathConfig.mandatory.tags for union-merge test.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac12-secretsmanager-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac12-secretsmanager-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac12-secretsmanager-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac12-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac12-secretsmanager-global-ns
 spec:
   mandatory:
     tags:
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SecretsManagerConfig
 metadata:
   name: ac12-general-policy
-  namespace: kro-system
+  namespace: ac12-secretsmanager-global-ns
 spec:
   mandatory:
     tags:
@@ -29,7 +41,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SecretsManagerConfig
 metadata:
   name: ac12-general-policy
-  namespace: secrets-prod
+  namespace: ac12-secretsmanager-app-ns
 spec:
   mandatory: {}
   defaults: {}

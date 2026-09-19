@@ -3,7 +3,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SecretsManagerConfig
 metadata:
   name: ac2-general-policy
-  namespace: secrets-prod
+  namespace: ac02-secretsmanager-app-ns
 status:
   effectiveConfig:
     mandatory:

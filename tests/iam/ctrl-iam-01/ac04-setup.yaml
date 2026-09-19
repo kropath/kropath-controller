@@ -1,9 +1,21 @@
 # AC-4: level-1 globalKropathConfig mandatory maxSessionDurationSeconds=3600.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-iam-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-iam-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac04-iam-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac4-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac04-iam-global-ns
 spec:
   mandatory:
     iam:
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: IAMConfig
 metadata:
   name: ac4-general-policy
-  namespace: kro-system
+  namespace: ac04-iam-global-ns
 spec:
   mandatory:
     permissionsBoundaryArn: ""
@@ -39,7 +51,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: IAMConfig
 metadata:
   name: ac4-general-policy
-  namespace: payments-prod
+  namespace: ac04-iam-app-ns
 spec:
   mandatory:
     permissionsBoundaryArn: ""

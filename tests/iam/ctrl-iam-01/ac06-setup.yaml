@@ -1,9 +1,21 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac06-iam-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac06-iam-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac06-iam-global-ns
+---
 # AC-6: global namespace (kro-system) KropathConfig mandatory boundary — level 1.
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac6-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac06-iam-global-ns
 spec:
   mandatory:
     iam:
@@ -17,8 +29,8 @@ spec:
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac6-general-policy
-  namespace: payments-prod
+  name: baseline
+  namespace: ac06-iam-app-ns
 spec:
   mandatory:
     iam:
@@ -32,7 +44,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: IAMConfig
 metadata:
   name: ac6-general-policy
-  namespace: payments-prod
+  namespace: ac06-iam-app-ns
 spec:
   mandatory:
     permissionsBoundaryArn: ""

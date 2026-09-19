@@ -1,9 +1,21 @@
 # AC-3: globalKropathConfig with mandatory.iam.blockIamUserAccessKeys=true.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac03-iam-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac03-iam-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac03-iam-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac3-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac03-iam-global-ns
 spec:
   mandatory:
     iam:
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: IAMConfig
 metadata:
   name: ac3-general-policy
-  namespace: payments-prod
+  namespace: ac03-iam-app-ns
 spec:
   mandatory:
     permissionsBoundaryArn: ""

@@ -1,9 +1,21 @@
 # AC-4: globalKropathConfig with mandatory.cloudwatchlogs.retentionDays=365 (level 1).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-cloudwatchlogs-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-cloudwatchlogs-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac04-cloudwatchlogs-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac4-ac4-cwl-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac04-cloudwatchlogs-global-ns
 spec:
   mandatory:
     cloudwatchlogs:
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudWatchLogsConfig
 metadata:
   name: ac4-ac4-cwl-policy
-  namespace: logging-prod
+  namespace: ac04-cloudwatchlogs-app-ns
   labels:
     aws.kropath.run/resource-name: ac4-ac4-cwl-policy
 spec:

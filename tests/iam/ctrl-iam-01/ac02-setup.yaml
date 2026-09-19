@@ -1,9 +1,21 @@
 # AC-2: level-1 globalKropathConfig mandatory boundary (should win).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac02-iam-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac02-iam-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac02-iam-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac2-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac02-iam-global-ns
 spec:
   mandatory:
     iam:
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: IAMConfig
 metadata:
   name: ac2-general-policy
-  namespace: kro-system
+  namespace: ac02-iam-global-ns
 spec:
   mandatory:
     permissionsBoundaryArn: "arn:aws:iam::123456789012:policy/IAMConfigLevel3"
@@ -39,7 +51,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: IAMConfig
 metadata:
   name: ac2-general-policy
-  namespace: payments-prod
+  namespace: ac02-iam-app-ns
 spec:
   mandatory:
     permissionsBoundaryArn: ""

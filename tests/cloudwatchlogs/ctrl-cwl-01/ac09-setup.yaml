@@ -1,9 +1,21 @@
 # AC-9: globalKropathConfig with mandatory.tags (tier-level tags, level 1).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-cloudwatchlogs-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-cloudwatchlogs-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac09-cloudwatchlogs-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac9-ac9-cwl-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac09-cloudwatchlogs-global-ns
 spec:
   mandatory:
     tags:
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudWatchLogsConfig
 metadata:
   name: ac9-ac9-cwl-policy
-  namespace: logging-prod
+  namespace: ac09-cloudwatchlogs-app-ns
   labels:
     aws.kropath.run/resource-name: ac9-ac9-cwl-policy
 spec:

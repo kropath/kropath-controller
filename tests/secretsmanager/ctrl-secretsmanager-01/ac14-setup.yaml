@@ -1,9 +1,21 @@
 # AC-14: globalKropathConfig.spec.aws.accountId and .region propagate to effCfg.aws.*.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac14-secretsmanager-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac14-secretsmanager-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac14-secretsmanager-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac14-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac14-secretsmanager-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -14,7 +26,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SecretsManagerConfig
 metadata:
   name: ac14-general-policy
-  namespace: secrets-prod
+  namespace: ac14-secretsmanager-app-ns
 spec:
   mandatory: {}
   defaults: {}

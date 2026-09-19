@@ -1,9 +1,21 @@
 # AC-1: globalKropathConfig with mandatory.secretsManager.kmsKeyID (level 1).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac02-secretsmanager-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac02-secretsmanager-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac02-secretsmanager-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac2-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac02-secretsmanager-global-ns
 spec:
   mandatory:
     secretsManager:
@@ -18,7 +30,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SecretsManagerConfig
 metadata:
   name: ac2-general-policy
-  namespace: kro-system
+  namespace: ac02-secretsmanager-global-ns
 spec:
   mandatory:
     kmsKeyID: "arn:aws:kms:ap-southeast-2:123456789012:key/mrk-smcfg-l3"
@@ -29,7 +41,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SecretsManagerConfig
 metadata:
   name: ac2-general-policy
-  namespace: secrets-prod
+  namespace: ac02-secretsmanager-app-ns
 spec:
   mandatory: {}
   defaults: {}

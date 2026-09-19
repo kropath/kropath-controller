@@ -1,9 +1,21 @@
 # AC-11: globalKropathConfig with mandatory.tags (tier-level tags, level 1).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac11-sns-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac11-sns-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac11-sns-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac11-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac11-sns-global-ns
 spec:
   mandatory:
     tags:
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SNSConfig
 metadata:
   name: ac11-general-policy
-  namespace: events-prod
+  namespace: ac11-sns-app-ns
 spec:
   mandatory:
     tags:

@@ -1,9 +1,21 @@
 # AC-1: globalKropathConfig with mandatory.iam.permissionsBoundaryArn set (level 1).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac01-iam-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac01-iam-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac01-iam-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac1-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac01-iam-global-ns
 spec:
   mandatory:
     iam:
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: IAMConfig
 metadata:
   name: ac1-general-policy
-  namespace: payments-prod
+  namespace: ac01-iam-app-ns
 spec:
   mandatory:
     permissionsBoundaryArn: ""
