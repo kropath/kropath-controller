@@ -17,7 +17,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SSMConfig
 metadata:
   name: ac11-ssm-policy
-  namespace: ssm-prod
+  namespace: ac11-ssm-app-ns
 status:
   effectiveConfig:
     mandatory:

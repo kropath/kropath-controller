@@ -129,9 +129,12 @@ def migrate_setup_file(path: pathlib.Path, family: str, provider: str):
 
 
 def migrate_assert_files(suite_dir: pathlib.Path, slug: str, setup_path: pathlib.Path, ns_map: dict):
+    # Anchored so slug "ac1" cannot substring-match "ac10"/"ac11" filenames: the
+    # slug must be followed by a non-digit (or end of the stem) at the match site.
+    slug_re = re.compile(re.escape(slug) + r"(?!\d)")
     changed = []
-    for p in sorted(suite_dir.glob(f"*{slug}*assert*.yaml")):
-        if p == setup_path:
+    for p in sorted(suite_dir.glob("*assert*.yaml")):
+        if p == setup_path or not slug_re.search(p.stem):
             continue
         docs = load_docs(p)
         touched = False

@@ -1,12 +1,20 @@
-# AC-12 setup: Union-merge of KropathConfig.mandatory.tags and MSKConfig.mandatory.tags+syncedLabels.
-# KropathConfig contributes cost-centre (level 1 — wins on key conflict).
-# MSKConfig.mandatory contributes cluster-type tag and data-class syncedLabel.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac12-msk-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac12-msk-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac12-msk-global-ns
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac12-msk-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac12-msk-global-ns
 spec:
   mandatory:
     tags:
@@ -16,7 +24,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MSKConfig
 metadata:
   name: ac12-msk-policy
-  namespace: kro-system
+  namespace: ac12-msk-global-ns
 spec:
   mandatory:
     tags:
@@ -33,5 +41,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MSKConfig
 metadata:
   name: ac12-msk-policy
-  namespace: streaming-prod
+  namespace: ac12-msk-app-ns
 spec: {}

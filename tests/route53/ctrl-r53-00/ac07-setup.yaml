@@ -1,3 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac07-r53-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac07-r53-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac07-r53-global-ns
+---
 # Copyright 2026 kropath Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +32,8 @@
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac7-r53-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac07-r53-global-ns
 spec:
   mandatory:
     tags:
@@ -35,7 +47,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: Route53Config
 metadata:
   name: ac7-r53-policy
-  namespace: route53-prod
+  namespace: ac07-r53-app-ns
 spec:
   mandatory:
     tags:

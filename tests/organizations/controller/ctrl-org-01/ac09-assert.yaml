@@ -4,7 +4,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: OrganizationsConfig
 metadata:
   name: ac9-org-policy
-  namespace: org-prod
+  namespace: ac09-org-app-ns
 status:
   effectiveConfig:
     mandatory:
