@@ -2,11 +2,23 @@
 # Global LambdaConfig (kro-system, level 3): tags env=staging, team=platform
 # Local LambdaConfig (payments-prod, level 4): tags env=prod, app=api
 # Expected effective mandatory tags: env=staging (level 3 wins), team=platform, app=api (union)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac07-lambda-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac07-lambda-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac07-lambda-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac7-lambdacfg-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac07-lambda-global-ns
 spec:
   mandatory: {}
   aws:
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: LambdaConfig
 metadata:
   name: ac7-lambdacfg-policy
-  namespace: kro-system
+  namespace: ac07-lambda-global-ns
 spec:
   mandatory:
     tags:
@@ -29,7 +41,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: LambdaConfig
 metadata:
   name: ac7-lambdacfg-policy
-  namespace: payments-prod
+  namespace: ac07-lambda-app-ns
 spec:
   mandatory:
     tags:

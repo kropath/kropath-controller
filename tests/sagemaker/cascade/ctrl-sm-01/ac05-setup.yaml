@@ -1,10 +1,22 @@
 # AC-T02-5: KropathConfig.mandatory.sagemaker.enableNetworkIsolation (L1) flows to
 # effectiveConfig.mandatory.enableNetworkIsolation.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac05-sagemaker-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac05-sagemaker-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac05-sagemaker-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac05-sm-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac05-sagemaker-global-ns
 spec:
   mandatory:
     sagemaker:
@@ -17,5 +29,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SageMakerConfig
 metadata:
   name: ac05-sm-policy
-  namespace: payments-prod
+  namespace: ac05-sagemaker-app-ns
 spec: {}

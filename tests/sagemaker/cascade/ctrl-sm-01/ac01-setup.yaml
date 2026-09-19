@@ -1,10 +1,22 @@
 # AC-T02-1: KropathConfig.mandatory.sagemaker.instanceType (L1) flows to
 # effectiveConfig.mandatory.instanceType, overriding SageMakerConfig.mandatory.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac01-sagemaker-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac01-sagemaker-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac01-sagemaker-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac01-sm-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac01-sagemaker-global-ns
 spec:
   mandatory:
     sagemaker:
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SageMakerConfig
 metadata:
   name: ac01-sm-policy
-  namespace: payments-prod
+  namespace: ac01-sagemaker-app-ns
 spec:
   mandatory:
     instanceType: "ml.t3.medium"

@@ -8,3 +8,6 @@ status:
     - type: Valid
       status: "False"
       reason: InvalidGuardrailConfiguration
+    - type: GlobalProfileResolved
+      status: "False"
+      reason: ProfileUnresolved

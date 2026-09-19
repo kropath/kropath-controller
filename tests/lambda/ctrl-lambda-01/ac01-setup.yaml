@@ -1,9 +1,21 @@
 # AC-L1: LambdaConfig with empty spec; KropathConfig with provider identity.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac01-lambda-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac01-lambda-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac01-lambda-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac1-lambdacfg-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac01-lambda-global-ns
 spec:
   mandatory: {}
   aws:
@@ -14,7 +26,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: LambdaConfig
 metadata:
   name: ac1-lambdacfg-policy
-  namespace: payments-prod
+  namespace: ac01-lambda-app-ns
 spec:
   mandatory: {}
   defaults: {}

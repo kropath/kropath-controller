@@ -1,10 +1,22 @@
 # AC-L3: LambdaConfig mandatory memorySize=512 in product namespace (level 4)
 # propagates to effectiveConfig.mandatory.memorySize.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac03-lambda-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac03-lambda-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac03-lambda-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac3-lambdacfg-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac03-lambda-global-ns
 spec:
   mandatory: {}
   aws:
@@ -15,7 +27,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: LambdaConfig
 metadata:
   name: ac3-lambdacfg-policy
-  namespace: payments-prod
+  namespace: ac03-lambda-app-ns
 spec:
   mandatory:
     memorySize: 512

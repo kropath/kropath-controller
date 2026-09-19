@@ -1,10 +1,22 @@
 # AC-L4: LambdaConfig defaults tracingMode="Active" in product namespace (level 6)
 # propagates to effectiveConfig.defaults.tracingMode.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-lambda-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-lambda-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac04-lambda-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac4-lambdacfg-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac04-lambda-global-ns
 spec:
   mandatory: {}
   aws:
@@ -15,7 +27,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: LambdaConfig
 metadata:
   name: ac4-lambdacfg-policy
-  namespace: payments-prod
+  namespace: ac04-lambda-app-ns
 spec:
   mandatory: {}
   defaults:

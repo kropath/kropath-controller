@@ -1,10 +1,22 @@
 # AC-L2: KropathConfig mandatory lambda.runtime="python3.12" (level 1)
 # propagates to effectiveConfig.mandatory.runtime.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac02-lambda-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac02-lambda-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac02-lambda-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac2-lambdacfg-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac02-lambda-global-ns
 spec:
   mandatory:
     lambda:
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: LambdaConfig
 metadata:
   name: ac2-lambdacfg-policy
-  namespace: payments-prod
+  namespace: ac02-lambda-app-ns
 spec:
   mandatory: {}
   defaults: {}
