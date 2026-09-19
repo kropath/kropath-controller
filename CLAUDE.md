@@ -23,6 +23,14 @@
 - Exposes Prometheus metrics: `kropath_poldoc_reconcile_total`, `kropath_poldoc_unresolved_refs`, etc.
 - Test suite at `tests/policy/` (three phases: CRD validation, ref resolution, source merge)
 
+### Reconciler 3 — KropathConfigStatus (KRO-1121)
+
+- Watches `KropathConfig` only; does not watch the ~57 family Config kinds (would add every one of them to the §1 missing-CRD-kills-the-manager blast radius for a status field that tolerates being briefly stale)
+- On each reconcile, lists every `<ResourceFamily>Config` kind (derived from `features.All`, not hand-maintained) via the manager's *uncached* `APIReader` — a cached `List()` for a kind with no running informer starts one lazily and blocks the calling reconcile forever if the CRD is genuinely absent; a direct read instead returns a same-call error, which is treated as zero consumers for that kind
+- Classifies itself as the **global tier** for any namespace whose resolved `global-config-namespace` is this object's namespace, and as the **local tier** when a family config shares its own namespace; publishes a `Reconciled` condition with `Reason` one of `GlobalTier` / `LocalTier` / `GlobalAndLocalTier` / `Unreferenced`
+- Re-evaluates every `requeueInterval` (15s) in addition to reacting to the KropathConfig object's own create/update/delete, so a family config appearing or disappearing elsewhere is still picked up
+- Test suite at `tests/kropathconfig/ctrl-kropathconfig-01/`
+
 ### Planned reconcilers (not yet implemented)
 
 - **Composite RGD sequencer** — apply child CRs in dependency order

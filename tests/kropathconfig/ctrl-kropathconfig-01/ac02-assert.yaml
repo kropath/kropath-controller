@@ -1,0 +1,10 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: baseline
+  namespace: ac2-app-ns
+status:
+  conditions:
+    - type: Reconciled
+      status: "True"
+      reason: LocalTier
