@@ -9,6 +9,9 @@ status:
     - type: Valid
       status: "True"
       reason: ValidationPassed
+    - type: GlobalProfileResolved
+      status: "False"
+      reason: ProfileUnresolved
   effectiveConfig:
     mandatory:
       keySpec: "SYMMETRIC_DEFAULT"

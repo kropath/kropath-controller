@@ -23,3 +23,6 @@ status:
   conditions:
     - type: "Reconciled"
       status: "True"
+    - type: GlobalProfileResolved
+      status: "False"
+      reason: ProfileUnresolved

@@ -9,3 +9,6 @@ status:
     - type: Valid
       status: "False"
       reason: InvalidKeySpecNotInAllowedList
+    - type: GlobalProfileResolved
+      status: "False"
+      reason: ProfileUnresolved
