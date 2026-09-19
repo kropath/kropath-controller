@@ -2,7 +2,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: ECRPublicConfig
 metadata:
   name: ac5-ecrpub
-  namespace: kro-system
+  namespace: ecrpublic-global-ns
 spec:
   defaults:
     tags:

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ecrpublic-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ecrpublic-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ecrpublic-global-ns

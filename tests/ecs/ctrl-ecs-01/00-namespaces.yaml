@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ecs-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ecs-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ecs-global-ns

@@ -1,8 +1,8 @@
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac1-ecrpub
-  namespace: kro-system
+  name: baseline
+  namespace: ecrpublic-global-ns
 spec:
   aws:
     accountId: "123456789012"

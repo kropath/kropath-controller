@@ -22,17 +22,19 @@ kind: Test
 metadata:
   name: ctrl-sfn-01-cascade
 spec:
-  namespace: stepfunctions
+  namespace: sfn-app-ns
   steps:
     # Purge any stale resources from prior runs before the suite starts.
     - name: purge-stale-leftovers
       try:
+        - apply:
+            file: 00-namespaces.yaml
         - script:
             content: |
-              kubectl delete stepfunctionsconfig general-sfn -n stepfunctions --ignore-not-found
-              kubectl delete stepfunctionsconfig general-sfn -n kro-system --ignore-not-found
-              kubectl delete kropathconfig general-sfn -n kro-system --ignore-not-found
-              kubectl delete kropathconfig general-sfn -n stepfunctions --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n sfn-app-ns --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n sfn-global-ns --ignore-not-found
+              kubectl delete kropathconfig baseline -n sfn-global-ns --ignore-not-found
+              kubectl delete kropathconfig baseline -n sfn-app-ns --ignore-not-found
 
     # AC-1: globalKropathConfig.mandatory.stepfunctions.loggingLevel="ALL" (L1) propagates to
     # effectiveConfig.mandatory.loggingLevel (highest mandatory priority).
@@ -56,9 +58,9 @@ spec:
       try:
         - script:
             content: |
-              kubectl delete kropathconfig general-sfn -n kro-system --ignore-not-found
-              kubectl delete stepfunctionsconfig general-sfn -n kro-system --ignore-not-found
-              kubectl delete stepfunctionsconfig general-sfn -n stepfunctions --ignore-not-found
+              kubectl delete kropathconfig baseline -n sfn-global-ns --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n sfn-global-ns --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n sfn-app-ns --ignore-not-found
         - apply:
             file: 04-global-sfncfg-logging-mandatory.yaml
         - apply:
@@ -78,9 +80,9 @@ spec:
       try:
         - script:
             content: |
-              kubectl delete kropathconfig general-sfn -n kro-system --ignore-not-found
-              kubectl delete stepfunctionsconfig general-sfn -n kro-system --ignore-not-found
-              kubectl delete stepfunctionsconfig general-sfn -n stepfunctions --ignore-not-found
+              kubectl delete kropathconfig baseline -n sfn-global-ns --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n sfn-global-ns --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n sfn-app-ns --ignore-not-found
         - apply:
             file: 06-local-sfncfg-tracing-mandatory.yaml
         - assert:
@@ -96,9 +98,9 @@ spec:
       try:
         - script:
             content: |
-              kubectl delete kropathconfig general-sfn -n kro-system --ignore-not-found
-              kubectl delete stepfunctionsconfig general-sfn -n kro-system --ignore-not-found
-              kubectl delete stepfunctionsconfig general-sfn -n stepfunctions --ignore-not-found
+              kubectl delete kropathconfig baseline -n sfn-global-ns --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n sfn-global-ns --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n sfn-app-ns --ignore-not-found
         - apply:
             file: 08-local-sfncfg-include-exec-data-mandatory.yaml
         - assert:
@@ -114,9 +116,9 @@ spec:
       try:
         - script:
             content: |
-              kubectl delete kropathconfig general-sfn -n kro-system --ignore-not-found
-              kubectl delete stepfunctionsconfig general-sfn -n kro-system --ignore-not-found
-              kubectl delete stepfunctionsconfig general-sfn -n stepfunctions --ignore-not-found
+              kubectl delete kropathconfig baseline -n sfn-global-ns --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n sfn-global-ns --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n sfn-app-ns --ignore-not-found
         - apply:
             file: 10-local-sfncfg-logging-defaults.yaml
         - assert:
@@ -132,9 +134,9 @@ spec:
       try:
         - script:
             content: |
-              kubectl delete kropathconfig general-sfn -n kro-system --ignore-not-found
-              kubectl delete stepfunctionsconfig general-sfn -n kro-system --ignore-not-found
-              kubectl delete stepfunctionsconfig general-sfn -n stepfunctions --ignore-not-found
+              kubectl delete kropathconfig baseline -n sfn-global-ns --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n sfn-global-ns --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n sfn-app-ns --ignore-not-found
         - apply:
             file: 12-global-sfncfg-tracing-defaults.yaml
         - apply:
@@ -154,9 +156,9 @@ spec:
       try:
         - script:
             content: |
-              kubectl delete kropathconfig general-sfn -n kro-system --ignore-not-found
-              kubectl delete stepfunctionsconfig general-sfn -n kro-system --ignore-not-found
-              kubectl delete stepfunctionsconfig general-sfn -n stepfunctions --ignore-not-found
+              kubectl delete kropathconfig baseline -n sfn-global-ns --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n sfn-global-ns --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n sfn-app-ns --ignore-not-found
         - apply:
             file: 14-global-kpc-tags-mandatory.yaml
         - apply:
@@ -180,9 +182,9 @@ spec:
       try:
         - script:
             content: |
-              kubectl delete kropathconfig general-sfn -n kro-system --ignore-not-found
-              kubectl delete stepfunctionsconfig general-sfn -n kro-system --ignore-not-found
-              kubectl delete stepfunctionsconfig general-sfn -n stepfunctions --ignore-not-found
+              kubectl delete kropathconfig baseline -n sfn-global-ns --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n sfn-global-ns --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n sfn-app-ns --ignore-not-found
         - apply:
             file: 17-global-sfncfg-syncedlabels-mandatory.yaml
         - apply:
@@ -202,9 +204,9 @@ spec:
       try:
         - script:
             content: |
-              kubectl delete kropathconfig general-sfn -n kro-system --ignore-not-found
-              kubectl delete stepfunctionsconfig general-sfn -n kro-system --ignore-not-found
-              kubectl delete stepfunctionsconfig general-sfn -n stepfunctions --ignore-not-found
+              kubectl delete kropathconfig baseline -n sfn-global-ns --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n sfn-global-ns --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n sfn-app-ns --ignore-not-found
         - apply:
             file: 19-global-kpc-aws-identity.yaml
         - apply:
@@ -224,9 +226,9 @@ spec:
       try:
         - script:
             content: |
-              kubectl delete kropathconfig general-sfn -n kro-system --ignore-not-found
-              kubectl delete stepfunctionsconfig general-sfn -n kro-system --ignore-not-found
-              kubectl delete stepfunctionsconfig general-sfn -n stepfunctions --ignore-not-found
+              kubectl delete kropathconfig baseline -n sfn-global-ns --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n sfn-global-ns --ignore-not-found
+              kubectl delete stepfunctionsconfig general-sfn -n sfn-app-ns --ignore-not-found
         - apply:
             file: 21-global-sfncfg-naming-mandatory.yaml
         - apply:

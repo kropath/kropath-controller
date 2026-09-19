@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sfn-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sfn-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: sfn-global-ns

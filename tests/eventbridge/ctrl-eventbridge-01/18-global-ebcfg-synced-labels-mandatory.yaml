@@ -2,7 +2,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: EventBridgeConfig
 metadata:
   name: general-bus
-  namespace: kro-system
+  namespace: eventbridge-global-ns
 spec:
   mandatory:
     syncedLabels:

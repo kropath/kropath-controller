@@ -3,7 +3,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: ECSConfig
 metadata:
   name: general-policy-ac11
-  namespace: payments-prod
+  namespace: ecs-app-ns
 spec:
   mandatory:
     tags:

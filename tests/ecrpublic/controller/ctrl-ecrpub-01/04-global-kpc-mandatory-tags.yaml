@@ -1,8 +1,8 @@
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac2-ecrpub
-  namespace: kro-system
+  name: baseline
+  namespace: ecrpublic-global-ns
 spec:
   mandatory:
     tags:

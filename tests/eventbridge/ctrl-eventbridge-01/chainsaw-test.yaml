@@ -3,17 +3,19 @@ kind: Test
 metadata:
   name: ctrl-eventbridge-01
 spec:
-  namespace: eventbridge
+  namespace: eventbridge-app-ns
   steps:
 
   - name: purge-stale-leftovers
     try:
+    - apply:
+        file: 00-namespaces.yaml
     - script:
         content: |
-          kubectl delete eventbridgeconfig general-bus -n eventbridge --ignore-not-found
-          kubectl delete eventbridgeconfig general-bus -n kro-system --ignore-not-found
-          kubectl delete kropathconfig general-bus -n eventbridge --ignore-not-found
-          kubectl delete kropathconfig general-bus -n kro-system --ignore-not-found
+          kubectl delete eventbridgeconfig general-bus -n eventbridge-app-ns --ignore-not-found
+          kubectl delete eventbridgeconfig general-bus -n eventbridge-global-ns --ignore-not-found
+          kubectl delete kropathconfig baseline -n eventbridge-app-ns --ignore-not-found
+          kubectl delete kropathconfig baseline -n eventbridge-global-ns --ignore-not-found
 
   # AC-1: globalKropathConfig.mandatory.eventbridge.archiveRetentionDays propagates to
   # effectiveConfig.mandatory.archiveRetentionDays (L1 — highest mandatory priority).
@@ -37,9 +39,9 @@ spec:
     try:
     - script:
         content: |
-          kubectl delete kropathconfig general-bus -n kro-system --ignore-not-found
-          kubectl delete eventbridgeconfig general-bus -n kro-system --ignore-not-found
-          kubectl delete eventbridgeconfig general-bus -n eventbridge --ignore-not-found
+          kubectl delete kropathconfig baseline -n eventbridge-global-ns --ignore-not-found
+          kubectl delete eventbridgeconfig general-bus -n eventbridge-global-ns --ignore-not-found
+          kubectl delete eventbridgeconfig general-bus -n eventbridge-app-ns --ignore-not-found
     - apply:
         file: 04-global-ebcfg-arch-mandatory.yaml
     - apply:
@@ -59,9 +61,9 @@ spec:
     try:
     - script:
         content: |
-          kubectl delete kropathconfig general-bus -n kro-system --ignore-not-found
-          kubectl delete eventbridgeconfig general-bus -n kro-system --ignore-not-found
-          kubectl delete eventbridgeconfig general-bus -n eventbridge --ignore-not-found
+          kubectl delete kropathconfig baseline -n eventbridge-global-ns --ignore-not-found
+          kubectl delete eventbridgeconfig general-bus -n eventbridge-global-ns --ignore-not-found
+          kubectl delete eventbridgeconfig general-bus -n eventbridge-app-ns --ignore-not-found
     - apply:
         file: 06-local-ebcfg-arch-defaults.yaml
     - assert:
@@ -77,9 +79,9 @@ spec:
     try:
     - script:
         content: |
-          kubectl delete kropathconfig general-bus -n kro-system --ignore-not-found
-          kubectl delete eventbridgeconfig general-bus -n kro-system --ignore-not-found
-          kubectl delete eventbridgeconfig general-bus -n eventbridge --ignore-not-found
+          kubectl delete kropathconfig baseline -n eventbridge-global-ns --ignore-not-found
+          kubectl delete eventbridgeconfig general-bus -n eventbridge-global-ns --ignore-not-found
+          kubectl delete eventbridgeconfig general-bus -n eventbridge-app-ns --ignore-not-found
     - apply:
         file: 08-global-kpc-arch-defaults.yaml
     - apply:
@@ -103,9 +105,9 @@ spec:
     try:
     - script:
         content: |
-          kubectl delete kropathconfig general-bus -n kro-system --ignore-not-found
-          kubectl delete eventbridgeconfig general-bus -n kro-system --ignore-not-found
-          kubectl delete eventbridgeconfig general-bus -n eventbridge --ignore-not-found
+          kubectl delete kropathconfig baseline -n eventbridge-global-ns --ignore-not-found
+          kubectl delete eventbridgeconfig general-bus -n eventbridge-global-ns --ignore-not-found
+          kubectl delete eventbridgeconfig general-bus -n eventbridge-app-ns --ignore-not-found
     - apply:
         file: 11-global-kpc-tags-mandatory.yaml
     - apply:
@@ -129,9 +131,9 @@ spec:
     try:
     - script:
         content: |
-          kubectl delete kropathconfig general-bus -n kro-system --ignore-not-found
-          kubectl delete eventbridgeconfig general-bus -n kro-system --ignore-not-found
-          kubectl delete eventbridgeconfig general-bus -n eventbridge --ignore-not-found
+          kubectl delete kropathconfig baseline -n eventbridge-global-ns --ignore-not-found
+          kubectl delete eventbridgeconfig general-bus -n eventbridge-global-ns --ignore-not-found
+          kubectl delete eventbridgeconfig general-bus -n eventbridge-app-ns --ignore-not-found
     - apply:
         file: 14-global-ebcfg-naming-mandatory.yaml
     - apply:
@@ -151,9 +153,9 @@ spec:
     try:
     - script:
         content: |
-          kubectl delete kropathconfig general-bus -n kro-system --ignore-not-found
-          kubectl delete eventbridgeconfig general-bus -n kro-system --ignore-not-found
-          kubectl delete eventbridgeconfig general-bus -n eventbridge --ignore-not-found
+          kubectl delete kropathconfig baseline -n eventbridge-global-ns --ignore-not-found
+          kubectl delete eventbridgeconfig general-bus -n eventbridge-global-ns --ignore-not-found
+          kubectl delete eventbridgeconfig general-bus -n eventbridge-app-ns --ignore-not-found
     - apply:
         file: 16-global-ebcfg-naming-defaults.yaml
     - apply:
@@ -173,9 +175,9 @@ spec:
     try:
     - script:
         content: |
-          kubectl delete kropathconfig general-bus -n kro-system --ignore-not-found
-          kubectl delete eventbridgeconfig general-bus -n kro-system --ignore-not-found
-          kubectl delete eventbridgeconfig general-bus -n eventbridge --ignore-not-found
+          kubectl delete kropathconfig baseline -n eventbridge-global-ns --ignore-not-found
+          kubectl delete eventbridgeconfig general-bus -n eventbridge-global-ns --ignore-not-found
+          kubectl delete eventbridgeconfig general-bus -n eventbridge-app-ns --ignore-not-found
     - apply:
         file: 18-global-ebcfg-synced-labels-mandatory.yaml
     - apply:
@@ -195,9 +197,9 @@ spec:
     try:
     - script:
         content: |
-          kubectl delete kropathconfig general-bus -n kro-system --ignore-not-found
-          kubectl delete eventbridgeconfig general-bus -n kro-system --ignore-not-found
-          kubectl delete eventbridgeconfig general-bus -n eventbridge --ignore-not-found
+          kubectl delete kropathconfig baseline -n eventbridge-global-ns --ignore-not-found
+          kubectl delete eventbridgeconfig general-bus -n eventbridge-global-ns --ignore-not-found
+          kubectl delete eventbridgeconfig general-bus -n eventbridge-app-ns --ignore-not-found
     - apply:
         file: 20-global-kpc-aws-identity.yaml
     - apply:
