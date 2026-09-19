@@ -61,7 +61,8 @@ func TestRegistryCoversAllPackages(t *testing.T) {
 // primary <package>s.aws.kropath.run CRD. The label operator watches every
 // already-registered config kind rather than a kind of its own.
 var packagesWithoutOwnCRD = map[string]bool{
-	"labeloperator": true,
+	"labeloperator":       true,
+	"kropathconfigstatus": true, // watches the existing KropathConfig kind, owns none of its own
 }
 
 // crdNameRE matches the `  name: <crd>` line of a CRD's metadata block.

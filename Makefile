@@ -431,7 +431,7 @@ test-chainsaw: chainsaw-stop chainsaw-start chainsaw-wait ## Stop any stale cont
 		tests/cloudwatch/ tests/cloudwatchlogs/ tests/dynamodb/ tests/ec2/ \
 		tests/ecr/ tests/ecs/ tests/efs/ tests/eks/ tests/elasticache/ \
 		tests/emr/ tests/eventbridge/ tests/features/ tests/glue/ tests/iam/ tests/kms/ \
-		tests/label-operator/ tests/memorydb/ tests/msk/ tests/policy/ \
+		tests/kropathconfig/ tests/label-operator/ tests/memorydb/ tests/msk/ tests/policy/ \
 		tests/rds/ tests/s3/ tests/s3advanced/ tests/secretsmanager/ tests/sns/ tests/sqs/ \
 		tests/stepfunctions/ tests/version/ tests/waf/ \
 		tests/organizations/ \

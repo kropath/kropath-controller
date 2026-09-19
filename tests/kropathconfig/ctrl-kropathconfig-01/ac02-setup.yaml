@@ -1,0 +1,26 @@
+# AC-2: KropathConfig/baseline sharing a namespace with an IAMConfig. Neither
+# ac2-app-ns's own global-config-namespace resolution (default: kro-system)
+# nor any other namespace's annotation points at ac2-app-ns, so this is a
+# local-tier-only match.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac2-app-ns
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: baseline
+  namespace: ac2-app-ns
+spec:
+  mandatory: {}
+  defaults: {}
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: IAMConfig
+metadata:
+  name: general-policy
+  namespace: ac2-app-ns
+spec:
+  mandatory: {}
+  defaults: {}
