@@ -2,7 +2,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: ECRConfig
 metadata:
   name: general-policy
-  namespace: kro-system
+  namespace: ecr-global-ns
 spec:
   mandatory:
     encryptionType: AES256

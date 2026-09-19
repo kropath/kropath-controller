@@ -26,6 +26,18 @@ metadata:
 spec:
   steps:
     # -----------------------------------------------------------------------
+    # KRO-1137: this suite's KropathConfig singleton lives in a namespace pair
+    # dedicated to this suite (ecrpublic-global-ns/ecrpublic-app-ns) instead of
+    # kro-system, so it can't collide with any other suite's own singleton
+    # baseline when the whole Chainsaw job runs. Created once; never deleted
+    # between ACs.
+    # -----------------------------------------------------------------------
+    - name: setup-namespaces
+      try:
+        - apply:
+            file: 00-namespaces.yaml
+
+    # -----------------------------------------------------------------------
     # ctrl-1: aws.accountId and aws.region from KPC spec.aws are written to
     # effectiveConfig.aws.accountId and effectiveConfig.aws.region.
     # -----------------------------------------------------------------------

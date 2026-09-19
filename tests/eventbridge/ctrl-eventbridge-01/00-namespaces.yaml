@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: eventbridge-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: eventbridge-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: eventbridge-global-ns

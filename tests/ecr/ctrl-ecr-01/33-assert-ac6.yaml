@@ -2,7 +2,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: ECRConfig
 metadata:
   name: general-policy
-  namespace: registry-prod
+  namespace: ecr-app-ns
 status:
   effectiveConfig:
     defaults:

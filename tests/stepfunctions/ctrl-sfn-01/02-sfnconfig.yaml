@@ -4,5 +4,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: StepFunctionsConfig
 metadata:
   name: general-sfn
-  namespace: stepfunctions
+  namespace: sfn-app-ns
 spec: {}

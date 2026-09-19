@@ -2,8 +2,8 @@
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: general-policy-ac11
-  namespace: kro-system
+  name: baseline
+  namespace: ecs-global-ns
 spec:
   mandatory:
     tags:

@@ -2,12 +2,12 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: ECRConfig
 metadata:
   name: general-policy
-  namespace: registry-prod
+  namespace: ecr-app-ns
 status:
   conditions:
-    - type: Valid
-      status: "False"
-      reason: InvalidEncryptionConfiguration
-    - type: GlobalProfileResolved
-      status: "True"
-      reason: ProfileFound
+  - type: Valid
+    status: "False"
+    reason: InvalidEncryptionConfiguration
+  - type: GlobalProfileResolved
+    status: "True"
+    reason: ProfileFound

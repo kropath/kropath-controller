@@ -1,8 +1,8 @@
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: general-bus
-  namespace: kro-system
+  name: baseline
+  namespace: eventbridge-global-ns
 spec:
   aws:
     accountId: "123456789012"
