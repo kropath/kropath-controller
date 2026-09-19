@@ -18,7 +18,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: BackupConfig
 metadata:
   name: ac13-backup-policy
-  namespace: payments-prod
+  namespace: ac13-backup-app-ns
 status:
   effectiveConfig:
     defaults:

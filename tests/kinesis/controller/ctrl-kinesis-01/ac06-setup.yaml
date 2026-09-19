@@ -1,12 +1,29 @@
 # AC-6 setup: KropathConfig.mandatory.kinesis.streamMode="ON_DEMAND" (level 1)
 # wins over KinesisConfig.mandatory.streamMode="PROVISIONED" (level 4).
 # Verifies that the org-wide mandatory Kinesis field propagates correctly to effCfg.
+#
+# KropathConfig is a per-namespace singleton named "baseline" (ADR-018 D-1/D-2,
+# ADR-015 §5.7) — renamed out of kro-system into a per-AC global-ns/app-ns pair
+# so this suite's global-tier config cannot collide with any other suite's
+# singleton "baseline" once every suite shares the cluster.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac06-kinesis-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: streaming-prod-ac06
+  annotations:
+    aws.kropath.run/global-config-namespace: ac06-kinesis-global-ns
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac06-kinesis-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac06-kinesis-global-ns
 spec:
   mandatory:
     kinesis:
@@ -16,15 +33,10 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: KinesisConfig
 metadata:
   name: ac06-kinesis-policy
-  namespace: kro-system
+  namespace: ac06-kinesis-global-ns
 spec:
   mandatory:
     streamMode: PROVISIONED
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: streaming-prod-ac06
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KinesisConfig

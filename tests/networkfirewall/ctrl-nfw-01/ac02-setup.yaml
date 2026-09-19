@@ -14,11 +14,23 @@
 #
 # AC-2: globalNFWConfig.mandatory.encryptionType (level 3) flows to effCfg.mandatory.encryptionType
 # when KropathConfig has no networkfirewall settings.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac2-nfw-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac2-nfw-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac2-nfw-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac2-nfw-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac2-nfw-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -28,7 +40,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: NetworkFirewallConfig
 metadata:
   name: ac2-nfw-policy
-  namespace: kro-system
+  namespace: ac2-nfw-global-ns
 spec:
   mandatory:
     encryptionType: "CUSTOMER_KMS"
@@ -37,5 +49,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: NetworkFirewallConfig
 metadata:
   name: ac2-nfw-policy
-  namespace: networkfirewall
+  namespace: ac2-nfw-app-ns
 spec: {}

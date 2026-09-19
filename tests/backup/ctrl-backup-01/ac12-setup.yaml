@@ -14,11 +14,28 @@
 #
 # AC-12: KropathConfig.mandatory.backup.encryptionKeyARN (level 1) flows to
 # effCfg.mandatory.encryptionKeyARN.
+#
+# KropathConfig is a per-namespace singleton named "baseline" (ADR-018 D-1/D-2,
+# ADR-015 §5.7) — renamed out of kro-system into a per-AC global-ns/app-ns pair
+# so this suite's global-tier config cannot collide with any other suite's
+# singleton "baseline" once every suite shares the cluster.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac12-backup-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac12-backup-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac12-backup-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac12-backup-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac12-backup-global-ns
 spec:
   mandatory:
     backup:
@@ -31,5 +48,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: BackupConfig
 metadata:
   name: ac12-backup-policy
-  namespace: payments-prod
+  namespace: ac12-backup-app-ns
 spec: {}

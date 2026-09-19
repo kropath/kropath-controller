@@ -13,11 +13,23 @@
 # limitations under the License.
 #
 # AC-9: globalNFWConfig.defaults.namingTemplate (level 7) flows to effCfg.defaults.namingTemplate.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac9-nfw-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac9-nfw-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac9-nfw-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac9-nfw-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac9-nfw-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -27,7 +39,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: NetworkFirewallConfig
 metadata:
   name: ac9-nfw-policy
-  namespace: kro-system
+  namespace: ac9-nfw-global-ns
 spec:
   defaults:
     namingTemplate: "{namespace}-{name}-fw"
@@ -36,5 +48,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: NetworkFirewallConfig
 metadata:
   name: ac9-nfw-policy
-  namespace: networkfirewall
+  namespace: ac9-nfw-app-ns
 spec: {}

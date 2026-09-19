@@ -14,11 +14,23 @@
 #
 # AC-10: KropathConfig.mandatory.tags (level 1) and NetworkFirewallConfig.mandatory.tags (level 3)
 # union-merge additively in effCfg.mandatory.tags; level 1 wins on key conflict.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac10-nfw-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac10-nfw-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac10-nfw-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac10-nfw-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac10-nfw-global-ns
 spec:
   mandatory:
     tags:
@@ -32,7 +44,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: NetworkFirewallConfig
 metadata:
   name: ac10-nfw-policy
-  namespace: kro-system
+  namespace: ac10-nfw-global-ns
 spec:
   mandatory:
     tags:
@@ -43,5 +55,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: NetworkFirewallConfig
 metadata:
   name: ac10-nfw-policy
-  namespace: networkfirewall
+  namespace: ac10-nfw-app-ns
 spec: {}

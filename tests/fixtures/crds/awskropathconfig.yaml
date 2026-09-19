@@ -3235,6 +3235,138 @@ spec:
                           description: >-
                             Org-wide IAM user access to billing enforcement ("allow" | "deny").
                             Empty string = not enforced.
+                    backup:
+                      type: object
+                      default: {}
+                      description: >-
+                        Backup-family governance fields applied across all Backup resource
+                        types. Cascade levels 1-2 in the ten-level priority chain (ADR-015 §5.3).
+                      properties:
+                        encryptionKeyARN:
+                          type: string
+                          description: >-
+                            KMS key ARN enforced org-wide for all backup vaults. Empty string
+                            (zero value) = not enforced.
+                        vaultLockMinRetentionDays:
+                          type: integer
+                          format: int64
+                          default: 0
+                          minimum: 0
+                          description: >-
+                            Minimum Vault Lock retention period enforced org-wide, in days.
+                            0 (zero value) = not enforced.
+                        vaultLockMaxRetentionDays:
+                          type: integer
+                          format: int64
+                          default: 0
+                          minimum: 0
+                          description: >-
+                            Maximum Vault Lock retention period enforced org-wide, in days.
+                            0 (zero value) = not enforced.
+                        enableContinuousBackup:
+                          type: boolean
+                          default: false
+                          description: >-
+                            When true, requires point-in-time recovery on all backup plans
+                            regardless of instance spec. false (zero value) = not enforced.
+                        defaultLifecycleDeleteAfterDays:
+                          type: integer
+                          format: int64
+                          default: 0
+                          minimum: 0
+                          description: >-
+                            Minimum lifecycle delete-after retention enforced org-wide, in days.
+                            0 (zero value) = not enforced.
+                        defaultLifecycleMoveToColdStorageAfterDays:
+                          type: integer
+                          format: int64
+                          default: 0
+                          minimum: 0
+                          description: >-
+                            Cold storage transition period enforced org-wide, in days.
+                            0 (zero value) = not enforced.
+                        enableMalwareScan:
+                          type: boolean
+                          default: false
+                          description: >-
+                            When true, requires malware scanning on all backup plans regardless
+                            of instance spec. false (zero value) = not enforced.
+                        scannerRoleARN:
+                          type: string
+                          description: >-
+                            IAM role ARN enforced org-wide for malware scanning. Empty string
+                            (zero value) = not enforced.
+                    kinesis:
+                      type: object
+                      default: {}
+                      description: >-
+                        Kinesis-family governance fields applied across all Kinesis resource
+                        types. Cascade levels 1-2 in the ten-level priority chain (ADR-015 §5.3).
+                      properties:
+                        streamMode:
+                          type: string
+                          description: >-
+                            Capacity mode enforced org-wide for all streams. Empty string
+                            (zero value) = not enforced. Valid values: "" | on_demand |
+                            provisioned.
+                        shardCount:
+                          type: integer
+                          format: int64
+                          default: 0
+                          minimum: 0
+                          description: >-
+                            Shard count enforced org-wide for provisioned streams.
+                            0 (zero value) = not enforced.
+                    networkfirewall:
+                      type: object
+                      default: {}
+                      description: >-
+                        Network Firewall-family governance fields applied across all Network
+                        Firewall resource types. Cascade levels 1-2 in the ten-level priority
+                        chain (ADR-015 §5.3).
+                      properties:
+                        deleteProtection:
+                          type: boolean
+                          default: false
+                          description: >-
+                            When true, requires deletion protection on all firewalls regardless
+                            of instance spec. false (zero value) = not enforced.
+                        firewallPolicyChangeProtection:
+                          type: boolean
+                          default: false
+                          description: >-
+                            When true, requires firewall policy change protection on all
+                            firewalls regardless of instance spec. false (zero value) = not
+                            enforced.
+                        subnetChangeProtection:
+                          type: boolean
+                          default: false
+                          description: >-
+                            When true, requires subnet change protection on all firewalls
+                            regardless of instance spec. false (zero value) = not enforced.
+                        encryptionType:
+                          type: string
+                          description: >-
+                            Encryption type enforced org-wide. Empty string (zero value) = not
+                            enforced. CUSTOMER_KMS forces CMK encryption.
+                        statefulRuleOrder:
+                          type: string
+                          description: >-
+                            Stateful rule evaluation order enforced org-wide. Empty string
+                            (zero value) = not enforced. Valid values: STRICT_ORDER |
+                            DEFAULT_ACTION_ORDER.
+                        statefulDefaultActions:
+                          type: array
+                          description: >-
+                            Default stateful actions enforced org-wide. Empty list
+                            (zero value) = not enforced.
+                          items:
+                            type: string
+                        streamExceptionPolicy:
+                          type: string
+                          description: >-
+                            Stream exception policy enforced org-wide. Empty string
+                            (zero value) = not enforced. Valid values: DROP | CONTINUE.
 
                 defaults:
                   type: object
@@ -4610,6 +4742,109 @@ spec:
                           description: >-
                             Default IAM user access to billing setting ("allow" | "deny").
                             Empty string = no default.
+                    backup:
+                      type: object
+                      default: {}
+                      description: >-
+                        Default Backup-family governance fields. Cascade levels 8-9 in the
+                        ten-level priority chain (ADR-015 §5.3). Applied only when no
+                        higher-priority source sets the field.
+                      properties:
+                        encryptionKeyARN:
+                          type: string
+                          description: Default KMS key ARN for backup vaults.
+                        vaultLockMinRetentionDays:
+                          type: integer
+                          format: int64
+                          default: 0
+                          minimum: 0
+                          description: Default minimum Vault Lock retention period, in days.
+                        vaultLockMaxRetentionDays:
+                          type: integer
+                          format: int64
+                          default: 0
+                          minimum: 0
+                          description: Default maximum Vault Lock retention period, in days.
+                        enableContinuousBackup:
+                          type: boolean
+                          default: false
+                          description: Default point-in-time recovery toggle.
+                        defaultLifecycleDeleteAfterDays:
+                          type: integer
+                          format: int64
+                          default: 0
+                          minimum: 0
+                          description: Default lifecycle delete-after retention, in days.
+                        defaultLifecycleMoveToColdStorageAfterDays:
+                          type: integer
+                          format: int64
+                          default: 0
+                          minimum: 0
+                          description: Default cold storage transition period, in days.
+                        enableMalwareScan:
+                          type: boolean
+                          default: false
+                          description: Default malware scanning toggle.
+                        scannerRoleARN:
+                          type: string
+                          description: Default IAM role ARN for malware scanning.
+                    kinesis:
+                      type: object
+                      default: {}
+                      description: >-
+                        Default Kinesis-family governance fields. Cascade levels 8-9 in the
+                        ten-level priority chain (ADR-015 §5.3). Applied only when no
+                        higher-priority source sets the field.
+                      properties:
+                        streamMode:
+                          type: string
+                          description: >-
+                            Default capacity mode for streams. Valid values: "" | on_demand |
+                            provisioned.
+                        shardCount:
+                          type: integer
+                          format: int64
+                          default: 0
+                          minimum: 0
+                          description: Default shard count for provisioned streams.
+                    networkfirewall:
+                      type: object
+                      default: {}
+                      description: >-
+                        Default Network Firewall-family governance fields. Cascade levels 8-9
+                        in the ten-level priority chain (ADR-015 §5.3). Applied only when no
+                        higher-priority source sets the field.
+                      properties:
+                        deleteProtection:
+                          type: boolean
+                          default: false
+                          description: Default deletion protection toggle.
+                        firewallPolicyChangeProtection:
+                          type: boolean
+                          default: false
+                          description: Default firewall policy change protection toggle.
+                        subnetChangeProtection:
+                          type: boolean
+                          default: false
+                          description: Default subnet change protection toggle.
+                        encryptionType:
+                          type: string
+                          description: Default encryption type. CUSTOMER_KMS forces CMK encryption.
+                        statefulRuleOrder:
+                          type: string
+                          description: >-
+                            Default stateful rule evaluation order. Valid values:
+                            STRICT_ORDER | DEFAULT_ACTION_ORDER.
+                        statefulDefaultActions:
+                          type: array
+                          description: Default set of stateful actions.
+                          items:
+                            type: string
+                        streamExceptionPolicy:
+                          type: string
+                          description: >-
+                            Default stream exception policy. Valid values:
+                            DROP | CONTINUE.
 
                 aws:
                   type: object

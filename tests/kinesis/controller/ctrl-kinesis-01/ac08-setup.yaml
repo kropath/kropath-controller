@@ -1,11 +1,28 @@
 # AC-8 setup: KropathConfig.mandatory.tags and KinesisConfig.mandatory.tags are
 # union-merged into effCfg.mandatory.tags. Both sets of tags appear in the output.
+#
+# KropathConfig is a per-namespace singleton named "baseline" (ADR-018 D-1/D-2,
+# ADR-015 §5.7) — renamed out of kro-system into a per-AC global-ns/app-ns pair
+# so this suite's global-tier config cannot collide with any other suite's
+# singleton "baseline" once every suite shares the cluster.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac08-kinesis-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: streaming-prod-ac08
+  annotations:
+    aws.kropath.run/global-config-namespace: ac08-kinesis-global-ns
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac08-kinesis-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac08-kinesis-global-ns
 spec:
   mandatory:
     tags:
@@ -16,17 +33,12 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: KinesisConfig
 metadata:
   name: ac08-kinesis-policy
-  namespace: kro-system
+  namespace: ac08-kinesis-global-ns
 spec:
   mandatory:
     tags:
       team: streaming
       cost-center: cc-42
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: streaming-prod-ac08
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KinesisConfig
