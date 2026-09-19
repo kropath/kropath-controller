@@ -1,10 +1,22 @@
 # CC-2: globalKropathConfig.mandatory.mq.publiclyAccessible=false (level 1) wins over
 # globalMQConfig.mandatory.publiclyAccessible=true (level 3).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac02-mq-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac02-mq-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac02-mq-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac2-mq-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac02-mq-global-ns
 spec:
   mandatory:
     mq:
@@ -18,7 +30,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MQConfig
 metadata:
   name: ac2-mq-policy
-  namespace: kro-system
+  namespace: ac02-mq-global-ns
 spec:
   mandatory:
     publiclyAccessible: true
@@ -29,7 +41,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MQConfig
 metadata:
   name: ac2-mq-policy
-  namespace: mq-prod
+  namespace: ac02-mq-app-ns
   labels:
     aws.kropath.run/resource-name: ac2-mq-policy
 spec:

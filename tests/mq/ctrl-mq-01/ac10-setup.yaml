@@ -1,10 +1,22 @@
 # CC-10: localKropathDefaults.mq.autoMinorVersionUpgrade=true (level 8) wins over
 # globalKropathDefaults.mq.autoMinorVersionUpgrade=false (level 9).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac10-mq-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac10-mq-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac10-mq-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac10-mq-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac10-mq-global-ns
 spec:
   mandatory: {}
   defaults:
@@ -18,8 +30,8 @@ spec:
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: default
-  namespace: mq-prod
+  name: baseline
+  namespace: ac10-mq-app-ns
 spec:
   mandatory: {}
   defaults:
@@ -30,7 +42,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MQConfig
 metadata:
   name: ac10-mq-policy
-  namespace: mq-prod
+  namespace: ac10-mq-app-ns
   labels:
     aws.kropath.run/resource-name: ac10-mq-policy
 spec:

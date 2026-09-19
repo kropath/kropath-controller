@@ -1,10 +1,22 @@
 # CC-4: localMQConfig.mandatory.hostInstanceType="mq.m5.large" (level 4) propagates.
 # hostInstanceType is MQConfig-only — no KropathConfig.mq.hostInstanceType exists.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-mq-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-mq-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac04-mq-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac4-mq-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac04-mq-global-ns
 spec:
   mandatory: {}
   aws:
@@ -15,7 +27,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MQConfig
 metadata:
   name: ac4-mq-policy
-  namespace: mq-prod
+  namespace: ac04-mq-app-ns
   labels:
     aws.kropath.run/resource-name: ac4-mq-policy
 spec:

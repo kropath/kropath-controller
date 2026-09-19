@@ -1,10 +1,22 @@
 # CC-8: globalMQConfig.defaults.namingTemplate="{namespace}-{name}" (level 7) propagates
 # when localMQConfig.defaults has no namingTemplate. MQConfig-only field.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac08-mq-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac08-mq-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac08-mq-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac8-mq-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac08-mq-global-ns
 spec:
   mandatory: {}
   aws:
@@ -15,7 +27,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MQConfig
 metadata:
   name: ac8-mq-policy
-  namespace: kro-system
+  namespace: ac08-mq-global-ns
 spec:
   mandatory: {}
   defaults:
@@ -25,7 +37,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MQConfig
 metadata:
   name: ac8-mq-policy
-  namespace: mq-prod
+  namespace: ac08-mq-app-ns
   labels:
     aws.kropath.run/resource-name: ac8-mq-policy
 spec:

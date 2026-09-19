@@ -4,7 +4,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MQConfig
 metadata:
   name: ac6-mq-policy
-  namespace: mq-prod
+  namespace: ac06-mq-app-ns
 status:
   effectiveConfig:
     defaults:

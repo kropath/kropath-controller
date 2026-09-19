@@ -1,9 +1,21 @@
 # Global KropathConfig — sets aws.accountId and aws.region.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac10-efs-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac10-efs-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac10-efs-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac10-general-storage
-  namespace: kro-system
+  name: baseline
+  namespace: ac10-efs-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -15,5 +27,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: EFSConfig
 metadata:
   name: ac10-general-storage
-  namespace: efs
+  namespace: ac10-efs-app-ns
 spec: {}

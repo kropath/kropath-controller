@@ -3,7 +3,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: ElastiCacheConfig
 metadata:
   name: ac5-general-policy
-  namespace: payments-prod
+  namespace: ac05-elasticache-app-ns
 status:
   effectiveConfig:
     defaults:

@@ -1,10 +1,22 @@
 # CC-5: globalMQConfig.mandatory.hostInstanceType="mq.m5.xlarge" (level 3) wins over
 # localMQConfig.mandatory.hostInstanceType="mq.m5.large" (level 4).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac05-mq-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac05-mq-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac05-mq-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac5-mq-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac05-mq-global-ns
 spec:
   mandatory: {}
   aws:
@@ -15,7 +27,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MQConfig
 metadata:
   name: ac5-mq-policy
-  namespace: kro-system
+  namespace: ac05-mq-global-ns
 spec:
   mandatory:
     hostInstanceType: mq.m5.xlarge
@@ -25,7 +37,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MQConfig
 metadata:
   name: ac5-mq-policy
-  namespace: mq-prod
+  namespace: ac05-mq-app-ns
   labels:
     aws.kropath.run/resource-name: ac5-mq-policy
 spec:

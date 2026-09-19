@@ -3,7 +3,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: EFSConfig
 metadata:
   name: ac8-general-storage
-  namespace: efs
+  namespace: ac08-efs-app-ns
 status:
   effectiveConfig:
     mandatory:

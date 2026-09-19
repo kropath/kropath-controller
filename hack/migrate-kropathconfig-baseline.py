@@ -31,6 +31,7 @@ Usage:
       --family acm --provider aws
 """
 import argparse
+import io
 import pathlib
 import re
 import sys
@@ -57,13 +58,40 @@ def ac_slug(filename: str) -> str:
     return pathlib.Path(filename).stem
 
 
+def split_leading_header(text: str) -> tuple[str, str]:
+    """Split off a file's leading comment header (license block, AC description)
+    from the YAML content that follows, including a bare `---` document-start
+    marker if the header is followed by one.
+
+    ruamel.yaml's round-trip loader does not reliably reattach a comment that
+    sits before an explicit `---` at the very start of a stream -- it depends
+    on whether that `---` is present, so a per-document dump loop silently
+    drops the header for files written in that style (see KRO-1137 batch 5).
+    Stripping the header as plain text before parsing, and re-prepending it
+    verbatim after dumping, sidesteps ruamel's comment-attachment model
+    entirely instead of depending on it.
+    """
+    lines = text.split("\n")
+    i = 0
+    while i < len(lines) and (lines[i].strip() == "" or lines[i].lstrip().startswith("#")):
+        i += 1
+    if i < len(lines) and lines[i].strip() == "---":
+        i += 1
+    header = "\n".join(lines[:i]).rstrip("\n")
+    rest = "\n".join(lines[i:])
+    return header, rest
+
+
 def load_docs(path: pathlib.Path):
     with open(path) as f:
-        return list(yaml.load_all(f))
+        header, rest = split_leading_header(f.read())
+    return header, list(yaml.load_all(io.StringIO(rest)))
 
 
-def dump_docs(path: pathlib.Path, docs) -> None:
+def dump_docs(path: pathlib.Path, header: str, docs) -> None:
     with open(path, "w") as f:
+        if header:
+            f.write(header + "\n")
         first = True
         for d in docs:
             if d is None:
@@ -75,7 +103,7 @@ def dump_docs(path: pathlib.Path, docs) -> None:
 
 
 def migrate_setup_file(path: pathlib.Path, family: str, provider: str):
-    docs = load_docs(path)
+    header, docs = load_docs(path)
     kpc_docs = [d for d in docs if d and d.get("kind") == "KropathConfig"]
     if not kpc_docs:
         return None
@@ -123,7 +151,7 @@ def migrate_setup_file(path: pathlib.Path, family: str, provider: str):
         "metadata": {"name": app_ns, "annotations": {annotation_key: global_ns}},
     }
     new_docs = [ns_global, ns_app] + docs
-    dump_docs(path, new_docs)
+    dump_docs(path, header, new_docs)
     ns_map = {old_local_ns: app_ns, old_global_ns: global_ns}
     return {"path": path, "ns_map": ns_map, "app_ns": app_ns, "global_ns": global_ns, "slug": slug}
 
@@ -136,7 +164,7 @@ def migrate_assert_files(suite_dir: pathlib.Path, slug: str, setup_path: pathlib
     for p in sorted(suite_dir.glob("*assert*.yaml")):
         if p == setup_path or not slug_re.search(p.stem):
             continue
-        docs = load_docs(p)
+        header, docs = load_docs(p)
         touched = False
         for d in docs:
             ns = d.get("metadata", {}).get("namespace") if d else None
@@ -144,7 +172,7 @@ def migrate_assert_files(suite_dir: pathlib.Path, slug: str, setup_path: pathlib
                 d["metadata"]["namespace"] = ns_map[ns]
                 touched = True
         if touched:
-            dump_docs(p, docs)
+            dump_docs(p, header, docs)
             changed.append(str(p))
     return changed
 
