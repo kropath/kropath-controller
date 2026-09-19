@@ -3,7 +3,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: AutoScalingConfig
 metadata:
   name: ac2-general-policy
-  namespace: payments-prod
+  namespace: ac02-autoscaling-app-ns
 status:
   effectiveConfig:
     mandatory:

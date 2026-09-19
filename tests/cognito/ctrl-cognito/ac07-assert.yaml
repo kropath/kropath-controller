@@ -13,12 +13,11 @@
 # limitations under the License.
 #
 # AC-7 assert: effectiveConfig.mandatory.mfaConfiguration must be "ON".
----
 apiVersion: aws.kropath.run/v1alpha1
 kind: CognitoConfig
 metadata:
   name: ac7-cognito-policy
-  namespace: payments-prod
+  namespace: ac07-cognito-app-ns
 status:
   effectiveConfig:
     mandatory:

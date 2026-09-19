@@ -14,12 +14,11 @@
 #
 # AC-8 assert: effectiveConfig.mandatory.passwordPolicy.minimumLength must be 14
 # (KropathConfig level 1 wins over CognitoConfig level 4).
----
 apiVersion: aws.kropath.run/v1alpha1
 kind: CognitoConfig
 metadata:
   name: ac8-cognito-policy
-  namespace: payments-prod
+  namespace: ac08-cognito-app-ns
 status:
   effectiveConfig:
     mandatory:

@@ -16,12 +16,23 @@
 # must win over CognitoConfig.mandatory.passwordPolicy.minimumLength=12 (level 4).
 # Spec AC-8: global KropathConfig.mandatory.cognito.passwordPolicy.minimumLength=14
 # wins over CognitoConfig.mandatory.passwordPolicy.minimumLength=12.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac08-cognito-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac08-cognito-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac08-cognito-global-ns
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac8-cognito-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac08-cognito-global-ns
 spec:
   mandatory:
     cognito:
@@ -35,7 +46,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CognitoConfig
 metadata:
   name: ac8-cognito-policy
-  namespace: payments-prod
+  namespace: ac08-cognito-app-ns
 spec:
   mandatory:
     passwordPolicy:

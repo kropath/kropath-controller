@@ -15,12 +15,23 @@
 # AC-7 setup: KropathConfig.mandatory.cognito.mfaConfiguration="ON" in kro-system.
 # Spec AC-7: global KropathConfig.mandatory.cognito.mfaConfiguration="ON"
 # → effectiveConfig.mandatory.mfaConfiguration="ON"
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac07-cognito-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac07-cognito-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac07-cognito-global-ns
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac7-cognito-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac07-cognito-global-ns
 spec:
   mandatory:
     cognito:
@@ -33,5 +44,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CognitoConfig
 metadata:
   name: ac7-cognito-policy
-  namespace: payments-prod
+  namespace: ac07-cognito-app-ns
 spec: {}

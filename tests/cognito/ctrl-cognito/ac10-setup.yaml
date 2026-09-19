@@ -15,12 +15,23 @@
 # AC-10 setup: KropathConfig.mandatory.tags and CognitoConfig.mandatory.tags must
 # union-merge, with the KropathConfig tag winning on key conflict.
 # Spec AC-10: Tag union merge across KropathConfig.mandatory.tags and CognitoConfig.mandatory.tags.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac10-cognito-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac10-cognito-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac10-cognito-global-ns
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac10-cognito-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac10-cognito-global-ns
 spec:
   mandatory:
     tags:
@@ -34,7 +45,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CognitoConfig
 metadata:
   name: ac10-cognito-policy
-  namespace: payments-prod
+  namespace: ac10-cognito-app-ns
 spec:
   mandatory:
     tags:

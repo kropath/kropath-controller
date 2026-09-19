@@ -1,9 +1,21 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac02-autoscaling-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac02-autoscaling-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac02-autoscaling-global-ns
+---
 # AC-C2: globalKropathConfig mandatory.autoscaling.newInstancesProtectedFromScaleIn=true (level 1).
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac2-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac02-autoscaling-global-ns
 spec:
   mandatory:
     autoscaling:
@@ -18,7 +30,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: AutoScalingConfig
 metadata:
   name: ac2-general-policy
-  namespace: kro-system
+  namespace: ac02-autoscaling-global-ns
 spec:
   mandatory:
     newInstancesProtectedFromScaleIn: false
@@ -29,7 +41,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: AutoScalingConfig
 metadata:
   name: ac2-general-policy
-  namespace: payments-prod
+  namespace: ac02-autoscaling-app-ns
 spec:
   mandatory: {}
   defaults: {}

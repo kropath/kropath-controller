@@ -14,12 +14,11 @@
 #
 # AC-10 assert: effectiveConfig.mandatory.tags must contain the union of KropathConfig
 # and CognitoConfig mandatory tags, with KropathConfig winning on "env" key conflict.
----
 apiVersion: aws.kropath.run/v1alpha1
 kind: CognitoConfig
 metadata:
   name: ac10-cognito-policy
-  namespace: payments-prod
+  namespace: ac10-cognito-app-ns
 status:
   effectiveConfig:
     mandatory:

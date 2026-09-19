@@ -13,12 +13,11 @@
 # limitations under the License.
 #
 # AC-9 assert: effectiveConfig.defaults.namingTemplate must be "{namespace}-{name}".
----
 apiVersion: aws.kropath.run/v1alpha1
 kind: CognitoConfig
 metadata:
   name: ac9-cognito-policy
-  namespace: payments-prod
+  namespace: ac09-cognito-app-ns
 status:
   effectiveConfig:
     defaults:

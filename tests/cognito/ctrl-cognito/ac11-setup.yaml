@@ -15,12 +15,23 @@
 # AC-11 setup: CognitoConfig.mandatory.syncedLabels={"app":"cognito"} (level 4)
 # flows to effectiveConfig.mandatory.syncedLabels.
 # Spec AC-11: CognitoConfig.mandatory.syncedLabels → effectiveConfig.mandatory.syncedLabels.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac11-cognito-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac11-cognito-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac11-cognito-global-ns
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac11-cognito-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac11-cognito-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -30,7 +41,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CognitoConfig
 metadata:
   name: ac11-cognito-policy
-  namespace: payments-prod
+  namespace: ac11-cognito-app-ns
 spec:
   mandatory:
     syncedLabels:

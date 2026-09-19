@@ -1,9 +1,21 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-autoscaling-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-autoscaling-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac09-autoscaling-global-ns
+---
 # AC-C9: globalKropathConfig with aws.accountId and aws.region.
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac9-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac09-autoscaling-global-ns
 spec:
   mandatory: {}
   aws:
@@ -15,7 +27,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: AutoScalingConfig
 metadata:
   name: ac9-general-policy
-  namespace: payments-prod
+  namespace: ac09-autoscaling-app-ns
 spec:
   mandatory: {}
   defaults: {}

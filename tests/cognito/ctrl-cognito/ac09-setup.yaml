@@ -15,12 +15,23 @@
 # AC-9 setup: CognitoConfig.defaults.namingTemplate="{namespace}-{name}" (level 6)
 # flows to effectiveConfig.defaults.namingTemplate.
 # Spec AC-9: CognitoConfig.defaults.namingTemplate → effectiveConfig.defaults.namingTemplate.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-cognito-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-cognito-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac09-cognito-global-ns
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac9-cognito-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac09-cognito-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -30,7 +41,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CognitoConfig
 metadata:
   name: ac9-cognito-policy
-  namespace: payments-prod
+  namespace: ac09-cognito-app-ns
 spec:
   defaults:
     namingTemplate: "{namespace}-{name}"

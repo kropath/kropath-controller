@@ -1,9 +1,21 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac08-autoscaling-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac08-autoscaling-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac08-autoscaling-global-ns
+---
 # AC-C8: globalKropathConfig with mandatory.tags (tier-level tags, level 1).
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac8-general-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac08-autoscaling-global-ns
 spec:
   mandatory:
     tags:
@@ -18,7 +30,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: AutoScalingConfig
 metadata:
   name: ac8-general-policy
-  namespace: payments-prod
+  namespace: ac08-autoscaling-app-ns
 spec:
   mandatory:
     tags:

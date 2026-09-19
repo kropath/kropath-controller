@@ -13,12 +13,11 @@
 # limitations under the License.
 #
 # AC-11 assert: effectiveConfig.mandatory.syncedLabels must contain {"app":"cognito"}.
----
 apiVersion: aws.kropath.run/v1alpha1
 kind: CognitoConfig
 metadata:
   name: ac11-cognito-policy
-  namespace: payments-prod
+  namespace: ac11-cognito-app-ns
 status:
   effectiveConfig:
     mandatory:

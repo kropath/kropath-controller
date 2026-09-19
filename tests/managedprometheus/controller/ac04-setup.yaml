@@ -1,9 +1,21 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-managedprometheus-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-managedprometheus-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac04-managedprometheus-global-ns
+---
 # AC-4: no tier sets namingTemplate — defaults.namingTemplate falls back to "{namespace}-{name}".
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac04-amp-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac04-managedprometheus-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -13,7 +25,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: ManagedPrometheusConfig
 metadata:
   name: ac04-amp-policy
-  namespace: monitoring-prod
+  namespace: ac04-managedprometheus-app-ns
   labels:
     aws.kropath.run/resource-name: ac04-amp-policy
 spec:

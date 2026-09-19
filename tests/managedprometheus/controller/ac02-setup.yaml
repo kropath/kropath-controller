@@ -1,9 +1,21 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac02-managedprometheus-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac02-managedprometheus-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac02-managedprometheus-global-ns
+---
 # AC-2: localMPConfig.defaults.logGroupARN (level 6) propagates; mandatory stays empty.
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac02-amp-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac02-managedprometheus-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -13,7 +25,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: ManagedPrometheusConfig
 metadata:
   name: ac02-amp-policy
-  namespace: monitoring-prod
+  namespace: ac02-managedprometheus-app-ns
   labels:
     aws.kropath.run/resource-name: ac02-amp-policy
 spec:
