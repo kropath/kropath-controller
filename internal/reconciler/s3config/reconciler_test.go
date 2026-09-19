@@ -402,7 +402,7 @@ func findCondition(conditions []metav1.Condition, condType string) *metav1.Condi
 func TestGlobalProfileFallthroughWhenRequestedProfileMissing(t *testing.T) {
 	rec, c := testReconciler(t,
 		namespace("payments-prod"),
-		localKropathConfig("payments-prod", "default", cascade.S3Section{}),
+		localKropathConfig("payments-prod", cascade.S3Section{}),
 		// Only the fallthrough target exists globally — no S3Config/pci in kro-system.
 		globalS3Config("general-policy",
 			cascade.S3ConfigSection{KmsKeyArn: "arn:general-policy"},
@@ -438,7 +438,7 @@ func TestGlobalProfileFallthroughWhenRequestedProfileMissing(t *testing.T) {
 func TestGlobalProfileNoFallthroughWhenRequestedProfileExists(t *testing.T) {
 	rec, c := testReconciler(t,
 		namespace("payments-prod"),
-		localKropathConfig("payments-prod", "default", cascade.S3Section{}),
+		localKropathConfig("payments-prod", cascade.S3Section{}),
 		globalS3Config("pci",
 			cascade.S3ConfigSection{KmsKeyArn: "arn:pci"},
 			cascade.S3ConfigSection{},
@@ -477,7 +477,7 @@ func TestGlobalProfileNoFallthroughWhenRequestedProfileExists(t *testing.T) {
 func TestGlobalProfileUnresolvedIsObservable(t *testing.T) {
 	rec, c := testReconciler(t,
 		namespace("payments-prod"),
-		localKropathConfig("payments-prod", "default", cascade.S3Section{}),
+		localKropathConfig("payments-prod", cascade.S3Section{}),
 		// No global S3Config at all — neither "pci" nor "general-policy".
 		localS3Config("payments-prod", "pci", cascade.S3ConfigSection{KmsKeyArn: "arn:local-pci"}, cascade.S3ConfigSection{}),
 	)
@@ -510,7 +510,7 @@ func TestGlobalProfileUnresolvedIsObservable(t *testing.T) {
 func TestNonDefaultProfileReceivesOrgWideGuardrailsViaFallthrough(t *testing.T) {
 	rec, c := testReconciler(t,
 		namespace("payments-prod"),
-		localKropathConfig("payments-prod", "default", cascade.S3Section{}),
+		localKropathConfig("payments-prod", cascade.S3Section{}),
 		globalS3Config("general-policy",
 			cascade.S3ConfigSection{BlockPublicAccess: true, EncryptionAlgorithm: "aws:kms"},
 			cascade.S3ConfigSection{},
