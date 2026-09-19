@@ -1,3 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac11-ssm-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac11-ssm-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac11-ssm-global-ns
+---
 # Copyright 2026 kropath Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +30,8 @@
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac11-ssm-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac11-ssm-global-ns
 spec:
   mandatory:
     ssm:
@@ -29,5 +41,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SSMConfig
 metadata:
   name: ac11-ssm-policy
-  namespace: ssm-prod
+  namespace: ac11-ssm-app-ns
 spec: {}

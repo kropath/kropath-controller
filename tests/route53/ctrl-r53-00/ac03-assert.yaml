@@ -17,7 +17,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: Route53Config
 metadata:
   name: ac3-r53-policy
-  namespace: route53-prod
+  namespace: ac03-r53-app-ns
 status:
   effectiveConfig:
     mandatory:

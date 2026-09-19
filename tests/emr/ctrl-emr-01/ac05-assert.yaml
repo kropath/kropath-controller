@@ -18,7 +18,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: EMRConfig
 metadata:
   name: ac5-emr-policy
-  namespace: data-platform
+  namespace: ac05-emr-app-ns
 status:
   effectiveConfig:
     defaults:

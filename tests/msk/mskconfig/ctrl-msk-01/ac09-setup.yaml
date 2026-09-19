@@ -1,12 +1,20 @@
-# AC-9 setup: KropathConfig.mandatory.msk.encryptionInTransitClientBroker="TLS" (level 1)
-# wins over MSKConfig.mandatory.encryptionInTransitClientBroker="TLS_PLAINTEXT" (level 3).
-# Verifies that the org-wide mandatory MSK field propagates correctly to effCfg.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-msk-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-msk-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac09-msk-global-ns
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac09-msk-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac09-msk-global-ns
 spec:
   mandatory:
     msk:
@@ -16,7 +24,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MSKConfig
 metadata:
   name: ac09-msk-policy
-  namespace: kro-system
+  namespace: ac09-msk-global-ns
 spec:
   mandatory:
     encryptionInTransitClientBroker: TLS_PLAINTEXT
@@ -30,5 +38,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MSKConfig
 metadata:
   name: ac09-msk-policy
-  namespace: streaming-prod
+  namespace: ac09-msk-app-ns
 spec: {}

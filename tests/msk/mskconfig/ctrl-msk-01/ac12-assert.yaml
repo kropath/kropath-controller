@@ -4,7 +4,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MSKConfig
 metadata:
   name: ac12-msk-policy
-  namespace: streaming-prod
+  namespace: ac12-msk-app-ns
 status:
   effectiveConfig:
     mandatory:

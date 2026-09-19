@@ -1,10 +1,22 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-org-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-org-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac09-org-global-ns
+---
 # AC-9: globalKropathConfig with mandatory.organizations.iamUserAccessToBilling="deny" (level 1).
 # Verifies that org-wide mandatory billing enforcement propagates through the cascade.
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac9-org-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac09-org-global-ns
 spec:
   mandatory:
     organizations:
@@ -18,7 +30,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: OrganizationsConfig
 metadata:
   name: ac9-org-policy
-  namespace: org-prod
+  namespace: ac09-org-app-ns
   labels:
     aws.kropath.run/resource-name: ac9-org-policy
 spec:

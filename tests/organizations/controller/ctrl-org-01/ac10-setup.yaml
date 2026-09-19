@@ -1,9 +1,21 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac10-org-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac10-org-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac10-org-global-ns
+---
 # AC-10: globalKropathConfig with mandatory.tags (tier-level tags, level 1).
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac10-org-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac10-org-global-ns
 spec:
   mandatory:
     tags:
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: OrganizationsConfig
 metadata:
   name: ac10-org-policy
-  namespace: org-prod
+  namespace: ac10-org-app-ns
   labels:
     aws.kropath.run/resource-name: ac10-org-policy
 spec:
