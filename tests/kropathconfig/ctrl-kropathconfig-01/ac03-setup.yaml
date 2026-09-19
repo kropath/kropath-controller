@@ -1,0 +1,15 @@
+# AC-3 (negative path): KropathConfig/baseline alone in ac3-orphan-ns, with no
+# family config anywhere resolving it as either tier.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac3-orphan-ns
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: baseline
+  namespace: ac3-orphan-ns
+spec:
+  mandatory: {}
+  defaults: {}

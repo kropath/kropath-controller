@@ -1,0 +1,41 @@
+# AC-4: KropathConfig/baseline in ac4-hub-ns is both ac4-hub-ns's own local
+# tier (an S3Config living there too) and ac4-app-ns's global tier (ac4-app-ns
+# is annotated to point at ac4-hub-ns, and hosts an IAMConfig).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac4-hub-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac4-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac4-hub-ns
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: KropathConfig
+metadata:
+  name: baseline
+  namespace: ac4-hub-ns
+spec:
+  mandatory: {}
+  defaults: {}
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: S3Config
+metadata:
+  name: general-policy
+  namespace: ac4-hub-ns
+spec:
+  mandatory: {}
+  defaults: {}
+---
+apiVersion: aws.kropath.run/v1alpha1
+kind: IAMConfig
+metadata:
+  name: general-policy
+  namespace: ac4-app-ns
+spec:
+  mandatory: {}
+  defaults: {}

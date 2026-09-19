@@ -1,0 +1,77 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-kropathconfig-01 Chainsaw integration tests — 4 acceptance criteria for
+# the KropathConfigStatus reconciler (KRO-1121): the Reconciled condition it
+# publishes on KropathConfig itself.
+#
+# Test isolation — dedicated namespace pair per AC, no inter-step deletes:
+#   KropathConfig is a per-namespace singleton named "baseline" (ADR-018 D-1),
+#   so unlike every other config kind in this repo, its object *name* cannot
+#   be used to isolate one AC's global-tier object from another's. Each AC
+#   below instead gets its own dedicated namespace (or namespace pair, for the
+#   global-tier cases), connected via the aws.kropath.run/global-config-namespace
+#   annotation where a global tier is needed. This is the same pattern already
+#   proven in tests/s3/ctrl-s3-01/ac10 and recommended by
+#   kropath-core docs/design/kropathconfig-singleton-chainsaw-migration.md
+#   (KRO-1137) for every suite migrating off per-AC KropathConfig names.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-kropathconfig-01
+spec:
+  steps:
+    # AC-1: a KropathConfig/baseline in a namespace that is some other
+    # namespace's resolved global-config-namespace, with an S3Config living in
+    # that other namespace, resolves as the global tier.
+    - name: ac-1-global-tier-reconciled
+      try:
+        - apply:
+            file: ac01-setup.yaml
+        - assert:
+            file: ac01-assert.yaml
+            timeout: 30s
+
+    # AC-2: a KropathConfig/baseline sharing a namespace with an IAMConfig
+    # (and not designated as anyone's global-config-namespace) resolves as
+    # the local tier.
+    - name: ac-2-local-tier-reconciled
+      try:
+        - apply:
+            file: ac02-setup.yaml
+        - assert:
+            file: ac02-assert.yaml
+            timeout: 30s
+
+    # AC-3 (negative path): a KropathConfig/baseline in a namespace with no
+    # family config of any kind, and not designated as any namespace's
+    # global-config-namespace, is Unreferenced.
+    - name: ac-3-unreferenced
+      try:
+        - apply:
+            file: ac03-setup.yaml
+        - assert:
+            file: ac03-assert.yaml
+            timeout: 30s
+
+    # AC-4: a KropathConfig/baseline that is both a namespace's local tier
+    # (an S3Config in the same namespace) and another namespace's global tier
+    # (an IAMConfig in a namespace annotated to point here) reports both.
+    - name: ac-4-global-and-local-tier-reconciled
+      try:
+        - apply:
+            file: ac04-setup.yaml
+        - assert:
+            file: ac04-assert.yaml
+            timeout: 30s

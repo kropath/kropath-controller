@@ -29,7 +29,8 @@ type KropathConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec KropathConfigSpec `json:"spec,omitempty"`
+	Spec   KropathConfigSpec   `json:"spec,omitempty"`
+	Status KropathConfigStatus `json:"status,omitempty"`
 }
 
 type KropathConfigList struct {
@@ -43,6 +44,17 @@ type KropathConfigSpec struct {
 	Mandatory KropathConfigTier `json:"mandatory,omitempty"`
 	Defaults  KropathConfigTier `json:"defaults,omitempty"`
 	AWS       ProviderIdentity  `json:"aws,omitempty"`
+}
+
+// KropathConfigStatus surfaces whether this object was actually consumed by
+// any <ResourceFamily>Config cascade, and as which tier (KRO-1121). Before
+// this field existed, a mis-scoped or unreferenced KropathConfig was
+// indistinguishable from a correctly-resolved one — the same silent-failure
+// shape as the missing-CRD-fixture problem, but for governance config.
+type KropathConfigStatus struct {
+	Conditions         []metav1.Condition `json:"conditions,omitempty"`
+	ObservedGeneration int64              `json:"observedGeneration,omitempty"`
+	SyncedTimestamp    string             `json:"syncedTimestamp,omitempty"`
 }
 
 type KropathConfigTier struct {
@@ -143,6 +155,11 @@ func (in *KropathConfig) DeepCopyInto(out *KropathConfig) {
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
 	out.Spec = in.Spec
+	out.Status = in.Status
+	if in.Status.Conditions != nil {
+		out.Status.Conditions = make([]metav1.Condition, len(in.Status.Conditions))
+		copy(out.Status.Conditions, in.Status.Conditions)
+	}
 	if in.Spec.Mandatory.KMS.AllowedKeySpecs != nil {
 		out.Spec.Mandatory.KMS.AllowedKeySpecs = make([]string, len(in.Spec.Mandatory.KMS.AllowedKeySpecs))
 		copy(out.Spec.Mandatory.KMS.AllowedKeySpecs, in.Spec.Mandatory.KMS.AllowedKeySpecs)

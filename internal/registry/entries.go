@@ -42,6 +42,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/keyspacesconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/kinesisconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/kmsconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/kropathconfigstatus"
 	"github.com/kropath/kropath-controller/internal/reconciler/labeloperator"
 	"github.com/kropath/kropath-controller/internal/reconciler/managedprometheusconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/memorydbconfig"
@@ -562,6 +563,23 @@ func All() []Entry {
 				Scheme: bctx.Manager.GetScheme(),
 			}).BuildWithManager(bctx.Manager)
 		}),
+		// KropathConfigStatus watches only KropathConfig itself — it derives the
+		// family kinds it lists from features.All at reconcile time rather than
+		// declaring 57 Required GVKs, so a family whose CRD is briefly absent
+		// degrades that one kind's consumer count instead of staying pending.
+		{
+			Package:  "kropathconfigstatus",
+			Required: []schema.GroupVersionKind{awsGVK("KropathConfig")},
+			Optional: nil,
+			Build: func(bctx BuildCtx, _ []schema.GroupVersionKind) (controller.Controller, error) {
+				return (&kropathconfigstatus.Reconciler{
+					Client: bctx.Manager.GetClient(),
+					Reader: bctx.Manager.GetAPIReader(),
+					Log:    bctx.Log.WithName("controllers").WithName("KropathConfigStatus"),
+					Scheme: bctx.Manager.GetScheme(),
+				}).BuildWithManager(bctx.Manager)
+			},
+		},
 	}
 }
 
