@@ -3,12 +3,15 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: LambdaConfig
 metadata:
   name: ac7-lambdacfg-policy
-  namespace: payments-prod
+  namespace: ac07-lambda-app-ns
 status:
   conditions:
-    - type: Valid
-      status: "True"
-      reason: ValidationPassed
+  - type: Valid
+    status: "True"
+    reason: ValidationPassed
+  - type: GlobalProfileResolved
+    status: "True"
+    reason: ProfileFound
   effectiveConfig:
     mandatory:
       tags:

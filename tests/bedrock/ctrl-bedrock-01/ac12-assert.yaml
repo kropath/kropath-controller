@@ -11,3 +11,6 @@ status:
     - type: Valid
       status: "True"
       reason: ValidationPassed
+    - type: GlobalProfileResolved
+      status: "True"
+      reason: ProfileFound

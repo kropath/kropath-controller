@@ -1,5 +1,9 @@
-# AC-T02-2: SageMakerConfig.mandatory.instanceType (L3) overrides
-# SageMakerConfig.defaults.instanceType (L7) in effectiveConfig.
+# AC-T02-2: SageMakerConfig.mandatory.instanceType (L3, global) overrides
+# SageMakerConfig.defaults.instanceType (L6, local) in effectiveConfig.
+# instanceType cannot be set in both spec.mandatory and spec.defaults on the
+# same SageMakerConfig object (CRD mutual-exclusion CEL rule), so the two
+# tiers under test must live on separate objects: global carries mandatory,
+# local carries defaults.
 apiVersion: aws.kropath.run/v1alpha1
 kind: SageMakerConfig
 metadata:
@@ -8,12 +12,12 @@ metadata:
 spec:
   mandatory:
     instanceType: "ml.m5.xlarge"
-  defaults:
-    instanceType: "ml.t3.medium"
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: SageMakerConfig
 metadata:
   name: ac02-sm-policy
   namespace: payments-prod
-spec: {}
+spec:
+  defaults:
+    instanceType: "ml.t3.medium"

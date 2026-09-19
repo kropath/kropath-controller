@@ -3,13 +3,16 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: BedrockConfig
 metadata:
   name: ac24-bedrock-policy
-  namespace: payments-prod
+  namespace: ac24-bedrock-app-ns
 status:
   effectiveConfig:
     mandatory:
       guardrailIdentifier: "fixture-test"
       guardrailVersion: "v1"
   conditions:
-    - type: Valid
-      status: "True"
-      reason: ValidationPassed
+  - type: Valid
+    status: "True"
+    reason: ValidationPassed
+  - type: GlobalProfileResolved
+    status: "False"
+    reason: ProfileUnresolved

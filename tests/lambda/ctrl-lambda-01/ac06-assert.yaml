@@ -3,12 +3,15 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: LambdaConfig
 metadata:
   name: ac6-lambdacfg-policy
-  namespace: payments-prod
+  namespace: ac06-lambda-app-ns
 status:
   conditions:
-    - type: Valid
-      status: "True"
-      reason: ValidationPassed
+  - type: Valid
+    status: "True"
+    reason: ValidationPassed
+  - type: GlobalProfileResolved
+    status: "False"
+    reason: ProfileUnresolved
   effectiveConfig:
     aws:
       accountId: "987654321098"

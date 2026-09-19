@@ -1,14 +1,25 @@
 # AC-23: tags union-merge — KropathConfig.mandatory + BedrockConfig.mandatory.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac23-bedrock-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac23-bedrock-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac23-bedrock-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac23-bedrock-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac23-bedrock-global-ns
 spec:
   mandatory:
-    bedrock:
-      tags:
-        cost-centre: "ai"
+    tags:
+      cost-centre: "ai"
   aws:
     accountId: "123456789012"
     region: "us-east-1"
@@ -17,7 +28,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: BedrockConfig
 metadata:
   name: ac23-bedrock-policy
-  namespace: kro-system
+  namespace: ac23-bedrock-global-ns
 spec:
   mandatory:
     tags:
@@ -27,5 +38,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: BedrockConfig
 metadata:
   name: ac23-bedrock-policy
-  namespace: payments-prod
+  namespace: ac23-bedrock-app-ns
 spec: {}

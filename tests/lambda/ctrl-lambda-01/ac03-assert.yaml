@@ -3,12 +3,15 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: LambdaConfig
 metadata:
   name: ac3-lambdacfg-policy
-  namespace: payments-prod
+  namespace: ac03-lambda-app-ns
 status:
   conditions:
-    - type: Valid
-      status: "True"
-      reason: ValidationPassed
+  - type: Valid
+    status: "True"
+    reason: ValidationPassed
+  - type: GlobalProfileResolved
+    status: "False"
+    reason: ProfileUnresolved
   effectiveConfig:
     mandatory:
       memorySize: 512
