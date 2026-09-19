@@ -21,7 +21,7 @@
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac02-dyn-s3
+  name: baseline
   namespace: kro-system
 spec:
   mandatory:
