@@ -16,7 +16,7 @@ metadata:
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac10-ac10-general-policy
+  name: baseline
   namespace: ac10-global-ns
 spec:
   mandatory:

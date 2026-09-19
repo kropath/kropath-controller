@@ -1,9 +1,21 @@
 # AC-11: globalKropathConfig.spec.aws.region and accountId propagate to effCfg.aws.*.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac11-cloudwatch-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac11-cloudwatch-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac11-cloudwatch-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac11-cw-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac11-cloudwatch-global-ns
 spec:
   mandatory:
     cloudwatch: {}
@@ -15,7 +27,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudWatchConfig
 metadata:
   name: ac11-cw-policy
-  namespace: monitoring-prod
+  namespace: ac11-cloudwatch-app-ns
   labels:
     aws.kropath.run/resource-name: ac11-cw-policy
 spec:

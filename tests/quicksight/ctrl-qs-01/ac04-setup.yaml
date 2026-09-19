@@ -14,11 +14,23 @@
 #
 # AC-4: global QuickSightConfig.mandatory.namingTemplate (level 3) flows to
 #        effCfg.mandatory.namingTemplate.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-quicksight-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-quicksight-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac04-quicksight-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac4-qs-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac04-quicksight-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -28,7 +40,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: QuickSightConfig
 metadata:
   name: ac4-qs-policy
-  namespace: kro-system
+  namespace: ac04-quicksight-global-ns
 spec:
   mandatory:
     namingTemplate: "corp-{namespace}-{name}"
@@ -37,5 +49,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: QuickSightConfig
 metadata:
   name: ac4-qs-policy
-  namespace: payments-prod
+  namespace: ac04-quicksight-app-ns
 spec: {}

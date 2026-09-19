@@ -16,27 +16,38 @@
 #        effCfg.mandatory.importMode and wins over the global QuickSightConfig
 #        mandatory tier (level 3).
 #
-# Namespace note: level 2 is looked up by the fixed name `default` in the resource
-# namespace, so it is NOT isolated by the per-AC name used by every other step.
-# This AC therefore runs in `data-platform` (no other suite creates a KropathConfig
-# named `default` there) instead of `payments-prod`, which ctrl-s3-01 AC-11 already
-# uses for its own level-2 `default` KropathConfig.
+# Namespace note: level 2 is looked up by the fixed name `baseline` in the resource
+# namespace (singleton rule, KRO-1137) -- isolation now comes from this AC's
+# dedicated ac09-quicksight-app-ns rather than from sharing `data-platform` with
+# other suites.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-quicksight-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-quicksight-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac09-quicksight-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac9-qs-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac09-quicksight-global-ns
 spec:
   aws:
     accountId: "123456789012"
     region: "us-east-1"
 ---
-# Level 2 — KropathConfig named `default` in the resource namespace.
+# Level 2 — KropathConfig named `baseline` in the resource namespace.
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: default
-  namespace: data-platform
+  name: baseline
+  namespace: ac09-quicksight-app-ns
 spec:
   mandatory:
     quicksight:
@@ -47,7 +58,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: QuickSightConfig
 metadata:
   name: ac9-qs-policy
-  namespace: kro-system
+  namespace: ac09-quicksight-global-ns
 spec:
   mandatory:
     importMode: "SPICE"
@@ -56,5 +67,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: QuickSightConfig
 metadata:
   name: ac9-qs-policy
-  namespace: data-platform
+  namespace: ac09-quicksight-app-ns
 spec: {}

@@ -1,9 +1,21 @@
 # AC-5: globalKropathConfig.mandatory.cloudwatch.outputFormat="json" (level 1) propagates.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac05-cloudwatch-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac05-cloudwatch-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac05-cloudwatch-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac5-cw-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac05-cloudwatch-global-ns
 spec:
   mandatory:
     cloudwatch:
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudWatchConfig
 metadata:
   name: ac5-cw-policy
-  namespace: monitoring-prod
+  namespace: ac05-cloudwatch-app-ns
   labels:
     aws.kropath.run/resource-name: ac5-cw-policy
 spec:

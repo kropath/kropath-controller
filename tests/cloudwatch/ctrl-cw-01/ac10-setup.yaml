@@ -1,9 +1,21 @@
 # AC-10: Tags union merge. Level 1 (globalKropathConfig.mandatory.tags) wins key conflict.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac10-cloudwatch-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac10-cloudwatch-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac10-cloudwatch-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac10-cw-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac10-cloudwatch-global-ns
 spec:
   mandatory:
     tags:
@@ -18,7 +30,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudWatchConfig
 metadata:
   name: ac10-cw-policy
-  namespace: monitoring-prod
+  namespace: ac10-cloudwatch-app-ns
   labels:
     aws.kropath.run/resource-name: ac10-cw-policy
 spec:

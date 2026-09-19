@@ -14,11 +14,23 @@
 #
 # AC-3: QuickSightConfig local defaults.importMode (level 6) flows to
 #        effCfg.defaults.importMode when all mandatory tiers are empty.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac03-quicksight-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac03-quicksight-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac03-quicksight-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac3-qs-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac03-quicksight-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -28,7 +40,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: QuickSightConfig
 metadata:
   name: ac3-qs-policy
-  namespace: payments-prod
+  namespace: ac03-quicksight-app-ns
 spec:
   defaults:
     importMode: "SPICE"

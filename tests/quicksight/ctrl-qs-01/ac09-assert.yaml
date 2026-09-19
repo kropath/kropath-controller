@@ -18,7 +18,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: QuickSightConfig
 metadata:
   name: ac9-qs-policy
-  namespace: data-platform
+  namespace: ac09-quicksight-app-ns
 status:
   effectiveConfig:
     mandatory:

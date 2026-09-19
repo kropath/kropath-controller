@@ -1,9 +1,21 @@
 # AC-3: globalKropathConfig.mandatory.cloudwatch.treatMissingData="breaching" (level 1) propagates.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac03-cloudwatch-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac03-cloudwatch-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac03-cloudwatch-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac3-cw-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac03-cloudwatch-global-ns
 spec:
   mandatory:
     cloudwatch:
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudWatchConfig
 metadata:
   name: ac3-cw-policy
-  namespace: monitoring-prod
+  namespace: ac03-cloudwatch-app-ns
   labels:
     aws.kropath.run/resource-name: ac3-cw-policy
 spec:

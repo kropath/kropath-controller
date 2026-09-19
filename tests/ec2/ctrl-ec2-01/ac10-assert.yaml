@@ -2,7 +2,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: EC2Config
 metadata:
   name: ac10-general-policy
-  namespace: network-prod
+  namespace: ac10-ec2-app-ns
 status:
   effectiveConfig:
     defaults:

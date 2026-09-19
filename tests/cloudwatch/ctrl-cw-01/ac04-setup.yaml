@@ -1,10 +1,22 @@
 # AC-4: localCWConfig.mandatory.treatMissingData="notBreaching" (level 4).
 # KC mandatory.cloudwatch is empty — level 4 wins.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-cloudwatch-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-cloudwatch-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac04-cloudwatch-global-ns
+---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac4-cw-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac04-cloudwatch-global-ns
 spec:
   mandatory:
     cloudwatch: {}
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: CloudWatchConfig
 metadata:
   name: ac4-cw-policy
-  namespace: monitoring-prod
+  namespace: ac04-cloudwatch-app-ns
   labels:
     aws.kropath.run/resource-name: ac4-cw-policy
 spec:
