@@ -3,7 +3,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: ManagedPrometheusConfig
 metadata:
   name: ac03-amp-policy
-  namespace: monitoring-prod
+  namespace: ac03-managedprometheus-app-ns
 status:
   effectiveConfig:
     mandatory:

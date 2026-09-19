@@ -1,11 +1,23 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-sagemaker-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-sagemaker-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac09-sagemaker-global-ns
+---
 # AC-T02-9: Tag union merge — KropathConfig.mandatory.tags and
 # SageMakerConfig.mandatory.tags combine in effectiveConfig.mandatory.tags.
 # KropathConfig wins on key conflict.
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac09-sm-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac09-sagemaker-global-ns
 spec:
   mandatory:
     tags:
@@ -19,7 +31,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SageMakerConfig
 metadata:
   name: ac09-sm-policy
-  namespace: kro-system
+  namespace: ac09-sagemaker-global-ns
 spec:
   mandatory:
     tags:
@@ -30,5 +42,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SageMakerConfig
 metadata:
   name: ac09-sm-policy
-  namespace: payments-prod
+  namespace: ac09-sagemaker-app-ns
 spec: {}

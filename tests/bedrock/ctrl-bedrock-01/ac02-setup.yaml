@@ -1,9 +1,21 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac02-bedrock-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac02-bedrock-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac02-bedrock-global-ns
+---
 # AC-2: level 1 KPC.mandatory.guardrail wins over level 3 BedrockConfig.
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac2-bedrock-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac02-bedrock-global-ns
 spec:
   mandatory:
     bedrock:
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: BedrockConfig
 metadata:
   name: ac2-bedrock-policy
-  namespace: kro-system
+  namespace: ac02-bedrock-global-ns
 spec:
   mandatory:
     guardrailIdentifier: "bc-guardrail"
@@ -27,5 +39,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: BedrockConfig
 metadata:
   name: ac2-bedrock-policy
-  namespace: payments-prod
+  namespace: ac02-bedrock-app-ns
 spec: {}

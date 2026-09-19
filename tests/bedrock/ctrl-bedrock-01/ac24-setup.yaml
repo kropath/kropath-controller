@@ -1,9 +1,21 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac24-bedrock-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac24-bedrock-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac24-bedrock-global-ns
+---
 # AC-24: KropathConfig.spec.mandatory.bedrock is a valid field (fixture CRD updated).
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac24-bedrock-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac24-bedrock-global-ns
 spec:
   mandatory:
     bedrock:
@@ -17,5 +29,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: BedrockConfig
 metadata:
   name: ac24-bedrock-policy
-  namespace: payments-prod
+  namespace: ac24-bedrock-app-ns
 spec: {}

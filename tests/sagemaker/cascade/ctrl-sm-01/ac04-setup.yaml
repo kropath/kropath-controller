@@ -1,10 +1,22 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-sagemaker-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-sagemaker-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac04-sagemaker-global-ns
+---
 # AC-T02-4: KropathConfig.mandatory.sagemaker.kmsKeyId (L1) flows to
 # effectiveConfig.mandatory.kmsKeyId.
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac04-sm-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac04-sagemaker-global-ns
 spec:
   mandatory:
     sagemaker:
@@ -17,5 +29,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: SageMakerConfig
 metadata:
   name: ac04-sm-policy
-  namespace: payments-prod
+  namespace: ac04-sagemaker-app-ns
 spec: {}
