@@ -1,9 +1,21 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac01-memorydb-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac01-memorydb-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac01-memorydb-global-ns
+---
 # AC-1: globalKropathConfig with mandatory.memorydb.tlsEnabled=true (level 1).
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac1-mdb-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac01-memorydb-global-ns
 spec:
   mandatory:
     memorydb:
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MemoryDBConfig
 metadata:
   name: ac1-mdb-policy
-  namespace: payments-prod
+  namespace: ac01-memorydb-app-ns
 spec:
   mandatory: {}
   defaults: {}

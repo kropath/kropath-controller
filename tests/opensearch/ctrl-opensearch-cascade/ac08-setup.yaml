@@ -1,3 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac08-opensearch-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac08-opensearch-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac08-opensearch-global-ns
+---
 # AC-8: Two OpenSearchConfig CRs exist — global (kro-system) and local (payments-prod).
 # Controller pairs local CR with same-name global CR by name.
 # Global mandatory has encryptionAtRestEnabled=true (level 3),
@@ -5,8 +17,8 @@
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac8-os-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac08-opensearch-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -17,7 +29,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: OpenSearchConfig
 metadata:
   name: ac8-os-policy
-  namespace: kro-system
+  namespace: ac08-opensearch-global-ns
 spec:
   mandatory:
     encryptionAtRestEnabled: true
@@ -28,7 +40,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: OpenSearchConfig
 metadata:
   name: ac8-os-policy
-  namespace: payments-prod
+  namespace: ac08-opensearch-app-ns
 spec:
   mandatory: {}
   defaults:

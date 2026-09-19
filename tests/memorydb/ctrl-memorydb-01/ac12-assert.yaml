@@ -3,7 +3,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MemoryDBConfig
 metadata:
   name: ac12-mdb-policy
-  namespace: payments-prod
+  namespace: ac12-memorydb-app-ns
 status:
   effectiveConfig:
     aws:

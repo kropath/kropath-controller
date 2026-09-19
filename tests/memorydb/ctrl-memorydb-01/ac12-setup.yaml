@@ -1,9 +1,21 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac12-memorydb-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac12-memorydb-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac12-memorydb-global-ns
+---
 # AC-12: KropathConfig.spec.aws.region and .accountId propagate to effectiveConfig.aws.
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac12-mdb-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac12-memorydb-global-ns
 spec:
   aws:
     accountId: "999888777666"
@@ -13,7 +25,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MemoryDBConfig
 metadata:
   name: ac12-mdb-policy
-  namespace: payments-prod
+  namespace: ac12-memorydb-app-ns
 spec:
   mandatory: {}
   defaults: {}

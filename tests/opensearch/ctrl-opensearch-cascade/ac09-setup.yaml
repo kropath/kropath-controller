@@ -1,11 +1,23 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-opensearch-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac09-opensearch-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac09-opensearch-global-ns
+---
 # AC-9: syncedLabels union-merged from OSCfg levels only (no KropathConfig.opensearch equivalent).
 # Global OSCfg.mandatory.syncedLabels (level 3) and local OSCfg.mandatory.syncedLabels (level 4)
 # are union-merged; level 3 wins on key conflict.
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac9-os-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac09-opensearch-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -16,7 +28,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: OpenSearchConfig
 metadata:
   name: ac9-os-policy
-  namespace: kro-system
+  namespace: ac09-opensearch-global-ns
 spec:
   mandatory:
     syncedLabels:
@@ -29,7 +41,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: OpenSearchConfig
 metadata:
   name: ac9-os-policy
-  namespace: payments-prod
+  namespace: ac09-opensearch-app-ns
 spec:
   mandatory:
     syncedLabels:

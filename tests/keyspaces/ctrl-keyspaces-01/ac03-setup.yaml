@@ -1,3 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac03-keyspaces-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac03-keyspaces-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac03-keyspaces-global-ns
+---
 # Copyright 2026 kropath Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +30,8 @@
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac3-keyspaces-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac03-keyspaces-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -29,7 +41,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: KeyspacesConfig
 metadata:
   name: ac3-keyspaces-policy
-  namespace: kro-system
+  namespace: ac03-keyspaces-global-ns
 spec:
   defaults:
     throughputMode: PROVISIONED
@@ -38,7 +50,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: KeyspacesConfig
 metadata:
   name: ac3-keyspaces-policy
-  namespace: payments-prod
+  namespace: ac03-keyspaces-app-ns
 spec:
   defaults:
     throughputMode: PAY_PER_REQUEST

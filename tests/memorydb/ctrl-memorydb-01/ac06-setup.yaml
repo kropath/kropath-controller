@@ -1,9 +1,21 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac06-memorydb-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac06-memorydb-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac06-memorydb-global-ns
+---
 # AC-6: globalKropathConfig.mandatory.memorydb.snapshotRetentionLimit=7 (level 1).
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac6-mdb-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac06-memorydb-global-ns
 spec:
   mandatory:
     memorydb:
@@ -16,7 +28,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MemoryDBConfig
 metadata:
   name: ac6-mdb-policy
-  namespace: payments-prod
+  namespace: ac06-memorydb-app-ns
 spec:
   mandatory: {}
   defaults: {}

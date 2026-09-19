@@ -1,3 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac01-athena-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac01-athena-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac01-athena-global-ns
+---
 # Copyright 2026 kropath Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,8 +29,8 @@
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac1-athena-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac01-athena-global-ns
 spec:
   mandatory:
     athena:
@@ -31,5 +43,5 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: AthenaConfig
 metadata:
   name: ac1-athena-policy
-  namespace: data-platform
+  namespace: ac01-athena-app-ns
 spec: {}
