@@ -1,0 +1,16 @@
+apiVersion: aws.kropath.run/v1alpha1
+kind: S3Config
+metadata:
+  name: ac13-pci
+  namespace: payments-prod
+status:
+  conditions:
+    - type: Reconciled
+      status: "True"
+    - type: GlobalProfileResolved
+      status: "True"
+      reason: ProfileFallthrough
+  effectiveConfig:
+    mandatory:
+      blockPublicAccess: true
+      encryptionAlgorithm: aws:kms
