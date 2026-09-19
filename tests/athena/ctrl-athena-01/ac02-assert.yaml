@@ -17,7 +17,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: AthenaConfig
 metadata:
   name: ac2-athena-policy
-  namespace: data-platform
+  namespace: ac02-athena-app-ns
 status:
   effectiveConfig:
     mandatory:

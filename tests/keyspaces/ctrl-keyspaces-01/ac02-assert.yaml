@@ -17,7 +17,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: KeyspacesConfig
 metadata:
   name: ac2-keyspaces-policy
-  namespace: payments-prod
+  namespace: ac02-keyspaces-app-ns
 status:
   effectiveConfig:
     mandatory:

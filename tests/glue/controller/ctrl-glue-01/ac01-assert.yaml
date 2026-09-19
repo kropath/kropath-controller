@@ -17,7 +17,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: GlueConfig
 metadata:
   name: ac1-glue-policy
-  namespace: data-platform
+  namespace: ac01-glue-app-ns
 status:
   effectiveConfig:
     mandatory:

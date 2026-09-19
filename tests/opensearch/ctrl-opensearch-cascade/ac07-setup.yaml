@@ -1,11 +1,23 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac07-opensearch-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac07-opensearch-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac07-opensearch-global-ns
+---
 # AC-7: Tags union-merged from KropathConfig.mandatory.tags (level 1) and
 # OpenSearchConfig.mandatory.tags (level 3) into effectiveConfig.mandatory.tags.
 # Level-1 wins on key conflict.
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac7-os-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac07-opensearch-global-ns
 spec:
   mandatory:
     tags:
@@ -20,7 +32,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: OpenSearchConfig
 metadata:
   name: ac7-os-policy
-  namespace: kro-system
+  namespace: ac07-opensearch-global-ns
 spec:
   mandatory:
     tags:
@@ -32,7 +44,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: OpenSearchConfig
 metadata:
   name: ac7-os-policy
-  namespace: payments-prod
+  namespace: ac07-opensearch-app-ns
 spec:
   mandatory: {}
   defaults: {}

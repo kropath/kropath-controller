@@ -3,10 +3,10 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MemoryDBConfig
 metadata:
   name: ac4-mdb-policy
-  namespace: payments-prod
+  namespace: ac04-memorydb-app-ns
 status:
   effectiveConfig:
     mandatory:
       allowedNodeTypes:
-        - "db.r7g.large"
-        - "db.r7g.xlarge"
+      - "db.r7g.large"
+      - "db.r7g.xlarge"

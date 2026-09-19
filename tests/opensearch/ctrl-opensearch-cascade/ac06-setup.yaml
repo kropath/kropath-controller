@@ -1,11 +1,23 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac06-opensearch-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac06-opensearch-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac06-opensearch-global-ns
+---
 # AC-6: No KropathConfig.opensearch section; global OpenSearchConfig.mandatory.engineVersion
 # (level 3; profile-only — no KropathConfig equivalent) propagates.
 # KropathConfig exists only to provide AWS identity.
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac6-os-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac06-opensearch-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -16,7 +28,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: OpenSearchConfig
 metadata:
   name: ac6-os-policy
-  namespace: kro-system
+  namespace: ac06-opensearch-global-ns
 spec:
   mandatory:
     engineVersion: "OpenSearch_2.9"
@@ -26,7 +38,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: OpenSearchConfig
 metadata:
   name: ac6-os-policy
-  namespace: payments-prod
+  namespace: ac06-opensearch-app-ns
 spec:
   mandatory: {}
   defaults: {}

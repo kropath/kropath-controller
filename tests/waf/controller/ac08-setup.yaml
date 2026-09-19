@@ -1,3 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac08-waf-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac08-waf-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac08-waf-global-ns
+---
 # Copyright 2026 kropath Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,8 +29,8 @@
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac8-waf-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac08-waf-global-ns
 spec:
   aws:
     accountId: "123456789012"
@@ -28,7 +40,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: WAFConfig
 metadata:
   name: ac8-waf-policy
-  namespace: security-prod
+  namespace: ac08-waf-app-ns
 spec:
   defaults:
     namingTemplate: "{namespace}-{name}"

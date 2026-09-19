@@ -17,7 +17,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: WAFConfig
 metadata:
   name: ac7-waf-policy
-  namespace: security-prod
+  namespace: ac07-waf-app-ns
 status:
   effectiveConfig:
     mandatory:

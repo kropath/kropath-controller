@@ -3,7 +3,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: OpenSearchConfig
 metadata:
   name: ac4-os-policy
-  namespace: payments-prod
+  namespace: ac04-opensearch-app-ns
 status:
   effectiveConfig:
     mandatory:

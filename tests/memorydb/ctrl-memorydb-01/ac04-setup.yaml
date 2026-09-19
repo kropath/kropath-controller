@@ -1,15 +1,27 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-memorydb-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac04-memorydb-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac04-memorydb-global-ns
+---
 # AC-4: globalKropathConfig.mandatory.memorydb.allowedNodeTypes set (level 1).
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac4-mdb-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac04-memorydb-global-ns
 spec:
   mandatory:
     memorydb:
       allowedNodeTypes:
-        - "db.r7g.large"
-        - "db.r7g.xlarge"
+      - "db.r7g.large"
+      - "db.r7g.xlarge"
   aws:
     accountId: "123456789012"
     region: "ap-southeast-2"
@@ -18,7 +30,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MemoryDBConfig
 metadata:
   name: ac4-mdb-policy
-  namespace: payments-prod
+  namespace: ac04-memorydb-app-ns
 spec:
   mandatory: {}
   defaults: {}

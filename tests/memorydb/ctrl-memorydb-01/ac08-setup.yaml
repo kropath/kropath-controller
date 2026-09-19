@@ -1,10 +1,22 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac08-memorydb-global-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ac08-memorydb-app-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac08-memorydb-global-ns
+---
 # AC-8: globalMemoryDBConfig.defaults.snapshotRetentionLimit=3 (level 7) wins over
 # globalKropathConfig.defaults.memorydb.snapshotRetentionLimit=1 (level 9).
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig
 metadata:
-  name: ac8-mdb-policy
-  namespace: kro-system
+  name: baseline
+  namespace: ac08-memorydb-global-ns
 spec:
   defaults:
     memorydb:
@@ -18,7 +30,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MemoryDBConfig
 metadata:
   name: ac8-mdb-policy
-  namespace: kro-system
+  namespace: ac08-memorydb-global-ns
 spec:
   mandatory: {}
   defaults:
@@ -28,7 +40,7 @@ apiVersion: aws.kropath.run/v1alpha1
 kind: MemoryDBConfig
 metadata:
   name: ac8-mdb-policy
-  namespace: payments-prod
+  namespace: ac08-memorydb-app-ns
 spec:
   mandatory: {}
   defaults: {}
