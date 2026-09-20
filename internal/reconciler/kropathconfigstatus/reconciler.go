@@ -127,7 +127,10 @@ func (r *Reconciler) consumingFamilyKinds(ctx context.Context, kpcNamespace stri
 		if g, ok := globalNSCache[ns]; ok {
 			return g
 		}
-		g := util.ResolveGlobalNamespace(ctx, r.Client, ns)
+		_, g, err := util.ResolveNamespaceRole(ctx, r.Client, ns)
+		if err != nil {
+			g = ""
+		}
 		globalNSCache[ns] = g
 		return g
 	}

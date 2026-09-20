@@ -29,7 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-const globalNS = util.DefaultGlobalNamespace // "kro-system"
+const globalNS = "kro-system"
 
 func testScheme(t *testing.T) *runtime.Scheme {
 	t.Helper()
@@ -54,11 +54,11 @@ func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, client.C
 	return &Reconciler{Client: c, Reader: c, Scheme: scheme}, c
 }
 
+// namespace returns a namespace annotated to resolve its global tier to
+// globalNS. AC-12 deleted the old "kro-system" default (spec §5.5): a
+// namespace lacking the annotation is governance-only, not a silent fallback.
 func namespace(name string) *corev1.Namespace {
-	return &corev1.Namespace{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
-		ObjectMeta: metav1.ObjectMeta{Name: name},
-	}
+	return namespaceWithAnnotation(name, globalNS)
 }
 
 func namespaceWithAnnotation(name, globalConfigNS string) *corev1.Namespace {
@@ -125,9 +125,9 @@ func findCondition(conds []metav1.Condition, condType string) *metav1.Condition 
 }
 
 func TestReconcile_GlobalTier(t *testing.T) {
-	// team-a has no global-config-namespace annotation, so it defaults to
-	// kro-system. An S3Config living there makes the kro-system KropathConfig
-	// resolve as team-a's global tier.
+	// team-a is annotated to resolve its global tier to kro-system (AC-12: no
+	// default, so this must be explicit). An S3Config living there makes the
+	// kro-system KropathConfig resolve as team-a's global tier.
 	r, c := testReconciler(t,
 		namespace("team-a"),
 		kropathConfig(globalNS),

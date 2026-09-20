@@ -442,8 +442,9 @@ func TestReconcilerState_UnknownPackage(t *testing.T) {
 func TestAllEntries_CascadeHaveKropathConfigRequired(t *testing.T) {
 	kpc := awsGVK("KropathConfig")
 	for _, e := range registry.All() {
-		if e.Package == "labeloperator" {
-			continue // labeloperator has no Required by design
+		if e.Package == "labeloperator" || e.Package == "namespaceplacement" {
+			continue // no Required by design: labeloperator spans provider groups;
+			// namespaceplacement watches only the core Namespace kind
 		}
 		found := false
 		for _, gvk := range e.Required {

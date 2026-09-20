@@ -63,6 +63,7 @@ func TestRegistryCoversAllPackages(t *testing.T) {
 var packagesWithoutOwnCRD = map[string]bool{
 	"labeloperator":       true,
 	"kropathconfigstatus": true, // watches the existing KropathConfig kind, owns none of its own
+	"namespaceplacement":  true, // watches the core Namespace kind, owns no CRD
 }
 
 // crdNameRE matches the `  name: <crd>` line of a CRD's metadata block.

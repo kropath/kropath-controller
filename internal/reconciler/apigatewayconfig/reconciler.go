@@ -23,16 +23,15 @@ import (
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/cascade"
 	"github.com/kropath/kropath-controller/internal/reconciler/util"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 )
-
-const kroSystemNamespace = "kro-system"
 
 type Reconciler struct {
 	Client client.Client
@@ -47,15 +46,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	updated, result, err := r.reconcile(ctx, cfg)
-	if err != nil {
-		return ctrl.Result{}, err
+	updated, result, reconcileErr := r.reconcile(ctx, cfg)
+	if updated {
+		if err := r.Client.Status().Update(ctx, cfg); err != nil {
+			return ctrl.Result{}, err
+		}
 	}
-	if !updated {
-		return result, nil
-	}
-	if err := r.Client.Status().Update(ctx, cfg); err != nil {
-		return ctrl.Result{}, err
+	if reconcileErr != nil {
+		return ctrl.Result{}, reconcileErr
 	}
 	return result, nil
 }
@@ -76,11 +74,28 @@ func (r *Reconciler) BuildWithManager(mgr ctrl.Manager) (controller.Controller, 
 			&v1alpha1.KropathConfig{},
 			handler.EnqueueRequestsFromMapFunc(r.requestsForKropathConfigChange),
 		).
+		Watches(
+			&corev1.Namespace{},
+			handler.EnqueueRequestsFromMapFunc(r.requestsForNamespaceChange),
+		).
 		Build(r)
 }
 
 func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.APIGatewayConfig) (bool, ctrl.Result, error) {
-	globalKropath, err := r.loadKropathConfig(ctx, kroSystemNamespace, util.KropathConfigName)
+	now := metav1.Now()
+	placement, err := util.ResolveFamilyPlacement(ctx, r.Client, cfg.Namespace, cfg.Generation, now)
+	if err != nil {
+		reconciledCond, placementCond := util.NamespaceUnreadableCondition(cfg.Namespace, err, cfg.Generation, now)
+		updated := r.withholdEffectiveConfig(cfg, reconciledCond, &placementCond)
+		return updated, ctrl.Result{}, err
+	}
+	if placement.ReconciledOverride != nil {
+		updated := r.withholdEffectiveConfig(cfg, *placement.ReconciledOverride, placement.PlacementCondition)
+		return updated, ctrl.Result{}, nil
+	}
+	globalNS := placement.GlobalNamespace
+
+	globalKropath, err := r.loadKropathConfig(ctx, globalNS, util.KropathConfigName)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
@@ -89,7 +104,7 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.APIGatewayConf
 		return false, ctrl.Result{}, err
 	}
 	globalApigw, globalApigwFound, globalApigwViaFallthrough, err := util.LoadConfigWithFallthrough[v1alpha1.APIGatewayConfig](
-		ctx, r.Client, v1alpha1.GroupVersion.WithKind("APIGatewayConfig"), kroSystemNamespace, cfg.Name, util.DefaultConfigProfile)
+		ctx, r.Client, v1alpha1.GroupVersion.WithKind("APIGatewayConfig"), globalNS, cfg.Name, util.DefaultConfigProfile)
 	if err != nil {
 		return false, ctrl.Result{}, err
 	}
@@ -118,8 +133,6 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.APIGatewayConf
 		globalKropathDefaultsApigw,
 	)
 
-	now := metav1.Now()
-
 	newCond := metav1.Condition{
 		Type:               "Reconciled",
 		Status:             metav1.ConditionTrue,
@@ -130,23 +143,51 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.APIGatewayConf
 	}
 	profileCond := util.ConfigProfileResolvedCondition(cfg.Name, globalApigwFound, globalApigwViaFallthrough, cfg.Generation, now)
 	newEffConfig := v1alpha1.EffectiveAPIGatewayConfig{
-		AWS:       mergeAWSIdentity(localKropath.Spec.AWS, globalKropath.Spec.AWS),
+		AWS:       placement.Identity,
 		Mandatory: eff.Mandatory,
 		Defaults:  eff.Defaults,
 	}
 
 	if !conditionNeedsUpdate(cfg.Status.Conditions, newCond) &&
+		!conditionNeedsUpdate(cfg.Status.Conditions, *placement.PlacementCondition) &&
 		!conditionNeedsUpdate(cfg.Status.Conditions, profileCond) &&
 		reflect.DeepEqual(cfg.Status.EffectiveConfig, newEffConfig) {
 		return false, ctrl.Result{}, nil
 	}
 
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, newCond)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, *placement.PlacementCondition)
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
 	cfg.Status.EffectiveConfig = newEffConfig
 	cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 
 	return true, ctrl.Result{}, nil
+}
+
+// withholdEffectiveConfig publishes reconciledCond (and placementCond, when
+// non-nil) and clears status.effectiveConfig entirely -- a placement failure or
+// a governance-only namespace must never leave a stale or partial identity
+// published (spec §4.2, §6.4, AC-14). It reports whether anything changed so
+// the caller can skip an unnecessary status write.
+func (r *Reconciler) withholdEffectiveConfig(cfg *v1alpha1.APIGatewayConfig, reconciledCond metav1.Condition, placementCond *metav1.Condition) bool {
+	changed := conditionNeedsUpdate(cfg.Status.Conditions, reconciledCond)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, reconciledCond)
+	if placementCond != nil {
+		if conditionNeedsUpdate(cfg.Status.Conditions, *placementCond) {
+			changed = true
+		}
+		cfg.Status.Conditions = setCondition(cfg.Status.Conditions, *placementCond)
+	}
+	var zero v1alpha1.EffectiveAPIGatewayConfig
+	if !reflect.DeepEqual(cfg.Status.EffectiveConfig, zero) {
+		cfg.Status.EffectiveConfig = zero
+		changed = true
+	}
+	if changed {
+		cfg.Status.ObservedGeneration = cfg.Generation
+		cfg.Status.SyncedTimestamp = reconciledCond.LastTransitionTime.UTC().Format(time.RFC3339)
+	}
+	return changed
 }
 
 func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name string) (*v1alpha1.KropathConfig, error) {
@@ -162,71 +203,90 @@ func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name stri
 }
 
 func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj client.Object) []ctrl.Request {
-	cfg, ok := obj.(*v1alpha1.KropathConfig)
+	kpc, ok := obj.(*v1alpha1.KropathConfig)
 	if !ok {
 		return nil
 	}
 
 	var list v1alpha1.APIGatewayConfigList
-	if cfg.Namespace == kroSystemNamespace {
-		if err := r.Client.List(ctx, &list); err != nil {
-			r.Log.Error(err, "unable to list ApiGateway configs for global KropathConfig change")
-			return nil
-		}
-	} else {
-		if err := r.Client.List(ctx, &list, client.InNamespace(cfg.Namespace)); err != nil {
-			r.Log.Error(err, "unable to list ApiGateway configs for namespace KropathConfig change")
-			return nil
-		}
+	if err := r.Client.List(ctx, &list); err != nil {
+		r.Log.Error(err, "unable to list ApiGateway configs for KropathConfig change")
+		return nil
 	}
 
-	// Classified by namespace, not name -- the name is a fixed singleton
-	// (ADR-018 D-1). A KropathConfig in kroSystemNamespace is the global tier
-	// for every item; a KropathConfig in an item's own namespace is its local
-	// tier.
 	requests := make([]ctrl.Request, 0, len(list.Items))
 	for _, item := range list.Items {
-		if item.Namespace == kroSystemNamespace {
+		// Local tier: KropathConfig lives in the item's own namespace. Classified
+		// by namespace, not name -- the name is a fixed singleton (ADR-018 D-1).
+		if kpc.Namespace == item.Namespace {
+			requests = append(requests, ctrl.Request{
+				NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name},
+			})
 			continue
 		}
-		if cfg.Namespace == kroSystemNamespace || cfg.Namespace == item.Namespace {
-			requests = append(requests, ctrl.Request{NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name}})
+		// Global tier: KropathConfig lives in the item's resolved global namespace.
+		_, globalNS, err := util.ResolveNamespaceRole(ctx, r.Client, item.Namespace)
+		if err != nil {
+			continue
+		}
+		if kpc.Namespace == globalNS {
+			requests = append(requests, ctrl.Request{
+				NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name},
+			})
 		}
 	}
 	return requests
 }
 
 func (r *Reconciler) requestsForApiGatewayConfigChange(ctx context.Context, obj client.Object) []ctrl.Request {
-	cfg, ok := obj.(*v1alpha1.APIGatewayConfig)
-	if !ok || cfg.Namespace != kroSystemNamespace {
+	trigger, ok := obj.(*v1alpha1.APIGatewayConfig)
+	if !ok {
 		return nil
 	}
 
 	var list v1alpha1.APIGatewayConfigList
 	if err := r.Client.List(ctx, &list); err != nil {
-		r.Log.Error(err, "unable to list ApiGateway configs for global ApiGatewayConfig change")
+		r.Log.Error(err, "unable to list ApiGateway configs for ApiGatewayConfig change")
 		return nil
 	}
 
 	requests := make([]ctrl.Request, 0, len(list.Items))
 	for _, item := range list.Items {
-		if item.Namespace == kroSystemNamespace || item.Name != cfg.Name {
+		if item.Namespace == trigger.Namespace {
 			continue
 		}
-		requests = append(requests, ctrl.Request{NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name}})
+		_, globalNS, err := util.ResolveNamespaceRole(ctx, r.Client, item.Namespace)
+		if err != nil {
+			continue
+		}
+		if trigger.Namespace == globalNS && trigger.Name == item.Name {
+			requests = append(requests, ctrl.Request{
+				NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name},
+			})
+		}
 	}
 	return requests
 }
 
-func mergeAWSIdentity(local, global v1alpha1.ProviderIdentity) v1alpha1.ProviderIdentity {
-	out := global
-	if local.AccountID != "" {
-		out.AccountID = local.AccountID
+func (r *Reconciler) requestsForNamespaceChange(ctx context.Context, obj client.Object) []ctrl.Request {
+	ns, ok := obj.(*corev1.Namespace)
+	if !ok {
+		return nil
 	}
-	if local.Region != "" {
-		out.Region = local.Region
+
+	var list v1alpha1.APIGatewayConfigList
+	if err := r.Client.List(ctx, &list, client.InNamespace(ns.Name)); err != nil {
+		r.Log.Error(err, "unable to list ApiGateway configs for namespace change", "namespace", ns.Name)
+		return nil
 	}
-	return out
+
+	requests := make([]ctrl.Request, 0, len(list.Items))
+	for _, item := range list.Items {
+		requests = append(requests, ctrl.Request{
+			NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name},
+		})
+	}
+	return requests
 }
 
 func conditionNeedsUpdate(conditions []metav1.Condition, new metav1.Condition) bool {

@@ -20,9 +20,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+// ProviderIdentity is output-only: it appears in status.effectiveConfig and
+// nowhere in any spec (ADR-019 D-3). The whole struct is written or none of it
+// is -- a partial identity is never published (spec §4.2, AC-14).
 type ProviderIdentity struct {
 	AccountID string `json:"accountId,omitempty"`
 	Region    string `json:"region,omitempty"`
+	Partition string `json:"partition,omitempty"`
 }
 
 type KropathConfig struct {
@@ -40,10 +44,13 @@ type KropathConfigList struct {
 	Items []KropathConfig `json:"items"`
 }
 
+// KropathConfigSpec carries only governance (ADR-018 D-3). Placement identity
+// (accountId, region) was removed (ADR-019 D-3): it is per-namespace, resolved
+// from provider-native annotations, and has no tier -- a second source is
+// exactly what ADR-019 removed. Do not re-add an AWS field here.
 type KropathConfigSpec struct {
 	Mandatory KropathConfigTier `json:"mandatory,omitempty"`
 	Defaults  KropathConfigTier `json:"defaults,omitempty"`
-	AWS       ProviderIdentity  `json:"aws,omitempty"`
 }
 
 // KropathConfigStatus surfaces whether this object was actually consumed by

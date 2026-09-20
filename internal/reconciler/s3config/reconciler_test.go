@@ -16,6 +16,7 @@ package s3config
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
 	"github.com/kropath/kropath-controller/api/v1alpha1"
@@ -30,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-const globalNS = util.DefaultGlobalNamespace // "kro-system"
+const globalNS = "kro-system"
 
 func testScheme(t *testing.T) *runtime.Scheme {
 	t.Helper()
@@ -57,20 +58,35 @@ func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, client.C
 
 // --- Object factory helpers ---
 
+// namespace returns a resource namespace resolving its global tier to
+// globalNS, with a valid account/region so placement resolves successfully.
+// Most tests in this file exercise cascade-merge logic, not placement itself,
+// so this keeps them from repeating that boilerplate.
 func namespace(name string) *corev1.Namespace {
-	return &corev1.Namespace{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
-		ObjectMeta: metav1.ObjectMeta{Name: name},
-	}
+	return namespaceWithAnnotation(name, globalNS)
 }
 
 func namespaceWithAnnotation(name, globalConfigNS string) *corev1.Namespace {
 	return &corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        name,
-			Annotations: map[string]string{util.GlobalConfigNamespaceAnnotation: globalConfigNS},
+			Name: name,
+			Annotations: map[string]string{
+				util.GlobalConfigNamespaceAnnotation: globalConfigNS,
+				util.OwnerAccountIDAnnotation:        "111122223333",
+				util.DefaultRegionAnnotation:         "ap-southeast-2",
+			},
 		},
+	}
+}
+
+// governanceOnlyNamespace carries none of the placement annotations (spec
+// §6.4, AC-12): it is exempt from every placement rule and its config objects
+// never receive status.effectiveConfig.
+func governanceOnlyNamespace(name string) *corev1.Namespace {
+	return &corev1.Namespace{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
+		ObjectMeta: metav1.ObjectMeta{Name: name},
 	}
 }
 
@@ -260,29 +276,33 @@ func TestResolveGlobalNamespaceFromAnnotation(t *testing.T) {
 	}
 }
 
-// Gap 1: when no annotation is present on the namespace, the reconciler falls back to kro-system.
-func TestGlobalNamespaceDefaultsToKroSystem(t *testing.T) {
+// AC-12: no kro-system default. A namespace lacking the global-config-namespace
+// annotation is governance-only -- exempt from placement, no effectiveConfig
+// written -- never a silent fallback to any namespace (spec §5.5, §6.4).
+func TestGovernanceOnlyNamespaceReceivesNoEffectiveConfig(t *testing.T) {
 	rec, c := testReconciler(t,
-		namespace("payments-prod"),
-		// KPC in kro-system (default global namespace)
+		governanceOnlyNamespace("platform-shared"),
 		globalKropathConfig(cascade.S3Section{EncryptionAlgorithm: "aws:kms"}),
-		localKropathConfig("payments-prod", cascade.S3Section{}),
-		localS3Config("payments-prod", "general-policy",
+		localS3Config("platform-shared", "general-policy",
 			cascade.S3ConfigSection{}, cascade.S3ConfigSection{},
 		),
 	)
 
 	_, err := rec.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Namespace: "payments-prod", Name: "general-policy"},
+		NamespacedName: types.NamespacedName{Namespace: "platform-shared", Name: "general-policy"},
 	})
 	if err != nil {
 		t.Fatalf("Reconcile: %v", err)
 	}
 
-	got := getS3Config(t, c, "payments-prod", "general-policy")
-	if got.Status.EffectiveConfig.Mandatory.EncryptionAlgorithm != "aws:kms" {
-		t.Errorf("mandatory.encryptionAlgorithm = %q, want aws:kms — global KPC in kro-system should apply",
-			got.Status.EffectiveConfig.Mandatory.EncryptionAlgorithm)
+	got := getS3Config(t, c, "platform-shared", "general-policy")
+	var zero v1alpha1.EffectiveS3Config
+	if !reflect.DeepEqual(got.Status.EffectiveConfig, zero) {
+		t.Fatalf("EffectiveConfig = %+v, want zero value for a governance-only namespace", got.Status.EffectiveConfig)
+	}
+	cond := findCondition(got.Status.Conditions, "Reconciled")
+	if cond == nil || cond.Status != metav1.ConditionTrue || cond.Reason != util.ReasonGlobalTierInput {
+		t.Fatalf("Reconciled condition = %+v, want True/%s", cond, util.ReasonGlobalTierInput)
 	}
 }
 

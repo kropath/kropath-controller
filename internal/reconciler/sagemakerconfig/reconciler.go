@@ -28,8 +28,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 )
 
@@ -47,15 +47,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	updated, result, err := r.reconcile(ctx, cfg)
-	if err != nil {
-		return ctrl.Result{}, err
+	updated, result, reconcileErr := r.reconcile(ctx, cfg)
+	if updated {
+		if err := r.Client.Status().Update(ctx, cfg); err != nil {
+			return ctrl.Result{}, err
+		}
 	}
-	if !updated {
-		return result, nil
-	}
-	if err := r.Client.Status().Update(ctx, cfg); err != nil {
-		return ctrl.Result{}, err
+	if reconcileErr != nil {
+		return ctrl.Result{}, reconcileErr
 	}
 	return result, nil
 }
@@ -84,7 +83,18 @@ func (r *Reconciler) BuildWithManager(mgr ctrl.Manager) (controller.Controller, 
 }
 
 func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.SageMakerConfig) (bool, ctrl.Result, error) {
-	globalNS := util.ResolveGlobalNamespace(ctx, r.Client, cfg.Namespace)
+	now := metav1.Now()
+	placement, err := util.ResolveFamilyPlacement(ctx, r.Client, cfg.Namespace, cfg.Generation, now)
+	if err != nil {
+		reconciledCond, placementCond := util.NamespaceUnreadableCondition(cfg.Namespace, err, cfg.Generation, now)
+		updated := r.withholdEffectiveConfig(cfg, reconciledCond, &placementCond)
+		return updated, ctrl.Result{}, err
+	}
+	if placement.ReconciledOverride != nil {
+		updated := r.withholdEffectiveConfig(cfg, *placement.ReconciledOverride, placement.PlacementCondition)
+		return updated, ctrl.Result{}, nil
+	}
+	globalNS := placement.GlobalNamespace
 	globalKropath, err := r.loadKropathConfig(ctx, globalNS, util.KropathConfigName)
 	if err != nil {
 		return false, ctrl.Result{}, err
@@ -113,17 +123,15 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.SageMakerConfi
 	globalKropathDefaultsSM.Tags = globalKropath.Spec.Defaults.Tags
 
 	eff := cascade.MergeSageMakerCascade(
-		globalKropathMandatorySM,  // level 1
-		localKropathMandatorySM,   // level 2
-		globalSM.Spec.Mandatory,   // level 3
-		cfg.Spec.Mandatory,        // level 4
-		cfg.Spec.Defaults,         // level 6
-		globalSM.Spec.Defaults,    // level 7
-		localKropathDefaultsSM,    // level 8
-		globalKropathDefaultsSM,   // level 9
+		globalKropathMandatorySM, // level 1
+		localKropathMandatorySM,  // level 2
+		globalSM.Spec.Mandatory,  // level 3
+		cfg.Spec.Mandatory,       // level 4
+		cfg.Spec.Defaults,        // level 6
+		globalSM.Spec.Defaults,   // level 7
+		localKropathDefaultsSM,   // level 8
+		globalKropathDefaultsSM,  // level 9
 	)
-
-	now := metav1.Now()
 
 	newCond := metav1.Condition{
 		Type:               "Valid",
@@ -134,15 +142,15 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.SageMakerConfi
 		LastTransitionTime: now,
 	}
 
-	awsIdentity := mergeAWSIdentity(localKropath.Spec.AWS, globalKropath.Spec.AWS)
 	newEffConfig := v1alpha1.EffectiveSageMakerConfigStatus{
-		AWS:       v1alpha1.ProviderIdentity{AccountID: awsIdentity.AccountID, Region: awsIdentity.Region},
+		AWS:       placement.Identity,
 		Mandatory: eff.Mandatory,
 		Defaults:  eff.Defaults,
 	}
 	profileCond := util.ConfigProfileResolvedCondition(cfg.Name, globalSMFound, globalSMViaFallthrough, cfg.Generation, now)
 
 	condChanged := conditionNeedsUpdate(cfg.Status.Conditions, newCond) ||
+		conditionNeedsUpdate(cfg.Status.Conditions, *placement.PlacementCondition) ||
 		conditionNeedsUpdate(cfg.Status.Conditions, profileCond)
 	effChanged := !reflect.DeepEqual(cfg.Status.EffectiveConfig, newEffConfig)
 
@@ -151,11 +159,38 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.SageMakerConfi
 	}
 
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, newCond)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, *placement.PlacementCondition)
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
 	cfg.Status.EffectiveConfig = newEffConfig
 	cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 
 	return true, ctrl.Result{}, nil
+}
+
+// withholdEffectiveConfig publishes reconciledCond (and placementCond, when
+// non-nil) and clears status.effectiveConfig entirely -- a placement failure or
+// a governance-only namespace must never leave a stale or partial identity
+// published (spec §4.2, §6.4, AC-14). It reports whether anything changed so
+// the caller can skip an unnecessary status write.
+func (r *Reconciler) withholdEffectiveConfig(cfg *v1alpha1.SageMakerConfig, reconciledCond metav1.Condition, placementCond *metav1.Condition) bool {
+	changed := conditionNeedsUpdate(cfg.Status.Conditions, reconciledCond)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, reconciledCond)
+	if placementCond != nil {
+		if conditionNeedsUpdate(cfg.Status.Conditions, *placementCond) {
+			changed = true
+		}
+		cfg.Status.Conditions = setCondition(cfg.Status.Conditions, *placementCond)
+	}
+	var zero v1alpha1.EffectiveSageMakerConfigStatus
+	if !reflect.DeepEqual(cfg.Status.EffectiveConfig, zero) {
+		cfg.Status.EffectiveConfig = zero
+		changed = true
+	}
+	if changed {
+		cfg.Status.ObservedGeneration = cfg.Generation
+		cfg.Status.SyncedTimestamp = reconciledCond.LastTransitionTime.UTC().Format(time.RFC3339)
+	}
+	return changed
 }
 
 func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name string) (*v1alpha1.KropathConfig, error) {
@@ -193,7 +228,10 @@ func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj cli
 			continue
 		}
 		// Global tier: KropathConfig lives in the item's resolved global namespace.
-		globalNS := util.ResolveGlobalNamespace(ctx, r.Client, item.Namespace)
+		_, globalNS, err := util.ResolveNamespaceRole(ctx, r.Client, item.Namespace)
+		if err != nil {
+			continue
+		}
 		if kpc.Namespace == globalNS {
 			requests = append(requests, ctrl.Request{
 				NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name},
@@ -220,7 +258,10 @@ func (r *Reconciler) requestsForSageMakerConfigChange(ctx context.Context, obj c
 		if item.Namespace == trigger.Namespace {
 			continue
 		}
-		globalNS := util.ResolveGlobalNamespace(ctx, r.Client, item.Namespace)
+		_, globalNS, err := util.ResolveNamespaceRole(ctx, r.Client, item.Namespace)
+		if err != nil {
+			continue
+		}
 		if trigger.Namespace == globalNS && trigger.Name == item.Name {
 			requests = append(requests, ctrl.Request{
 				NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name},
@@ -249,17 +290,6 @@ func (r *Reconciler) requestsForNamespaceChange(ctx context.Context, obj client.
 		})
 	}
 	return requests
-}
-
-func mergeAWSIdentity(local, global v1alpha1.ProviderIdentity) v1alpha1.ProviderIdentity {
-	out := global
-	if local.AccountID != "" {
-		out.AccountID = local.AccountID
-	}
-	if local.Region != "" {
-		out.Region = local.Region
-	}
-	return out
 }
 
 func conditionNeedsUpdate(conditions []metav1.Condition, new metav1.Condition) bool {
