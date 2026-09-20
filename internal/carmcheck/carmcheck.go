@@ -151,6 +151,7 @@ func Run(ctx context.Context, c client.Client, opts Options) (*Report, error) {
 	report := &Report{}
 	report.Findings = append(report.Findings, checkEnableCARM(ctx, c, opts.ACKNamespace)...)
 	report.Findings = append(report.Findings, checkWatchNamespaceScope(ctx, c, opts.ACKNamespace, namespaces)...)
+	report.Findings = append(report.Findings, checkNamespaceIgnoreList(namespaces)...)
 	report.Findings = append(report.Findings, checkRoleAccountMap(ctx, c, opts, namespaces)...)
 	report.Findings = append(report.Findings, checkTeamID(namespaces)...)
 	report.Findings = append(report.Findings, checkIAMRoleSelector(ctx, c, namespaces)...)

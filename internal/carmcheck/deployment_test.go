@@ -156,3 +156,60 @@ func TestCheckWatchNamespaceScopeNoDeployments(t *testing.T) {
 		t.Errorf("expected a single Unknown finding with zero Deployments, got: %+v", findings)
 	}
 }
+
+func TestCheckNamespaceIgnoreListClean(t *testing.T) {
+	managed := []corev1.Namespace{*namespace("payments-prod", nil, nil), *namespace("data-prod", nil, nil)}
+
+	findings := checkNamespaceIgnoreList(managed)
+	if len(findings) != 1 || findings[0].Severity != SeverityOK {
+		t.Errorf("expected a single OK finding, got: %+v", findings)
+	}
+}
+
+func TestCheckNamespaceIgnoreListNoManagedNamespaces(t *testing.T) {
+	findings := checkNamespaceIgnoreList(nil)
+	if len(findings) != 1 || findings[0].Severity != SeverityOK {
+		t.Errorf("expected a single OK finding with zero managed namespaces, got: %+v", findings)
+	}
+}
+
+func TestCheckNamespaceIgnoreListOneMatch(t *testing.T) {
+	managed := []corev1.Namespace{*namespace("payments-prod", nil, nil), *namespace("kube-system", nil, nil)}
+
+	findings := checkNamespaceIgnoreList(managed)
+	if len(findings) != 1 {
+		t.Fatalf("expected exactly one finding, got %d: %+v", len(findings), findings)
+	}
+	if findings[0].Severity != SeverityBlocking || findings[0].Namespace != "kube-system" {
+		t.Errorf("finding = %+v, want Blocking on kube-system", findings[0])
+	}
+}
+
+func TestCheckNamespaceIgnoreListAllThreeMatch(t *testing.T) {
+	managed := []corev1.Namespace{
+		*namespace("kube-system", nil, nil),
+		*namespace("kube-public", nil, nil),
+		*namespace("kube-node-lease", nil, nil),
+	}
+
+	findings := checkNamespaceIgnoreList(managed)
+	if len(findings) != 3 {
+		t.Fatalf("expected three findings, got %d: %+v", len(findings), findings)
+	}
+	for _, f := range findings {
+		if f.Severity != SeverityBlocking {
+			t.Errorf("finding = %+v, want Blocking", f)
+		}
+	}
+}
+
+func TestCheckNamespaceIgnoreListFindingsAreCheckNamedWatchNamespaceScope(t *testing.T) {
+	// This check is the second half of precondition 1, so it must share the
+	// same Check name as checkWatchNamespaceScope's findings.
+	findings := checkNamespaceIgnoreList([]corev1.Namespace{*namespace("kube-system", nil, nil)})
+	for _, f := range findings {
+		if f.Check != "watch-namespace-scope" {
+			t.Errorf("finding.Check = %q, want %q", f.Check, "watch-namespace-scope")
+		}
+	}
+}

@@ -17,6 +17,7 @@ package carmcheck
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -29,6 +30,16 @@ const (
 	enableCARMFlag     = "--enable-carm"
 	watchNamespaceFlag = "--watch-namespace"
 )
+
+// ackIgnoredNamespaces mirrors ACK's fixed, non-configurable ignore list —
+// verified against aws-controllers-k8s/runtime's
+// pkg/runtime/service_controller.go, where BindControllerManager constructs
+// its namespace cache with
+// Ignored: []string{NamespaceKubeSystem, NamespaceKubePublic, NamespaceKubeNodeLease}.
+// Unlike --enable-carm or --watch-namespace, this list is not read from a
+// flag, env var, or ConfigMap, so a match here is a certain violation, never
+// a SeverityUnknown guess.
+var ackIgnoredNamespaces = []string{"kube-system", "kube-public", "kube-node-lease"}
 
 // ackDeployments lists every Deployment in namespace. It does not try to
 // filter for "the ACK ones" by label or image, because ACK controllers carry
@@ -186,6 +197,37 @@ func checkWatchNamespaceScope(ctx context.Context, c client.Client, ackNamespace
 				),
 			})
 		}
+	}
+	return findings
+}
+
+// checkNamespaceIgnoreList implements the second half of ADR-015 §5.8.4
+// precondition 1: a kropath-managed namespace must not be one of ACK's fixed
+// ignore-list namespaces. approvedNamespace() excludes these three
+// unconditionally, so a match makes ACK ignore the namespace's annotations
+// no matter how --watch-namespace is configured — this is why the check runs
+// independently of checkWatchNamespaceScope and of any ACK Deployment lookup.
+func checkNamespaceIgnoreList(managed []corev1.Namespace) []Finding {
+	var findings []Finding
+	for _, ns := range managed {
+		if slices.Contains(ackIgnoredNamespaces, ns.Name) {
+			findings = append(findings, Finding{
+				Check:     "watch-namespace-scope",
+				Severity:  SeverityBlocking,
+				Namespace: ns.Name,
+				Message: fmt.Sprintf(
+					"namespace %q is in ACK's fixed ignore list (%s); approvedNamespace() excludes it regardless of %s (ADR-015 §5.8.4 precondition 1)",
+					ns.Name, strings.Join(ackIgnoredNamespaces, ", "), watchNamespaceFlag,
+				),
+			})
+		}
+	}
+	if len(findings) == 0 {
+		findings = append(findings, Finding{
+			Check:    "watch-namespace-scope",
+			Severity: SeverityOK,
+			Message:  fmt.Sprintf("no kropath-managed namespace matches ACK's fixed ignore list (%s)", strings.Join(ackIgnoredNamespaces, ", ")),
+		})
 	}
 	return findings
 }
