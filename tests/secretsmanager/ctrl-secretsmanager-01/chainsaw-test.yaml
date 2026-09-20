@@ -39,6 +39,12 @@ metadata:
   name: ctrl-secretsmanager-01-cascade
 spec:
   namespace: secrets-prod
+  namespaceTemplate:
+    metadata:
+      annotations:
+        aws.kropath.run/global-config-namespace: kro-system
+        services.k8s.aws/owner-account-id: "123456789012"
+        services.k8s.aws/default-region: "us-east-1"
   steps:
     # AC-1: globalKropathConfig.mandatory.secretsManager.kmsKeyID (level 1) propagates.
     - name: ac1-global-kpc-mandatory-kmskey-level1

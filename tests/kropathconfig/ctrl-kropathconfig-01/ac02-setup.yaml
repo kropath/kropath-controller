@@ -1,7 +1,8 @@
-# AC-2: KropathConfig/baseline sharing a namespace with an IAMConfig. Neither
-# ac2-app-ns's own global-config-namespace resolution (default: kro-system)
-# nor any other namespace's annotation points at ac2-app-ns, so this is a
-# local-tier-only match.
+# AC-2: KropathConfig/baseline sharing a namespace with an IAMConfig. ac2-app-ns
+# carries no global-config-namespace annotation of its own (it is RoleGovernanceOnly
+# for placement purposes -- spec AC-12, no default fallback) and no other namespace's
+# annotation points at it, so this is a local-tier-only match. The IAMConfig here
+# is never asserted for effectiveConfig, so its governance-only exemption is fine.
 apiVersion: v1
 kind: Namespace
 metadata:

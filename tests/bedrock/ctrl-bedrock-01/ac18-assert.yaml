@@ -12,6 +12,9 @@ status:
     - type: Valid
       status: "True"
       reason: ValidationPassed
+    - type: PlacementResolved
+      status: "True"
+      reason: ResolvedFromNamespace
     - type: GlobalProfileResolved
       status: "True"
       reason: ProfileFound

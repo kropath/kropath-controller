@@ -4,6 +4,12 @@ metadata:
   name: ctrl-apigwv2-01
 spec:
   namespace: apigatewayv2
+  namespaceTemplate:
+    metadata:
+      annotations:
+        aws.kropath.run/global-config-namespace: kro-system
+        services.k8s.aws/owner-account-id: "123456789012"
+        services.k8s.aws/default-region: "us-east-1"
   steps:
 
   - name: purge-stale-leftovers

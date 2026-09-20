@@ -7,6 +7,9 @@ status:
   conditions:
     - type: Reconciled
       status: "True"
+    - type: PlacementResolved
+      status: "True"
+      reason: ResolvedFromNamespace
     - type: GlobalProfileResolved
       status: "True"
       reason: ProfileFallthrough

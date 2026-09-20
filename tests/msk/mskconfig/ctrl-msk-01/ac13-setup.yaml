@@ -16,6 +16,10 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: streaming-prod
+  annotations:
+    aws.kropath.run/global-config-namespace: kro-system
+    services.k8s.aws/owner-account-id: "123456789012"
+    services.k8s.aws/default-region: "us-east-1"
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: MSKConfig

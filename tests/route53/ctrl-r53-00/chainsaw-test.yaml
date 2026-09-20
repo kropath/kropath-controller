@@ -28,6 +28,12 @@ metadata:
 spec:
   description: "Route53 effectiveConfig cascade — acceptance criteria AC-1 through AC-9 (ctrl-r53-00)"
   namespace: route53-prod
+  namespaceTemplate:
+    metadata:
+      annotations:
+        aws.kropath.run/global-config-namespace: kro-system
+        services.k8s.aws/owner-account-id: "123456789012"
+        services.k8s.aws/default-region: "us-east-1"
   steps:
     # AC-1: globalKropathConfig.mandatory.route53.defaultTTL=300 (level 1) → effCfg.mandatory.defaultTTL=300
     - name: ac1-global-kpc-mandatory-default-ttl
