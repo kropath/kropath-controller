@@ -11,6 +11,8 @@ metadata:
   name: ac11-sagemaker-app-ns
   annotations:
     aws.kropath.run/global-config-namespace: ac11-sagemaker-global-ns
+    services.k8s.aws/owner-account-id: "111222333444"
+    services.k8s.aws/default-region: "eu-west-1"
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig

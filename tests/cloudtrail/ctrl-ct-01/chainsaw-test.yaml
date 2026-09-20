@@ -31,6 +31,12 @@ metadata:
   name: ctrl-ct-01-cascade
 spec:
   namespace: cloudtrail-prod
+  namespaceTemplate:
+    metadata:
+      annotations:
+        aws.kropath.run/global-config-namespace: kro-system
+        services.k8s.aws/owner-account-id: "123456789012"
+        services.k8s.aws/default-region: "us-east-1"
   steps:
     # AC-10: KropathConfig.mandatory.cloudtrail.isMultiRegionTrail=true (level 1) propagates
     # to effectiveConfig.mandatory; CloudTrailConfig.defaults.enableLogFileValidation=true

@@ -27,6 +27,12 @@ metadata:
   name: ctrl-mq-01-cascade
 spec:
   namespace: mq-prod
+  namespaceTemplate:
+    metadata:
+      annotations:
+        aws.kropath.run/global-config-namespace: kro-system
+        services.k8s.aws/owner-account-id: "123456789012"
+        services.k8s.aws/default-region: "us-east-1"
   steps:
     # CC-1: globalKropathConfig.mandatory.mq.publiclyAccessible=false (level 1) propagates.
     # false is a valid enforced value — nil is the only skip sentinel.

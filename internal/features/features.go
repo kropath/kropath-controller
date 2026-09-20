@@ -142,4 +142,12 @@ var All = []Reconciler{
 		SinceVersion: seedVersion,
 		Stability:    "alpha",
 	},
+	{
+		Name:         "NamespacePlacement",
+		Package:      "namespaceplacement",
+		Description:  "Resolves account/region placement for a resource namespace and publishes the verdict as an annotation and Event.",
+		Kinds:        []string{"Namespace"},
+		SinceVersion: seedVersion,
+		Stability:    "alpha",
+	},
 }

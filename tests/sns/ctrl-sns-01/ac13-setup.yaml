@@ -10,6 +10,8 @@ metadata:
   name: ac13-sns-app-ns
   annotations:
     aws.kropath.run/global-config-namespace: ac13-sns-global-ns
+    services.k8s.aws/owner-account-id: "123456789012"
+    services.k8s.aws/default-region: "ap-southeast-2"
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig

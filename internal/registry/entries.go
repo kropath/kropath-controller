@@ -15,6 +15,7 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/autoscalingconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/backupconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/bedrockconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/cloudfrontconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/cloudtrailconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/cloudwatchconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/cloudwatchlogsconfig"
@@ -26,10 +27,6 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/ec2config"
 	"github.com/kropath/kropath-controller/internal/reconciler/ecrconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/ecrpublicconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/recyclebinconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/s3advancedconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/cloudfrontconfig"
-	"github.com/kropath/kropath-controller/internal/reconciler/lambdaconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/ecsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/efsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/eksconfig"
@@ -44,11 +41,13 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/kmsconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/kropathconfigstatus"
 	"github.com/kropath/kropath-controller/internal/reconciler/labeloperator"
+	"github.com/kropath/kropath-controller/internal/reconciler/lambdaconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/managedprometheusconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/memorydbconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/mqconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/mskconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/mwaaconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/namespaceplacement"
 	"github.com/kropath/kropath-controller/internal/reconciler/networkfirewallconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/opensearchconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/organizationsconfig"
@@ -57,7 +56,9 @@ import (
 	"github.com/kropath/kropath-controller/internal/reconciler/quicksightconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/ramconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/rdsconfig"
+	"github.com/kropath/kropath-controller/internal/reconciler/recyclebinconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/route53config"
+	"github.com/kropath/kropath-controller/internal/reconciler/s3advancedconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/s3config"
 	"github.com/kropath/kropath-controller/internal/reconciler/sagemakerconfig"
 	"github.com/kropath/kropath-controller/internal/reconciler/secretsmanagerconfig"
@@ -577,6 +578,23 @@ func All() []Entry {
 					Reader: bctx.Manager.GetAPIReader(),
 					Log:    bctx.Log.WithName("controllers").WithName("KropathConfigStatus"),
 					Scheme: bctx.Manager.GetScheme(),
+				}).BuildWithManager(bctx.Manager)
+			},
+		},
+		// NamespacePlacement watches only the core Namespace kind (never gated on
+		// any aws.kropath.run CRD) and publishes the account/region placement
+		// verdict as an annotation + Event (spec §5.6, §6.2).
+		{
+			Package:  "namespaceplacement",
+			Required: nil,
+			Optional: nil,
+			Build: func(bctx BuildCtx, _ []schema.GroupVersionKind) (controller.Controller, error) {
+				return (&namespaceplacement.Reconciler{
+					Client: bctx.Manager.GetClient(),
+					//nolint:staticcheck // GetEventRecorder's newer Eventf API requires an "action" field the spec doesn't define; GetEventRecorderFor is still fully supported.
+					Recorder: bctx.Manager.GetEventRecorderFor("kropath-placement"),
+					Log:      bctx.Log.WithName("controllers").WithName("NamespacePlacement"),
+					Scheme:   bctx.Manager.GetScheme(),
 				}).BuildWithManager(bctx.Manager)
 			},
 		},

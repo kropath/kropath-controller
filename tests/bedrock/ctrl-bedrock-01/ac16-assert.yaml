@@ -8,6 +8,9 @@ status:
     - type: Valid
       status: "False"
       reason: InvalidGuardrailConfiguration
+    - type: PlacementResolved
+      status: "True"
+      reason: ResolvedFromNamespace
     - type: GlobalProfileResolved
       status: "True"
       reason: ProfileFound

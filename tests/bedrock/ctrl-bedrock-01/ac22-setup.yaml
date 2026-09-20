@@ -10,6 +10,8 @@ metadata:
   name: ac22-bedrock-app-ns
   annotations:
     aws.kropath.run/global-config-namespace: ac22-bedrock-global-ns
+    services.k8s.aws/owner-account-id: "999888777666"
+    services.k8s.aws/default-region: "eu-west-1"
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig

@@ -350,8 +350,10 @@ spec:
             file: 17-global-ecrcfg-mandatory-syncedlabels.yaml
 
     # -----------------------------------------------------------------------
-    # AC-16: globalKropathConfig.spec.aws.accountId and region propagate to
-    # effectiveConfig.aws.accountId and effectiveConfig.aws.region.
+    # AC-16: KropathConfig.spec.aws is removed (ADR-019); a KropathConfig that
+    # still carries it is accepted but the field is inert -- effectiveConfig.aws
+    # is resolved solely from the resource namespace's owner-account-id /
+    # default-region annotations (spec AC-2, controller-account-region-placement.md).
     # -----------------------------------------------------------------------
     - name: ac16-aws-metadata
       try:

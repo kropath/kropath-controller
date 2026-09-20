@@ -63,6 +63,15 @@ func TestRegistryCoversAllPackages(t *testing.T) {
 var packagesWithoutOwnCRD = map[string]bool{
 	"labeloperator":       true,
 	"kropathconfigstatus": true, // watches the existing KropathConfig kind, owns none of its own
+	"namespaceplacement":  true, // watches the core Namespace kind, owns no CRD
+}
+
+// coreKinds lists built-in Kubernetes kinds this controller watches that are
+// served by the API server itself rather than by any kropath-aws CRD.
+// kropath-aws is the authority for every CRD kind (see TestWatchedKindsMatchUpstreamCRDs),
+// but it has no opinion on core types, so those kinds are exempt from that check.
+var coreKinds = map[string]bool{
+	"Namespace": true, // core/v1, watched by namespaceplacement
 }
 
 // crdNameRE matches the `  name: <crd>` line of a CRD's metadata block.
@@ -404,6 +413,9 @@ func TestWatchedKindsMatchUpstreamCRDs(t *testing.T) {
 	watched := map[string]bool{}
 	for _, r := range features.All {
 		for _, k := range r.Kinds {
+			if coreKinds[k] {
+				continue
+			}
 			watched[k] = true
 		}
 	}

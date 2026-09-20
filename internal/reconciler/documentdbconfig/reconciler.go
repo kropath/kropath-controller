@@ -28,8 +28,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 )
 
@@ -46,15 +46,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	updated, result, err := r.reconcile(ctx, cfg)
-	if err != nil {
-		return ctrl.Result{}, err
+	updated, result, reconcileErr := r.reconcile(ctx, cfg)
+	if updated {
+		if err := r.Client.Status().Update(ctx, cfg); err != nil {
+			return ctrl.Result{}, err
+		}
 	}
-	if !updated {
-		return result, nil
-	}
-	if err := r.Client.Status().Update(ctx, cfg); err != nil {
-		return ctrl.Result{}, err
+	if reconcileErr != nil {
+		return ctrl.Result{}, reconcileErr
 	}
 	return result, nil
 }
@@ -83,7 +82,18 @@ func (r *Reconciler) BuildWithManager(mgr ctrl.Manager) (controller.Controller, 
 }
 
 func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.DocumentDBConfig) (bool, ctrl.Result, error) {
-	globalNS := util.ResolveGlobalNamespace(ctx, r.Client, cfg.Namespace)
+	now := metav1.Now()
+	placement, err := util.ResolveFamilyPlacement(ctx, r.Client, cfg.Namespace, cfg.Generation, now)
+	if err != nil {
+		reconciledCond, placementCond := util.NamespaceUnreadableCondition(cfg.Namespace, err, cfg.Generation, now)
+		updated := r.withholdEffectiveConfig(cfg, reconciledCond, &placementCond)
+		return updated, ctrl.Result{}, err
+	}
+	if placement.ReconciledOverride != nil {
+		updated := r.withholdEffectiveConfig(cfg, *placement.ReconciledOverride, placement.PlacementCondition)
+		return updated, ctrl.Result{}, nil
+	}
+	globalNS := placement.GlobalNamespace
 	globalKropath, err := r.loadKropathConfig(ctx, globalNS, util.KropathConfigName)
 	if err != nil {
 		return false, ctrl.Result{}, err
@@ -122,7 +132,6 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.DocumentDBConf
 		globalKropathDefaultsDocDB,
 	)
 
-	now := metav1.Now()
 	profileCond := util.ConfigProfileResolvedCondition(cfg.Name, globalDocDBFound, globalDocDBViaFallthrough, cfg.Generation, now)
 
 	// Cross-field validation: dbInstanceClass must be in allowedInstanceClasses when both are set.
@@ -155,15 +164,17 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.DocumentDBConf
 		// Validation failure: update conditions but clear effectiveConfig to prevent
 		// RGDs from consuming a config with an invalid instance class constraint.
 		emptyEffConfig := v1alpha1.EffectiveDocumentDBConfig{
-			AWS: mergeAWSIdentity(localKropath.Spec.AWS, globalKropath.Spec.AWS),
+			AWS: placement.Identity,
 		}
 		if !conditionNeedsUpdate(cfg.Status.Conditions, reconciledCond) &&
+			!conditionNeedsUpdate(cfg.Status.Conditions, *placement.PlacementCondition) &&
 			!conditionNeedsUpdate(cfg.Status.Conditions, validCond) &&
 			!conditionNeedsUpdate(cfg.Status.Conditions, profileCond) &&
 			reflect.DeepEqual(cfg.Status.EffectiveConfig, emptyEffConfig) {
 			return false, ctrl.Result{}, nil
 		}
 		cfg.Status.Conditions = setCondition(cfg.Status.Conditions, reconciledCond)
+		cfg.Status.Conditions = setCondition(cfg.Status.Conditions, *placement.PlacementCondition)
 		cfg.Status.Conditions = setCondition(cfg.Status.Conditions, validCond)
 		cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
 		cfg.Status.EffectiveConfig = emptyEffConfig
@@ -172,12 +183,13 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.DocumentDBConf
 	}
 
 	newEffConfig := v1alpha1.EffectiveDocumentDBConfig{
-		AWS:       mergeAWSIdentity(localKropath.Spec.AWS, globalKropath.Spec.AWS),
+		AWS:       placement.Identity,
 		Mandatory: eff.Mandatory,
 		Defaults:  eff.Defaults,
 	}
 
 	if !conditionNeedsUpdate(cfg.Status.Conditions, reconciledCond) &&
+		!conditionNeedsUpdate(cfg.Status.Conditions, *placement.PlacementCondition) &&
 		!conditionNeedsUpdate(cfg.Status.Conditions, validCond) &&
 		!conditionNeedsUpdate(cfg.Status.Conditions, profileCond) &&
 		reflect.DeepEqual(cfg.Status.EffectiveConfig, newEffConfig) {
@@ -185,12 +197,39 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.DocumentDBConf
 	}
 
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, reconciledCond)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, *placement.PlacementCondition)
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, validCond)
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
 	cfg.Status.EffectiveConfig = newEffConfig
 	cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 
 	return true, ctrl.Result{}, nil
+}
+
+// withholdEffectiveConfig publishes reconciledCond (and placementCond, when
+// non-nil) and clears status.effectiveConfig entirely -- a placement failure or
+// a governance-only namespace must never leave a stale or partial identity
+// published (spec §4.2, §6.4, AC-14). It reports whether anything changed so
+// the caller can skip an unnecessary status write.
+func (r *Reconciler) withholdEffectiveConfig(cfg *v1alpha1.DocumentDBConfig, reconciledCond metav1.Condition, placementCond *metav1.Condition) bool {
+	changed := conditionNeedsUpdate(cfg.Status.Conditions, reconciledCond)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, reconciledCond)
+	if placementCond != nil {
+		if conditionNeedsUpdate(cfg.Status.Conditions, *placementCond) {
+			changed = true
+		}
+		cfg.Status.Conditions = setCondition(cfg.Status.Conditions, *placementCond)
+	}
+	var zero v1alpha1.EffectiveDocumentDBConfig
+	if !reflect.DeepEqual(cfg.Status.EffectiveConfig, zero) {
+		cfg.Status.EffectiveConfig = zero
+		changed = true
+	}
+	if changed {
+		cfg.Status.ObservedGeneration = cfg.Generation
+		cfg.Status.SyncedTimestamp = reconciledCond.LastTransitionTime.UTC().Format(time.RFC3339)
+	}
+	return changed
 }
 
 func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name string) (*v1alpha1.KropathConfig, error) {
@@ -228,7 +267,10 @@ func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj cli
 			continue
 		}
 		// Global tier: KropathConfig lives in the item's resolved global namespace.
-		globalNS := util.ResolveGlobalNamespace(ctx, r.Client, item.Namespace)
+		_, globalNS, err := util.ResolveNamespaceRole(ctx, r.Client, item.Namespace)
+		if err != nil {
+			continue
+		}
 		if kpc.Namespace == globalNS {
 			requests = append(requests, ctrl.Request{
 				NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name},
@@ -255,7 +297,10 @@ func (r *Reconciler) requestsForDocumentDBConfigChange(ctx context.Context, obj 
 		if item.Namespace == trigger.Namespace {
 			continue
 		}
-		globalNS := util.ResolveGlobalNamespace(ctx, r.Client, item.Namespace)
+		_, globalNS, err := util.ResolveNamespaceRole(ctx, r.Client, item.Namespace)
+		if err != nil {
+			continue
+		}
 		if trigger.Namespace == globalNS && trigger.Name == item.Name {
 			requests = append(requests, ctrl.Request{
 				NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name},
@@ -284,17 +329,6 @@ func (r *Reconciler) requestsForNamespaceChange(ctx context.Context, obj client.
 		})
 	}
 	return requests
-}
-
-func mergeAWSIdentity(local, global v1alpha1.ProviderIdentity) v1alpha1.ProviderIdentity {
-	out := global
-	if local.AccountID != "" {
-		out.AccountID = local.AccountID
-	}
-	if local.Region != "" {
-		out.Region = local.Region
-	}
-	return out
 }
 
 // conditionNeedsUpdate returns true when no existing condition matches Type+Status+Reason+Message.

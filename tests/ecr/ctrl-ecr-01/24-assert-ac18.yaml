@@ -4,7 +4,9 @@ metadata:
   name: general-policy
   namespace: ecr-app-ns
 status:
+  # accountId/region come from the ecr-app-ns namespace annotations, not from
+  # KropathConfig.spec.aws above -- proves the field is inert (spec AC-2).
   effectiveConfig:
     aws:
-      accountId: "987654321098"
-      region: eu-west-1
+      accountId: "123456789012"
+      region: us-east-1

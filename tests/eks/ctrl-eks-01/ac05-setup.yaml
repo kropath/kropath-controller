@@ -17,6 +17,10 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: ac05-eks-global-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac05-eks-global-ns
+    services.k8s.aws/owner-account-id: "123456789012"
+    services.k8s.aws/default-region: "us-east-1"
 ---
 apiVersion: v1
 kind: Namespace
@@ -24,6 +28,8 @@ metadata:
   name: ac05-eks-app-ns
   annotations:
     aws.kropath.run/global-config-namespace: ac05-eks-global-ns
+    services.k8s.aws/owner-account-id: "123456789012"
+    services.k8s.aws/default-region: "us-east-1"
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: EKSConfig

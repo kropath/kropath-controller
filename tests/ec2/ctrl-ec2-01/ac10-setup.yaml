@@ -2,6 +2,10 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: ac10-ec2-global-ns
+  annotations:
+    aws.kropath.run/global-config-namespace: ac10-ec2-global-ns
+    services.k8s.aws/owner-account-id: "123456789012"
+    services.k8s.aws/default-region: "us-east-1"
 ---
 apiVersion: v1
 kind: Namespace
@@ -9,6 +13,8 @@ metadata:
   name: ac10-ec2-app-ns
   annotations:
     aws.kropath.run/global-config-namespace: ac10-ec2-global-ns
+    services.k8s.aws/owner-account-id: "123456789012"
+    services.k8s.aws/default-region: "us-east-1"
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: EC2Config

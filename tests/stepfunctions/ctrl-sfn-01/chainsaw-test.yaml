@@ -23,6 +23,12 @@ metadata:
   name: ctrl-sfn-01-cascade
 spec:
   namespace: sfn-app-ns
+  namespaceTemplate:
+    metadata:
+      annotations:
+        aws.kropath.run/global-config-namespace: kro-system
+        services.k8s.aws/owner-account-id: "123456789012"
+        services.k8s.aws/default-region: "us-east-1"
   steps:
     # Purge any stale resources from prior runs before the suite starts.
     - name: purge-stale-leftovers

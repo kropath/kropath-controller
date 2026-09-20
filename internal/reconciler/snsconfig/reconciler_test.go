@@ -22,6 +22,7 @@ import (
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/cascade"
 	"github.com/kropath/kropath-controller/internal/reconciler/util"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -314,7 +315,7 @@ func TestReconcileAC12GlobalSNSConfigSyncedLabels(t *testing.T) {
 // AC-13: Provider identity from globalKropathConfig propagates to effCfg.aws.*.
 func TestReconcileAC13ProviderIdentityPropagates(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfigWithAWS(v1alpha1.ProviderIdentity{AccountID: "123456789012", Region: "ap-southeast-2"}),
+		namespaceWithIdentity("events-prod", "123456789012", "ap-southeast-2"),
 		localSNSConfig("events-prod", "general-policy", cascade.SNSConfigSection{}, cascade.SNSConfigSection{}),
 	)
 
@@ -437,6 +438,10 @@ func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, *v1alpha
 	if err := v1alpha1.AddToScheme(scheme); err != nil {
 		t.Fatalf("add scheme: %v", err)
 	}
+	if err := corev1.AddToScheme(scheme); err != nil {
+		t.Fatalf("add corev1 scheme: %v", err)
+	}
+	objs = withDefaultNamespaces(objs)
 	builder := fake.NewClientBuilder().
 		WithScheme(scheme).
 		WithStatusSubresource(&v1alpha1.SNSConfig{})
@@ -449,6 +454,52 @@ func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, *v1alpha
 		t.Fatalf("seed local SNSConfig: %v", err)
 	}
 	return &Reconciler{Client: cl, Log: logr.Discard(), Scheme: scheme}, cfg
+}
+
+// withDefaultNamespaces auto-seeds a resource namespace (valid account/region,
+// global tier "kro-system") for every namespace referenced by objs that isn't
+// "kro-system" and doesn't already have an explicit Namespace object among objs.
+// Most tests in this file exercise cascade-merge logic and don't care about
+// placement specifics, so this keeps them from repeating that boilerplate.
+func withDefaultNamespaces(objs []runtime.Object) []runtime.Object {
+	explicit := map[string]bool{}
+	namespaces := map[string]bool{}
+	for _, obj := range objs {
+		if ns, ok := obj.(*corev1.Namespace); ok {
+			explicit[ns.Name] = true
+			continue
+		}
+		co, ok := obj.(client.Object)
+		if !ok {
+			continue
+		}
+		if ns := co.GetNamespace(); ns != "" && ns != "kro-system" {
+			namespaces[ns] = true
+		}
+	}
+	for ns := range namespaces {
+		if !explicit[ns] {
+			objs = append(objs, defaultResourceNamespace(ns))
+		}
+	}
+	return objs
+}
+
+func namespaceWithIdentity(name, accountID, region string) *corev1.Namespace {
+	return &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+			Annotations: map[string]string{
+				util.GlobalConfigNamespaceAnnotation: "kro-system",
+				util.OwnerAccountIDAnnotation:         accountID,
+				util.DefaultRegionAnnotation:          region,
+			},
+		},
+	}
+}
+
+func defaultResourceNamespace(name string) *corev1.Namespace {
+	return namespaceWithIdentity(name, "111122223333", "ap-southeast-2")
 }
 
 func globalKropathConfig(tier v1alpha1.KropathConfigTier) *v1alpha1.KropathConfig {
@@ -476,12 +527,6 @@ func globalKropathConfigWithDefaults(mandatory, defaults v1alpha1.KropathConfigT
 			Defaults:  defaults,
 		},
 	}
-}
-
-func globalKropathConfigWithAWS(aws v1alpha1.ProviderIdentity) *v1alpha1.KropathConfig {
-	cfg := globalKropathConfig(v1alpha1.KropathConfigTier{})
-	cfg.Spec.AWS = aws
-	return cfg
 }
 
 func globalSNSConfig(name string, mandatory, defaults cascade.SNSConfigSection) *v1alpha1.SNSConfig {

@@ -11,6 +11,8 @@ metadata:
   name: ac06-lambda-app-ns
   annotations:
     aws.kropath.run/global-config-namespace: ac06-lambda-global-ns
+    services.k8s.aws/owner-account-id: "987654321098"
+    services.k8s.aws/default-region: "eu-west-1"
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: KropathConfig

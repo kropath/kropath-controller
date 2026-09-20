@@ -9,6 +9,8 @@ metadata:
   name: ac10-memorydb-app-ns
   annotations:
     aws.kropath.run/global-config-namespace: ac10-memorydb-global-ns
+    services.k8s.aws/owner-account-id: "123456789012"
+    services.k8s.aws/default-region: "us-east-1"
 ---
 # AC-10: Union merge of KropathConfig.mandatory.tags + MemoryDBConfig.mandatory.tags+syncedLabels.
 apiVersion: aws.kropath.run/v1alpha1

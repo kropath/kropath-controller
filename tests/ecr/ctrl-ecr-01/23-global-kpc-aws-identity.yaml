@@ -5,6 +5,9 @@ metadata:
   namespace: ecr-global-ns
 spec:
   mandatory: {}
+  # spec.aws is deleted (ADR-019); the CRD still accepts it until KRO-1129 also
+  # drops the schema field, but the controller never reads it -- kept here only
+  # to prove that carrying it is inert, not rejected (spec AC-2).
   aws:
     accountId: "987654321098"
     region: "eu-west-1"

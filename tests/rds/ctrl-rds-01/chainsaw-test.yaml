@@ -38,6 +38,12 @@ metadata:
   name: ctrl-rds-01-cascade
 spec:
   namespace: rds
+  namespaceTemplate:
+    metadata:
+      annotations:
+        aws.kropath.run/global-config-namespace: kro-system
+        services.k8s.aws/owner-account-id: "123456789012"
+        services.k8s.aws/default-region: "us-east-1"
   steps:
     # AC-1: KropathConfig.mandatory.rds.storageEncrypted: true (level 1) forces
     # storageEncrypted on all RDS resources regardless of RDSConfig.

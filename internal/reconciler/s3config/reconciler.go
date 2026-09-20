@@ -28,8 +28,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 )
 
@@ -83,8 +83,18 @@ func (r *Reconciler) BuildWithManager(mgr ctrl.Manager) (controller.Controller, 
 }
 
 func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.S3Config) (bool, ctrl.Result, error) {
-	// Gap 1: dynamic global namespace resolution via annotation
-	globalNS := util.ResolveGlobalNamespace(ctx, r.Client, cfg.Namespace)
+	now := metav1.Now()
+	placement, err := util.ResolveFamilyPlacement(ctx, r.Client, cfg.Namespace, cfg.Generation, now)
+	if err != nil {
+		reconciledCond, placementCond := util.NamespaceUnreadableCondition(cfg.Namespace, err, cfg.Generation, now)
+		updated := r.withholdEffectiveConfig(cfg, reconciledCond, &placementCond)
+		return updated, ctrl.Result{}, err
+	}
+	if placement.ReconciledOverride != nil {
+		updated := r.withholdEffectiveConfig(cfg, *placement.ReconciledOverride, placement.PlacementCondition)
+		return updated, ctrl.Result{}, nil
+	}
+	globalNS := placement.GlobalNamespace
 
 	globalKropath, err := r.loadKropathConfig(ctx, globalNS, util.KropathConfigName)
 	if err != nil {
@@ -115,17 +125,15 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.S3Config) (boo
 	globalKropathDefaultsS3.Tags = globalKropath.Spec.Defaults.Tags
 
 	eff := cascade.MergeS3Cascade(
-		globalKropathMandatoryS3,  // level 1 — KropathConfig global mandatory
-		localKropathMandatoryS3,   // level 2 — KropathConfig local mandatory
-		globalS3.Spec.Mandatory,   // level 3 — S3Config global mandatory
-		cfg.Spec.Mandatory,        // level 4 — S3Config local mandatory
-		cfg.Spec.Defaults,         // level 6 — S3Config local defaults
-		globalS3.Spec.Defaults,    // level 7 — S3Config global defaults
-		localKropathDefaultsS3,    // level 8 — KropathConfig local defaults
-		globalKropathDefaultsS3,   // level 9 — KropathConfig global defaults
+		globalKropathMandatoryS3, // level 1 — KropathConfig global mandatory
+		localKropathMandatoryS3,  // level 2 — KropathConfig local mandatory
+		globalS3.Spec.Mandatory,  // level 3 — S3Config global mandatory
+		cfg.Spec.Mandatory,       // level 4 — S3Config local mandatory
+		cfg.Spec.Defaults,        // level 6 — S3Config local defaults
+		globalS3.Spec.Defaults,   // level 7 — S3Config global defaults
+		localKropathDefaultsS3,   // level 8 — KropathConfig local defaults
+		globalKropathDefaultsS3,  // level 9 — KropathConfig global defaults
 	)
-
-	now := metav1.Now()
 
 	newCond := metav1.Condition{
 		Type:               "Reconciled",
@@ -137,23 +145,51 @@ func (r *Reconciler) reconcile(ctx context.Context, cfg *v1alpha1.S3Config) (boo
 	}
 	profileCond := util.ConfigProfileResolvedCondition(cfg.Name, globalS3Found, globalS3ViaFallthrough, cfg.Generation, now)
 	newEffConfig := v1alpha1.EffectiveS3Config{
-		AWS:       mergeAWSIdentity(localKropath.Spec.AWS, globalKropath.Spec.AWS),
+		AWS:       placement.Identity,
 		Mandatory: eff.Mandatory,
 		Defaults:  eff.Defaults,
 	}
 
 	if !conditionNeedsUpdate(cfg.Status.Conditions, newCond) &&
+		!conditionNeedsUpdate(cfg.Status.Conditions, *placement.PlacementCondition) &&
 		!conditionNeedsUpdate(cfg.Status.Conditions, profileCond) &&
 		reflect.DeepEqual(cfg.Status.EffectiveConfig, newEffConfig) {
 		return false, ctrl.Result{}, nil
 	}
 
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, newCond)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, *placement.PlacementCondition)
 	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, profileCond)
 	cfg.Status.EffectiveConfig = newEffConfig
 	cfg.Status.SyncedTimestamp = now.UTC().Format(time.RFC3339)
 
 	return true, ctrl.Result{}, nil
+}
+
+// withholdEffectiveConfig publishes reconciledCond (and placementCond, when
+// non-nil) and clears status.effectiveConfig entirely -- a placement failure or
+// a governance-only namespace must never leave a stale or partial identity
+// published (spec §4.2, §6.4, AC-14). It reports whether anything changed so
+// the caller can skip an unnecessary status write.
+func (r *Reconciler) withholdEffectiveConfig(cfg *v1alpha1.S3Config, reconciledCond metav1.Condition, placementCond *metav1.Condition) bool {
+	changed := conditionNeedsUpdate(cfg.Status.Conditions, reconciledCond)
+	cfg.Status.Conditions = setCondition(cfg.Status.Conditions, reconciledCond)
+	if placementCond != nil {
+		if conditionNeedsUpdate(cfg.Status.Conditions, *placementCond) {
+			changed = true
+		}
+		cfg.Status.Conditions = setCondition(cfg.Status.Conditions, *placementCond)
+	}
+	var zero v1alpha1.EffectiveS3Config
+	if !reflect.DeepEqual(cfg.Status.EffectiveConfig, zero) {
+		cfg.Status.EffectiveConfig = zero
+		changed = true
+	}
+	if changed {
+		cfg.Status.ObservedGeneration = cfg.Generation
+		cfg.Status.SyncedTimestamp = reconciledCond.LastTransitionTime.UTC().Format(time.RFC3339)
+	}
+	return changed
 }
 
 func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name string) (*v1alpha1.KropathConfig, error) {
@@ -169,9 +205,9 @@ func (r *Reconciler) loadKropathConfig(ctx context.Context, namespace, name stri
 }
 
 // requestsForKropathConfigChange re-enqueues S3Configs when a KropathConfig changes.
-// - A KPC named "default" in namespace X is a local KPC: enqueue all S3Configs in X.
-// - Any other KPC is a global KPC: enqueue S3Configs whose resolved global namespace
-//   matches kpc.Namespace and whose name matches kpc.Name.
+//   - A KPC named "default" in namespace X is a local KPC: enqueue all S3Configs in X.
+//   - Any other KPC is a global KPC: enqueue S3Configs whose resolved global namespace
+//     matches kpc.Namespace and whose name matches kpc.Name.
 func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj client.Object) []ctrl.Request {
 	kpc, ok := obj.(*v1alpha1.KropathConfig)
 	if !ok {
@@ -195,7 +231,10 @@ func (r *Reconciler) requestsForKropathConfigChange(ctx context.Context, obj cli
 			continue
 		}
 		// Global tier: KropathConfig lives in the item's resolved global namespace.
-		globalNS := util.ResolveGlobalNamespace(ctx, r.Client, item.Namespace)
+		_, globalNS, err := util.ResolveNamespaceRole(ctx, r.Client, item.Namespace)
+		if err != nil {
+			continue
+		}
 		if kpc.Namespace == globalNS {
 			requests = append(requests, ctrl.Request{
 				NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name},
@@ -225,7 +264,10 @@ func (r *Reconciler) requestsForS3ConfigChange(ctx context.Context, obj client.O
 			// Same namespace — this is the local config itself, already reconciled directly.
 			continue
 		}
-		globalNS := util.ResolveGlobalNamespace(ctx, r.Client, item.Namespace)
+		_, globalNS, err := util.ResolveNamespaceRole(ctx, r.Client, item.Namespace)
+		if err != nil {
+			continue
+		}
 		if trigger.Namespace == globalNS && trigger.Name == item.Name {
 			requests = append(requests, ctrl.Request{
 				NamespacedName: types.NamespacedName{Namespace: item.Namespace, Name: item.Name},
@@ -256,17 +298,6 @@ func (r *Reconciler) requestsForNamespaceChange(ctx context.Context, obj client.
 		})
 	}
 	return requests
-}
-
-func mergeAWSIdentity(local, global v1alpha1.ProviderIdentity) v1alpha1.ProviderIdentity {
-	out := global
-	if local.AccountID != "" {
-		out.AccountID = local.AccountID
-	}
-	if local.Region != "" {
-		out.Region = local.Region
-	}
-	return out
 }
 
 // conditionNeedsUpdate returns true when no existing condition matches Type+Status+Reason+Message.

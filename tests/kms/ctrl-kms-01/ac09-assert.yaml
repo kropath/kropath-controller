@@ -9,6 +9,9 @@ status:
     - type: Valid
       status: "False"
       reason: InvalidKeySpecNotInAllowedList
+    - type: PlacementResolved
+      status: "True"
+      reason: ResolvedFromNamespace
     - type: GlobalProfileResolved
       status: "False"
       reason: ProfileUnresolved

@@ -9,6 +9,8 @@ metadata:
   name: ac04-managedprometheus-app-ns
   annotations:
     aws.kropath.run/global-config-namespace: ac04-managedprometheus-global-ns
+    services.k8s.aws/owner-account-id: "123456789012"
+    services.k8s.aws/default-region: "us-east-1"
 ---
 # AC-4: no tier sets namingTemplate — defaults.namingTemplate falls back to "{namespace}-{name}".
 apiVersion: aws.kropath.run/v1alpha1

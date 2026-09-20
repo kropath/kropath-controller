@@ -16,22 +16,27 @@ package apigatewayconfig
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
 	"github.com/go-logr/logr"
 	"github.com/kropath/kropath-controller/api/v1alpha1"
 	"github.com/kropath/kropath-controller/internal/cascade"
 	"github.com/kropath/kropath-controller/internal/reconciler/util"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	ctrl "sigs.k8s.io/controller-runtime"
 )
+
+const globalNS = "platform-config"
 
 // AC-1: globalKropathConfig.mandatory.apigateway.endpointType="REGIONAL" propagates (level 1 wins).
 func TestReconcileAC1GlobalKropathEndpointTypeLevel1(t *testing.T) {
 	rec, _ := testReconciler(t,
+		resourceNamespace("payments-prod"),
 		globalKropathConfig(v1alpha1.KropathConfigTier{
 			ApiGateway: cascade.ApiGatewayKropathSection{EndpointType: "REGIONAL"},
 		}),
@@ -51,6 +56,7 @@ func TestReconcileAC1GlobalKropathEndpointTypeLevel1(t *testing.T) {
 // AC-2: globalApiGatewayConfig.mandatory.apiKeySource="HEADER" propagates (level 3 wins when L1-L2 absent).
 func TestReconcileAC2GlobalApiGatewayConfigApiKeySourceLevel3(t *testing.T) {
 	rec, _ := testReconciler(t,
+		resourceNamespace("payments-prod"),
 		globalApiGatewayConfig("general-policy", cascade.ApiGatewayConfigSection{ApiKeySource: "HEADER"}, cascade.ApiGatewayConfigSection{}),
 		localApiGatewayConfig("payments-prod", "general-policy", cascade.ApiGatewayConfigSection{}, cascade.ApiGatewayConfigSection{}),
 	)
@@ -68,6 +74,7 @@ func TestReconcileAC2GlobalApiGatewayConfigApiKeySourceLevel3(t *testing.T) {
 // AC-3: localApiGatewayConfig.defaults.namingTemplate="{namespace}-{name}" propagates (level 6).
 func TestReconcileAC3LocalApiGatewayConfigDefaultsNamingTemplate(t *testing.T) {
 	rec, _ := testReconciler(t,
+		resourceNamespace("payments-prod"),
 		localApiGatewayConfig("payments-prod", "general-policy",
 			cascade.ApiGatewayConfigSection{},
 			cascade.ApiGatewayConfigSection{NamingTemplate: "{namespace}-{name}"},
@@ -90,6 +97,7 @@ func TestReconcileAC3LocalApiGatewayConfigDefaultsNamingTemplate(t *testing.T) {
 // AC-4: globalKropathConfig.mandatory.tags augmented into KropathSection tags cascade.
 func TestReconcileAC4GlobalKropathTagsAugmented(t *testing.T) {
 	rec, _ := testReconciler(t,
+		resourceNamespace("payments-prod"),
 		globalKropathConfig(v1alpha1.KropathConfigTier{
 			Tags: map[string]string{"cost-centre": "infra"},
 		}),
@@ -113,10 +121,11 @@ func TestReconcileAC4GlobalKropathTagsAugmented(t *testing.T) {
 	}
 }
 
-// AC-5: Provider identity from globalKropathConfig propagates to effCfg.aws.*.
-func TestReconcileAC5ProviderIdentityPropagates(t *testing.T) {
+// AC-5: account/region identity resolves from the namespace annotations (ADR-019 D-3
+// — KropathConfig.spec.aws no longer exists as a source), not from any config CR.
+func TestReconcileAC5ProviderIdentityResolvesFromNamespace(t *testing.T) {
 	rec, _ := testReconciler(t,
-		globalKropathConfigWithAWS(v1alpha1.ProviderIdentity{AccountID: "123456789012", Region: "ap-southeast-2"}),
+		namespaceWithIdentity("payments-prod", "123456789012", "ap-southeast-2"),
 		localApiGatewayConfig("payments-prod", "general-policy", cascade.ApiGatewayConfigSection{}, cascade.ApiGatewayConfigSection{}),
 	)
 
@@ -131,11 +140,15 @@ func TestReconcileAC5ProviderIdentityPropagates(t *testing.T) {
 	if got := updated.Status.EffectiveConfig.AWS.Region; got != "ap-southeast-2" {
 		t.Fatalf("aws.region = %q, want ap-southeast-2", got)
 	}
+	if got := updated.Status.EffectiveConfig.AWS.Partition; got != "aws" {
+		t.Fatalf("aws.partition = %q, want aws", got)
+	}
 }
 
 // AC-6: disableExecuteApiEndpoint enforced from global ApiGatewayConfig mandatory (level 3).
 func TestReconcileAC6DisableExecuteApiEndpointLevel3(t *testing.T) {
 	rec, _ := testReconciler(t,
+		resourceNamespace("payments-prod"),
 		globalApiGatewayConfig("general-policy",
 			cascade.ApiGatewayConfigSection{DisableExecuteApiEndpoint: true},
 			cascade.ApiGatewayConfigSection{},
@@ -153,19 +166,79 @@ func TestReconcileAC6DisableExecuteApiEndpointLevel3(t *testing.T) {
 	}
 }
 
+// A resource namespace missing the account annotation gets no effectiveConfig and a
+// Reconciled=False/MissingAccountAnnotation condition (spec §6.2, AC-3 shape).
+func TestReconcileMissingAccountAnnotationWithholdsEffectiveConfig(t *testing.T) {
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "payments-prod",
+			Annotations: map[string]string{util.GlobalConfigNamespaceAnnotation: globalNS, util.DefaultRegionAnnotation: "ap-southeast-2"},
+		},
+	}
+	rec, _ := testReconciler(t, ns, localApiGatewayConfig("payments-prod", "general-policy", cascade.ApiGatewayConfigSection{}, cascade.ApiGatewayConfigSection{}))
+
+	if _, err := rec.Reconcile(context.Background(), req("payments-prod", "general-policy")); err != nil {
+		t.Fatalf("reconcile: %v", err)
+	}
+
+	updated := getApiGatewayConfig(t, rec.Client, "payments-prod", "general-policy")
+	var zero v1alpha1.EffectiveAPIGatewayConfig
+	if !reflect.DeepEqual(updated.Status.EffectiveConfig, zero) {
+		t.Fatalf("EffectiveConfig = %+v, want zero value", updated.Status.EffectiveConfig)
+	}
+	found := false
+	for _, c := range updated.Status.Conditions {
+		if c.Type == "Reconciled" {
+			found = true
+			if c.Status != metav1.ConditionFalse || c.Reason != util.ReasonMissingAccountAnnotation {
+				t.Fatalf("Reconciled condition = %+v, want False/%s", c, util.ReasonMissingAccountAnnotation)
+			}
+		}
+	}
+	if !found {
+		t.Fatal("no Reconciled condition published")
+	}
+}
+
+// A governance-only namespace (no global-config-namespace annotation) is exempt: its
+// config objects receive no effectiveConfig (spec §6.4, AC-8 shape).
+func TestReconcileGovernanceOnlyNamespaceExempt(t *testing.T) {
+	rec, _ := testReconciler(t,
+		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "platform-shared"}},
+		localApiGatewayConfig("platform-shared", "general-policy", cascade.ApiGatewayConfigSection{}, cascade.ApiGatewayConfigSection{}),
+	)
+
+	if _, err := rec.Reconcile(context.Background(), req("platform-shared", "general-policy")); err != nil {
+		t.Fatalf("reconcile: %v", err)
+	}
+
+	updated := getApiGatewayConfig(t, rec.Client, "platform-shared", "general-policy")
+	var zero v1alpha1.EffectiveAPIGatewayConfig
+	if !reflect.DeepEqual(updated.Status.EffectiveConfig, zero) {
+		t.Fatalf("EffectiveConfig = %+v, want zero value for governance-only namespace", updated.Status.EffectiveConfig)
+	}
+	for _, c := range updated.Status.Conditions {
+		if c.Type == "Reconciled" && (c.Status != metav1.ConditionTrue || c.Reason != util.ReasonGlobalTierInput) {
+			t.Fatalf("Reconciled condition = %+v, want True/%s", c, util.ReasonGlobalTierInput)
+		}
+	}
+}
+
 func TestRequestsForKropathConfigChangeGlobal(t *testing.T) {
 	rec, _ := testReconciler(t,
+		resourceNamespace("payments-prod"),
+		resourceNamespace("sandbox"),
 		localApiGatewayConfig("payments-prod", "general-policy", cascade.ApiGatewayConfigSection{}, cascade.ApiGatewayConfigSection{}),
 		localApiGatewayConfig("sandbox", "general-policy", cascade.ApiGatewayConfigSection{}, cascade.ApiGatewayConfigSection{}),
 		localApiGatewayConfig("payments-prod", "other-policy", cascade.ApiGatewayConfigSection{}, cascade.ApiGatewayConfigSection{}),
 	)
 
 	got := rec.requestsForKropathConfigChange(context.Background(), &v1alpha1.KropathConfig{
-		ObjectMeta: metav1.ObjectMeta{Name: util.KropathConfigName, Namespace: kroSystemNamespace},
+		ObjectMeta: metav1.ObjectMeta{Name: util.KropathConfigName, Namespace: globalNS},
 	})
 
 	// Classified by namespace, not name (ADR-018 D-1): a global-tier change
-	// enqueues every non-kro-system config, regardless of name.
+	// enqueues every config whose resolved global namespace matches.
 	if len(got) != 3 {
 		t.Fatalf("requests len = %d, want 3 (%#v)", len(got), got)
 	}
@@ -173,6 +246,8 @@ func TestRequestsForKropathConfigChangeGlobal(t *testing.T) {
 
 func TestRequestsForKropathConfigChangeLocalNamespaceEnqueuesAllConfigsInNamespace(t *testing.T) {
 	rec, _ := testReconciler(t,
+		resourceNamespace("payments-prod"),
+		resourceNamespace("sandbox"),
 		localApiGatewayConfig("payments-prod", "general-policy", cascade.ApiGatewayConfigSection{}, cascade.ApiGatewayConfigSection{}),
 		localApiGatewayConfig("payments-prod", "other-policy", cascade.ApiGatewayConfigSection{}, cascade.ApiGatewayConfigSection{}),
 		localApiGatewayConfig("sandbox", "general-policy", cascade.ApiGatewayConfigSection{}, cascade.ApiGatewayConfigSection{}),
@@ -189,6 +264,7 @@ func TestRequestsForKropathConfigChangeLocalNamespaceEnqueuesAllConfigsInNamespa
 
 func TestRequestsForApiGatewayConfigChangeNonGlobalIgnored(t *testing.T) {
 	rec, _ := testReconciler(t,
+		resourceNamespace("payments-prod"),
 		localApiGatewayConfig("payments-prod", "general-policy", cascade.ApiGatewayConfigSection{}, cascade.ApiGatewayConfigSection{}),
 	)
 
@@ -209,6 +285,9 @@ func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, *v1alpha
 	if err := v1alpha1.AddToScheme(scheme); err != nil {
 		t.Fatalf("add scheme: %v", err)
 	}
+	if err := corev1.AddToScheme(scheme); err != nil {
+		t.Fatalf("add corev1 scheme: %v", err)
+	}
 	builder := fake.NewClientBuilder().
 		WithScheme(scheme).
 		WithStatusSubresource(&v1alpha1.APIGatewayConfig{})
@@ -217,10 +296,27 @@ func testReconciler(t *testing.T, objs ...runtime.Object) (*Reconciler, *v1alpha
 	}
 	cl := builder.Build()
 	cfg := &v1alpha1.APIGatewayConfig{}
-	if err := cl.Get(context.Background(), client.ObjectKey{Namespace: "payments-prod", Name: "general-policy"}, cfg); err != nil {
-		t.Fatalf("seed local ApiGatewayConfig: %v", err)
-	}
+	_ = cl.Get(context.Background(), client.ObjectKey{Namespace: "payments-prod", Name: "general-policy"}, cfg)
 	return &Reconciler{Client: cl, Log: logr.Discard(), Scheme: scheme}, cfg
+}
+
+// resourceNamespace returns a namespace annotated as a resource namespace with a
+// valid account/region, resolving its global tier to globalNS.
+func resourceNamespace(name string) *corev1.Namespace {
+	return namespaceWithIdentity(name, "111122223333", "ap-southeast-2")
+}
+
+func namespaceWithIdentity(name, accountID, region string) *corev1.Namespace {
+	return &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+			Annotations: map[string]string{
+				util.GlobalConfigNamespaceAnnotation: globalNS,
+				util.OwnerAccountIDAnnotation:        accountID,
+				util.DefaultRegionAnnotation:         region,
+			},
+		},
+	}
 }
 
 func globalKropathConfig(tier v1alpha1.KropathConfigTier) *v1alpha1.KropathConfig {
@@ -228,7 +324,7 @@ func globalKropathConfig(tier v1alpha1.KropathConfigTier) *v1alpha1.KropathConfi
 		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "KropathConfig"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      util.KropathConfigName,
-			Namespace: kroSystemNamespace,
+			Namespace: globalNS,
 		},
 		Spec: v1alpha1.KropathConfigSpec{
 			Mandatory: tier,
@@ -236,18 +332,12 @@ func globalKropathConfig(tier v1alpha1.KropathConfigTier) *v1alpha1.KropathConfi
 	}
 }
 
-func globalKropathConfigWithAWS(aws v1alpha1.ProviderIdentity) *v1alpha1.KropathConfig {
-	cfg := globalKropathConfig(v1alpha1.KropathConfigTier{})
-	cfg.Spec.AWS = aws
-	return cfg
-}
-
 func globalApiGatewayConfig(name string, mandatory, defaults cascade.ApiGatewayConfigSection) *v1alpha1.APIGatewayConfig {
 	return &v1alpha1.APIGatewayConfig{
 		TypeMeta: metav1.TypeMeta{APIVersion: v1alpha1.GroupVersion.String(), Kind: "APIGatewayConfig"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: kroSystemNamespace,
+			Namespace: globalNS,
 		},
 		Spec: v1alpha1.APIGatewayConfigSpec{
 			Mandatory: mandatory,

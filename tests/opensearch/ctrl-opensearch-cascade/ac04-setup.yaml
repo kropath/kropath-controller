@@ -9,6 +9,8 @@ metadata:
   name: ac04-opensearch-app-ns
   annotations:
     aws.kropath.run/global-config-namespace: ac04-opensearch-global-ns
+    services.k8s.aws/owner-account-id: "123456789012"
+    services.k8s.aws/default-region: "us-east-1"
 ---
 # AC-4: KropathConfig(global).mandatory.opensearch.encryptionAtRestEnabled=true (level 1)
 # wins over all lower levels when OSCfg mandatory fields are absent.

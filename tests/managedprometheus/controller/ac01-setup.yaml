@@ -9,6 +9,8 @@ metadata:
   name: ac01-managedprometheus-app-ns
   annotations:
     aws.kropath.run/global-config-namespace: ac01-managedprometheus-global-ns
+    services.k8s.aws/owner-account-id: "123456789012"
+    services.k8s.aws/default-region: "us-east-1"
 ---
 # AC-1: globalKropathConfig with mandatory.managedprometheus.alias (level 1).
 apiVersion: aws.kropath.run/v1alpha1

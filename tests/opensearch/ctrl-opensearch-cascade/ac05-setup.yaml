@@ -9,6 +9,8 @@ metadata:
   name: ac05-opensearch-app-ns
   annotations:
     aws.kropath.run/global-config-namespace: ac05-opensearch-global-ns
+    services.k8s.aws/owner-account-id: "123456789012"
+    services.k8s.aws/default-region: "us-east-1"
 ---
 # AC-5: KropathConfig(global).defaults.opensearch.tlsSecurityPolicy="Policy-Min-TLS-1-0-2019-10"
 # (level 9) is the weaker fallback. Local OpenSearchConfig.defaults.tlsSecurityPolicy
