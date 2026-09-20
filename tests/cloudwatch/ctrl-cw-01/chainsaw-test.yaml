@@ -22,9 +22,12 @@
 # pairs a namespaced config with its kro-system counterpart *by name*.
 # A per-step name is a complete isolation boundary — no cleanup between steps needed.
 #
-# Unlike kropath-aws RGD tests, skipDelete is NOT set — CloudWatchConfig CRs have
-# no finalizers and no cloud calls, so end-of-test cleanup is cheap and keeps the
-# shared kind cluster lean.
+# skipDelete is not set per-suite; the whole run instead passes --skip-delete
+# via CHAINSAW_FLAGS in the Makefile, matching the reference pattern. Chainsaw
+# otherwise deletes each step's resources at step end and blocks on it, and
+# since every AC now creates its own Namespace pair that cost dominated the
+# job -- 310 namespace deletions, 27.4 of 32 minutes (KRO-1154). Deletion is
+# not what isolates suites here; the unique-name-per-AC rule above is.
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:

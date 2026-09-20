@@ -32,10 +32,12 @@
 #   kropath-aws/docs/frequent-rgd-errors.md §6 "CANONICAL: Unique-Name-Per-Step
 #   + skipDelete" for the full rationale.
 #
-#   skipDelete is deliberately NOT set, unlike the reference pattern: Chainsaw's
-#   end-of-test cleanup is cheap here (plain config CRs, no finalizers, no cloud
-#   calls), so reclaiming each suite's objects costs little and keeps the shared
-#   kind cluster small.
+#   skipDelete is not set per-suite; the whole run instead passes --skip-delete
+#   via CHAINSAW_FLAGS in the Makefile, matching the reference pattern. Chainsaw
+#   otherwise deletes each step's resources at step end and blocks on it, and
+#   since every AC now creates its own Namespace pair that cost dominated the
+#   job -- 310 namespace deletions, 27.4 of 32 minutes (KRO-1154). Deletion is
+#   not what isolates suites here; the unique-name-per-AC rule above is.
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
