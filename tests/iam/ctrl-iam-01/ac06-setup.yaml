@@ -9,6 +9,8 @@ metadata:
   name: ac06-iam-app-ns
   annotations:
     aws.kropath.run/global-config-namespace: ac06-iam-global-ns
+    services.k8s.aws/owner-account-id: "123456789012"
+    services.k8s.aws/default-region: "us-east-1"
 ---
 # AC-6: global namespace (kro-system) KropathConfig mandatory boundary — level 1.
 apiVersion: aws.kropath.run/v1alpha1

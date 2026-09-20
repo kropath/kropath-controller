@@ -9,6 +9,8 @@ metadata:
   name: ac03-r53-app-ns
   annotations:
     aws.kropath.run/global-config-namespace: ac03-r53-global-ns
+    services.k8s.aws/owner-account-id: "123456789012"
+    services.k8s.aws/default-region: "us-east-1"
 ---
 # Copyright 2026 kropath Authors
 #

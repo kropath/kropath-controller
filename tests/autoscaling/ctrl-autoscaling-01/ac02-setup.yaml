@@ -9,6 +9,8 @@ metadata:
   name: ac02-autoscaling-app-ns
   annotations:
     aws.kropath.run/global-config-namespace: ac02-autoscaling-global-ns
+    services.k8s.aws/owner-account-id: "123456789012"
+    services.k8s.aws/default-region: "us-east-1"
 ---
 # AC-C2: globalKropathConfig mandatory.autoscaling.newInstancesProtectedFromScaleIn=true (level 1).
 apiVersion: aws.kropath.run/v1alpha1

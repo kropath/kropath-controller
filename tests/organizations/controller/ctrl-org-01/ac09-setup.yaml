@@ -9,6 +9,8 @@ metadata:
   name: ac09-org-app-ns
   annotations:
     aws.kropath.run/global-config-namespace: ac09-org-global-ns
+    services.k8s.aws/owner-account-id: "123456789012"
+    services.k8s.aws/default-region: "us-east-1"
 ---
 # AC-9: globalKropathConfig with mandatory.organizations.iamUserAccessToBilling="deny" (level 1).
 # Verifies that org-wide mandatory billing enforcement propagates through the cascade.

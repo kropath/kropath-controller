@@ -258,6 +258,18 @@ chainsaw-setup: build kind-up ## Create kind cluster, apply CRDs, create test na
 	@for ns in $(TEST_NAMESPACES); do \
 		kubectl create namespace "$$ns" --dry-run=client -o yaml | kubectl apply -f -; \
 	done
+	# kro-system is the shared global-tier namespace itself, so it carries no
+	# global-config-namespace annotation. Every other shared namespace is a
+	# resource namespace pointing at it, and since KRO-1128 that role also
+	# requires the ACK-native account/region annotations util.ResolvePlacement
+	# reads (spec §4.4) -- without them these namespaces are RoleGovernanceOnly
+	# and every <ResourceFamily>Config inside them gets no effectiveConfig.
+	@for ns in $(filter-out kro-system,$(TEST_NAMESPACES)); do \
+		kubectl annotate namespace "$$ns" --overwrite \
+			aws.kropath.run/global-config-namespace=kro-system \
+			services.k8s.aws/owner-account-id=123456789012 \
+			services.k8s.aws/default-region=us-east-1; \
+	done
 
 # Install one optional CRD (from tests/fixtures/crds-optional/) and wait for Established.
 # Usage: make chainsaw-install-optional-crd CRD_FILE=tests/fixtures/crds-optional/<name>.yaml
