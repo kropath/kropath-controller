@@ -29,13 +29,12 @@
 #   per-step cleanup deletes and inline reset steps this suite used to carry.
 #   See kropath-aws docs/frequent-rgd-errors.md §6 for the full rationale.
 #
-#   Unlike that reference, this suite does NOT set skipDelete. Chainsaw's
-#   end-of-test cleanup is cheap here — these are plain config CRs with no
-#   finalizers and no cloud calls, so there is no deletion queue to back up,
-#   which is the only reason skipDelete is mandated there. Letting Chainsaw
-#   reclaim each suite's objects keeps the shared kind cluster small; leaving
-#   every suite's objects behind for a whole run puts enough reconcile load on
-#   the API server to trip the test client's rate limiter in later suites.
+#   skipDelete is not set per-suite; the whole run instead passes --skip-delete
+#   via CHAINSAW_FLAGS in the Makefile, matching the reference pattern. Chainsaw
+#   otherwise deletes each step's resources at step end and blocks on it, and
+#   since every AC now creates its own Namespace pair that cost dominated the
+#   job -- 310 namespace deletions, 27.4 of 32 minutes (KRO-1154). Deletion is
+#   not what isolates suites here; the unique-name-per-AC rule above is.
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:

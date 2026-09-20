@@ -225,7 +225,13 @@ jobs:
   e2e:
     name: Chainsaw integration tests
     runs-on: ubuntu-latest
-    needs: [changes, lint, unit, features-verify, security]
+    # Deliberately gated on `changes` alone. Chainsaw consumes nothing that lint,
+    # unit, features-verify or security produce -- it builds the binary itself via
+    # `make test-chainsaw`. Waiting on them only serialised the two slowest jobs:
+    # on run 35475151346 this job sat idle until the security scan finished and
+    # started 6 minutes later than it needed to (KRO-1154). A genuinely broken
+    # commit now burns one extra runner, which is the cheaper trade.
+    needs: [changes]
     # Chainsaw already ran on the PR head against an identical tree; re-running
     # on the post-merge push to main duplicates the slowest job for no signal.
     # This job-level skip is safe where a path-based one would not be: the

@@ -21,7 +21,11 @@
 # Test isolation: each step uses a distinct resource name (ac<N>-msk-policy).
 # The controller pairs namespaced MSKConfig with its kro-system counterpart by
 # *name*, so per-step names provide complete isolation without inter-step deletes.
-# skipDelete is not set — end-of-test cleanup is cheap for these plain config CRs.
+# skipDelete is not set per-suite; the whole run instead passes --skip-delete via
+# CHAINSAW_FLAGS in the Makefile. Chainsaw otherwise deletes each step's resources
+# at step end and blocks on it, and since every AC now creates its own Namespace
+# pair that cost dominated the job -- 27.4 of 32 minutes (KRO-1154). Deletion is
+# not what isolates suites here; the unique-name-per-AC rule above is.
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:

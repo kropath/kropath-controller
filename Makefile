@@ -67,7 +67,18 @@ KROPATH_AWS_REF  ?= main
 # Each ref is silently skipped if it does not exist (e.g. after branch deletion).
 KROPATH_AWS_COMPANION_REFS ?=
 
-CHAINSAW_FLAGS   := --parallel 1 --report-format JUNIT-TEST --report-path $(REPORT_DIR)/
+# --skip-delete: Chainsaw otherwise deletes every resource a step created at the
+# end of that step, and blocks on it. Since the KRO-1137 namespace-pair migration
+# each acceptance criterion creates its own Namespace pair, so a full run spent
+# 310 namespace deletions x ~5.3s = 27.4 min of its 32 min waiting on Kubernetes
+# namespace termination -- 86% of the job, against 19s of actual assertions
+# (KRO-1154). The CRs themselves delete in ~0s; it is purely the namespaces.
+#
+# Skipping deletion is safe because suite isolation comes from unique-name-per-AC
+# (see any suite header), not from cleanup, and `test-chainsaw` builds and throws
+# away its kind cluster inside a single run. Iterating locally against a
+# long-lived cluster accumulates namespaces across runs; `make kind-down` resets.
+CHAINSAW_FLAGS   := --parallel 1 --skip-delete --report-format JUNIT-TEST --report-path $(REPORT_DIR)/
 
 .PHONY: all build test test-cover vet fmt lint \
         features-gen features-verify crds-verify \
