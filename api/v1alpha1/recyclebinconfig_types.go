@@ -190,3 +190,10 @@ func (in *RecycleBinConfigList) DeepCopyObject() runtime.Object {
 	}
 	return nil
 }
+
+// MarshalJSON omits "effectiveConfig" from the wire payload when it is the
+// Go zero value -- see marshalConfigStatus in effectiveconfig_marshal.go
+// (KRO-1199).
+func (s RecycleBinConfigStatus) MarshalJSON() ([]byte, error) {
+	return marshalConfigStatus(s.EffectiveConfig, s.ObservedGeneration, s.SyncedTimestamp, s.Conditions)
+}

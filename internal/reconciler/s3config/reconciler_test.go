@@ -16,6 +16,7 @@ package s3config
 
 import (
 	"context"
+	"encoding/json"
 	"reflect"
 	"testing"
 
@@ -299,6 +300,23 @@ func TestGovernanceOnlyNamespaceReceivesNoEffectiveConfig(t *testing.T) {
 	var zero v1alpha1.EffectiveS3Config
 	if !reflect.DeepEqual(got.Status.EffectiveConfig, zero) {
 		t.Fatalf("EffectiveConfig = %+v, want zero value for a governance-only namespace", got.Status.EffectiveConfig)
+	}
+	// Go-value equality against the zero value is not sufficient (KRO-1199):
+	// encoding/json's omitempty is a no-op on non-pointer struct fields, so a
+	// zero-valued EffectiveConfig previously still serialized as
+	// "effectiveConfig":{"aws":{},"defaults":{},"mandatory":{}} instead of
+	// being absent from the wire payload the API server actually stores.
+	// Assert the marshaled JSON directly so this regression can't slip back in.
+	statusJSON, err := json.Marshal(got.Status)
+	if err != nil {
+		t.Fatalf("json.Marshal(Status): %v", err)
+	}
+	var decoded map[string]json.RawMessage
+	if err := json.Unmarshal(statusJSON, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal(Status): %v", err)
+	}
+	if _, present := decoded["effectiveConfig"]; present {
+		t.Fatalf("marshaled status carries an \"effectiveConfig\" key for a governance-only namespace; want it absent: %s", statusJSON)
 	}
 	cond := findCondition(got.Status.Conditions, "Reconciled")
 	if cond == nil || cond.Status != metav1.ConditionTrue || cond.Reason != util.ReasonGlobalTierInput {
