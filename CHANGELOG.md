@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.13.0](https://github.com/kropath/kropath-controller/compare/v0.12.0...v0.13.0) (2026-09-22)
+
+
+### Features
+
+* **KRO-1128:** resolve account/region placement from namespace annotations ([#140](https://github.com/kropath/kropath-controller/issues/140)) ([8c79d1e](https://github.com/kropath/kropath-controller/commit/8c79d1e63d50215b40b594174250e6d22ca6c025))
+* **KRO-1141:** add ACK install conformance checker ([#124](https://github.com/kropath/kropath-controller/issues/124)) ([c25a703](https://github.com/kropath/kropath-controller/commit/c25a70316dfa510607b444e36e6553f5a61e06b2))
+
+
+### Bug Fixes
+
+* **KRO-1199:** make status.effectiveConfig genuinely absent when withheld ([#142](https://github.com/kropath/kropath-controller/issues/142)) ([72fdd7c](https://github.com/kropath/kropath-controller/commit/72fdd7c578e632578da1904336fed27a72276d13))
+
+
+### Dependencies
+
+* bump sigs.k8s.io/controller-runtime in the kubernetes group ([#141](https://github.com/kropath/kropath-controller/issues/141)) ([e8e1db4](https://github.com/kropath/kropath-controller/commit/e8e1db410aa4acdd2fc260f0f9eeb307d41881b3))
+
 ## [0.12.0](https://github.com/kropath/kropath-controller/compare/v0.11.0...v0.12.0) (2026-09-19)
 
 
