@@ -1,0 +1,12 @@
+# AC-14 (aws-kms-03 spec): localKMSConfig defaults.allowedGrantOperations (level 6);
+# mandatory tier is empty at every level.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
+metadata:
+  name: grantops14-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults:
+    allowedGrantOperations:
+      - "Decrypt"

@@ -325,9 +325,9 @@ test-s3: ## Run S3 cascade Chainsaw suite (ctrl-s3-01).
 	@mkdir -p $(REPORT_DIR)
 	$(CHAINSAW) test tests/s3/ctrl-s3-01/ $(CHAINSAW_FLAGS)
 
-test-kms: ## Run KMS cascade Chainsaw suite (ctrl-kms-01).
+test-kms: ## Run KMS cascade Chainsaw suites (ctrl-kms-01, ctrl-kms-02).
 	@mkdir -p $(REPORT_DIR)
-	$(CHAINSAW) test tests/kms/ctrl-kms-01/ $(CHAINSAW_FLAGS)
+	$(CHAINSAW) test tests/kms/ctrl-kms-01/ tests/kms/ctrl-kms-02/ $(CHAINSAW_FLAGS)
 
 test-policy: ## Run policy document Chainsaw suites (phase2-refs + phase3-merge).
 	@mkdir -p $(REPORT_DIR)

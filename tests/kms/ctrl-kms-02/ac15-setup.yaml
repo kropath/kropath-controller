@@ -1,0 +1,15 @@
+# AC-15 (aws-kms-03 spec): both tiers allowedGrantOperations=[] (no restriction).
+# mandatory.keySpec is set alongside purely to force a non-zero effectiveConfig write,
+# since the whole field is omitted from the wire payload when it is the Go zero value
+# (KRO-1199) — without it this scenario could not observe anything.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
+metadata:
+  name: grantops15-general-policy
+  namespace: payments-prod
+spec:
+  mandatory:
+    keySpec: "SYMMETRIC_DEFAULT"
+    allowedGrantOperations: []
+  defaults:
+    allowedGrantOperations: []

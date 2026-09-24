@@ -1,0 +1,22 @@
+# Assert AC-15: no restriction — reconcile succeeds and writes effectiveConfig
+# normally (mandatory.keySpec present); neither tier's allowedGrantOperations
+# appears (empty = omitted, matching the ctrl-kms-01 AC-11 convention).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
+metadata:
+  name: grantops15-general-policy
+  namespace: payments-prod
+status:
+  conditions:
+    - type: Valid
+      status: "True"
+      reason: ValidationPassed
+    - type: PlacementResolved
+      status: "True"
+      reason: ResolvedFromNamespace
+    - type: GlobalProfileResolved
+      status: "False"
+      reason: ProfileUnresolved
+  effectiveConfig:
+    mandatory:
+      keySpec: "SYMMETRIC_DEFAULT"

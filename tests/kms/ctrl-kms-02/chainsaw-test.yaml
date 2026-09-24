@@ -1,0 +1,68 @@
+# Copyright 2026 kropath Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ctrl-kms-02 Chainsaw integration tests — KMSConfig.allowedGrantOperations cascade
+# population (KRO-1234, aws-kms-03 spec AC-13/14/15, cascade-population half only).
+# The allowlist-vs-requested-operations *filtering* behavior is a KMSGrant RGD concern
+# (KRO-1235), not this controller — these scenarios only assert that
+# status.effectiveConfig.{mandatory,defaults}.allowedGrantOperations is populated
+# correctly by the KMSConfig cascade.
+#
+# Requires:
+#   - kind cluster with kropath-operator deployed
+#   - KMSConfig CRD applied (tests/fixtures/crds/awskmsconfig.yaml in this repo)
+#
+# Uses the shared kro-system / payments-prod namespace pair (see Makefile
+# TEST_NAMESPACES) rather than a dedicated namespace pair per AC: unlike
+# enableKeyRotation/allowedKeySpecs, allowedGrantOperations has no KropathConfig
+# levels at all (per-profile only, ADR-018 D-3), so no KropathConfig fixture is
+# needed and the namespace-level account/region annotations already applied by
+# `make chainsaw-setup` are sufficient. Each AC uses its own resource name
+# (grantops<N>-*) for isolation, per the convention in ctrl-kms-01.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ctrl-kms-02-grant-ops-cascade
+spec:
+  steps:
+    # AC-13: globalKMSConfig (kro-system) mandatory.allowedGrantOperations (level 3)
+    # propagates to effCfg.mandatory.allowedGrantOperations.
+    - name: ac13-mandatory-allowlist-propagates
+      try:
+        - apply:
+            file: ac13-setup.yaml
+        - assert:
+            file: ac13-assert.yaml
+            timeout: 30s
+
+    # AC-14: localKMSConfig (payments-prod) defaults.allowedGrantOperations (level 6)
+    # propagates to effCfg.defaults.allowedGrantOperations; mandatory tier stays empty.
+    - name: ac14-defaults-allowlist-propagates
+      try:
+        - apply:
+            file: ac14-setup.yaml
+        - assert:
+            file: ac14-assert.yaml
+            timeout: 30s
+
+    # AC-15: both tiers allowedGrantOperations=[] — no restriction. keySpec is set
+    # alongside purely to force a non-zero effectiveConfig write (KRO-1199 omits the
+    # whole field when the Go zero value).
+    - name: ac15-no-allowlist-no-restriction
+      try:
+        - apply:
+            file: ac15-setup.yaml
+        - assert:
+            file: ac15-assert.yaml
+            timeout: 30s

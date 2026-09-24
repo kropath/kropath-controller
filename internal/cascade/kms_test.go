@@ -294,6 +294,190 @@ func TestMergeKMSCascade_AC11(t *testing.T) {
 	}
 }
 
+// TestMergeKMSCascade_AC13 — KMSConfig/general-policy mandatory.allowedGrantOperations
+// (level 3, global) propagates to effCfg.mandatory.allowedGrantOperations, winning over
+// a conflicting level-4 local value (aws-kms-03 spec AC-13, cascade-population half).
+func TestMergeKMSCascade_AC13(t *testing.T) {
+	got := mergeKMSAll(
+		zeroKropathKMS,
+		zeroKropathKMS,
+		cascade.KMSConfigSection{AllowedGrantOperations: []string{"Decrypt", "DescribeKey"}}, // level 3
+		cascade.KMSConfigSection{AllowedGrantOperations: []string{"Encrypt"}},                // level 4
+		zeroKMSCfg,
+		zeroKMSCfg,
+		zeroKropathKMS,
+		zeroKropathKMS,
+	)
+
+	want := []string{"Decrypt", "DescribeKey"}
+	if len(got.Mandatory.AllowedGrantOperations) != len(want) ||
+		got.Mandatory.AllowedGrantOperations[0] != want[0] ||
+		got.Mandatory.AllowedGrantOperations[1] != want[1] {
+		t.Errorf("AC-13: mandatory.allowedGrantOperations = %v, want %v",
+			got.Mandatory.AllowedGrantOperations, want)
+	}
+	if len(got.Defaults.AllowedGrantOperations) != 0 {
+		t.Errorf("AC-13: defaults.allowedGrantOperations must not bleed from mandatory; got %v",
+			got.Defaults.AllowedGrantOperations)
+	}
+}
+
+// TestMergeKMSCascade_AC14 — defaults.allowedGrantOperations (level 6, local) propagates
+// to effCfg.defaults.allowedGrantOperations while the mandatory tier stays empty
+// (aws-kms-03 spec AC-14, cascade-population half).
+func TestMergeKMSCascade_AC14(t *testing.T) {
+	got := mergeKMSAll(
+		zeroKropathKMS,
+		zeroKropathKMS,
+		zeroKMSCfg,
+		zeroKMSCfg,
+		cascade.KMSConfigSection{AllowedGrantOperations: []string{"Decrypt"}}, // level 6
+		zeroKMSCfg,
+		zeroKropathKMS,
+		zeroKropathKMS,
+	)
+
+	if len(got.Mandatory.AllowedGrantOperations) != 0 {
+		t.Errorf("AC-14: mandatory.allowedGrantOperations should be empty; got %v",
+			got.Mandatory.AllowedGrantOperations)
+	}
+	want := []string{"Decrypt"}
+	if len(got.Defaults.AllowedGrantOperations) != len(want) || got.Defaults.AllowedGrantOperations[0] != want[0] {
+		t.Errorf("AC-14: defaults.allowedGrantOperations = %v, want %v",
+			got.Defaults.AllowedGrantOperations, want)
+	}
+}
+
+// TestMergeKMSCascade_AC15 — both tiers empty (the zero value) means no restriction:
+// effCfg.{mandatory,defaults}.allowedGrantOperations are both empty (aws-kms-03 spec
+// AC-15, cascade-population half).
+func TestMergeKMSCascade_AC15(t *testing.T) {
+	got := mergeKMSAll(
+		zeroKropathKMS, zeroKropathKMS,
+		zeroKMSCfg, zeroKMSCfg, zeroKMSCfg, zeroKMSCfg,
+		zeroKropathKMS, zeroKropathKMS,
+	)
+
+	if len(got.Mandatory.AllowedGrantOperations) != 0 {
+		t.Errorf("AC-15: mandatory.allowedGrantOperations should be empty; got %v",
+			got.Mandatory.AllowedGrantOperations)
+	}
+	if len(got.Defaults.AllowedGrantOperations) != 0 {
+		t.Errorf("AC-15: defaults.allowedGrantOperations should be empty; got %v",
+			got.Defaults.AllowedGrantOperations)
+	}
+}
+
+// TestMergeKMSCascade_AllowedGrantOperationsNotReadFromKropathConfig — populating every
+// KropathConfig-sourced KMS field (both tiers, both KropathConfig levels) must never
+// surface as allowedGrantOperations. Unlike allowedKeySpecs, this field has no
+// KropathConfig levels at all (aws-kms-03 spec, ADR-018 D-3): KMSKropathSection carries
+// no AllowedGrantOperations field to set, so this test proves the absence behaviorally —
+// populating every other KropathConfig-sourced field must not leak a value into it.
+func TestMergeKMSCascade_AllowedGrantOperationsNotReadFromKropathConfig(t *testing.T) {
+	fullKropath := cascade.KMSKropathSection{
+		EnableKeyRotation: true,
+		AllowedKeySpecs:   []string{"SYMMETRIC_DEFAULT"},
+		Tags:              map[string]string{"team": "payments"},
+	}
+	got := mergeKMSAll(
+		fullKropath, fullKropath,
+		zeroKMSCfg, zeroKMSCfg, zeroKMSCfg, zeroKMSCfg,
+		fullKropath, fullKropath,
+	)
+
+	if len(got.Mandatory.AllowedGrantOperations) != 0 {
+		t.Errorf("mandatory.allowedGrantOperations must not be populated from KropathConfig; got %v",
+			got.Mandatory.AllowedGrantOperations)
+	}
+	if len(got.Defaults.AllowedGrantOperations) != 0 {
+		t.Errorf("defaults.allowedGrantOperations must not be populated from KropathConfig; got %v",
+			got.Defaults.AllowedGrantOperations)
+	}
+}
+
+// TestMergeKMSCascade_AllowedGrantOperationsMandatoryCascadeOrder verifies the mandatory
+// priority order for allowedGrantOperations (level 3 > 4 only — no KropathConfig levels,
+// per aws-kms-03 spec).
+func TestMergeKMSCascade_AllowedGrantOperationsMandatoryCascadeOrder(t *testing.T) {
+	cases := []struct {
+		name                  string
+		globalKMSCfgMandatory cascade.KMSConfigSection
+		localKMSCfgMandatory  cascade.KMSConfigSection
+		want                  []string
+	}{
+		{
+			name:                  "level3-wins",
+			globalKMSCfgMandatory: cascade.KMSConfigSection{AllowedGrantOperations: []string{"LEVEL3"}},
+			localKMSCfgMandatory:  cascade.KMSConfigSection{AllowedGrantOperations: []string{"LEVEL4"}},
+			want:                  []string{"LEVEL3"},
+		},
+		{
+			name:                  "level4-wins-when-3-absent",
+			globalKMSCfgMandatory: zeroKMSCfg,
+			localKMSCfgMandatory:  cascade.KMSConfigSection{AllowedGrantOperations: []string{"LEVEL4"}},
+			want:                  []string{"LEVEL4"},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := mergeKMSAll(
+				zeroKropathKMS, zeroKropathKMS,
+				tc.globalKMSCfgMandatory, tc.localKMSCfgMandatory,
+				zeroKMSCfg, zeroKMSCfg,
+				zeroKropathKMS, zeroKropathKMS,
+			)
+			if len(got.Mandatory.AllowedGrantOperations) != len(tc.want) ||
+				(len(tc.want) > 0 && got.Mandatory.AllowedGrantOperations[0] != tc.want[0]) {
+				t.Errorf("mandatory.allowedGrantOperations = %v, want %v",
+					got.Mandatory.AllowedGrantOperations, tc.want)
+			}
+		})
+	}
+}
+
+// TestMergeKMSCascade_AllowedGrantOperationsDefaultsCascadeOrder verifies the defaults
+// priority order for allowedGrantOperations (level 6 > 7 only — no KropathConfig levels,
+// per aws-kms-03 spec).
+func TestMergeKMSCascade_AllowedGrantOperationsDefaultsCascadeOrder(t *testing.T) {
+	cases := []struct {
+		name                 string
+		localKMSCfgDefaults  cascade.KMSConfigSection
+		globalKMSCfgDefaults cascade.KMSConfigSection
+		want                 []string
+	}{
+		{
+			name:                 "level6-wins",
+			localKMSCfgDefaults:  cascade.KMSConfigSection{AllowedGrantOperations: []string{"LEVEL6"}},
+			globalKMSCfgDefaults: cascade.KMSConfigSection{AllowedGrantOperations: []string{"LEVEL7"}},
+			want:                 []string{"LEVEL6"},
+		},
+		{
+			name:                 "level7-wins-when-6-absent",
+			localKMSCfgDefaults:  zeroKMSCfg,
+			globalKMSCfgDefaults: cascade.KMSConfigSection{AllowedGrantOperations: []string{"LEVEL7"}},
+			want:                 []string{"LEVEL7"},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := mergeKMSAll(
+				zeroKropathKMS, zeroKropathKMS,
+				zeroKMSCfg, zeroKMSCfg,
+				tc.localKMSCfgDefaults, tc.globalKMSCfgDefaults,
+				zeroKropathKMS, zeroKropathKMS,
+			)
+			if len(got.Defaults.AllowedGrantOperations) != len(tc.want) ||
+				(len(tc.want) > 0 && got.Defaults.AllowedGrantOperations[0] != tc.want[0]) {
+				t.Errorf("defaults.allowedGrantOperations = %v, want %v",
+					got.Defaults.AllowedGrantOperations, tc.want)
+			}
+		})
+	}
+}
+
 // TestMergeKMSCascade_AllAbsent — when all sources are zero, effectiveConfig
 // fields are all zero (permissive; no governance enforced).
 func TestMergeKMSCascade_AllAbsent(t *testing.T) {
@@ -315,6 +499,9 @@ func TestMergeKMSCascade_AllAbsent(t *testing.T) {
 	if len(got.Mandatory.AllowedKeySpecs) != 0 {
 		t.Errorf("all-absent: mandatory.allowedKeySpecs = %v, want empty", got.Mandatory.AllowedKeySpecs)
 	}
+	if len(got.Mandatory.AllowedGrantOperations) != 0 {
+		t.Errorf("all-absent: mandatory.allowedGrantOperations = %v, want empty", got.Mandatory.AllowedGrantOperations)
+	}
 	if got.Defaults.EnableKeyRotation {
 		t.Error("all-absent: defaults.enableKeyRotation should be false")
 	}
@@ -323,6 +510,9 @@ func TestMergeKMSCascade_AllAbsent(t *testing.T) {
 	}
 	if len(got.Defaults.AllowedKeySpecs) != 0 {
 		t.Errorf("all-absent: defaults.allowedKeySpecs = %v, want empty", got.Defaults.AllowedKeySpecs)
+	}
+	if len(got.Defaults.AllowedGrantOperations) != 0 {
+		t.Errorf("all-absent: defaults.allowedGrantOperations = %v, want empty", got.Defaults.AllowedGrantOperations)
 	}
 }
 

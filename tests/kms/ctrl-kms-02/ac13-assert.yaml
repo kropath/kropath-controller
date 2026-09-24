@@ -1,0 +1,13 @@
+# Assert AC-13: mandatory.allowedGrantOperations=["Decrypt","DescribeKey"] from
+# level-3 global KMSConfig.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
+metadata:
+  name: grantops13-general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    mandatory:
+      allowedGrantOperations:
+        - "Decrypt"
+        - "DescribeKey"
