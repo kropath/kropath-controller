@@ -660,3 +660,116 @@ func TestMergeCloudFrontCascade_CFConfigOnlyFieldsIgnoreKropathLevels(t *testing
 		t.Errorf("cf-only-fields: mandatory.geoRestrictionType = %q, want empty", got.Mandatory.GeoRestrictionType)
 	}
 }
+
+// TestMergeCloudFrontCascade_VpcOriginProtocolPolicy_Mandatory — vpcOriginProtocolPolicy is
+// CloudFrontConfig-only; level 3 wins over level 4 in the mandatory tier.
+func TestMergeCloudFrontCascade_VpcOriginProtocolPolicy_Mandatory(t *testing.T) {
+	cases := []struct {
+		name                 string
+		globalCFCfgMandatory cascade.CloudFrontConfigSection
+		localCFCfgMandatory  cascade.CloudFrontConfigSection
+		wantPolicy           string
+	}{
+		{
+			name:                 "level3-wins",
+			globalCFCfgMandatory: cascade.CloudFrontConfigSection{VpcOriginProtocolPolicy: "https-only"},
+			localCFCfgMandatory:  cascade.CloudFrontConfigSection{VpcOriginProtocolPolicy: "http-only"},
+			wantPolicy:           "https-only",
+		},
+		{
+			name:                 "level4-wins-when-3-absent",
+			globalCFCfgMandatory: zeroCFCfg,
+			localCFCfgMandatory:  cascade.CloudFrontConfigSection{VpcOriginProtocolPolicy: "match-viewer"},
+			wantPolicy:           "match-viewer",
+		},
+		{
+			name:                 "empty-when-3-4-absent",
+			globalCFCfgMandatory: zeroCFCfg,
+			localCFCfgMandatory:  zeroCFCfg,
+			wantPolicy:           "",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := mergeCFAll(
+				zeroKropathCF,
+				zeroKropathCF,
+				tc.globalCFCfgMandatory,
+				tc.localCFCfgMandatory,
+				zeroCFCfg,
+				zeroCFCfg,
+				zeroKropathCF,
+				zeroKropathCF,
+			)
+			if got.Mandatory.VpcOriginProtocolPolicy != tc.wantPolicy {
+				t.Errorf("mandatory.vpcOriginProtocolPolicy = %q, want %q", got.Mandatory.VpcOriginProtocolPolicy, tc.wantPolicy)
+			}
+		})
+	}
+}
+
+// TestMergeCloudFrontCascade_VpcOriginProtocolPolicy_Defaults — vpcOriginProtocolPolicy is
+// CloudFrontConfig-only; level 6 wins over level 7 in the defaults tier.
+func TestMergeCloudFrontCascade_VpcOriginProtocolPolicy_Defaults(t *testing.T) {
+	cases := []struct {
+		name                string
+		localCFCfgDefaults  cascade.CloudFrontConfigSection
+		globalCFCfgDefaults cascade.CloudFrontConfigSection
+		wantPolicy          string
+	}{
+		{
+			name:                "level6-wins",
+			localCFCfgDefaults:  cascade.CloudFrontConfigSection{VpcOriginProtocolPolicy: "https-only"},
+			globalCFCfgDefaults: cascade.CloudFrontConfigSection{VpcOriginProtocolPolicy: "http-only"},
+			wantPolicy:          "https-only",
+		},
+		{
+			name:                "level7-wins-when-6-absent",
+			localCFCfgDefaults:  zeroCFCfg,
+			globalCFCfgDefaults: cascade.CloudFrontConfigSection{VpcOriginProtocolPolicy: "https-only"},
+			wantPolicy:          "https-only",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := mergeCFAll(
+				zeroKropathCF,
+				zeroKropathCF,
+				zeroCFCfg,
+				zeroCFCfg,
+				tc.localCFCfgDefaults,
+				tc.globalCFCfgDefaults,
+				zeroKropathCF,
+				zeroKropathCF,
+			)
+			if got.Defaults.VpcOriginProtocolPolicy != tc.wantPolicy {
+				t.Errorf("defaults.vpcOriginProtocolPolicy = %q, want %q", got.Defaults.VpcOriginProtocolPolicy, tc.wantPolicy)
+			}
+		})
+	}
+}
+
+// TestMergeCloudFrontCascade_VpcOriginProtocolPolicyIgnoresKropathLevels — vpcOriginProtocolPolicy
+// is not promoted to KropathConfig (ADR-018 D-3); CloudFrontKropathSection has no such field, so
+// this asserts the merge stays empty when only CFConfig-only fields on other struct types are set.
+func TestMergeCloudFrontCascade_VpcOriginProtocolPolicyIgnoresKropathLevels(t *testing.T) {
+	got := mergeCFAll(
+		zeroKropathCF,
+		zeroKropathCF,
+		zeroCFCfg,
+		zeroCFCfg,
+		zeroCFCfg,
+		zeroCFCfg,
+		zeroKropathCF,
+		zeroKropathCF,
+	)
+
+	if got.Mandatory.VpcOriginProtocolPolicy != "" {
+		t.Errorf("vpc-origin-protocol-policy: mandatory.vpcOriginProtocolPolicy = %q, want empty (KropathConfig has no vpcOriginProtocolPolicy)", got.Mandatory.VpcOriginProtocolPolicy)
+	}
+	if got.Defaults.VpcOriginProtocolPolicy != "" {
+		t.Errorf("vpc-origin-protocol-policy: defaults.vpcOriginProtocolPolicy = %q, want empty", got.Defaults.VpcOriginProtocolPolicy)
+	}
+}

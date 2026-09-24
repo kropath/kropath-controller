@@ -20,7 +20,7 @@ package cascade
 // Only 4 scalar fields are governed at the KropathConfig level:
 // viewerProtocolPolicy, minimumProtocolVersion, webACLRequired, and loggingEnabled.
 // The remaining CloudFront-specific fields (httpVersion, sslSupportMethod, loggingBucket,
-// priceClass, geoRestrictionType, oacSigningBehavior, namingTemplate) are
+// priceClass, geoRestrictionType, oacSigningBehavior, vpcOriginProtocolPolicy, namingTemplate) are
 // CloudFrontConfig-only (family design §8).
 //
 // Zero value of each field is the permissive sentinel (not enforced).
@@ -101,6 +101,13 @@ type CloudFrontConfigSection struct {
 	// Governed only at CloudFrontConfig levels 3-4 (mandatory) and 6-7 (defaults).
 	OacSigningBehavior string `json:"oacSigningBehavior,omitempty"`
 
+	// VpcOriginProtocolPolicy enforces the origin-leg protocol policy for VPC origins
+	// in this profile.
+	// Empty string = not enforced; "http-only" | "https-only" | "match-viewer".
+	// Governed only at CloudFrontConfig levels 3-4 (mandatory) and 6-7 (defaults).
+	// CloudFrontConfig-only — not promoted to KropathConfig (ADR-018 D-3).
+	VpcOriginProtocolPolicy string `json:"vpcOriginProtocolPolicy,omitempty"`
+
 	// NamingTemplate is the cloud resource naming template for this profile.
 	// Empty string = not enforced.
 	// Governed only at CloudFrontConfig levels 3-4 (mandatory) and 6-7 (defaults).
@@ -124,20 +131,21 @@ type CloudFrontConfigSection struct {
 // EffectiveCloudFrontSection is one tier (mandatory or defaults) of the merged CloudFront
 // governance result written into CloudFrontConfig.status.effectiveConfig by the controller.
 type EffectiveCloudFrontSection struct {
-	ViewerProtocolPolicy   string            `json:"viewerProtocolPolicy,omitempty"`
-	MinimumProtocolVersion string            `json:"minimumProtocolVersion,omitempty"`
-	HttpVersion            string            `json:"httpVersion,omitempty"`
-	SslSupportMethod       string            `json:"sslSupportMethod,omitempty"`
-	LoggingEnabled         bool              `json:"loggingEnabled,omitempty"`
-	LoggingBucket          string            `json:"loggingBucket,omitempty"`
-	PriceClass             string            `json:"priceClass,omitempty"`
-	WebACLRequired         bool              `json:"webACLRequired,omitempty"`
-	GeoRestrictionType     string            `json:"geoRestrictionType,omitempty"`
-	OacSigningBehavior     string            `json:"oacSigningBehavior,omitempty"`
-	NamingTemplate         string            `json:"namingTemplate,omitempty"`
-	Tags                   map[string]string `json:"tags,omitempty"`
-	SyncedLabels           map[string]string `json:"syncedLabels,omitempty"`
-	SyncedAnnotations      map[string]string `json:"syncedAnnotations,omitempty"`
+	ViewerProtocolPolicy    string            `json:"viewerProtocolPolicy,omitempty"`
+	MinimumProtocolVersion  string            `json:"minimumProtocolVersion,omitempty"`
+	HttpVersion             string            `json:"httpVersion,omitempty"`
+	SslSupportMethod        string            `json:"sslSupportMethod,omitempty"`
+	LoggingEnabled          bool              `json:"loggingEnabled,omitempty"`
+	LoggingBucket           string            `json:"loggingBucket,omitempty"`
+	PriceClass              string            `json:"priceClass,omitempty"`
+	WebACLRequired          bool              `json:"webACLRequired,omitempty"`
+	GeoRestrictionType      string            `json:"geoRestrictionType,omitempty"`
+	OacSigningBehavior      string            `json:"oacSigningBehavior,omitempty"`
+	VpcOriginProtocolPolicy string            `json:"vpcOriginProtocolPolicy,omitempty"`
+	NamingTemplate          string            `json:"namingTemplate,omitempty"`
+	Tags                    map[string]string `json:"tags,omitempty"`
+	SyncedLabels            map[string]string `json:"syncedLabels,omitempty"`
+	SyncedAnnotations       map[string]string `json:"syncedAnnotations,omitempty"`
 }
 
 // EffectiveCloudFrontConfig is the merged CloudFront governance result written into
@@ -166,8 +174,8 @@ type EffectiveCloudFrontConfig struct {
 // Tags: additive union merge across all four mandatory levels, all four defaults levels.
 // SyncedLabels/SyncedAnnotations: additive union from CloudFrontConfig levels only (no KropathConfig).
 // HttpVersion, SslSupportMethod, LoggingBucket, PriceClass, GeoRestrictionType,
-// OacSigningBehavior, NamingTemplate: governed only at CloudFrontConfig levels 3-4 (mandatory)
-// and 6-7 (defaults).
+// OacSigningBehavior, VpcOriginProtocolPolicy, NamingTemplate: governed only at CloudFrontConfig
+// levels 3-4 (mandatory) and 6-7 (defaults).
 func MergeCloudFrontCascade(
 	globalKropathMandatory CloudFrontKropathSection, // level 1
 	localKropathMandatory CloudFrontKropathSection, // level 2
@@ -238,6 +246,11 @@ func MergeCloudFrontCascade(
 				globalCFCfgMandatory.OacSigningBehavior, // level 3
 				localCFCfgMandatory.OacSigningBehavior,  // level 4
 			),
+			// vpcOriginProtocolPolicy: CloudFrontConfig levels only (3, 4).
+			VpcOriginProtocolPolicy: firstNonEmptyString(
+				globalCFCfgMandatory.VpcOriginProtocolPolicy, // level 3
+				localCFCfgMandatory.VpcOriginProtocolPolicy,  // level 4
+			),
 			// namingTemplate: CloudFrontConfig levels only (3, 4).
 			NamingTemplate: firstNonEmptyString(
 				globalCFCfgMandatory.NamingTemplate, // level 3
@@ -256,24 +269,24 @@ func MergeCloudFrontCascade(
 			),
 			// Tags: union of all mandatory sources; L4 added first, L1 wins on key conflict.
 			Tags: mergeMaps(
-				localCFCfgMandatory.Tags,   // level 4 (lowest priority)
-				globalCFCfgMandatory.Tags,  // level 3
-				localKropathMandatory.Tags, // level 2
+				localCFCfgMandatory.Tags,    // level 4 (lowest priority)
+				globalCFCfgMandatory.Tags,   // level 3
+				localKropathMandatory.Tags,  // level 2
 				globalKropathMandatory.Tags, // level 1 (highest priority)
 			),
 		},
 		Defaults: EffectiveCloudFrontSection{
 			// viewerProtocolPolicy: CloudFrontConfig levels 6-7 + KropathConfig levels 8-9.
 			ViewerProtocolPolicy: firstNonEmptyString(
-				localCFCfgDefaults.ViewerProtocolPolicy,  // level 6
-				globalCFCfgDefaults.ViewerProtocolPolicy, // level 7
+				localCFCfgDefaults.ViewerProtocolPolicy,    // level 6
+				globalCFCfgDefaults.ViewerProtocolPolicy,   // level 7
 				localKropathDefaults.ViewerProtocolPolicy,  // level 8
 				globalKropathDefaults.ViewerProtocolPolicy, // level 9
 			),
 			// minimumProtocolVersion: CloudFrontConfig levels 6-7 + KropathConfig levels 8-9.
 			MinimumProtocolVersion: firstNonEmptyString(
-				localCFCfgDefaults.MinimumProtocolVersion,  // level 6
-				globalCFCfgDefaults.MinimumProtocolVersion, // level 7
+				localCFCfgDefaults.MinimumProtocolVersion,    // level 6
+				globalCFCfgDefaults.MinimumProtocolVersion,   // level 7
 				localKropathDefaults.MinimumProtocolVersion,  // level 8
 				globalKropathDefaults.MinimumProtocolVersion, // level 9
 			),
@@ -289,8 +302,8 @@ func MergeCloudFrontCascade(
 			),
 			// loggingEnabled: CloudFrontConfig levels 6-7 + KropathConfig levels 8-9.
 			LoggingEnabled: firstTrue(
-				localCFCfgDefaults.LoggingEnabled,  // level 6
-				globalCFCfgDefaults.LoggingEnabled, // level 7
+				localCFCfgDefaults.LoggingEnabled,    // level 6
+				globalCFCfgDefaults.LoggingEnabled,   // level 7
 				localKropathDefaults.LoggingEnabled,  // level 8
 				globalKropathDefaults.LoggingEnabled, // level 9
 			),
@@ -306,8 +319,8 @@ func MergeCloudFrontCascade(
 			),
 			// webACLRequired: CloudFrontConfig levels 6-7 + KropathConfig levels 8-9.
 			WebACLRequired: firstTrue(
-				localCFCfgDefaults.WebACLRequired,  // level 6
-				globalCFCfgDefaults.WebACLRequired, // level 7
+				localCFCfgDefaults.WebACLRequired,    // level 6
+				globalCFCfgDefaults.WebACLRequired,   // level 7
 				localKropathDefaults.WebACLRequired,  // level 8
 				globalKropathDefaults.WebACLRequired, // level 9
 			),
@@ -320,6 +333,11 @@ func MergeCloudFrontCascade(
 			OacSigningBehavior: firstNonEmptyString(
 				localCFCfgDefaults.OacSigningBehavior,  // level 6
 				globalCFCfgDefaults.OacSigningBehavior, // level 7
+			),
+			// vpcOriginProtocolPolicy: CloudFrontConfig levels only (6, 7).
+			VpcOriginProtocolPolicy: firstNonEmptyString(
+				localCFCfgDefaults.VpcOriginProtocolPolicy,  // level 6
+				globalCFCfgDefaults.VpcOriginProtocolPolicy, // level 7
 			),
 			// namingTemplate: CloudFrontConfig levels only (6, 7).
 			NamingTemplate: firstNonEmptyString(
