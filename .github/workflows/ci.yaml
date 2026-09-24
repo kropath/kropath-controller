@@ -148,10 +148,10 @@ jobs:
         if: needs.changes.outputs.code == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # kropath-aws#284 (KRO-1149) adds the backup/kinesis/networkfirewall
-          # sections this PR's fixture depends on; not yet on kropath-aws@main.
-          # Clear back to "" once that PR merges.
-          KROPATH_AWS_COMPANION_REFS: "kro-1149-kropathconfig-family-schema"
+          # kropath-aws#284 (KRO-1149) merged 2026-09-19; its backup/kinesis/
+          # networkfirewall sections are on kropath-aws@main now, so the
+          # companion ref is cleared back to "" per the comment above (KRO-1241).
+          KROPATH_AWS_COMPANION_REFS: ""
         run: make crds-verify
 
   security:

@@ -10,6 +10,3 @@ spec:
   defaults:
     ecr:
       encryptionType: AES256
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"

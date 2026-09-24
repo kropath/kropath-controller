@@ -3,7 +3,4 @@ kind: KropathConfig
 metadata:
   name: baseline
   namespace: ecrpublic-global-ns
-spec:
-  aws:
-    accountId: "123456789012"
-    region: us-east-1
+spec: {}

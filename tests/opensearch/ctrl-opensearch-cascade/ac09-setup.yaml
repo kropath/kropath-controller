@@ -24,10 +24,7 @@ kind: KropathConfig
 metadata:
   name: baseline
   namespace: ac09-opensearch-global-ns
-spec:
-  aws:
-    accountId: "123456789012"
-    region: "ap-southeast-2"
+spec: {}
 ---
 # Global OpenSearchConfig: syncedLabels at level 3. "data-class" wins over local level 4.
 apiVersion: aws.kropath.run/v1alpha1

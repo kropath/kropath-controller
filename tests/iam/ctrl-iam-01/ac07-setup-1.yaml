@@ -11,6 +11,3 @@ spec:
   defaults:
     iam:
       permissionsBoundaryArn: "arn:aws:iam::123456789012:policy/DefaultBoundary"
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"

@@ -8,6 +8,3 @@ spec:
   mandatory:
     syncedLabels:
       workload-type: ecs
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"

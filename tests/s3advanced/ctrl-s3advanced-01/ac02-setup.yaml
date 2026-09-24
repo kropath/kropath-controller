@@ -20,9 +20,6 @@ metadata:
   namespace: ac02-s3advanced-global-ns
 spec:
   mandatory: {}
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: S3AdvancedConfig

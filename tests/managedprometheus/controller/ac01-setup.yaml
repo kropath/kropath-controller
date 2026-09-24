@@ -22,9 +22,6 @@ spec:
   mandatory:
     managedprometheus:
       alias: "prod-amp"
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"
 ---
 # Empty local ManagedPrometheusConfig for ac01 — cascade sources come from global configs.
 apiVersion: aws.kropath.run/v1alpha1

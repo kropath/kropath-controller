@@ -24,9 +24,6 @@ spec:
     s3Advanced:
       accessPointPublicAccessBlock:
         blockPublicACLs: true
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: S3AdvancedConfig

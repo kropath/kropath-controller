@@ -23,9 +23,6 @@ spec:
   mandatory:
     route53:
       healthCheckRequestInterval: 10
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: Route53Config

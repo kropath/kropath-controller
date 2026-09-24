@@ -27,9 +27,6 @@ metadata:
   namespace: ac12-mq-global-ns
 spec:
   mandatory: {}
-  aws:
-    accountId: "123456789012"
-    region: "ap-southeast-2"
 ---
 # Global MQConfig mandatory (level 3) — wins on key conflict in mandatory syncedLabels.
 apiVersion: aws.kropath.run/v1alpha1

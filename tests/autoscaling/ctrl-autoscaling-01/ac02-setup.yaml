@@ -26,9 +26,6 @@ spec:
   mandatory:
     autoscaling:
       newInstancesProtectedFromScaleIn: true
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"
 ---
 # AC-C2: globalAutoScalingConfig mandatory.newInstancesProtectedFromScaleIn=false (level 3).
 # Level 1 from KropathConfig must win over this.

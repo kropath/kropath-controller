@@ -25,9 +25,6 @@ metadata:
   namespace: ac09-s3advanced-global-ns
 spec:
   mandatory: {}
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"
 ---
 # Level-3: global S3AdvancedConfig (kro-system) — wins on "cost-centre" conflict.
 apiVersion: aws.kropath.run/v1alpha1

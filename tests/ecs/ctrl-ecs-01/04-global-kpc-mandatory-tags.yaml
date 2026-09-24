@@ -9,6 +9,3 @@ spec:
     tags:
       cost-centre: infra
       owner: platform
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"

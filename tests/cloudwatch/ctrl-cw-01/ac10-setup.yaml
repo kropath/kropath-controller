@@ -23,9 +23,6 @@ spec:
     tags:
       cost-centre: "platform"
       env: "org-level"
-  aws:
-    accountId: "123456789012"
-    region: "ap-southeast-2"
 ---
 # Local CloudWatchConfig with its own tags — union merge expected; KC wins on "env".
 apiVersion: aws.kropath.run/v1alpha1

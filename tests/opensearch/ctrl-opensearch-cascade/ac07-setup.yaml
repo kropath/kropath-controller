@@ -29,9 +29,6 @@ spec:
     tags:
       cost-centre: infra
       owner: platform
-  aws:
-    accountId: "123456789012"
-    region: "ap-southeast-2"
 ---
 # Global OpenSearchConfig: tags at level 3 add "team" and contest "cost-centre".
 apiVersion: aws.kropath.run/v1alpha1

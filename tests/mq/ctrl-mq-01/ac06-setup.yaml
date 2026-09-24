@@ -21,9 +21,6 @@ metadata:
   namespace: ac06-mq-global-ns
 spec:
   mandatory: {}
-  aws:
-    accountId: "123456789012"
-    region: "ap-southeast-2"
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: MQConfig

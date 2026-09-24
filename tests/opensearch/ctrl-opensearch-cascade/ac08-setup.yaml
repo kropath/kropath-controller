@@ -25,10 +25,7 @@ kind: KropathConfig
 metadata:
   name: baseline
   namespace: ac08-opensearch-global-ns
-spec:
-  aws:
-    accountId: "123456789012"
-    region: "ap-southeast-2"
+spec: {}
 ---
 # Global OpenSearchConfig (level 3 mandatory).
 apiVersion: aws.kropath.run/v1alpha1

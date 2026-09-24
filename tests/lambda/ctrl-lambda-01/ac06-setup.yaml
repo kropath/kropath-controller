@@ -21,9 +21,6 @@ metadata:
   namespace: ac06-lambda-global-ns
 spec:
   mandatory: {}
-  aws:
-    accountId: "987654321098"
-    region: "eu-west-1"
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: LambdaConfig

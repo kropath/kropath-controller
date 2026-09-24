@@ -43,10 +43,7 @@ kind: KropathConfig
 metadata:
   name: baseline
   namespace: ac09-quicksight-global-ns
-spec:
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"
+spec: {}
 ---
 # Level 2 — KropathConfig named `baseline` in the resource namespace.
 apiVersion: aws.kropath.run/v1alpha1

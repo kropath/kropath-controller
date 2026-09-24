@@ -26,9 +26,6 @@ spec:
   mandatory:
     kms:
       enableKeyRotation: true
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"
 ---
 # AC-2: globalKMSConfig mandatory.enableKeyRotation=false (zero value = not enforced, level 3).
 apiVersion: aws.kropath.run/v1alpha1
