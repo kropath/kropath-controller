@@ -43,9 +43,6 @@ spec:
   defaults:
     tags:
       env: "prod"
-  aws:
-    accountId: "111122223333"
-    region: "us-east-1"
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: BackupConfig

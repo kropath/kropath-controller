@@ -18,10 +18,7 @@ kind: KropathConfig
 metadata:
   name: baseline
   namespace: ac12-memorydb-global-ns
-spec:
-  aws:
-    accountId: "999888777666"
-    region: "us-east-1"
+spec: {}
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: MemoryDBConfig

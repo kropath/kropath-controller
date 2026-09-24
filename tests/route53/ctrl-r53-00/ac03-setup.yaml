@@ -37,10 +37,7 @@ kind: KropathConfig
 metadata:
   name: baseline
   namespace: ac03-r53-global-ns
-spec:
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"
+spec: {}
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: Route53Config

@@ -37,9 +37,6 @@ spec:
   defaults:
     emr:
       releaseLabel: "emr-6.1.0"
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: EMRConfig

@@ -18,10 +18,7 @@ kind: KropathConfig
 metadata:
   name: baseline
   namespace: ac10-efs-global-ns
-spec:
-  aws:
-    accountId: "123456789012"
-    region: us-east-1
+spec: {}
 ---
 # Local EFSConfig (namespace=efs) — base resource used across multiple AC steps.
 # No mandatory or defaults fields set; tests layer governance on top.

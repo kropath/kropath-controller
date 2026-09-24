@@ -11,6 +11,3 @@ spec:
   defaults:
     kms:
       enableKeyRotation: true
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"

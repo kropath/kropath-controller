@@ -26,9 +26,6 @@ metadata:
 spec:
   mandatory:
     cloudwatch: {}
-  aws:
-    accountId: "123456789012"
-    region: "ap-southeast-2"
 ---
 # Global CloudWatchConfig with actionsEnabled=false at level 3.
 apiVersion: aws.kropath.run/v1alpha1

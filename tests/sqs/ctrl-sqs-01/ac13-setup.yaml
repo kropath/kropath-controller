@@ -18,10 +18,7 @@ kind: KropathConfig
 metadata:
   name: baseline
   namespace: ac13-sqs-global-ns
-spec:
-  aws:
-    accountId: "123456789012"
-    region: "ap-southeast-2"
+spec: {}
 ---
 # Shared empty local SQSConfig — all cascade sources come from global configs.
 apiVersion: aws.kropath.run/v1alpha1

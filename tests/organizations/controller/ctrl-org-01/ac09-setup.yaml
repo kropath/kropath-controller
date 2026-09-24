@@ -23,9 +23,6 @@ spec:
   mandatory:
     organizations:
       iamUserAccessToBilling: "deny"
-  aws:
-    accountId: "123456789012"
-    region: "ap-southeast-2"
 ---
 # AC-9: local OrganizationsConfig — mandatory and defaults empty so only L1 feeds effectiveConfig.
 apiVersion: aws.kropath.run/v1alpha1

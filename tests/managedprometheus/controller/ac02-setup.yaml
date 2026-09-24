@@ -18,10 +18,7 @@ kind: KropathConfig
 metadata:
   name: baseline
   namespace: ac02-managedprometheus-global-ns
-spec:
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"
+spec: {}
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: ManagedPrometheusConfig

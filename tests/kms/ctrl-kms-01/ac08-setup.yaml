@@ -27,9 +27,6 @@ spec:
     kms:
       allowedKeySpecs:
       - "SYMMETRIC_DEFAULT"
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"
 ---
 # Shared empty local KMSConfig — all cascade sources come from global configs.
 apiVersion: aws.kropath.run/v1alpha1

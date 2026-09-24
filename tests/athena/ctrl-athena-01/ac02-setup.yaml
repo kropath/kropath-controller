@@ -40,9 +40,6 @@ spec:
       enforceWorkGroupConfiguration: true
       enableMinimumEncryptionConfiguration: true
       publishCloudWatchMetricsEnabled: true
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: AthenaConfig

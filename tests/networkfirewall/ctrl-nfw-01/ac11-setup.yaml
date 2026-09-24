@@ -32,10 +32,7 @@ kind: KropathConfig
 metadata:
   name: baseline
   namespace: ac11-nfw-global-ns
-spec:
-  aws:
-    accountId: "999888777666"
-    region: "eu-west-1"
+spec: {}
 ---
 apiVersion: aws.kropath.run/v1alpha1
 kind: NetworkFirewallConfig

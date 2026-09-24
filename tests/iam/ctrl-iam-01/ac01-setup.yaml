@@ -22,9 +22,6 @@ spec:
   mandatory:
     iam:
       permissionsBoundaryArn: "arn:aws:iam::123456789012:policy/GlobalBlanket"
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"
 ---
 # IAMConfig used across multiple AC tests as the namespaced config.
 apiVersion: aws.kropath.run/v1alpha1

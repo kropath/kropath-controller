@@ -13,6 +13,3 @@ spec:
     kms:
       allowedKeySpecs:
         - "RSA_4096"
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"

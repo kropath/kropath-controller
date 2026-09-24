@@ -26,9 +26,6 @@ spec:
   mandatory:
     iam:
       maxSessionDurationSeconds: 3600
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"
 ---
 # AC-4: level-3 globalIAMConfig mandatory maxSessionDurationSeconds=7200 (should lose).
 apiVersion: aws.kropath.run/v1alpha1

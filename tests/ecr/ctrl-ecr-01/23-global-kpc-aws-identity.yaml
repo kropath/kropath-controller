@@ -5,9 +5,9 @@ metadata:
   namespace: ecr-global-ns
 spec:
   mandatory: {}
-  # spec.aws is deleted (ADR-019); the CRD still accepts it until KRO-1129 also
-  # drops the schema field, but the controller never reads it -- kept here only
-  # to prove that carrying it is inert, not rejected (spec AC-2).
-  aws:
-    accountId: "987654321098"
-    region: "eu-west-1"
+  # spec.aws was removed from the schema entirely in KRO-1241 (ADR-019,
+  # completing KRO-1129); the field cannot be set on this object at all
+  # anymore. Kept name/namespace matching AC-16's original intent -- proves
+  # effectiveConfig.aws is resolved solely from the resource namespace's
+  # owner-account-id/default-region annotations, never from KropathConfig
+  # (spec AC-2, controller-account-region-placement.md).

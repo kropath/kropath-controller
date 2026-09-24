@@ -22,9 +22,6 @@ spec:
   mandatory:
     tags:
       cost-centre: platform
-  aws:
-    accountId: "123456789012"
-    region: "us-east-1"
 ---
 # AC-C8: localAutoScalingConfig with mandatory.tags (level 4).
 # cost-centre is also set by KropathConfig; KropathConfig must win.
