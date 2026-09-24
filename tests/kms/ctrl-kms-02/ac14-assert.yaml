@@ -1,0 +1,12 @@
+# Assert AC-14: defaults.allowedGrantOperations=["Decrypt"] from level-6 local
+# KMSConfig; mandatory tier must not be populated.
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
+metadata:
+  name: grantops14-general-policy
+  namespace: payments-prod
+status:
+  effectiveConfig:
+    defaults:
+      allowedGrantOperations:
+        - "Decrypt"

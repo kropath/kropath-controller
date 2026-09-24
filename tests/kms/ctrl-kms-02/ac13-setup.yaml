@@ -1,0 +1,22 @@
+# AC-13 (aws-kms-03 spec): globalKMSConfig mandatory.allowedGrantOperations (level 3).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
+metadata:
+  name: grantops13-general-policy
+  namespace: kro-system
+spec:
+  mandatory:
+    allowedGrantOperations:
+      - "Decrypt"
+      - "DescribeKey"
+  defaults: {}
+---
+# Local KMSConfig — cascade source is the global KMSConfig above (level 4 empty).
+apiVersion: aws.kropath.run/v1alpha1
+kind: KMSConfig
+metadata:
+  name: grantops13-general-policy
+  namespace: payments-prod
+spec:
+  mandatory: {}
+  defaults: {}

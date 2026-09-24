@@ -60,6 +60,12 @@ type KMSConfigSection struct {
 	// nil / empty slice = no restriction.
 	AllowedKeySpecs []string `json:"allowedKeySpecs,omitempty"`
 
+	// AllowedGrantOperations is the allowlist of KMS operations a KMSGrant may
+	// confer for this profile (aws-kms-03 spec, ADR-018 D-3). Per-profile only —
+	// it is deliberately absent from KropathConfig, unlike AllowedKeySpecs.
+	// nil / empty slice = no restriction.
+	AllowedGrantOperations []string `json:"allowedGrantOperations,omitempty"`
+
 	// Tags are cloud resource tags for this KMS config profile.
 	// nil / empty map (zero value) = no tags at this level.
 	Tags map[string]string `json:"tags,omitempty"`
@@ -68,11 +74,12 @@ type KMSConfigSection struct {
 // EffectiveKMSSection is one tier (mandatory or defaults) of the merged KMS governance
 // result written into KMSConfig.status.effectiveConfig by the controller.
 type EffectiveKMSSection struct {
-	EnableKeyRotation bool              `json:"enableKeyRotation,omitempty"`
-	KeySpec           string            `json:"keySpec,omitempty"`
-	KeyUsage          string            `json:"keyUsage,omitempty"`
-	AllowedKeySpecs   []string          `json:"allowedKeySpecs,omitempty"`
-	Tags              map[string]string `json:"tags,omitempty"`
+	EnableKeyRotation      bool              `json:"enableKeyRotation,omitempty"`
+	KeySpec                string            `json:"keySpec,omitempty"`
+	KeyUsage               string            `json:"keyUsage,omitempty"`
+	AllowedKeySpecs        []string          `json:"allowedKeySpecs,omitempty"`
+	AllowedGrantOperations []string          `json:"allowedGrantOperations,omitempty"`
+	Tags                   map[string]string `json:"tags,omitempty"`
 }
 
 // EffectiveKMSConfig is the merged KMS governance result written into
@@ -104,6 +111,9 @@ type EffectiveKMSConfig struct {
 // keySpec and keyUsage are not in KropathConfig (per-key choices per family design §8),
 // so they only appear at levels 3–4 (mandatory) and 6–7 (defaults).
 // enableKeyRotation and allowedKeySpecs appear at all four mandatory/defaults levels.
+// allowedGrantOperations (aws-kms-03 spec, ADR-018 D-3) is per-profile only and has no
+// KropathConfig levels at all, so — like keySpec/keyUsage — it only appears at levels
+// 3–4 (mandatory) and 6–7 (defaults); it must never read from a KMSKropathSection input.
 // Tags appear at all four mandatory/defaults levels; KropathSection.Tags carries the
 // tier-level KropathConfig.mandatory.tags (populated by the reconciler).
 func MergeKMSCascade(
@@ -142,6 +152,11 @@ func MergeKMSCascade(
 				globalKMSCfgMandatory.AllowedKeySpecs,  // level 3
 				localKMSCfgMandatory.AllowedKeySpecs,   // level 4
 			),
+			// allowedGrantOperations not in KropathConfig: levels 3 and 4 only.
+			AllowedGrantOperations: firstNonEmptyStrings(
+				globalKMSCfgMandatory.AllowedGrantOperations, // level 3
+				localKMSCfgMandatory.AllowedGrantOperations,  // level 4
+			),
 			// Tags: union of all mandatory sources; L4 added first, L1 wins on key conflicts.
 			Tags: mergeMaps(
 				localKMSCfgMandatory.Tags,   // level 4 (lowest priority, set first)
@@ -152,8 +167,8 @@ func MergeKMSCascade(
 		},
 		Defaults: EffectiveKMSSection{
 			EnableKeyRotation: firstTrue(
-				localKMSCfgDefaults.EnableKeyRotation,  // level 6
-				globalKMSCfgDefaults.EnableKeyRotation, // level 7
+				localKMSCfgDefaults.EnableKeyRotation,   // level 6
+				globalKMSCfgDefaults.EnableKeyRotation,  // level 7
 				localKropathDefaults.EnableKeyRotation,  // level 8
 				globalKropathDefaults.EnableKeyRotation, // level 9
 			),
@@ -168,10 +183,15 @@ func MergeKMSCascade(
 				globalKMSCfgDefaults.KeyUsage, // level 7
 			),
 			AllowedKeySpecs: firstNonEmptyStrings(
-				localKMSCfgDefaults.AllowedKeySpecs,  // level 6
-				globalKMSCfgDefaults.AllowedKeySpecs, // level 7
+				localKMSCfgDefaults.AllowedKeySpecs,   // level 6
+				globalKMSCfgDefaults.AllowedKeySpecs,  // level 7
 				localKropathDefaults.AllowedKeySpecs,  // level 8
 				globalKropathDefaults.AllowedKeySpecs, // level 9
+			),
+			// allowedGrantOperations not in KropathConfig: levels 6 and 7 only.
+			AllowedGrantOperations: firstNonEmptyStrings(
+				localKMSCfgDefaults.AllowedGrantOperations,  // level 6
+				globalKMSCfgDefaults.AllowedGrantOperations, // level 7
 			),
 			// Tags: union of all defaults sources; L9 added first, L6 wins on key conflicts.
 			Tags: mergeMaps(

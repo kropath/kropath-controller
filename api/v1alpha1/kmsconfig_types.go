@@ -42,13 +42,13 @@ type KMSConfigSpec struct {
 
 type KMSConfigStatus struct {
 	EffectiveConfig    EffectiveKMSConfig `json:"effectiveConfig,omitempty"`
-	Conditions         []metav1.Condition    `json:"conditions,omitempty"`
-	ObservedGeneration int64                 `json:"observedGeneration,omitempty"`
-	SyncedTimestamp    string                `json:"syncedTimestamp,omitempty"`
+	Conditions         []metav1.Condition `json:"conditions,omitempty"`
+	ObservedGeneration int64              `json:"observedGeneration,omitempty"`
+	SyncedTimestamp    string             `json:"syncedTimestamp,omitempty"`
 }
 
 type EffectiveKMSConfig struct {
-	AWS       ProviderIdentity         `json:"aws,omitempty"`
+	AWS       ProviderIdentity            `json:"aws,omitempty"`
 	Mandatory cascade.EffectiveKMSSection `json:"mandatory,omitempty"`
 	Defaults  cascade.EffectiveKMSSection `json:"defaults,omitempty"`
 }
@@ -62,6 +62,10 @@ func (in *KMSConfig) DeepCopyInto(out *KMSConfig) {
 		out.Spec.Mandatory.AllowedKeySpecs = make([]string, len(in.Spec.Mandatory.AllowedKeySpecs))
 		copy(out.Spec.Mandatory.AllowedKeySpecs, in.Spec.Mandatory.AllowedKeySpecs)
 	}
+	if in.Spec.Mandatory.AllowedGrantOperations != nil {
+		out.Spec.Mandatory.AllowedGrantOperations = make([]string, len(in.Spec.Mandatory.AllowedGrantOperations))
+		copy(out.Spec.Mandatory.AllowedGrantOperations, in.Spec.Mandatory.AllowedGrantOperations)
+	}
 	if in.Spec.Mandatory.Tags != nil {
 		out.Spec.Mandatory.Tags = make(map[string]string, len(in.Spec.Mandatory.Tags))
 		for k, v := range in.Spec.Mandatory.Tags {
@@ -71,6 +75,10 @@ func (in *KMSConfig) DeepCopyInto(out *KMSConfig) {
 	if in.Spec.Defaults.AllowedKeySpecs != nil {
 		out.Spec.Defaults.AllowedKeySpecs = make([]string, len(in.Spec.Defaults.AllowedKeySpecs))
 		copy(out.Spec.Defaults.AllowedKeySpecs, in.Spec.Defaults.AllowedKeySpecs)
+	}
+	if in.Spec.Defaults.AllowedGrantOperations != nil {
+		out.Spec.Defaults.AllowedGrantOperations = make([]string, len(in.Spec.Defaults.AllowedGrantOperations))
+		copy(out.Spec.Defaults.AllowedGrantOperations, in.Spec.Defaults.AllowedGrantOperations)
 	}
 	if in.Spec.Defaults.Tags != nil {
 		out.Spec.Defaults.Tags = make(map[string]string, len(in.Spec.Defaults.Tags))
@@ -87,6 +95,10 @@ func (in *KMSConfig) DeepCopyInto(out *KMSConfig) {
 		out.Status.EffectiveConfig.Mandatory.AllowedKeySpecs = make([]string, len(in.Status.EffectiveConfig.Mandatory.AllowedKeySpecs))
 		copy(out.Status.EffectiveConfig.Mandatory.AllowedKeySpecs, in.Status.EffectiveConfig.Mandatory.AllowedKeySpecs)
 	}
+	if in.Status.EffectiveConfig.Mandatory.AllowedGrantOperations != nil {
+		out.Status.EffectiveConfig.Mandatory.AllowedGrantOperations = make([]string, len(in.Status.EffectiveConfig.Mandatory.AllowedGrantOperations))
+		copy(out.Status.EffectiveConfig.Mandatory.AllowedGrantOperations, in.Status.EffectiveConfig.Mandatory.AllowedGrantOperations)
+	}
 	if in.Status.EffectiveConfig.Mandatory.Tags != nil {
 		out.Status.EffectiveConfig.Mandatory.Tags = make(map[string]string, len(in.Status.EffectiveConfig.Mandatory.Tags))
 		for k, v := range in.Status.EffectiveConfig.Mandatory.Tags {
@@ -96,6 +108,10 @@ func (in *KMSConfig) DeepCopyInto(out *KMSConfig) {
 	if in.Status.EffectiveConfig.Defaults.AllowedKeySpecs != nil {
 		out.Status.EffectiveConfig.Defaults.AllowedKeySpecs = make([]string, len(in.Status.EffectiveConfig.Defaults.AllowedKeySpecs))
 		copy(out.Status.EffectiveConfig.Defaults.AllowedKeySpecs, in.Status.EffectiveConfig.Defaults.AllowedKeySpecs)
+	}
+	if in.Status.EffectiveConfig.Defaults.AllowedGrantOperations != nil {
+		out.Status.EffectiveConfig.Defaults.AllowedGrantOperations = make([]string, len(in.Status.EffectiveConfig.Defaults.AllowedGrantOperations))
+		copy(out.Status.EffectiveConfig.Defaults.AllowedGrantOperations, in.Status.EffectiveConfig.Defaults.AllowedGrantOperations)
 	}
 	if in.Status.EffectiveConfig.Defaults.Tags != nil {
 		out.Status.EffectiveConfig.Defaults.Tags = make(map[string]string, len(in.Status.EffectiveConfig.Defaults.Tags))
