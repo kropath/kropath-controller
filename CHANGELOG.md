@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.14.0](https://github.com/kropath/kropath-controller/compare/v0.13.0...v0.14.0) (2026-09-26)
+
+
+### Features
+
+* **KRO-1228:** extend CloudFront effectiveConfig cascade with vpcOriginProtocolPolicy ([#143](https://github.com/kropath/kropath-controller/issues/143)) ([38e663c](https://github.com/kropath/kropath-controller/commit/38e663caa17d4592171d993794d1ba70375c9d82))
+* **KRO-1234:** extend KMSConfig cascade with allowedGrantOperations ([#144](https://github.com/kropath/kropath-controller/issues/144)) ([eae9b5f](https://github.com/kropath/kropath-controller/commit/eae9b5fbf4ed5010ad4144e94909a1b9e63bc4cc))
+
+
+### Bug Fixes
+
+* **KRO-1241:** remove dead KropathConfig.spec.aws from CRD fixture and Chainsaw setups ([#146](https://github.com/kropath/kropath-controller/issues/146)) ([d2b9413](https://github.com/kropath/kropath-controller/commit/d2b94137596be9abecc52cda018834803770f09e))
+
 ## [0.13.0](https://github.com/kropath/kropath-controller/compare/v0.12.0...v0.13.0) (2026-09-22)
 
 
