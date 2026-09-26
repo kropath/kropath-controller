@@ -64,7 +64,7 @@ its own inputs, and its own output field.
                             └────────────────────────────────┘
 ```
 
-**1. Config cascade (21 reconcilers).** Each watches its `<Service>Config` plus `KropathConfig`,
+**1. Config cascade (57 reconcilers).** Each watches its `<Service>Config` plus `KropathConfig`,
 runs the merge helper in `internal/cascade`, and writes `status.effectiveConfig` (ADR-010). The
 merge is map-based and last-writer-wins per tier, so `mandatory` always beats a user's `spec`.
 This is the only feature that produces `effectiveConfig`.
@@ -90,40 +90,81 @@ deployed, not by runtime flags — query `/features` or the generated
 
 ## Implementation status
 
-**23 reconcilers**, **23 CRD types** registered in `api/v1alpha1`, **25 Chainsaw suites**
-covering **274 steps**, and **39 Go test files**.
+**61 reconcilers**, **58 CRD types** registered in `api/v1alpha1`, **61 Chainsaw suites**
+covering **493 steps**, and **91 Go test files**.
 
 **Suite** is the Chainsaw suite under `tests/`; **Steps** counts its named steps.
 **AWS integration** tracks end-to-end validation against a live AWS account with real ACK
-controllers — that work is in progress outside CI, so every entry is currently `⏳ Pending`.
+controllers, exercised outside this repo's CI in the separate `kropath-aws-integration-tests`
+harness. That harness maintains live resource fixtures backed by `S3Config`, `SNSConfig`, and
+`SQSConfig`, and has confirmed the `LambdaConfig` cascade reconciles against a real cluster, but the
+only fully-investigated resource run so far surfaced a real, still-open reconciliation bug, so no
+config kind has a confirmed, clean, end-to-end passing result and every entry below is still
+`⏳ Pending`.
 
-### Feature 1 — config cascade (21 reconcilers)
+### Feature 1 — config cascade (57 reconcilers)
 
 Each writes `status.effectiveConfig` on its `<Service>Config` CR.
 
 | Reconciler | CR(s) watched | Suite | Steps | AWS integration |
 |---|---|---|---|---|
-| `ApiGatewayConfig` | `ApiGatewayConfig`, `KropathConfig` | `apigateway/ctrl-apigw-01` | 6 | ⏳ Pending |
+| `ACMConfig` | `ACMConfig`, `KropathConfig` | `acm/ctrl-acm` | 3 | ⏳ Pending |
+| `APIGatewayConfig` | `APIGatewayConfig`, `KropathConfig` | `apigateway/ctrl-apigw-01` | 6 | ⏳ Pending |
 | `ApiGatewayV2Config` | `ApiGatewayV2Config`, `KropathConfig` | `apigatewayv2/ctrl-apigwv2-01` | 10 | ⏳ Pending |
+| `AppScalingConfig` | `AppScalingConfig`, `KropathConfig` | **none** — see [Known gaps](#known-gaps) | — | ⏳ Pending |
+| `AthenaConfig` | `AthenaConfig`, `KropathConfig` | `athena/ctrl-athena-01` | 9 | ⏳ Pending |
 | `AutoScalingConfig` | `AutoScalingConfig`, `KropathConfig` | `autoscaling/ctrl-autoscaling-01` | 9 | ⏳ Pending |
+| `BackupConfig` | `BackupConfig`, `KropathConfig` | `backup/ctrl-backup-01` | 2 | ⏳ Pending |
+| `BedrockConfig` | `BedrockConfig`, `KropathConfig` | `bedrock/ctrl-bedrock-01` | 24 | ⏳ Pending |
+| `CloudFrontConfig` | `CloudFrontConfig`, `KropathConfig` | `cloudfront/ctrl-cloudfront-01` | 7 | ⏳ Pending |
+| `CloudTrailConfig` | `CloudTrailConfig`, `KropathConfig` | `cloudtrail/ctrl-ct-01` | 1 | ⏳ Pending |
+| `CloudWatchConfig` | `CloudWatchConfig`, `KropathConfig` | `cloudwatch/ctrl-cw-01` | 11 | ⏳ Pending |
 | `CloudWatchLogsConfig` | `CloudWatchLogsConfig`, `KropathConfig` | `cloudwatchlogs/ctrl-cwl-01` | 11 | ⏳ Pending |
+| `CodeArtifactConfig` | `CodeArtifactConfig`, `KropathConfig` | **none** — see [Known gaps](#known-gaps) | — | ⏳ Pending |
+| `CognitoConfig` | `CognitoConfig`, `KropathConfig` | `cognito/ctrl-cognito` | 5 | ⏳ Pending |
+| `DocumentDBConfig` | `DocumentDBConfig`, `KropathConfig` | **none** — see [Known gaps](#known-gaps) | — | ⏳ Pending |
+| `DSQLConfig` | `DSQLConfig`, `KropathConfig` | `dsql/ctrl-dsql-01` | 4 | ⏳ Pending |
 | `DynamoDBConfig` | `DynamoDBConfig`, `KropathConfig` | `dynamodb/ctrl-dynamodb-01` | 14 | ⏳ Pending |
 | `EC2Config` | `EC2Config`, `KropathConfig` | `ec2/ctrl-ec2-01` | 15 | ⏳ Pending |
-| `ECRConfig` | `ECRConfig`, `KropathConfig` | `ecr/ctrl-ecr-01` | 22 | ⏳ Pending |
-| `ECSConfig` | `ECSConfig`, `KropathConfig` | `ecs/ctrl-ecs-01` | 3 | ⏳ Pending |
+| `ECRConfig` | `ECRConfig`, `KropathConfig` | `ecr/ctrl-ecr-01` | 23 | ⏳ Pending |
+| `ECRPublicConfig` | `ECRPublicConfig`, `KropathConfig` | `ecrpublic/controller/ctrl-ecrpub-01` | 6 | ⏳ Pending |
+| `ECSConfig` | `ECSConfig`, `KropathConfig` | `ecs/ctrl-ecs-01` | 4 | ⏳ Pending |
 | `EFSConfig` | `EFSConfig`, `KropathConfig` | `efs/ctrl-efs-01` | 10 | ⏳ Pending |
 | `EKSConfig` | `EKSConfig`, `KropathConfig` | `eks/ctrl-eks-01` | 16 | ⏳ Pending |
-| `ElastiCacheConfig` | `ElastiCacheConfig`, `KropathConfig` | `elasticache/ctrl-elasticache-01` | 13 | ⏳ Pending |
 | `ELBConfig` | `ELBConfig`, `KropathConfig` | **none** — see [Known gaps](#known-gaps) | — | ⏳ Pending |
+| `ElastiCacheConfig` | `ElastiCacheConfig`, `KropathConfig` | `elasticache/ctrl-elasticache-01` | 13 | ⏳ Pending |
+| `EMRConfig` | `EMRConfig`, `KropathConfig` | `emr/ctrl-emr-01` | 5 | ⏳ Pending |
 | `EventBridgeConfig` | `EventBridgeConfig`, `KropathConfig` | `eventbridge/ctrl-eventbridge-01` | 10 | ⏳ Pending |
+| `GlueConfig` | `GlueConfig`, `KropathConfig` | `glue/controller/ctrl-glue-01` | 6 | ⏳ Pending |
 | `IAMConfig` | `IAMConfig`, `KropathConfig` | `iam/ctrl-iam-01` | 7 | ⏳ Pending |
-| `KMSConfig` | `KMSConfig`, `KropathConfig` | `kms/ctrl-kms-01` | 15 | ⏳ Pending |
+| `KeyspacesConfig` | `KeyspacesConfig`, `KropathConfig` | `keyspaces/ctrl-keyspaces-01` | 6 | ⏳ Pending |
+| `KinesisConfig` | `KinesisConfig`, `KropathConfig` | `kinesis/controller/ctrl-kinesis-01` | 4 | ⏳ Pending |
+| `KMSConfig` | `KMSConfig`, `KropathConfig` | `kms/ctrl-kms-01`, `kms/ctrl-kms-02` | 18 | ⏳ Pending |
+| `LambdaConfig` | `LambdaConfig`, `KropathConfig` | `lambda/ctrl-lambda-01` | 7 | ⏳ Pending |
+| `ManagedPrometheusConfig` | `ManagedPrometheusConfig`, `KropathConfig` | `managedprometheus/controller` | 5 | ⏳ Pending |
+| `MemoryDBConfig` | `MemoryDBConfig`, `KropathConfig` | `memorydb/ctrl-memorydb-01` | 12 | ⏳ Pending |
+| `MQConfig` | `MQConfig`, `KropathConfig` | `mq/ctrl-mq-01` | 12 | ⏳ Pending |
+| `MSKConfig` | `MSKConfig`, `KropathConfig` | `msk/mskconfig/ctrl-msk-01` | 3 | ⏳ Pending |
+| `MWAAConfig` | `MWAAConfig`, `KropathConfig` | **none** — see [Known gaps](#known-gaps) | — | ⏳ Pending |
+| `NetworkFirewallConfig` | `NetworkFirewallConfig`, `KropathConfig` | `networkfirewall/ctrl-nfw-01` | 11 | ⏳ Pending |
+| `OpenSearchConfig` | `OpenSearchConfig`, `KropathConfig` | `opensearch/ctrl-opensearch-cascade` | 6 | ⏳ Pending |
+| `OrganizationsConfig` | `OrganizationsConfig`, `KropathConfig` | `organizations/controller/ctrl-org-01` | 3 | ⏳ Pending |
+| `PipesConfig` | `PipesConfig`, `KropathConfig` | **none** — see [Known gaps](#known-gaps) | — | ⏳ Pending |
+| `QuickSightConfig` | `QuickSightConfig`, `KropathConfig` | `quicksight/ctrl-qs-01` | 9 | ⏳ Pending |
+| `RAMConfig` | `RAMConfig`, `KropathConfig` | **none** — see [Known gaps](#known-gaps) | — | ⏳ Pending |
 | `RDSConfig` | `RDSConfig`, `KropathConfig` | `rds/ctrl-rds-01` | 16 | ⏳ Pending |
-| `S3Config` | `S3Config`, `KropathConfig` | `s3/ctrl-s3-01` | 12 | ⏳ Pending |
+| `RecycleBinConfig` | `RecycleBinConfig`, `KropathConfig` | `recyclebin/controller/ctrl-rb-01` | 4 | ⏳ Pending |
+| `Route53Config` | `Route53Config`, `KropathConfig` | `route53/ctrl-r53-00` | 9 | ⏳ Pending |
+| `S3AdvancedConfig` | `S3AdvancedConfig`, `KropathConfig` | `s3advanced/ctrl-s3advanced-01` | 9 | ⏳ Pending |
+| `S3Config` | `S3Config`, `KropathConfig` | `s3/ctrl-s3-01` | 13 | ⏳ Pending |
+| `SageMakerConfig` | `SageMakerConfig`, `KropathConfig` | `sagemaker/cascade/ctrl-sm-01` | 11 | ⏳ Pending |
 | `SecretsManagerConfig` | `SecretsManagerConfig`, `KropathConfig` | `secretsmanager/ctrl-secretsmanager-01` | 15 | ⏳ Pending |
+| `SESConfig` | `SESConfig`, `KropathConfig` | **none** — see [Known gaps](#known-gaps) | — | ⏳ Pending |
 | `SNSConfig` | `SNSConfig`, `KropathConfig` | `sns/ctrl-sns-01` | 13 | ⏳ Pending |
 | `SQSConfig` | `SQSConfig`, `KropathConfig` | `sqs/ctrl-sqs-01` | 13 | ⏳ Pending |
+| `SSMConfig` | `SSMConfig`, `KropathConfig` | `ssm/ctrl-ssm-cascade` | 3 | ⏳ Pending |
 | `StepFunctionsConfig` | `StepFunctionsConfig`, `KropathConfig` | `stepfunctions/ctrl-sfn-01` | 11 | ⏳ Pending |
+| `WAFConfig` | `WAFConfig`, `KropathConfig` | `waf/controller` | 4 | ⏳ Pending |
 
 ### Features 2 and 3 — standalone reconcilers
 
@@ -131,7 +172,7 @@ Neither reads or writes `effectiveConfig`; both are separate features with their
 
 | Feature | Reconciler | CR(s) watched | Output | Suite | Steps | AWS integration |
 |---|---|---|---|---|---|---|
-| PolicyDocument | `PolicyDocument` | `PolicyDocument`, `KropathConfig` | `status.resolvedDocumentJSON` | `policy/phase2-refs`, `policy/phase3-merge` | 18 | ⏳ Pending |
+| PolicyDocument | `PolicyDocument` | `PolicyDocument`, `KropathConfig` | `status.resolvedDocumentJSON` | `policy/phase2-refs`, `policy/phase3-merge` | 11 | ⏳ Pending |
 | Label injection | `LabelOperator` | every kind under `aws.`/`gcp.`/`azure.kropath.run` | `metadata.labels[<provider>.kropath.run/resource-name]` | `label-operator/ctrl-label-op-01` | 8 | ⏳ Pending |
 
 Both are implemented and covered. The label-operator suite has a step for AC-1 … AC-8 of the
@@ -152,14 +193,13 @@ drifts from the code (the **Feature registry drift gate** job).
 
 ### Known gaps
 
-- **`ELBConfig` has no Chainsaw suite.** The reconciler, CRD type, cascade helper, and
-  `tests/fixtures/crds/awselbconfig.yaml` all exist, but there is no `tests/elb/` directory and
-  no `test-elb` Make target — it is the only reconciler with no integration coverage. (See
+- **Eight reconcilers have no Chainsaw suite.** `ELBConfig`, `AppScalingConfig`,
+  `CodeArtifactConfig`, `DocumentDBConfig`, `MWAAConfig`, `PipesConfig`, `RAMConfig`, and
+  `SESConfig` each have a full reconciler, CRD type, and cascade helper registered, but none has a
+  `tests/<service>/` directory or a corresponding `test-<service>` Make target — none of the eight
+  has integration coverage. (See
   `docs/troubleshooting-logs/2026-08-13-elbconfig-missing-crd-manager-crash.md` for the incident
-  that followed from its CRD not being applied.)
-- **Cascade helpers without reconcilers.** `internal/cascade/cloudfront.go` and
-  `internal/cascade/lambda.go` are implemented and unit-tested, but no `CloudFrontConfig` or
-  `LambdaConfig` reconciler or CRD type exists yet, so nothing calls them at runtime.
+  that followed from `ELBConfig`'s CRD not being applied.)
 - **`make test-apigateway` is missing from the root `Makefile`.** `tests/apigateway/ctrl-apigw-01`
   runs under `make test-chainsaw` (which runs `chainsaw test tests/`) and via
   `tests/Makefile`, but there is no single-suite target at the repo root the way every other
