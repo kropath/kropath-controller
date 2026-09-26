@@ -2251,6 +2251,48 @@ spec:
                           description: Mandatory cloud resource tags applied to all RDS resources.
                           additionalProperties:
                             type: string
+                    appScaling:
+                      type: object
+                      default: {}
+                      description: >-
+                        Application Auto Scaling-family mandatory governance fields. Cascade
+                        levels 1-2 in the ten-level priority chain (ADR-015 §5.3). namingTemplate,
+                        syncedLabels, and syncedAnnotations are AppScalingConfig-only.
+                      properties:
+                        minCapacity:
+                          type: integer
+                          format: int64
+                          default: 0
+                          description: >-
+                            Force an org-wide minimum capacity floor for all scalable targets.
+                            0 (zero value) = not enforced.
+                        maxCapacity:
+                          type: integer
+                          format: int64
+                          default: 0
+                          description: >-
+                            Force an org-wide maximum capacity ceiling for all scalable targets.
+                            0 (zero value) = not enforced.
+                        disableScaleIn:
+                          type: boolean
+                          default: false
+                          description: >-
+                            Force scale-in protection on all scaling policies org-wide.
+                            false (zero value) = not enforced.
+                        scaleInCooldown:
+                          type: integer
+                          format: int64
+                          default: 0
+                          description: >-
+                            Force a minimum scale-in cooldown (seconds) org-wide.
+                            0 (zero value) = not enforced.
+                        scaleOutCooldown:
+                          type: integer
+                          format: int64
+                          default: 0
+                          description: >-
+                            Force a minimum scale-out cooldown (seconds) org-wide.
+                            0 (zero value) = not enforced.
                     autoscaling:
                       type: object
                       default: {}
@@ -3834,6 +3876,38 @@ spec:
                           description: Default cloud resource tags for RDS resources.
                           additionalProperties:
                             type: string
+                    appScaling:
+                      type: object
+                      default: {}
+                      description: >-
+                        Default Application Auto Scaling-family governance fields. Cascade levels
+                        8-9 (ADR-015 §5.3). Applied only when no higher-priority source sets the
+                        field.
+                      properties:
+                        minCapacity:
+                          type: integer
+                          format: int64
+                          default: 0
+                          description: Default minimum capacity floor. 0 = no default.
+                        maxCapacity:
+                          type: integer
+                          format: int64
+                          default: 0
+                          description: Default maximum capacity ceiling. 0 = no default.
+                        disableScaleIn:
+                          type: boolean
+                          default: false
+                          description: Default scale-in protection setting. false = no default.
+                        scaleInCooldown:
+                          type: integer
+                          format: int64
+                          default: 0
+                          description: Default scale-in cooldown (seconds). 0 = no default.
+                        scaleOutCooldown:
+                          type: integer
+                          format: int64
+                          default: 0
+                          description: Default scale-out cooldown (seconds). 0 = no default.
                     autoscaling:
                       type: object
                       default: {}
