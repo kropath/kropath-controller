@@ -34,34 +34,40 @@ kropath-controller ships **three independent features**. They share a deployment
 endpoint, and a leader election lease — but not a code path. Each has its own reconcile loop,
 its own inputs, and its own output field.
 
-```
- ┌── 1. CONFIG CASCADE ────────┐ ┌── 2. POLICY DOCUMENT ──┐ ┌── 3. LABEL INJECTION ─────┐
- │                             │ │                        │ │                           │
- │  KropathConfig              │ │  PolicyDocument        │ │  every CR under           │
- │   (org / namespace)         │ │   (statements, refs,   │ │  <provider>.kropath.run   │
- │  <Service>Config            │ │    sources)            │ │   (configs + instances)   │
- │   (per resource type)       │ │                        │ │                           │
- │            │                │ │           │            │ │            │              │
- │            ▼                │ │           ▼            │ │            ▼              │
- │  21 cascade reconcilers     │ │  PolicyDocument        │ │  LabelOperator            │
- │  mandatory > spec >         │ │  reconciler — resolves │ │  reconciler — one         │
- │  defaults, map-merged       │ │  refs to ARNs, merges  │ │  controller per           │
- │  per tier (ADR-010)         │ │  sources, detects Sid  │ │  discovered GVK           │
- │            │                │ │  conflicts             │ │            │              │
- │            ▼                │ │           │            │ │            ▼              │
- │  status.effectiveConfig     │ │           ▼            │ │  metadata.labels          │
- │                             │ │  status.               │ │   <provider>.kropath.run/ │
- │                             │ │   resolvedDocumentJSON │ │   resource-name = name    │
- └──────────────┬──────────────┘ └───────────┬────────────┘ └─────────────┬─────────────┘
-                │                            │                            │
-   read via one │           referenced as a  │        makes both lookups  │
-   externalRef  │           policy body by   │        resolvable at all   │
-   lookup       │           IAM RGDs         │        (selector.matchLabels)
-                └────────────────────────────┼────────────────────────────┘
-                                             ▼
-                            ┌────────────────────────────────┐
-                            │  kro RGD (kropath-aws)         │──▶ ACK CR ──▶ AWS
-                            └────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph F1["1. Config cascade"]
+        KC["KropathConfig<br/>org / namespace"]
+        SVC["&lt;Service&gt;Config<br/>per resource type"]
+        CASC["57 cascade reconcilers<br/>mandatory &gt; spec &gt; defaults,<br/>map-merged per tier (ADR-010)"]
+        EFF["status.effectiveConfig"]
+        KC --> CASC
+        SVC --> CASC
+        CASC --> EFF
+    end
+
+    subgraph F2["2. PolicyDocument"]
+        PD["PolicyDocument<br/>statements, refs, sources"]
+        PDR["PolicyDocument reconciler<br/>resolves refs to ARNs, merges<br/>sources, detects Sid conflicts"]
+        RDOC["status.resolvedDocumentJSON"]
+        PD --> PDR --> RDOC
+    end
+
+    subgraph F3["3. Label injection"]
+        CRS["every CR under<br/>&lt;provider&gt;.kropath.run<br/>(configs + instances)"]
+        LOP["LabelOperator reconciler<br/>one controller per<br/>discovered GVK"]
+        LBL["metadata.labels<br/>&lt;provider&gt;.kropath.run/resource-name = name"]
+        CRS --> LOP --> LBL
+    end
+
+    RGD["kro RGD (kropath-aws)"]
+    ACK["ACK CR"]
+    AWSCloud(["AWS"])
+
+    EFF -->|read via one externalRef lookup| RGD
+    RDOC -->|referenced as a policy body by IAM RGDs| RGD
+    LBL -->|makes both lookups resolvable via selector.matchLabels| RGD
+    RGD --> ACK --> AWSCloud
 ```
 
 **1. Config cascade (57 reconcilers).** Each watches its `<Service>Config` plus `KropathConfig`,
