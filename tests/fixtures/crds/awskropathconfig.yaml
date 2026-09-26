@@ -2262,37 +2262,36 @@ spec:
                         minCapacity:
                           type: integer
                           format: int64
-                          default: 0
+                          minimum: 0
                           description: >-
-                            Force an org-wide minimum capacity floor for all scalable targets.
-                            0 (zero value) = not enforced.
+                            Org-wide mandatory minimum capacity floor for all scalable targets.
+                            0 = not enforced; >0 forces minimum capacity.
                         maxCapacity:
                           type: integer
                           format: int64
-                          default: 0
+                          minimum: 0
                           description: >-
-                            Force an org-wide maximum capacity ceiling for all scalable targets.
-                            0 (zero value) = not enforced.
+                            Org-wide mandatory maximum capacity ceiling for all scalable targets.
+                            0 = not enforced; >0 forces maximum capacity.
                         disableScaleIn:
                           type: boolean
-                          default: false
                           description: >-
-                            Force scale-in protection on all scaling policies org-wide.
+                            Force scale-in protection on all scaling policies org-wide when true.
                             false (zero value) = not enforced.
                         scaleInCooldown:
                           type: integer
                           format: int64
-                          default: 0
+                          minimum: 0
                           description: >-
-                            Force a minimum scale-in cooldown (seconds) org-wide.
-                            0 (zero value) = not enforced.
+                            Org-wide mandatory minimum scale-in cooldown (seconds).
+                            0 = not enforced; >0 forces minimum cooldown.
                         scaleOutCooldown:
                           type: integer
                           format: int64
-                          default: 0
+                          minimum: 0
                           description: >-
-                            Force a minimum scale-out cooldown (seconds) org-wide.
-                            0 (zero value) = not enforced.
+                            Org-wide mandatory minimum scale-out cooldown (seconds).
+                            0 = not enforced; >0 forces minimum cooldown.
                     autoscaling:
                       type: object
                       default: {}
@@ -3887,26 +3886,25 @@ spec:
                         minCapacity:
                           type: integer
                           format: int64
-                          default: 0
+                          minimum: 0
                           description: Default minimum capacity floor. 0 = no default.
                         maxCapacity:
                           type: integer
                           format: int64
-                          default: 0
+                          minimum: 0
                           description: Default maximum capacity ceiling. 0 = no default.
                         disableScaleIn:
                           type: boolean
-                          default: false
                           description: Default scale-in protection setting. false = no default.
                         scaleInCooldown:
                           type: integer
                           format: int64
-                          default: 0
+                          minimum: 0
                           description: Default scale-in cooldown (seconds). 0 = no default.
                         scaleOutCooldown:
                           type: integer
                           format: int64
-                          default: 0
+                          minimum: 0
                           description: Default scale-out cooldown (seconds). 0 = no default.
                     autoscaling:
                       type: object
